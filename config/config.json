@@ -1,0 +1,23 @@
+{
+  "backend_url": "http://backend:8000",
+  "api_user": "admin",
+  "api_password": "changeme",
+  "sample_seconds": 15,
+  "downtime_minutes": 20,
+  "persistence_frames": 2,
+  "motion_threshold": 3.0,
+  "cameras": [
+    {
+      "camera_id": "cam1",
+      "rtsp_url": "rtsp://user:pass@192.168.1.10:554/h264Preview_01_main",
+      "roi": [120, 180, 500, 300],
+      "mode": "fill",
+      "empty_reference_path": "config/empty_cam1.jpg",
+      "max_units": 20,
+      "adaptive_sampling": true,
+      "resize_width": 960,
+      "min_confidence": 0.2,
+      "reset_threshold": 2
+    }
+  ]
+}

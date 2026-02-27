@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    environment:
+      API_USER: ${API_USER:-admin}
+      API_PASSWORD: ${API_PASSWORD:-changeme}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///./backend/data/factory.db}
+      EVIDENCE_DIR: /app/backend/data/evidence
+    volumes:
+      - ./backend/data:/app/backend/data
+    ports:
+      - "8000:8000"
+
+  edge:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.edge
+    depends_on:
+      - backend
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./config:/app/config
+      - ./edge/evidence:/app/edge/evidence
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    depends_on:
+      - backend
+    environment:
+      API_BASE: http://backend:8000
+      API_USER: ${API_USER:-admin}
+      API_PASSWORD: ${API_PASSWORD:-changeme}
+      CAMERA_IDS: ${CAMERA_IDS:-cam1}
+    ports:
+      - "8501:8501"
