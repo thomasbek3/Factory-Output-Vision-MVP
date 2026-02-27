@@ -1,0 +1,1 @@
+# Factory Output Vision MVP\n\nBackend API, edge agent, and dashboard for factory throughput monitoring.\n
