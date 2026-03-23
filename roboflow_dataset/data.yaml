@@ -1,0 +1,12 @@
+names:
+- panel
+nc: 1
+roboflow:
+  license: Private
+  project: wire-mesh-panel
+  url: https://app.roboflow.com/thomass-workspace-7u6ay/wire-mesh-panel/1
+  version: 1
+  workspace: thomass-workspace-7u6ay
+test: ../test/images
+train: ../train/images
+val: ../valid/images

@@ -1,0 +1,12 @@
+names:
+- panel
+nc: 1
+roboflow:
+  license: Private
+  project: panel-in-transit
+  url: https://app.roboflow.com/thomass-workspace-7u6ay/panel-in-transit/3
+  version: 3
+  workspace: thomass-workspace-7u6ay
+test: ../test/images
+train: ../train/images
+val: ../valid/images
