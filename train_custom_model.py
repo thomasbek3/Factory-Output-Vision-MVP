@@ -14,7 +14,42 @@ use Google Colab with a free GPU. Just upload this script and the dataset.
 """
 
 import argparse
+import json
 from pathlib import Path
+
+
+def validate_reviewed_label_gate(manifest_path: Path) -> dict[str, int]:
+    """Validate that training is fed by the AI-reviewed label gate.
+
+    The reviewed manifest is produced by ``scripts/review_labels_ai.py``. Only
+    ACCEPT/FIX labels appear in ``trainable_labels``; REJECT/UNCERTAIN rows are
+    counted as blocked and must not be exported into the training dataset.
+    """
+    manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != "label-quality-reviewed-v1":
+        raise ValueError("Expected schema_version label-quality-reviewed-v1")
+
+    trainable = len(manifest.get("trainable_labels") or [])
+    blocked = len(manifest.get("rejected") or []) + len(manifest.get("uncertain") or [])
+    if trainable == 0:
+        raise ValueError("No AI-reviewed trainable labels found")
+    return {"trainable": trainable, "blocked": blocked}
+
+
+def resolve_reviewed_label_gate(
+    reviewed_label_manifest: str | Path | None,
+    *,
+    allow_unreviewed_labels: bool = False,
+) -> dict[str, int] | None:
+    """Require the AI review gate unless explicitly bypassed."""
+    if reviewed_label_manifest is None:
+        if allow_unreviewed_labels:
+            return None
+        raise ValueError(
+            "AI label QA manifest is required. Run scripts/review_labels_ai.py first, "
+            "or pass --allow-unreviewed-labels to bypass deliberately."
+        )
+    return validate_reviewed_label_gate(Path(reviewed_label_manifest))
 
 
 def main():
@@ -25,6 +60,17 @@ def main():
     parser.add_argument("--batch", type=int, default=16, help="Batch size (default: 16, use 8 for low RAM)")
     parser.add_argument("--device", type=str, default="cpu", help="Device: 'cpu' or '0' for GPU")
     parser.add_argument("--base-model", type=str, default="yolov8n.pt", help="Base model to fine-tune from")
+    parser.add_argument(
+        "--reviewed-label-manifest",
+        type=str,
+        default=None,
+        help="Reviewed manifest from scripts/review_labels_ai.py; gates training to AI-approved labels",
+    )
+    parser.add_argument(
+        "--allow-unreviewed-labels",
+        action="store_true",
+        help="Explicit escape hatch: train without the AI label QA manifest",
+    )
     args = parser.parse_args()
 
     data_path = Path(args.data)
@@ -32,6 +78,16 @@ def main():
         print(f"ERROR: {data_path} not found.")
         print(f"Download your dataset from Roboflow and extract it first.")
         return
+
+    summary = resolve_reviewed_label_gate(
+        args.reviewed_label_manifest,
+        allow_unreviewed_labels=args.allow_unreviewed_labels,
+    )
+    if summary:
+        print(
+            "AI label QA gate passed: "
+            f"{summary['trainable']} trainable labels, {summary['blocked']} blocked labels."
+        )
 
     from ultralytics import YOLO
 
