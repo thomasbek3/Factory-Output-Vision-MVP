@@ -137,6 +137,11 @@ def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: P
     assert result["diagnosis"][0]["decision"] == "reject"
     assert result["diagnosis"][0]["reason"] == "static_stack_edge"
     assert result["overlay_sheet_path"].endswith("overlay_sheet.jpg")
+    assert result["track_receipts"] == [str(out_dir / "track_receipts" / "track-000001.json")]
+    receipt = json.loads((out_dir / "track_receipts" / "track-000001.json").read_text(encoding="utf-8"))
+    assert receipt["schema_version"] == "factory-track-receipt-v1"
+    assert receipt["diagnosis"]["reason"] == "static_stack_edge"
+    assert receipt["perception_gate"]["reason"] == "static_stack_edge"
     assert json.loads((out_dir / "diagnostic.json").read_text(encoding="utf-8")) == result
 
     with pytest.raises(FileExistsError, match="--force"):

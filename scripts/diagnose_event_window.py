@@ -96,6 +96,7 @@ def prepare_output_dir(out_dir: Path, *, force: bool) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "frames").mkdir(parents=True, exist_ok=True)
     (out_dir / "overlays").mkdir(parents=True, exist_ok=True)
+    (out_dir / "track_receipts").mkdir(parents=True, exist_ok=True)
 
 
 def load_calibration(calibration_path: Path) -> CalibrationZones:
@@ -224,6 +225,14 @@ def diagnose_event_window(
     sheet_path = out_dir / "overlay_sheet.jpg"
     overlay_video_path = out_dir / "overlay_video.mp4"
     make_media(overlay_frames=artifacts.overlay_frames, sheet_path=sheet_path, video_path=overlay_video_path, fps=fps)
+    receipt_paths = write_track_receipts(
+        out_dir=out_dir,
+        tracks=artifacts.track_evidence,
+        diagnoses=diagnoses,
+        gate_decisions=gate_decisions,
+        overlay_sheet_path=sheet_path,
+        overlay_video_path=overlay_video_path,
+    )
 
     result = {
         "schema_version": "factory-event-diagnostic-v1",
@@ -238,6 +247,7 @@ def diagnose_event_window(
         "frame_count": artifacts.frame_count,
         "overlay_sheet_path": _rel(sheet_path),
         "overlay_video_path": _rel(overlay_video_path),
+        "track_receipts": [_rel(path) for path in receipt_paths],
         "diagnosis": [asdict(item) for item in diagnoses],
         "summary": summarize_diagnoses(diagnoses),
         "perception_gate": [asdict(item) for item in gate_decisions],
@@ -264,6 +274,41 @@ def gate_features_from_track(track: TrackEvidence) -> GateTrackFeatures:
         static_location_ratio=track.static_location_ratio,
         flow_coherence=track.flow_coherence,
     )
+
+
+def write_track_receipts(
+    *,
+    out_dir: Path,
+    tracks: list[TrackEvidence],
+    diagnoses: list[TrackDiagnosis],
+    gate_decisions: list[Any],
+    overlay_sheet_path: Path,
+    overlay_video_path: Path,
+) -> list[Path]:
+    receipts_dir = out_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    diagnosis_by_track = {item.track_id: item for item in diagnoses}
+    gate_by_track = {item.track_id: item for item in gate_decisions}
+    paths: list[Path] = []
+    for track in sorted(tracks, key=lambda item: item.track_id):
+        diagnosis = diagnosis_by_track.get(track.track_id)
+        gate = gate_by_track.get(track.track_id)
+        path = receipts_dir / f"track-{track.track_id:06d}.json"
+        payload = {
+            "schema_version": "factory-track-receipt-v1",
+            "track_id": track.track_id,
+            "timestamps": {"first": track.first_timestamp, "last": track.last_timestamp},
+            "evidence": asdict(track),
+            "diagnosis": asdict(diagnosis) if diagnosis is not None else None,
+            "perception_gate": asdict(gate) if gate is not None else None,
+            "review_assets": {
+                "overlay_sheet_path": _rel(overlay_sheet_path),
+                "overlay_video_path": _rel(overlay_video_path),
+            },
+        }
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        paths.append(path)
+    return paths
 
 
 def summarize_diagnoses(diagnoses: list[TrackDiagnosis]) -> dict[str, Any]:
