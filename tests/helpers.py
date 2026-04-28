@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import TYPE_CHECKING, Iterator
 
-from fastapi.testclient import TestClient
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 def reset_logging_for_tests() -> None:
@@ -21,7 +24,7 @@ def reset_logging_for_tests() -> None:
 
 
 @contextmanager
-def app_client(*, demo: bool = False, extra_env: dict[str, str] | None = None) -> Iterator[tuple[TestClient, str]]:
+def app_client(*, demo: bool = False, extra_env: dict[str, str] | None = None) -> Iterator[tuple["TestClient", str]]:
     temp_dir = tempfile.mkdtemp(prefix="factory_counter_test_")
     env_updates = {
         "FC_DB_PATH": os.path.join(temp_dir, "test.db"),
@@ -45,6 +48,7 @@ def app_client(*, demo: bool = False, extra_env: dict[str, str] | None = None) -
             os.environ[key] = value
         reset_logging_for_tests()
         from app.main import create_app
+        from fastapi.testclient import TestClient
 
         app = create_app()
         with TestClient(app) as client:

@@ -59,9 +59,9 @@ def test_source_token_expires_before_output_and_cannot_count_late() -> None:
 
     counter.update([det(5, (5, 20, 20, 20))])
     counter.update([det(5, (10, 20, 20, 20))])
-    counter.update([det(5, (42, 20, 10, 20))])
-    counter.update([det(5, (42, 20, 10, 20))])
-    counter.update([det(5, (42, 20, 10, 20))])
+    counter.update([])
+    counter.update([])
+    counter.update([])
     events = counter.update([det(5, (65, 20, 20, 20))])
     events += counter.update([det(5, (65, 20, 20, 20))])
 

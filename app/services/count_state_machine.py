@@ -52,7 +52,7 @@ class CountConfig:
 class CountEvent:
     track_id: int
     count: int
-    reason: Literal["stable_in_output", "disappeared_in_output"]
+    reason: Literal["stable_in_output", "disappeared_in_output", "approved_delivery_chain"]
     bbox: Box
 
 
@@ -93,6 +93,7 @@ class _TrackMemory:
     last_seen_center: tuple[float, float] | None = None
     state_path: list[str] = field(default_factory=lambda: ["NEW_TRACK"])
     uncertain_reasons: list[str] = field(default_factory=list)
+    approved_for_count: bool = True
 
     @property
     def has_source_token(self) -> bool:
@@ -124,8 +125,9 @@ class CountStateMachine:
         self._resident_sequence = 0
         self._tracks: dict[int, _TrackMemory] = {}
         self._residents: dict[str, _ResidentObject] = {}
+        self._committed_delivery_chains: set[str] = set()
 
-    def update(self, detections: list[TrackDetection]) -> list[CountEvent]:
+    def update(self, detections: list[TrackDetection], approved_track_ids: set[int] | None = None) -> list[CountEvent]:
         self._frame_index += 1
         events: list[CountEvent] = []
         current_ids = {detection.track_id for detection in detections}
@@ -135,6 +137,7 @@ class CountStateMachine:
                 detection.track_id,
                 _TrackMemory(track_id=detection.track_id),
             )
+            track.approved_for_count = approved_track_ids is None or detection.track_id in approved_track_ids
             event = self._update_track(track, detection)
             if event is not None:
                 events.append(event)
@@ -162,6 +165,46 @@ class CountStateMachine:
     def track_uncertain_reasons(self, track_id: int) -> list[str]:
         track = self._tracks.get(track_id)
         return list(track.uncertain_reasons) if track is not None else []
+
+    def commit_approved_delivery_chain(
+        self,
+        *,
+        chain_id: str,
+        output_track_id: int,
+        output_bbox: Box,
+        source_track_id: int | None = None,
+    ) -> CountEvent | None:
+        if chain_id in self._committed_delivery_chains:
+            return None
+
+        track = self._tracks.setdefault(output_track_id, _TrackMemory(track_id=output_track_id))
+        if track.counted:
+            self._committed_delivery_chains.add(chain_id)
+            return None
+
+        track.last_bbox = output_bbox
+        track.last_center = box_center(output_bbox)
+        track.last_seen_center = track.last_center
+        track.entered_output = True
+        track.last_valid_detection_in_output = True
+        track.approved_for_count = True
+        track.has_allowed_gate_crossing = True
+        track.source_frames = max(track.source_frames, self.config.source_min_frames)
+        track.output_frames = max(track.output_frames, 1)
+        if track.state == "NEW_TRACK":
+            track.set_state("OBSERVING")
+        track.set_state("IN_OUTPUT_UNSETTLED")
+
+        source_track = self._tracks.get(source_track_id) if source_track_id is not None else None
+        if source_track is not None and source_track.source_token is not None and not source_track.source_token.consumed:
+            track.source_token = source_track.source_token
+            track.source_token.track_id = output_track_id
+            track.source_token.last_frame = self._frame_index
+        elif track.source_token is None:
+            track.source_token = self._create_source_token(track, output_bbox)
+
+        self._committed_delivery_chains.add(chain_id)
+        return self._commit_count(track, "approved_delivery_chain")
 
     def _update_track(self, track: _TrackMemory, detection: TrackDetection) -> CountEvent | None:
         membership = zone_membership(detection.bbox, self.config.zones)
@@ -212,7 +255,7 @@ class CountStateMachine:
             if track.has_source_token and not self._gate_requirement_satisfied(track):
                 track.add_uncertain("missing_gate_crossing")
                 return None
-            if self._can_count_track(track):
+            if track.has_source_token and self._gate_requirement_satisfied(track):
                 track.entered_output = True
                 if track.state in ("SOURCE_CONFIRMED", "MOVING_TO_OUTPUT", "OBSERVING", "UNCERTAIN_REVIEW"):
                     track.set_state("IN_OUTPUT_UNSETTLED")
@@ -220,7 +263,7 @@ class CountStateMachine:
                     track.stable_output_frames += 1
                 else:
                     track.stable_output_frames = 1
-                if track.stable_output_frames >= self.config.output_stable_frames:
+                if self._can_count_track(track) and track.stable_output_frames >= self.config.output_stable_frames:
                     return self._commit_count(track, "stable_in_output")
             elif not track.has_source_token and not track.counted:
                 track.set_state("RESIDENT_OUTPUT_OBJECT")
@@ -232,13 +275,12 @@ class CountStateMachine:
 
     def _mark_missing(self, track: _TrackMemory) -> CountEvent | None:
         track.missing_frames += 1
-        if track.source_token is not None and not track.source_token.consumed:
-            track.source_token.last_frame = self._frame_index
         if (
             track.has_source_token
             and track.entered_output
             and track.last_valid_detection_in_output
             and self._gate_requirement_satisfied(track)
+            and track.approved_for_count
             and not track.counted
             and track.last_bbox is not None
             and track.missing_frames >= self.config.disappear_in_output_frames
@@ -249,7 +291,7 @@ class CountStateMachine:
     def _commit_count(
         self,
         track: _TrackMemory,
-        reason: Literal["stable_in_output", "disappeared_in_output"],
+        reason: Literal["stable_in_output", "disappeared_in_output", "approved_delivery_chain"],
     ) -> CountEvent:
         track.counted = True
         if track.source_token is not None:
@@ -319,7 +361,7 @@ class CountStateMachine:
     def _token_age(self, track: _TrackMemory) -> int:
         if track.source_token is None:
             return 0
-        return self._frame_index - track.source_token.created_frame
+        return self._frame_index - track.source_token.last_frame
 
     def _matching_resident(self, center: tuple[float, float]) -> _ResidentObject | None:
         best: tuple[float, _ResidentObject] | None = None
@@ -343,7 +385,7 @@ class CountStateMachine:
         return self.config.gate is None or track.has_allowed_gate_crossing
 
     def _can_count_track(self, track: _TrackMemory) -> bool:
-        return track.has_source_token and self._gate_requirement_satisfied(track) and not track.counted
+        return track.has_source_token and track.approved_for_count and self._gate_requirement_satisfied(track) and not track.counted
 
     def _is_stable(
         self,

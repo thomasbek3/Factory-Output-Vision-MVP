@@ -6,10 +6,17 @@ import tempfile
 import time
 import unittest
 from collections import deque
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import numpy as np
 
 from app.db.config_repo import update_roi_polygon
 from app.db.database import init_db
-from app.services.counting import Track, count_new_tracks, mark_all_tracks_counted
+from app.services.count_state_machine import CountEvent, TrackDetection
+from app.services.counting import DetectedObject, DetectionDebugResult, Track, count_new_tracks, mark_all_tracks_counted
+from app.services.perception_gate import GateDecision
+from app.services.runtime_event_counter import RuntimeFrameResult
 from app.services.video_runtime import VideoRuntime
 from app.workers.vision_worker import VisionWorker
 from tests.helpers import reset_logging_for_tests
@@ -24,6 +31,8 @@ class VisionWorkerStateTests(unittest.TestCase):
             "FC_DEMO_MODE": os.environ.get("FC_DEMO_MODE"),
             "FC_DEMO_VIDEO_PATH": os.environ.get("FC_DEMO_VIDEO_PATH"),
             "FC_PERSON_DETECT_ENABLED": os.environ.get("FC_PERSON_DETECT_ENABLED"),
+            "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
+            "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
         }
         os.environ["FC_DB_PATH"] = os.path.join(self.temp_dir, "worker.db")
         os.environ["FC_LOG_DIR"] = os.path.join(self.temp_dir, "logs")
@@ -166,3 +175,70 @@ class VisionWorkerStateTests(unittest.TestCase):
         count = count_new_tracks(tracks, min_track_frames=5)
         self.assertEqual(count, 0)
         self.assertTrue(all(t.counted for t in tracks.values()))
+
+    def test_event_based_runtime_counter_path_uses_gate_decisions_in_debug_artifact(self) -> None:
+        self.worker.stop()
+        os.environ["FC_COUNTING_MODE"] = "event_based"
+        calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
+        calibration_path.write_text(
+            '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
+            encoding="utf-8",
+        )
+        os.environ["FC_RUNTIME_CALIBRATION_PATH"] = str(calibration_path)
+
+        with patch("app.workers.vision_worker.PersonDetector") as detector_cls:
+            detector_cls.return_value = Mock()
+            self.worker = VisionWorker(VideoRuntime())
+
+        fake_counter = Mock()
+        fake_counter.process_frame.return_value = RuntimeFrameResult(
+            events=[CountEvent(track_id=1, count=1, reason="stable_in_output", bbox=(65.0, 20.0, 20.0, 20.0))],
+            gate_decisions={
+                1: GateDecision(
+                    track_id=1,
+                    decision="allow_source_token",
+                    reason="moving_panel_candidate",
+                    flags=[],
+                    evidence={"source_frames": 2},
+                )
+            },
+            tracks=[TrackDetection(track_id=1, bbox=(65.0, 20.0, 20.0, 20.0), confidence=0.9)],
+        )
+        self.worker._runtime_event_counter = fake_counter
+        self.worker._yolo_detector.detect = Mock(
+            return_value=DetectionDebugResult(
+                detections=[DetectedObject(centroid=(75, 30), bbox=(65, 20, 20, 20), area=400.0)],
+                foreground_mask=np.zeros((100, 100), dtype=np.uint8),
+            )
+        )
+        self.worker._refresh_runtime_person_boxes = Mock(return_value=[(0.0, 0.0, 100.0, 100.0)])
+
+        increment, artifact = self.worker._run_event_based_counting(np.zeros((100, 100, 3), dtype=np.uint8), None)
+
+        self.assertEqual(increment, 1)
+        fake_counter.process_frame.assert_called_once()
+        self.assertEqual(fake_counter.process_frame.call_args.kwargs["person_boxes"], [(0.0, 0.0, 100.0, 100.0)])
+        self.assertEqual(fake_counter.process_frame.call_args.kwargs["detections"], [{"box": (65, 20, 20, 20), "confidence": 1.0}])
+        self.assertEqual(artifact["person_boxes"], [{"x": 0, "y": 0, "w": 100, "h": 100}])
+        self.assertEqual(artifact["tracks"][0]["perception_gate"]["reason"], "moving_panel_candidate")
+
+    def test_reset_counts_resets_runtime_event_counter(self) -> None:
+        self.worker.stop()
+        os.environ["FC_COUNTING_MODE"] = "event_based"
+        calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
+        calibration_path.write_text(
+            '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
+            encoding="utf-8",
+        )
+        os.environ["FC_RUNTIME_CALIBRATION_PATH"] = str(calibration_path)
+
+        with patch("app.workers.vision_worker.PersonDetector") as detector_cls:
+            detector_cls.return_value = Mock()
+            self.worker = VisionWorker(VideoRuntime())
+
+        fake_counter = Mock()
+        self.worker._runtime_event_counter = fake_counter
+
+        self.worker.reset_counts()
+
+        fake_counter.reset.assert_called_once_with()

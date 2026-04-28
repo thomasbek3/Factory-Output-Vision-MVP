@@ -30,6 +30,7 @@ from app.core.settings import (
     get_processing_fps,
     get_reconnect_backoff_initial_sec,
     get_reconnect_backoff_max_sec,
+    get_runtime_calibration_path,
     get_stop_minutes,
     get_tracker_max_age_frames,
     get_tracker_max_match_distance,
@@ -44,8 +45,11 @@ from app.db.config_repo import get_config, update_baseline_rate
 from app.db.count_repo import clear_count_history, record_count_event
 from app.db.event_repo import log_event
 from app.db.health_repo import insert_health_sample
+from app.services.calibration import Box, box_center
 from app.services.counting import CentroidTracker, CounterState, EventBasedCounter, YoloObjectDetector, apply_roi_mask, count_dead_tracks, count_new_tracks, mark_all_tracks_counted
+from app.services.perception_gate import GateDecision
 from app.services.person_detector import PersonDetector, point_in_polygon
+from app.services.runtime_event_counter import RuntimeEventCounter, load_runtime_calibration
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +76,21 @@ class VisionWorker:
         self._counting_mode = get_counting_mode()
         self._event_counter: EventBasedCounter | None = None  # kept for reference, no longer used
         self._event_tracker: CentroidTracker | None = None
+        self._runtime_calibration_path = get_runtime_calibration_path() if self._counting_mode == "event_based" else None
+        self._runtime_event_counter: RuntimeEventCounter | None = None
         if self._counting_mode == "event_based":
-            self._event_tracker = CentroidTracker(
-                max_age_frames=get_event_track_max_age(),
-                max_match_distance=get_event_track_max_match_distance(),
-            )
+            if self._runtime_calibration_path is not None:
+                zones, gate = load_runtime_calibration(self._runtime_calibration_path)
+                self._runtime_event_counter = RuntimeEventCounter(
+                    zones=zones,
+                    gate=gate,
+                    tracker_match_distance=get_event_track_max_match_distance(),
+                )
+            else:
+                self._event_tracker = CentroidTracker(
+                    max_age_frames=get_event_track_max_age(),
+                    max_match_distance=get_event_track_max_match_distance(),
+                )
 
         persisted = get_config()
 
@@ -114,6 +128,7 @@ class VisionWorker:
         self._state_before_operator_absent: str | None = None
         self._latest_person_boxes: list[dict[str, int | float]] = []
         self._last_person_ignore_detect_ts = 0.0
+        self._last_runtime_person_detect_ts = 0.0
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -199,7 +214,9 @@ class VisionWorker:
             self.monitoring_enabled = True
             # Warmup: mark existing tracks as counted so objects already in the
             # output zone don't get counted as new output.
-            if self._counting_mode == "event_based" and self._event_tracker is not None:
+            if self._runtime_event_counter is not None:
+                pass
+            elif self._counting_mode == "event_based" and self._event_tracker is not None:
                 mark_all_tracks_counted(self._event_tracker.tracks)
             else:
                 mark_all_tracks_counted(self._tracker.tracks)
@@ -230,7 +247,9 @@ class VisionWorker:
             self._calibration_samples = []
             # Warmup: mark existing tracks as counted so pre-existing objects
             # in the output zone don't inflate the calibration baseline.
-            if self._counting_mode == "event_based" and self._event_tracker is not None:
+            if self._runtime_event_counter is not None:
+                pass
+            elif self._counting_mode == "event_based" and self._event_tracker is not None:
                 mark_all_tracks_counted(self._event_tracker.tracks)
             else:
                 mark_all_tracks_counted(self._tracker.tracks)
@@ -260,7 +279,9 @@ class VisionWorker:
             self._current_minute_key = self._minute_key_now()
             self._minute_history.clear()
             self.rolling_rate_per_min = 0.0
-            if self._event_tracker is not None:
+            if self._runtime_event_counter is not None:
+                self._runtime_event_counter.reset()
+            elif self._event_tracker is not None:
                 self._event_tracker = CentroidTracker(
                     max_age_frames=get_event_track_max_age(),
                     max_match_distance=get_event_track_max_match_distance(),
@@ -364,20 +385,8 @@ class VisionWorker:
                     should_process = self.monitoring_enabled or self.calibrating
 
                 if should_process:
-                    if self._counting_mode == "event_based" and self._event_tracker is not None:
-                        # Event-based: detect panels in transit → track centroids →
-                        # count when track dies (panel placed / left frame)
-                        roi_frame = apply_roi_mask(frame, roi) if roi else frame
-                        debug_result = self._yolo_detector.detect(roi_frame)
-                        detections = debug_result.detections
-                        centroids = [det.centroid for det in detections]
-                        if centroids:
-                            logger.debug("EVENT_DETECT: %d detections this frame", len(centroids))
-                        dead_tracks, active_tracks = self._event_tracker.update_with_dead(centroids)
-                        increment = count_dead_tracks(
-                            dead_tracks,
-                            min_track_frames=max(1, get_event_track_min_frames()),
-                        )
+                    if self._counting_mode == "event_based":
+                        increment, debug_artifact = self._run_event_based_counting(frame, roi)
                         if increment > 0:
                             logger.info("EVENT_COUNT: +%d (total hour: %d)", increment, self.counter_state.counts_this_hour + increment)
                         with self._lock:
@@ -385,27 +394,7 @@ class VisionWorker:
                                 "mode": "calibration" if self.calibrating else "runtime",
                                 "updated_at_ts": time.time(),
                                 "source_frame": frame.copy(),
-                                "roi_frame": roi_frame.copy(),
-                                "mask_frame": cv2.cvtColor(debug_result.foreground_mask, cv2.COLOR_GRAY2BGR),
-                                "detections": [
-                                    {
-                                        "bbox": detection.bbox,
-                                        "centroid": detection.centroid,
-                                        "area": detection.area,
-                                    }
-                                    for detection in detections
-                                ],
-                                "tracks": [
-                                    {
-                                        "track_id": track.track_id,
-                                        "centroid": track.centroid,
-                                        "counted": track.counted,
-                                        "age": track.age,
-                                        "frames_seen": track.frames_seen,
-                                    }
-                                    for track in active_tracks.values()
-                                ],
-                                "person_boxes": [],
+                                **debug_artifact,
                             }
                     else:
                         # Track-based: existing approach
@@ -472,6 +461,86 @@ class VisionWorker:
                     self._record_runtime_error("VISION_LOOP_ERROR", str(exc))
 
             self._sleep_remaining(started, delay)
+
+    def _run_event_based_counting(
+        self,
+        frame,
+        roi: list[dict[str, float]] | None,
+    ) -> tuple[int, dict[str, Any]]:
+        if self._runtime_event_counter is not None:
+            return self._run_runtime_event_counting(frame)
+
+        roi_frame = apply_roi_mask(frame, roi) if roi else frame
+        debug_result = self._yolo_detector.detect(roi_frame)
+        detections = debug_result.detections
+        centroids = [det.centroid for det in detections]
+        if centroids:
+            logger.debug("EVENT_DETECT: %d detections this frame", len(centroids))
+        dead_tracks, active_tracks = self._event_tracker.update_with_dead(centroids) if self._event_tracker is not None else ([], {})
+        increment = count_dead_tracks(
+            dead_tracks,
+            min_track_frames=max(1, get_event_track_min_frames()),
+        )
+        return increment, {
+            "roi_frame": roi_frame.copy(),
+            "mask_frame": cv2.cvtColor(debug_result.foreground_mask, cv2.COLOR_GRAY2BGR),
+            "detections": [
+                {
+                    "bbox": detection.bbox,
+                    "centroid": detection.centroid,
+                    "area": detection.area,
+                }
+                for detection in detections
+            ],
+            "tracks": [
+                {
+                    "track_id": track.track_id,
+                    "centroid": track.centroid,
+                    "counted": track.counted,
+                    "age": track.age,
+                    "frames_seen": track.frames_seen,
+                }
+                for track in active_tracks.values()
+            ],
+            "person_boxes": [],
+        }
+
+    def _run_runtime_event_counting(self, frame) -> tuple[int, dict[str, Any]]:
+        debug_result = self._yolo_detector.detect(frame)
+        detections = [{"box": detection.bbox, "confidence": 1.0} for detection in debug_result.detections]
+        if detections:
+            logger.debug("EVENT_RUNTIME_DETECT: %d detections this frame", len(detections))
+        person_boxes = self._refresh_runtime_person_boxes(frame)
+        frame_result = self._runtime_event_counter.process_frame(
+            frame=frame,
+            detections=detections,
+            person_boxes=person_boxes,
+        )
+        counted_track_ids = {event.track_id for event in frame_result.events}
+        return len(frame_result.events), {
+            "roi_frame": frame.copy(),
+            "mask_frame": cv2.cvtColor(debug_result.foreground_mask, cv2.COLOR_GRAY2BGR),
+            "detections": [
+                {
+                    "bbox": detection.bbox,
+                    "centroid": detection.centroid,
+                    "area": detection.area,
+                }
+                for detection in debug_result.detections
+            ],
+            "tracks": [
+                {
+                    "track_id": track.track_id,
+                    "bbox": track.bbox,
+                    "centroid": box_center(track.bbox),
+                    "counted": track.track_id in counted_track_ids,
+                    "confidence": track.confidence,
+                    "perception_gate": self._gate_decision_payload(frame_result.gate_decisions.get(track.track_id)),
+                }
+                for track in frame_result.tracks
+            ],
+            "person_boxes": [self._person_box_payload(item) for item in person_boxes],
+        }
 
     def _run_person_loop(self) -> None:
         detect_interval = 1.0 / max(0.1, get_person_detect_fps())
@@ -852,6 +921,49 @@ class VisionWorker:
             self._last_person_ignore_detect_ts = now
         return [dict(item) for item in boxes]
 
+    def _refresh_runtime_person_boxes(self, frame) -> list[Box]:
+        interval = 1.0 / max(0.1, get_person_detect_fps())
+        now = time.time()
+        with self._lock:
+            if (now - self._last_runtime_person_detect_ts) < interval and self._latest_person_boxes:
+                return [
+                    (
+                        float(item.get("x", 0)),
+                        float(item.get("y", 0)),
+                        float(item.get("w", 0)),
+                        float(item.get("h", 0)),
+                    )
+                    for item in self._latest_person_boxes
+                ]
+
+        detector = self._ensure_person_detector()
+        if detector is None:
+            return []
+
+        detections = detector.detect_people(frame)
+        payload = [
+            {
+                "x": int(det.x),
+                "y": int(det.y),
+                "w": int(det.w),
+                "h": int(det.h),
+                "confidence": float(det.confidence),
+            }
+            for det in detections
+        ]
+        with self._lock:
+            self._latest_person_boxes = payload
+            self._last_runtime_person_detect_ts = now
+        return [
+            (
+                float(item["x"]),
+                float(item["y"]),
+                float(item["w"]),
+                float(item["h"]),
+            )
+            for item in payload
+        ]
+
     def _mask_person_regions(self, frame, person_boxes: list[dict[str, int | float]]) -> cv2.typing.MatLike:
         if not person_boxes:
             return frame
@@ -868,3 +980,18 @@ class VisionWorker:
             y2 = min(height, y + max(0, h))
             cv2.rectangle(masked, (x, y), (x2, y2), color=(0, 0, 0), thickness=-1)
         return masked
+
+    def _gate_decision_payload(self, decision: GateDecision | None) -> dict[str, Any] | None:
+        if decision is None:
+            return None
+        return {
+            "track_id": decision.track_id,
+            "decision": decision.decision,
+            "reason": decision.reason,
+            "flags": list(decision.flags),
+            "evidence": dict(decision.evidence),
+        }
+
+    def _person_box_payload(self, box: Box) -> dict[str, int]:
+        x, y, w, h = box
+        return {"x": int(x), "y": int(y), "w": int(w), "h": int(h)}

@@ -1,5 +1,12 @@
 # Lessons Learned
 
+## 2026-04-28: Factory2 Definition Of Done
+
+1. **Proof-only success is not done.** If Factory2 counts in `scripts/run_factory2_morning_proof.py` but the actual worker/app runtime path still shows `counts_this_hour: 0`, the task is still in progress.
+2. **Do not stop at diagnostics or receipts.** Diagnostics exist to unlock counting, not to replace it.
+3. **For Factory2, verify the real product path.** Run the actual `VisionWorker`/FastAPI monitoring flow on `factory2.MOV`, not just unit tests or proof scripts.
+4. **If stuck on the next move, escalate to Oracle before asking the user for direction.**
+
 ## 2026-03-18: Vision Pipeline Architecture Overhaul
 
 ### Key Decisions Made

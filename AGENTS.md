@@ -191,6 +191,14 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - When using Oracle here, default to browser mode unless the user explicitly wants an API run or explicitly accepts API spend.
 - Always pass both a prompt and the minimum necessary file set. Reattach to existing Oracle sessions instead of spawning duplicates unless a fresh run is clearly needed.
 
+### 8. Definition Of Done Rule
+- For Factory2 carried-panel work, "done" does not mean the proof report or diagnostics improved.
+- Do not stop at proof-only success.
+- The task is only done when the actual counting/runtime path works end to end on `factory2.MOV` and produces the defensible count behavior the proof established.
+- If the proof path works but the app/runtime counter path does not, the work is still in progress.
+- Do not stop to summarize partial progress while that runtime path is still failing. Keep working until the runtime path counts correctly or you are genuinely blocked.
+- If you become genuinely blocked, use the Oracle escalation rule before asking the user what to do next.
+
 ## Task Management
 
 1. **Plan First**: Write plan to tasks/todo.md with checkable items

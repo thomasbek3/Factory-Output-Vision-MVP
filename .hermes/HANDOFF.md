@@ -1,8 +1,106 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 12:19:03 EDT
+Updated: 2026-04-28 14:37:42 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+
+## Factory2 runtime/app path completion — live counting aligned with proof — 2026-04-28 14:37 EDT
+
+Implemented the missing runtime-side commit path so Factory2 now works through the actual worker/app surface instead of only through the proof scripts:
+
+```text
+AGENTS.md
+CLAUDE.md
+app/services/runtime_event_counter.py
+app/services/count_state_machine.py
+app/workers/vision_worker.py
+app/core/settings.py
+app/api/routes.py
+app/db/config_repo.py
+app/db/event_repo.py
+app/services/video_runtime.py
+requirements.txt
+tests/helpers.py
+tests/test_runtime_event_counter.py
+tests/test_count_state_machine_runtime_approval.py
+tests/test_count_state_machine_adversarial.py
+tests/test_settings_runtime.py
+tests/test_vision_worker_states.py
+tasks/lessons.md
+```
+
+What changed:
+
+```text
+- Added `RuntimeEventCounter` as the event-based runtime counter for calibrated Factory2 runs.
+- The runtime counter now merges proof-grade source->output delivery evidence across split tracks and emits an explicit `approved_delivery_chain` commit instead of waiting for legacy output-settle/disappear semantics.
+- `CountStateMachine` now supports idempotent proof-approved chain commits while still owning the count ledger and de-duplication.
+- `VisionWorker` now routes calibrated `event_based` runs through the runtime counter, resets it correctly, and surfaces gate decisions in runtime debug artifacts.
+- Settings/runtime compatibility fixes were kept in place for the live path used here, including calibrated event-based detector defaults.
+- Local agent instructions now explicitly say Factory2 is not done until the actual runtime/app path counts `factory2.MOV`; proof-only success is not sufficient.
+```
+
+Real results:
+
+```text
+Proof path:
+- verdict: accepted_positive_count_available
+- accepted_count: 1
+- suppressed_count: 11
+- uncertain_count: 4
+- accepted proof receipt: event0002 track 5
+
+Live worker path on factory2.MOV (4x playback, full relevant span):
+- counts_this_hour reached 1 at ~54.2s
+- stayed at 1 through ~105.8s real time (~423s of video time), so the later event0006 proof window did not create an extra count
+
+Live FastAPI/uvicorn app path:
+- POST /api/control/monitor/start returned 200
+- GET /api/status reached counts_this_hour: 1 at ~54.7s
+- final status showed RUNNING_GREEN with counts_this_hour: 1
+```
+
+Why this matters:
+
+```text
+This closes the last real gap the user called out: Factory2 is no longer "working only in proof." The same carried-panel evidence that yields the accepted proof count now drives the actual runtime/app counter path, and the live app path was verified over HTTP instead of only through direct unit or worker harnesses.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_runtime_event_counter.py tests/test_count_state_machine_runtime_approval.py tests/test_count_state_machine.py tests/test_count_state_machine_adversarial.py tests/test_vision_worker_states.py tests/test_settings_runtime.py tests/test_api_smoke.py tests/test_dashboard_contract.py -q
+.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/run_factory2_morning_proof.py --force
+env FC_DB_PATH=/tmp/factory2-runtime-api.db FC_LOG_DIR=/tmp/factory2-runtime-api-logs FC_DEMO_MODE=1 FC_DEMO_VIDEO_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV FC_DEMO_PLAYBACK_SPEED=4 FC_COUNTING_MODE=event_based FC_RUNTIME_CALIBRATION_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json FC_YOLO_MODEL_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/models/panel_in_transit.pt FC_PERSON_DETECT_ENABLED=1 ./.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8090
+# then POST /api/control/monitor/start and poll GET /api/status until counts_this_hour becomes 1
+```
+
+Verification:
+
+```text
+55 tests passed
+proof verdict: accepted_positive_count_available
+proof accepted_count: 1
+live worker run: count reached 1 and stayed there through the later proof window
+live uvicorn/API run: counts_this_hour reached 1 through /api/status
+```
+
+Next blocker:
+
+```text
+No Factory2 blocker remains for the current definition of done. The remaining work is hardening: codify the slow live runtime/API verification into a reusable regression harness so future gate/runtime changes cannot silently reopen the proof/runtime gap.
+```
+
+Exact next recommended step:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/run_factory2_morning_proof.py --force
+```
+
+Then add an opt-in slow regression harness that boots the app in demo mode on `factory2.MOV`, starts monitoring over HTTP, asserts `counts_this_hour == 1`, and verifies the count does not rise again across the later event window.
 
 
 ## PRD Success-path completion — end-to-end diagnostic regeneration + gate refresh — 2026-04-28 13:30 EDT

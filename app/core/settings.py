@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
@@ -14,6 +16,13 @@ def is_demo_mode() -> bool:
 def get_demo_video_path() -> Path:
     raw = os.getenv("FC_DEMO_VIDEO_PATH", "")
     return Path(raw).expanduser().resolve() if raw else Path()
+
+
+def get_runtime_calibration_path() -> Path | None:
+    raw = os.getenv("FC_RUNTIME_CALIBRATION_PATH", "").strip()
+    if not raw:
+        return None
+    return Path(raw).expanduser().resolve()
 
 
 def get_demo_video_library_dir() -> Path:
@@ -137,6 +146,8 @@ def get_yolo_conf_threshold() -> float:
     explicit = os.getenv("FC_YOLO_CONF_THRESHOLD")
     if explicit is not None:
         return float(explicit)
+    if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
+        return 0.15
     if get_counting_mode() == "event_based":
         return 0.40
     return 0.3
