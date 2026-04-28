@@ -5,6 +5,88 @@ Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
 
 
+## PRD Success-path completion — end-to-end diagnostic regeneration + gate refresh — 2026-04-28 13:30 EDT
+
+Implemented the final proof-path consistency work needed to make the Factory2 success path real and repeatable:
+
+```text
+app/services/person_panel_gate_promotion.py
+scripts/build_morning_proof_report.py
+scripts/diagnose_event_window.py
+scripts/run_factory2_morning_proof.py
+tests/test_person_panel_gate_promotion.py
+tests/test_diagnose_event_window.py
+tests/test_run_factory2_morning_proof.py
+docs/superpowers/plans/2026-04-28-factory2-end-to-end-person-panel-promotion.md
+```
+
+What changed:
+
+```text
+- Extracted the person/panel sidecar interpretation + worker-overlap promotion rule into shared service code.
+- Added a diagnostic refresh path that rewrites `diagnostic.json`, `track_receipts/*.json`, and hard-negative manifests from existing gate rows plus sibling `*-person-panel-separation.json` receipts.
+- Fixed two refresh bugs discovered during full proof runs:
+  - explicit `outside_person_ratio: 0.0` is now preserved instead of being treated as missing;
+  - refresh uses the existing diagnostic gate row as the baseline instead of recomputing a new protrusion decision from receipt payloads.
+- The canonical proof command now rebuilds base event-window diagnostics from their own metadata, then rebuilds transfer packets, separation receipts, refreshes gate receipts, and finally emits the proof report.
+```
+
+Real proof result now:
+
+```text
+verdict: accepted_positive_count_available
+accepted_count: 1
+suppressed_count: 11
+uncertain_count: 4
+bottleneck: none
+accepted receipt: event0002 track 5
+accepted receipt person/panel separation: data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/track_receipts/track-000005-person-panel-separation.json
+event0002 diagnostic allowed tracks: [5]
+event0006 diagnostic allowed tracks: []
+```
+
+Why this matters:
+
+```text
+This closes the prior proof-only gap. `scripts/run_factory2_morning_proof.py --force` now regenerates the base diagnostics, recomputes the packet/separation evidence, refreshes the on-disk diagnostic receipts, and lands on the same single accepted carried-panel count. The accepted `track-000005` receipt is now promoted by `strong_person_panel_separation` with `outside_person_ratio: 0.0`, which is exactly the auditable worker-overlap case the PRD was targeting.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_build_morning_proof_report.py tests/test_perception_gate.py tests/test_diagnose_event_window.py tests/test_person_panel_gate_promotion.py -q
+python -m py_compile app/services/person_panel_gate_promotion.py scripts/diagnose_event_window.py scripts/build_morning_proof_report.py scripts/run_factory2_morning_proof.py tests/test_person_panel_gate_promotion.py tests/test_diagnose_event_window.py tests/test_run_factory2_morning_proof.py
+.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/run_factory2_morning_proof.py --force
+```
+
+Verification:
+
+```text
+42 tests passed
+proof verdict: accepted_positive_count_available
+accepted_count: 1
+suppressed_count: 11
+uncertain_count: 4
+accepted track set: only event0002 track 5
+```
+
+Next blocker:
+
+```text
+Factory2 itself is no longer blocked at the PRD level; the success path is achieved. The remaining product work is beyond this PRD: generalize the same proof discipline beyond the two curated event windows and expose the accepted-count path in the broader product surface instead of only the proof/report command.
+```
+
+Exact next recommended step:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/run_factory2_morning_proof.py --force
+```
+
+Then, if moving beyond the PRD, wire the same accepted-count receipt path into the broader counting/product entrypoint and add a held-out regression clip so future gate changes cannot reopen weak worker-overlap packets.
+
+
 ## PRD Milestone 4 start — proof-path gate promotion from person/panel separation — 2026-04-28 12:19 EDT
 
 Implemented the first non-diagnostic promotion path for `factory2.MOV`:

@@ -25,7 +25,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.calibration import Box, CalibrationZones, box_center, point_in_polygon
-from app.services.perception_gate import GateConfig, GateTrackFeatures, evaluate_track, summarize_gate_decisions
+from app.services.perception_gate import GateConfig, GateDecision, GateTrackFeatures, evaluate_track, summarize_gate_decisions
+from app.services.person_panel_gate_promotion import promote_worker_overlap_gate_row
 from scripts.run_clip_eval import SimpleBoxTracker, normalize_detection_box
 
 DEFAULT_OUT_DIR = Path("data/diagnostics/event-windows")
@@ -297,6 +298,63 @@ def gate_features_from_track(track: TrackEvidence) -> GateTrackFeatures:
     )
 
 
+def gate_decision_from_row(row: dict[str, Any]) -> GateDecision:
+    return GateDecision(
+        track_id=int(row.get("track_id") or 0),
+        decision=str(row.get("decision") or "unknown"),
+        reason=str(row.get("reason") or "unknown"),
+        flags=[str(flag) for flag in (row.get("flags") or [])],
+        evidence=row.get("evidence") or {},
+    )
+
+
+def _value_or_default(mapping: dict[str, Any], key: str, default: Any) -> Any:
+    value = mapping.get(key)
+    return default if value is None else value
+
+
+def track_evidence_from_payload(payload: dict[str, Any]) -> TrackEvidence:
+    timestamps = payload.get("timestamps") or {}
+    evidence = payload.get("evidence") or {}
+    return TrackEvidence(
+        track_id=int(evidence.get("track_id") or payload.get("track_id") or 0),
+        first_timestamp=float(evidence.get("first_timestamp") or timestamps.get("first") or 0.0),
+        last_timestamp=float(evidence.get("last_timestamp") or timestamps.get("last") or 0.0),
+        first_zone=str(evidence.get("first_zone") or "unknown"),
+        zones_seen=[str(zone) for zone in (evidence.get("zones_seen") or [])],
+        source_frames=int(evidence.get("source_frames") or 0),
+        output_frames=int(evidence.get("output_frames") or 0),
+        max_displacement=float(evidence.get("max_displacement") or 0.0),
+        mean_internal_motion=float(evidence.get("mean_internal_motion") or 0.0),
+        max_internal_motion=float(evidence.get("max_internal_motion") or 0.0),
+        detections=int(evidence.get("detections") or 0),
+        static_location_ratio=float(evidence.get("static_location_ratio") or 0.0),
+        flow_coherence=float(evidence.get("flow_coherence") or 0.0),
+        static_stack_overlap_ratio=float(evidence.get("static_stack_overlap_ratio") or 0.0),
+        person_overlap_ratio=float(evidence.get("person_overlap_ratio") or 0.0),
+        outside_person_ratio=float(_value_or_default(evidence, "outside_person_ratio", 1.0)),
+        observations=[item for item in (evidence.get("observations") or []) if isinstance(item, dict)],
+    )
+
+
+def diagnosis_from_payload(payload: dict[str, Any], *, fallback_track: TrackEvidence) -> TrackDiagnosis:
+    diagnosis = payload.get("diagnosis") or {}
+    if diagnosis:
+        return TrackDiagnosis(
+            track_id=int(diagnosis.get("track_id") or fallback_track.track_id),
+            decision=str(diagnosis.get("decision") or "unknown"),
+            reason=str(diagnosis.get("reason") or "unknown"),
+            flags=[str(flag) for flag in (diagnosis.get("flags") or [])],
+            evidence=diagnosis.get("evidence") or {},
+        )
+    defaults = GateConfig()
+    return classify_track_evidence(
+        fallback_track,
+        min_displacement=defaults.min_displacement,
+        min_internal_motion=defaults.min_internal_motion,
+    )
+
+
 def write_track_receipts(
     *,
     out_dir: Path,
@@ -309,6 +367,7 @@ def write_track_receipts(
     start_timestamp: float = 0.0,
     fps: float = 1.0,
     receipt_card_maker: ReceiptCardMaker | None = None,
+    existing_receipt_payloads: dict[int, dict[str, Any]] | None = None,
 ) -> list[Path]:
     receipts_dir = out_dir / "track_receipts"
     receipts_dir.mkdir(parents=True, exist_ok=True)
@@ -331,6 +390,7 @@ def write_track_receipts(
                 output_path=card_path,
             )
         crop_paths = write_track_crop_assets(track=track, receipts_dir=receipts_dir)
+        existing_review_assets = ((existing_receipt_payloads or {}).get(track.track_id) or {}).get("review_assets") or {}
         payload = {
             "schema_version": "factory-track-receipt-v1",
             "track_id": track.track_id,
@@ -341,13 +401,115 @@ def write_track_receipts(
             "review_assets": {
                 "overlay_sheet_path": _rel(overlay_sheet_path),
                 "overlay_video_path": _rel(overlay_video_path),
-                "track_sheet_path": _rel(card_path) if card_path.exists() else None,
-                "raw_crop_paths": [_rel(path) for path in crop_paths],
+                "track_sheet_path": _rel(card_path) if card_path.exists() else existing_review_assets.get("track_sheet_path"),
+                "raw_crop_paths": [_rel(path) for path in crop_paths] or [str(path) for path in existing_review_assets.get("raw_crop_paths", [])],
             },
         }
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         paths.append(path)
     return paths
+
+
+def refresh_diagnostic_gate_receipts(*, diagnostic_path: Path) -> dict[str, Any]:
+    payload = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+    out_dir = diagnostic_path.parent
+    receipt_paths = [
+        path
+        for raw_path in payload.get("track_receipts") or []
+        if (path := resolve_repo_path(raw_path)) is not None and path.exists()
+    ]
+    if not receipt_paths:
+        return payload
+    existing_receipts = {path: json.loads(path.read_text(encoding="utf-8")) for path in receipt_paths}
+    tracks = [track_evidence_from_payload(existing_receipts[path]) for path in receipt_paths]
+    diagnoses = [diagnosis_from_payload(existing_receipts[path], fallback_track=track) for path, track in zip(receipt_paths, tracks)]
+    existing_gate_rows = {}
+    for row in payload.get("perception_gate") or []:
+        if not isinstance(row, dict):
+            continue
+        try:
+            existing_gate_rows[int(row.get("track_id") or 0)] = row
+        except (TypeError, ValueError):
+            continue
+    gate_config = GateConfig()
+    gate_decisions = []
+    for track, receipt_path in zip(tracks, receipt_paths):
+        base_row = existing_gate_rows.get(track.track_id)
+        if base_row is None:
+            base_row = asdict(evaluate_track(gate_features_from_track(track), gate_config))
+        promoted_row = promote_worker_overlap_gate_row(base_row, str(receipt_path))
+        gate_decisions.append(gate_decision_from_row(promoted_row))
+
+    overlay_sheet_path = resolve_repo_path(payload.get("overlay_sheet_path")) or (out_dir / "overlay_sheet.jpg")
+    overlay_video_path = resolve_repo_path(payload.get("overlay_video_path")) or (out_dir / "overlay_video.mp4")
+    receipt_payloads_by_track = {track.track_id: existing_receipts[path] for path, track in zip(receipt_paths, tracks)}
+    rewritten_receipts = write_track_receipts(
+        out_dir=out_dir,
+        tracks=tracks,
+        diagnoses=diagnoses,
+        gate_decisions=gate_decisions,
+        overlay_sheet_path=overlay_sheet_path,
+        overlay_video_path=overlay_video_path,
+        overlay_frames=[],
+        start_timestamp=float(payload.get("start_timestamp") or 0.0),
+        fps=float(payload.get("fps") or 1.0),
+        receipt_card_maker=None,
+        existing_receipt_payloads=receipt_payloads_by_track,
+    )
+    hard_negative_manifest_path = write_hard_negative_manifest(
+        out_dir=out_dir,
+        tracks=tracks,
+        diagnoses=diagnoses,
+        gate_decisions=gate_decisions,
+        receipt_paths=rewritten_receipts,
+    )
+    if hard_negative_manifest_path is None:
+        stale_manifest_path = out_dir / "hard_negative_manifest.json"
+        if stale_manifest_path.exists():
+            stale_manifest_path.unlink()
+
+    result = {
+        **payload,
+        "track_receipts": [_rel(path) for path in rewritten_receipts],
+        "track_receipt_cards": [
+            _rel(path.with_name(f"{path.stem}-sheet.jpg"))
+            for path in rewritten_receipts
+            if path.with_name(f"{path.stem}-sheet.jpg").exists()
+        ],
+        "hard_negative_manifest_path": _rel(hard_negative_manifest_path) if hard_negative_manifest_path is not None else None,
+        "diagnosis": [asdict(item) for item in diagnoses],
+        "summary": summarize_diagnoses(diagnoses),
+        "perception_gate": [asdict(item) for item in gate_decisions],
+        "perception_gate_summary": summarize_gate_decisions(gate_decisions),
+    }
+    diagnostic_path.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    return result
+
+
+def rebuild_diagnostic_from_metadata(*, diagnostic_path: Path) -> dict[str, Any]:
+    payload = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+    video_path = resolve_repo_path(payload.get("video_path"))
+    calibration_path = resolve_repo_path(payload.get("calibration_path"))
+    start_timestamp = payload.get("start_timestamp")
+    end_timestamp = payload.get("end_timestamp")
+    fps = payload.get("fps")
+    if video_path is None or calibration_path is None or start_timestamp is None or end_timestamp is None or fps is None:
+        return payload
+    model_path = resolve_repo_path(payload.get("model_path"))
+    person_model_path = resolve_repo_path(payload.get("person_model_path"))
+    confidence = float(payload.get("confidence") or 0.20)
+    return diagnose_event_window(
+        video_path=video_path,
+        calibration_path=calibration_path,
+        out_dir=diagnostic_path.parent,
+        start_timestamp=float(start_timestamp),
+        end_timestamp=float(end_timestamp),
+        fps=float(fps),
+        model_path=model_path,
+        person_model_path=person_model_path,
+        confidence=confidence,
+        force=True,
+    )
 
 
 def write_track_crop_assets(*, track: TrackEvidence, receipts_dir: Path, padding: float = 0.20) -> list[Path]:

@@ -216,3 +216,473 @@ def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: P
 
     with pytest.raises(FileExistsError, match="--force"):
         diag.prepare_output_dir(out_dir, force=False)
+
+
+def test_refresh_diagnostic_gate_receipts_promotes_track_from_person_panel_sidecar(tmp_path: Path) -> None:
+    out_dir = tmp_path / "diagnostic"
+    receipts_dir = out_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    (receipts_dir / "track-000005-sheet.jpg").write_bytes(b"fake jpg")
+    crop_dir = receipts_dir / "track-000005-crops"
+    crop_dir.mkdir(parents=True, exist_ok=True)
+    (crop_dir / "crop-01-source.jpg").write_bytes(b"fake crop")
+
+    track_receipt = receipts_dir / "track-000005.json"
+    track_receipt.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-track-receipt-v1",
+                "track_id": 5,
+                "timestamps": {"first": 80.0, "last": 110.0},
+                "evidence": {
+                    "track_id": 5,
+                    "first_timestamp": 80.0,
+                    "last_timestamp": 110.0,
+                    "first_zone": "source",
+                    "zones_seen": ["source", "output"],
+                    "source_frames": 38,
+                    "output_frames": 1,
+                    "max_displacement": 603.294,
+                    "mean_internal_motion": 0.337425,
+                    "max_internal_motion": 0.730217,
+                    "detections": 39,
+                    "static_location_ratio": 0.333333,
+                    "flow_coherence": 0.501419,
+                    "static_stack_overlap_ratio": 0.0,
+                    "person_overlap_ratio": 1.0,
+                    "outside_person_ratio": 0.0,
+                    "observations": [],
+                },
+                "diagnosis": {
+                    "track_id": 5,
+                    "decision": "candidate",
+                    "reason": "source_to_output_motion",
+                    "flags": [],
+                    "evidence": {"track_id": 5},
+                },
+                "perception_gate": {
+                    "track_id": 5,
+                    "decision": "reject",
+                    "reason": "worker_body_overlap",
+                    "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+                    "evidence": {
+                        "track_id": 5,
+                        "source_frames": 38,
+                        "output_frames": 1,
+                        "zones_seen": ["source", "output"],
+                        "first_zone": "source",
+                        "max_displacement": 603.294,
+                        "mean_internal_motion": 0.337425,
+                        "max_internal_motion": 0.730217,
+                        "detections": 39,
+                        "person_overlap_ratio": 1.0,
+                        "outside_person_ratio": 0.0,
+                        "static_stack_overlap_ratio": 0.0,
+                        "static_location_ratio": 0.333333,
+                        "flow_coherence": 0.501419,
+                        "edge_like_ratio": 0.0,
+                    },
+                },
+                "review_assets": {
+                    "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                    "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                    "track_sheet_path": str(receipts_dir / "track-000005-sheet.jpg"),
+                    "raw_crop_paths": [str(crop_dir / "crop-01-source.jpg")],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    track_receipt.with_name("track-000005-person-panel-separation.json").write_text(
+        json.dumps(
+            {
+                "packet_id": "event0002-track000005",
+                "diagnostic_only": True,
+                "recommendation": "countable_panel_candidate",
+                "summary": {
+                    "frame_count": 3,
+                    "separable_panel_candidate_frames": 3,
+                    "worker_body_overlap_frames": 0,
+                    "static_or_background_edge_frames": 0,
+                    "max_visible_nonperson_ratio": 0.542531,
+                    "max_estimated_visible_signal": 0.075512,
+                },
+                "selected_frames": [
+                    {"zone": "source", "separation_decision": "separable_panel_candidate"},
+                    {"zone": "source", "separation_decision": "separable_panel_candidate"},
+                    {"zone": "output", "separation_decision": "separable_panel_candidate"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (out_dir / "overlay_sheet.jpg").write_bytes(b"sheet")
+    (out_dir / "overlay_video.mp4").write_bytes(b"video")
+    diagnostic_path = out_dir / "diagnostic.json"
+    diagnostic_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-event-diagnostic-v1",
+                "video_path": "data/videos/from-pc/factory2.MOV",
+                "calibration_path": "data/calibration/factory2_ai_only_v1_no_gate.json",
+                "start_timestamp": 78.0,
+                "end_timestamp": 118.0,
+                "fps": 3.0,
+                "model_path": None,
+                "person_model_path": None,
+                "confidence": 0.2,
+                "frame_count": 120,
+                "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                "track_receipts": [str(track_receipt)],
+                "track_receipt_cards": [str(receipts_dir / "track-000005-sheet.jpg")],
+                "hard_negative_manifest_path": str(out_dir / "hard_negative_manifest.json"),
+                "diagnosis": [
+                    {
+                        "track_id": 5,
+                        "decision": "candidate",
+                        "reason": "source_to_output_motion",
+                        "flags": [],
+                        "evidence": {"track_id": 5},
+                    }
+                ],
+                "summary": {
+                    "track_count": 1,
+                    "decision_counts": {"candidate": 1, "reject": 0, "uncertain": 0},
+                    "reason_counts": {"source_to_output_motion": 1},
+                    "has_source_to_output_candidate": True,
+                },
+                "perception_gate": [
+                    {
+                        "track_id": 5,
+                        "decision": "reject",
+                        "reason": "worker_body_overlap",
+                        "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+                        "evidence": {
+                            "track_id": 5,
+                            "source_frames": 38,
+                            "output_frames": 1,
+                            "zones_seen": ["source", "output"],
+                            "first_zone": "source",
+                            "max_displacement": 603.294,
+                            "mean_internal_motion": 0.337425,
+                            "max_internal_motion": 0.730217,
+                            "detections": 39,
+                            "person_overlap_ratio": 1.0,
+                            "outside_person_ratio": 0.0,
+                            "static_stack_overlap_ratio": 0.0,
+                            "static_location_ratio": 0.333333,
+                            "flow_coherence": 0.501419,
+                            "edge_like_ratio": 0.0,
+                        },
+                    }
+                ],
+                "perception_gate_summary": {
+                    "allowed_source_token_tracks": [],
+                    "track_count": 1,
+                    "decision_counts": {"allow_source_token": 0, "reject": 1, "uncertain": 0},
+                    "reason_counts": {"worker_body_overlap": 1},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = diag.refresh_diagnostic_gate_receipts(diagnostic_path=diagnostic_path)
+
+    assert result["perception_gate"][0]["decision"] == "allow_source_token"
+    assert result["perception_gate"][0]["reason"] == "moving_panel_candidate"
+    assert result["perception_gate_summary"]["allowed_source_token_tracks"] == [5]
+    refreshed_receipt = json.loads(track_receipt.read_text(encoding="utf-8"))
+    assert refreshed_receipt["perception_gate"]["decision"] == "allow_source_token"
+    assert refreshed_receipt["perception_gate"]["reason"] == "moving_panel_candidate"
+    assert refreshed_receipt["review_assets"]["track_sheet_path"] == str(receipts_dir / "track-000005-sheet.jpg")
+    assert refreshed_receipt["review_assets"]["raw_crop_paths"] == [str(crop_dir / "crop-01-source.jpg")]
+    assert result["hard_negative_manifest_path"] is None
+    assert not (out_dir / "hard_negative_manifest.json").exists()
+
+
+def test_refresh_diagnostic_gate_receipts_preserves_zero_outside_person_ratio(tmp_path: Path) -> None:
+    out_dir = tmp_path / "diagnostic"
+    receipts_dir = out_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    track_receipt = receipts_dir / "track-000001.json"
+    track_receipt.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-track-receipt-v1",
+                "track_id": 1,
+                "timestamps": {"first": 370.0, "last": 391.0},
+                "evidence": {
+                    "track_id": 1,
+                    "first_timestamp": 370.0,
+                    "last_timestamp": 391.0,
+                    "first_zone": "source",
+                    "zones_seen": ["source", "output"],
+                    "source_frames": 35,
+                    "output_frames": 2,
+                    "max_displacement": 456.787,
+                    "mean_internal_motion": 0.24737,
+                    "max_internal_motion": 0.610074,
+                    "detections": 37,
+                    "static_location_ratio": 0.27027,
+                    "flow_coherence": 0.465985,
+                    "static_stack_overlap_ratio": 0.0,
+                    "person_overlap_ratio": 1.0,
+                    "outside_person_ratio": 0.0,
+                    "observations": [],
+                },
+                "diagnosis": {
+                    "track_id": 1,
+                    "decision": "candidate",
+                    "reason": "source_to_output_motion",
+                    "flags": [],
+                    "evidence": {"track_id": 1},
+                },
+                "review_assets": {
+                    "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                    "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                    "track_sheet_path": None,
+                    "raw_crop_paths": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    track_receipt.with_name("track-000001-person-panel-separation.json").write_text(
+        json.dumps(
+            {
+                "packet_id": "event0006-track000001",
+                "diagnostic_only": True,
+                "recommendation": "insufficient_visibility",
+                "summary": {
+                    "frame_count": 3,
+                    "separable_panel_candidate_frames": 1,
+                    "worker_body_overlap_frames": 1,
+                    "static_or_background_edge_frames": 0,
+                    "max_visible_nonperson_ratio": 0.822163,
+                    "max_estimated_visible_signal": 0.028576,
+                },
+                "selected_frames": [
+                    {"zone": "source", "separation_decision": "worker_body_overlap"},
+                    {"zone": "source", "separation_decision": "separable_panel_candidate"},
+                    {"zone": "output", "separation_decision": "insufficient_visibility"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (out_dir / "overlay_sheet.jpg").write_bytes(b"sheet")
+    (out_dir / "overlay_video.mp4").write_bytes(b"video")
+    diagnostic_path = out_dir / "diagnostic.json"
+    diagnostic_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-event-diagnostic-v1",
+                "video_path": "data/videos/from-pc/factory2.MOV",
+                "start_timestamp": 370.0,
+                "end_timestamp": 410.0,
+                "fps": 3.0,
+                "track_receipts": [str(track_receipt)],
+                "track_receipt_cards": [],
+                "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                "diagnosis": [
+                    {
+                        "track_id": 1,
+                        "decision": "candidate",
+                        "reason": "source_to_output_motion",
+                        "flags": [],
+                        "evidence": {"track_id": 1},
+                    }
+                ],
+                "summary": {
+                    "track_count": 1,
+                    "decision_counts": {"candidate": 1, "reject": 0, "uncertain": 0},
+                    "reason_counts": {"source_to_output_motion": 1},
+                    "has_source_to_output_candidate": True,
+                },
+                "perception_gate": [
+                    {
+                        "track_id": 1,
+                        "decision": "reject",
+                        "reason": "worker_body_overlap",
+                        "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+                        "evidence": {
+                            "track_id": 1,
+                            "source_frames": 35,
+                            "output_frames": 2,
+                            "zones_seen": ["source", "output"],
+                            "first_zone": "source",
+                            "max_displacement": 456.787,
+                            "mean_internal_motion": 0.24737,
+                            "max_internal_motion": 0.610074,
+                            "detections": 37,
+                            "person_overlap_ratio": 1.0,
+                            "outside_person_ratio": 0.0,
+                            "static_stack_overlap_ratio": 0.0,
+                            "static_location_ratio": 0.27027,
+                            "flow_coherence": 0.465985,
+                            "edge_like_ratio": 0.0,
+                        },
+                    }
+                ],
+                "perception_gate_summary": {
+                    "allowed_source_token_tracks": [],
+                    "track_count": 1,
+                    "decision_counts": {"allow_source_token": 0, "reject": 1, "uncertain": 0},
+                    "reason_counts": {"worker_body_overlap": 1},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = diag.refresh_diagnostic_gate_receipts(diagnostic_path=diagnostic_path)
+
+    assert result["perception_gate"][0]["decision"] == "reject"
+    assert result["perception_gate"][0]["reason"] == "worker_body_overlap"
+    assert result["perception_gate"][0]["evidence"]["outside_person_ratio"] == 0.0
+
+
+def test_refresh_diagnostic_gate_receipts_uses_existing_gate_row_as_baseline(tmp_path: Path) -> None:
+    out_dir = tmp_path / "diagnostic"
+    receipts_dir = out_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    track_receipt = receipts_dir / "track-000004.json"
+    track_receipt.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-track-receipt-v1",
+                "track_id": 4,
+                "timestamps": {"first": 372.0, "last": 390.0},
+                "evidence": {
+                    "track_id": 4,
+                    "first_timestamp": 372.0,
+                    "last_timestamp": 390.0,
+                    "first_zone": "source",
+                    "zones_seen": ["source", "output"],
+                    "source_frames": 33,
+                    "output_frames": 3,
+                    "max_displacement": 482.653,
+                    "mean_internal_motion": 0.270206,
+                    "max_internal_motion": 0.590582,
+                    "detections": 36,
+                    "static_location_ratio": 0.416667,
+                    "flow_coherence": 0.222248,
+                    "static_stack_overlap_ratio": 0.0,
+                    "person_overlap_ratio": 1.0,
+                    "outside_person_ratio": 1.0,
+                    "observations": [],
+                },
+                "diagnosis": {
+                    "track_id": 4,
+                    "decision": "candidate",
+                    "reason": "source_to_output_motion",
+                    "flags": [],
+                    "evidence": {"track_id": 4},
+                },
+                "review_assets": {
+                    "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                    "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                    "track_sheet_path": None,
+                    "raw_crop_paths": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    track_receipt.with_name("track-000004-person-panel-separation.json").write_text(
+        json.dumps(
+            {
+                "packet_id": "event0006-track000004",
+                "diagnostic_only": True,
+                "recommendation": "insufficient_visibility",
+                "summary": {
+                    "frame_count": 3,
+                    "separable_panel_candidate_frames": 1,
+                    "worker_body_overlap_frames": 2,
+                    "static_or_background_edge_frames": 0,
+                    "max_visible_nonperson_ratio": 0.760976,
+                    "max_estimated_visible_signal": 0.0456,
+                },
+                "selected_frames": [
+                    {"zone": "source", "separation_decision": "worker_body_overlap"},
+                    {"zone": "source", "separation_decision": "worker_body_overlap"},
+                    {"zone": "output", "separation_decision": "separable_panel_candidate"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (out_dir / "overlay_sheet.jpg").write_bytes(b"sheet")
+    (out_dir / "overlay_video.mp4").write_bytes(b"video")
+    diagnostic_path = out_dir / "diagnostic.json"
+    diagnostic_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-event-diagnostic-v1",
+                "video_path": "data/videos/from-pc/factory2.MOV",
+                "start_timestamp": 370.0,
+                "end_timestamp": 410.0,
+                "fps": 3.0,
+                "track_receipts": [str(track_receipt)],
+                "track_receipt_cards": [],
+                "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                "diagnosis": [
+                    {
+                        "track_id": 4,
+                        "decision": "candidate",
+                        "reason": "source_to_output_motion",
+                        "flags": [],
+                        "evidence": {"track_id": 4},
+                    }
+                ],
+                "summary": {
+                    "track_count": 1,
+                    "decision_counts": {"candidate": 1, "reject": 0, "uncertain": 0},
+                    "reason_counts": {"source_to_output_motion": 1},
+                    "has_source_to_output_candidate": True,
+                },
+                "perception_gate": [
+                    {
+                        "track_id": 4,
+                        "decision": "reject",
+                        "reason": "worker_body_overlap",
+                        "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+                        "evidence": {
+                            "track_id": 4,
+                            "source_frames": 33,
+                            "output_frames": 3,
+                            "zones_seen": ["source", "output"],
+                            "first_zone": "source",
+                            "max_displacement": 482.653,
+                            "mean_internal_motion": 0.270206,
+                            "max_internal_motion": 0.590582,
+                            "detections": 36,
+                            "person_overlap_ratio": 1.0,
+                            "outside_person_ratio": 0.0,
+                            "static_stack_overlap_ratio": 0.0,
+                            "static_location_ratio": 0.416667,
+                            "flow_coherence": 0.222248,
+                            "edge_like_ratio": 0.0,
+                        },
+                    }
+                ],
+                "perception_gate_summary": {
+                    "allowed_source_token_tracks": [],
+                    "track_count": 1,
+                    "decision_counts": {"allow_source_token": 0, "reject": 1, "uncertain": 0},
+                    "reason_counts": {"worker_body_overlap": 1},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = diag.refresh_diagnostic_gate_receipts(diagnostic_path=diagnostic_path)
+
+    assert result["perception_gate"][0]["decision"] == "reject"
+    assert result["perception_gate"][0]["reason"] == "worker_body_overlap"
+    assert result["perception_gate"][0]["evidence"]["outside_person_ratio"] == 0.0

@@ -45,6 +45,132 @@ def write_diagnostic(tmp_path: Path) -> Path:
     )
 
 
+def write_worker_overlap_diagnostic(tmp_path: Path) -> Path:
+    diag_dir = tmp_path / "diag"
+    receipts_dir = diag_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    receipt_path = receipts_dir / "track-000005.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-track-receipt-v1",
+                "track_id": 5,
+                "timestamps": {"first": 80.0, "last": 110.0},
+                "evidence": {
+                    "track_id": 5,
+                    "first_timestamp": 80.0,
+                    "last_timestamp": 110.0,
+                    "first_zone": "source",
+                    "zones_seen": ["source", "output"],
+                    "source_frames": 38,
+                    "output_frames": 1,
+                    "max_displacement": 603.294,
+                    "mean_internal_motion": 0.337425,
+                    "max_internal_motion": 0.730217,
+                    "detections": 39,
+                    "static_location_ratio": 0.333333,
+                    "flow_coherence": 0.501419,
+                    "static_stack_overlap_ratio": 0.0,
+                    "person_overlap_ratio": 1.0,
+                    "outside_person_ratio": 0.0,
+                    "observations": [],
+                },
+                "diagnosis": {
+                    "track_id": 5,
+                    "decision": "candidate",
+                    "reason": "source_to_output_motion",
+                    "flags": [],
+                    "evidence": {"track_id": 5},
+                },
+                "perception_gate": {
+                    "track_id": 5,
+                    "decision": "reject",
+                    "reason": "worker_body_overlap",
+                    "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+                    "evidence": {
+                        "track_id": 5,
+                        "source_frames": 38,
+                        "output_frames": 1,
+                        "zones_seen": ["source", "output"],
+                        "first_zone": "source",
+                        "max_displacement": 603.294,
+                        "mean_internal_motion": 0.337425,
+                        "max_internal_motion": 0.730217,
+                        "detections": 39,
+                        "person_overlap_ratio": 1.0,
+                        "outside_person_ratio": 0.0,
+                        "static_stack_overlap_ratio": 0.0,
+                        "static_location_ratio": 0.333333,
+                        "flow_coherence": 0.501419,
+                        "edge_like_ratio": 0.0,
+                    },
+                },
+                "review_assets": {
+                    "overlay_sheet_path": "diag/overlay_sheet.jpg",
+                    "overlay_video_path": "diag/overlay_video.mp4",
+                    "track_sheet_path": "diag/track_receipts/track-000005-sheet.jpg",
+                    "raw_crop_paths": ["diag/track_receipts/track-000005-crops/crop-01-source.jpg"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return write_json(
+        diag_dir / "diagnostic.json",
+        {
+            "video_path": "data/videos/from-pc/factory2.MOV",
+            "start_timestamp": 78.0,
+            "end_timestamp": 118.0,
+            "fps": 3.0,
+            "perception_gate_summary": {
+                "allowed_source_token_tracks": [],
+                "track_count": 1,
+                "decision_counts": {"allow_source_token": 0, "reject": 1, "uncertain": 0},
+                "reason_counts": {"worker_body_overlap": 1},
+            },
+            "perception_gate": [
+                {
+                    "track_id": 5,
+                    "decision": "reject",
+                    "reason": "worker_body_overlap",
+                    "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+                    "evidence": {
+                        "track_id": 5,
+                        "detections": 39,
+                        "first_zone": "source",
+                        "zones_seen": ["source", "output"],
+                        "source_frames": 38,
+                        "output_frames": 1,
+                        "max_displacement": 603.294,
+                        "mean_internal_motion": 0.337425,
+                        "max_internal_motion": 0.730217,
+                        "person_overlap_ratio": 1.0,
+                        "outside_person_ratio": 0.0,
+                        "static_stack_overlap_ratio": 0.0,
+                        "static_location_ratio": 0.333333,
+                        "flow_coherence": 0.501419,
+                        "edge_like_ratio": 0.0,
+                    },
+                }
+            ],
+            "diagnosis": [
+                {
+                    "track_id": 5,
+                    "decision": "candidate",
+                    "reason": "source_to_output_motion",
+                    "flags": [],
+                    "evidence": {"track_id": 5},
+                }
+            ],
+            "track_receipts": [str(receipt_path)],
+            "track_receipt_cards": ["diag/track_receipts/track-000005-sheet.jpg"],
+            "overlay_sheet_path": "diag/overlay_sheet.jpg",
+            "overlay_video_path": "diag/overlay_video.mp4",
+            "hard_negative_manifest_path": "diag/hard_negative_manifest.json",
+        },
+    )
+
+
 def fake_fp_evaluator(**kwargs):
     report = {
         "schema_version": "active-panel-false-positive-eval-v1",
@@ -211,6 +337,120 @@ def test_run_factory2_morning_proof_builds_transfer_and_person_panel_artifacts(t
     assert summary["person_panel_separation_report"] == "data/reports/factory2_person_panel_separation.json"
     assert (tmp_path / "data" / "reports" / "factory2_transfer_review_packets.json").exists()
     assert (tmp_path / "data" / "reports" / "factory2_person_panel_separation.json").exists()
+
+
+def test_run_factory2_morning_proof_regenerates_diagnostics_before_reporting(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    data_yaml = write_dataset(tmp_path)
+    diagnostic = write_diagnostic(tmp_path)
+    model = tmp_path / "models" / "panel_in_transit.pt"
+    model.parent.mkdir(parents=True, exist_ok=True)
+    model.write_text("model", encoding="utf-8")
+    calls = []
+
+    def fake_diagnostic_regenerator(*, diagnostic_path):
+        calls.append(str(diagnostic_path))
+        return json.loads(Path(diagnostic_path).read_text(encoding="utf-8"))
+
+    run_factory2_morning_proof(
+        data_yaml=data_yaml,
+        models=[model],
+        confidences=[0.25],
+        diagnostic_paths=[diagnostic],
+        report_json=tmp_path / "report.json",
+        report_md=tmp_path / "report.md",
+        run_summary_json=tmp_path / "run_summary.json",
+        panel_crop_evidence_json=tmp_path / "panel_crop_evidence.json",
+        force=True,
+        fp_evaluator=fake_fp_evaluator,
+        positive_evaluator=fake_positive_evaluator,
+        crop_evidence_analyzer=fake_crop_evidence_analyzer,
+        diagnostic_regenerator=fake_diagnostic_regenerator,
+    )
+
+    assert calls == [str(diagnostic)]
+
+
+def test_run_factory2_morning_proof_refreshes_diagnostic_receipts_after_separation(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    data_yaml = write_dataset(tmp_path)
+    diagnostic = write_worker_overlap_diagnostic(tmp_path)
+    model = tmp_path / "models" / "panel_in_transit.pt"
+    model.parent.mkdir(parents=True, exist_ok=True)
+    model.write_text("model", encoding="utf-8")
+
+    def fake_transfer_packet_builder(proof_report, output, *, repo_root, limit, force):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps({"schema_version": "factory-transfer-review-packets-v1", "packet_count": 1, "packets": [{"track_id": 5}]}), encoding="utf-8")
+        return {"schema_version": "factory-transfer-review-packets-v1", "packet_count": 1, "packets": [{"track_id": 5}]}
+
+    def fake_person_panel_separation_analyzer(packets_report, output, *, repo_root, limit, packet_ids, force):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
+            json.dumps(
+                {
+                    "schema_version": "factory-person-panel-separation-v1",
+                    "diagnostic_only": True,
+                    "packet_count": 1,
+                    "packets": [{"packet_id": "event0002-track000005", "recommendation": "countable_panel_candidate"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        receipt = tmp_path / "diag" / "track_receipts" / "track-000005-person-panel-separation.json"
+        receipt.write_text(
+            json.dumps(
+                {
+                    "packet_id": "event0002-track000005",
+                    "diagnostic_only": True,
+                    "recommendation": "countable_panel_candidate",
+                    "summary": {
+                        "frame_count": 3,
+                        "separable_panel_candidate_frames": 3,
+                        "worker_body_overlap_frames": 0,
+                        "static_or_background_edge_frames": 0,
+                        "max_visible_nonperson_ratio": 0.542531,
+                        "max_estimated_visible_signal": 0.075512,
+                    },
+                    "selected_frames": [
+                        {"zone": "source", "separation_decision": "separable_panel_candidate"},
+                        {"zone": "source", "separation_decision": "separable_panel_candidate"},
+                        {"zone": "output", "separation_decision": "separable_panel_candidate"},
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return {
+            "schema_version": "factory-person-panel-separation-v1",
+            "diagnostic_only": True,
+            "packet_count": 1,
+            "packets": [{"packet_id": "event0002-track000005", "recommendation": "countable_panel_candidate"}],
+        }
+
+    summary = run_factory2_morning_proof(
+        data_yaml=data_yaml,
+        models=[model],
+        confidences=[0.25],
+        diagnostic_paths=[diagnostic],
+        report_json=tmp_path / "report.json",
+        report_md=tmp_path / "report.md",
+        run_summary_json=tmp_path / "run_summary.json",
+        panel_crop_evidence_json=tmp_path / "panel_crop_evidence.json",
+        force=True,
+        fp_evaluator=fake_fp_evaluator,
+        positive_evaluator=fake_positive_evaluator,
+        crop_evidence_analyzer=fake_crop_evidence_analyzer,
+        transfer_packet_builder=fake_transfer_packet_builder,
+        person_panel_separation_analyzer=fake_person_panel_separation_analyzer,
+    )
+
+    assert summary["accepted_count"] == 1
+    refreshed_diagnostic = json.loads(diagnostic.read_text(encoding="utf-8"))
+    assert refreshed_diagnostic["perception_gate_summary"]["allowed_source_token_tracks"] == [5]
+    refreshed_receipt = json.loads((tmp_path / "diag" / "track_receipts" / "track-000005.json").read_text(encoding="utf-8"))
+    assert refreshed_receipt["perception_gate"]["decision"] == "allow_source_token"
+    assert refreshed_receipt["perception_gate"]["reason"] == "moving_panel_candidate"
 
 
 def test_run_factory2_morning_proof_skips_missing_models_but_records_them(tmp_path: Path, monkeypatch):

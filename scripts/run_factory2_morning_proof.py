@@ -27,6 +27,7 @@ from scripts.eval_detector_false_positives import evaluate_false_positives
 from scripts.eval_detector_positives import evaluate_detector_positives
 from scripts.analyze_panel_crop_evidence import analyze_work_queue_report
 from scripts.analyze_person_panel_separation import build_person_panel_separation_report
+from scripts.diagnose_event_window import rebuild_diagnostic_from_metadata, refresh_diagnostic_gate_receipts
 
 DATA_YAML = Path("data/labels/active_panel_dataset_with_hard_negatives_v1/data.yaml")
 REPORT_JSON = Path("data/reports/factory2_morning_proof_report.json")
@@ -44,6 +45,8 @@ PositiveEvaluator = Callable[..., dict[str, Any]]
 CropEvidenceAnalyzer = Callable[..., dict[str, Any]]
 TransferPacketBuilder = Callable[..., dict[str, Any]]
 PersonPanelSeparationAnalyzer = Callable[..., dict[str, Any]]
+DiagnosticRefresher = Callable[..., dict[str, Any]]
+DiagnosticRegenerator = Callable[..., dict[str, Any]]
 
 
 def model_slug(model_path: Path) -> str:
@@ -95,6 +98,8 @@ def run_factory2_morning_proof(
     crop_evidence_analyzer: CropEvidenceAnalyzer = analyze_work_queue_report,
     transfer_packet_builder: TransferPacketBuilder = build_transfer_review_packets,
     person_panel_separation_analyzer: PersonPanelSeparationAnalyzer = build_person_panel_separation_report,
+    diagnostic_regenerator: DiagnosticRegenerator = rebuild_diagnostic_from_metadata,
+    diagnostic_refresher: DiagnosticRefresher = refresh_diagnostic_gate_receipts,
 ) -> dict[str, Any]:
     selected_models = models if models is not None else DEFAULT_MODELS
     selected_confidences = confidences if confidences is not None else DEFAULT_CONFIDENCES
@@ -165,6 +170,9 @@ def run_factory2_morning_proof(
         ]
         raise FileExistsError(f"Output exists; pass --force: {existing}")
 
+    for diagnostic_path in selected_diagnostics:
+        diagnostic_regenerator(diagnostic_path=diagnostic_path)
+
     initial_report = build_report(
         diagnostic_paths=selected_diagnostics,
         fp_report_paths=fp_report_paths,
@@ -187,6 +195,8 @@ def run_factory2_morning_proof(
         packet_ids=None,
         force=force,
     )
+    for diagnostic_path in selected_diagnostics:
+        diagnostic_refresher(diagnostic_path=diagnostic_path)
 
     report = build_report(
         diagnostic_paths=selected_diagnostics,
