@@ -24,17 +24,20 @@ if __package__ is None or __package__ == "":
 from scripts.build_morning_proof_report import DEFAULT_DIAGNOSTICS, build_report, render_markdown
 from scripts.eval_detector_false_positives import evaluate_false_positives
 from scripts.eval_detector_positives import evaluate_detector_positives
+from scripts.analyze_panel_crop_evidence import analyze_work_queue_report
 
 DATA_YAML = Path("data/labels/active_panel_dataset_with_hard_negatives_v1/data.yaml")
 REPORT_JSON = Path("data/reports/factory2_morning_proof_report.json")
 REPORT_MD = Path("data/reports/factory2_morning_proof_report.md")
 RUN_SUMMARY_JSON = Path("data/reports/factory2_morning_proof_run_summary.json")
+PANEL_CROP_EVIDENCE_JSON = Path("data/reports/factory2_panel_crop_evidence.json")
 DEFAULT_MODELS = [Path("models/panel_in_transit.pt"), Path("models/caleb_metal_panel.pt")]
 DEFAULT_CONFIDENCES = [0.25, 0.10]
 DEFAULT_IOU_THRESHOLD = 0.30
 
 FalsePositiveEvaluator = Callable[..., dict[str, Any]]
 PositiveEvaluator = Callable[..., dict[str, Any]]
+CropEvidenceAnalyzer = Callable[..., dict[str, Any]]
 
 
 def model_slug(model_path: Path) -> str:
@@ -77,9 +80,11 @@ def run_factory2_morning_proof(
     report_json: Path = REPORT_JSON,
     report_md: Path = REPORT_MD,
     run_summary_json: Path = RUN_SUMMARY_JSON,
+    panel_crop_evidence_json: Path = PANEL_CROP_EVIDENCE_JSON,
     force: bool = False,
     fp_evaluator: FalsePositiveEvaluator = evaluate_false_positives,
     positive_evaluator: PositiveEvaluator = evaluate_detector_positives,
+    crop_evidence_analyzer: CropEvidenceAnalyzer = analyze_work_queue_report,
 ) -> dict[str, Any]:
     selected_models = models if models is not None else DEFAULT_MODELS
     selected_confidences = confidences if confidences is not None else DEFAULT_CONFIDENCES
@@ -128,8 +133,8 @@ def run_factory2_morning_proof(
     if not positive_report_paths:
         raise RuntimeError("No detector positive reports were produced; no available model files found")
 
-    if (report_json.exists() or report_md.exists() or run_summary_json.exists()) and not force:
-        existing = [str(path) for path in [report_json, report_md, run_summary_json] if path.exists()]
+    if (report_json.exists() or report_md.exists() or run_summary_json.exists() or panel_crop_evidence_json.exists()) and not force:
+        existing = [str(path) for path in [report_json, report_md, run_summary_json, panel_crop_evidence_json] if path.exists()]
         raise FileExistsError(f"Output exists; pass --force: {existing}")
 
     report = build_report(
@@ -137,6 +142,8 @@ def run_factory2_morning_proof(
         fp_report_paths=fp_report_paths,
         positive_report_paths=positive_report_paths,
     )
+    panel_crop_evidence = crop_evidence_analyzer(report, limit=10)
+    write_json(panel_crop_evidence_json, panel_crop_evidence)
     write_json(report_json, report)
     write_text(report_md, render_markdown(report))
 
@@ -149,6 +156,8 @@ def run_factory2_morning_proof(
         "diagnostics": [str(path) for path in selected_diagnostics],
         "fp_reports": [str(path) for path in fp_report_paths],
         "positive_reports": [str(path) for path in positive_report_paths],
+        "panel_crop_evidence_report": str(panel_crop_evidence_json),
+        "panel_crop_evidence_summary": panel_crop_evidence.get("summary", {}),
         "skipped_models": skipped_models,
         "report_json": str(report_json),
         "report_md": str(report_md),
@@ -185,6 +194,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--report-json", type=Path, default=REPORT_JSON)
     parser.add_argument("--report-md", type=Path, default=REPORT_MD)
     parser.add_argument("--run-summary-json", type=Path, default=RUN_SUMMARY_JSON)
+    parser.add_argument("--panel-crop-evidence-json", type=Path, default=PANEL_CROP_EVIDENCE_JSON)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 
@@ -197,6 +207,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         report_json=args.report_json,
         report_md=args.report_md,
         run_summary_json=args.run_summary_json,
+        panel_crop_evidence_json=args.panel_crop_evidence_json,
         force=args.force,
     )
     print(json.dumps(summary, sort_keys=True))

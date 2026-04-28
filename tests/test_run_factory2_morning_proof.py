@@ -90,6 +90,16 @@ def fake_positive_evaluator(**kwargs):
     return report
 
 
+def fake_crop_evidence_analyzer(report, *, limit):
+    assert limit == 10
+    return {
+        "schema_version": "factory-panel-crop-evidence-v1",
+        "receipt_count": 1,
+        "summary": {"panel_texture_candidate_receipts": 1, "low_panel_texture_receipts": 0},
+        "receipts": [{"track_id": 7, "recommendation": "inspect_as_possible_panel_texture"}],
+    }
+
+
 def test_run_factory2_morning_proof_runs_eval_matrix_and_report(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     data_yaml = write_dataset(tmp_path)
@@ -108,9 +118,11 @@ def test_run_factory2_morning_proof_runs_eval_matrix_and_report(tmp_path: Path, 
         report_json=tmp_path / "report.json",
         report_md=tmp_path / "report.md",
         run_summary_json=tmp_path / "run_summary.json",
+        panel_crop_evidence_json=tmp_path / "panel_crop_evidence.json",
         force=True,
         fp_evaluator=fake_fp_evaluator,
         positive_evaluator=fake_positive_evaluator,
+        crop_evidence_analyzer=fake_crop_evidence_analyzer,
     )
 
     assert summary["verdict"] == "auditable_abstention_no_trusted_positive"
@@ -120,8 +132,11 @@ def test_run_factory2_morning_proof_runs_eval_matrix_and_report(tmp_path: Path, 
     assert summary["bottleneck"] == "perception_gate_worker_body_overlap"
     assert len(summary["fp_reports"]) == 4
     assert len(summary["positive_reports"]) == 4
+    assert summary["panel_crop_evidence_report"] == str(tmp_path / "panel_crop_evidence.json")
+    assert summary["panel_crop_evidence_summary"] == {"panel_texture_candidate_receipts": 1, "low_panel_texture_receipts": 0}
     assert not summary["skipped_models"]
     assert (tmp_path / "report.json").exists()
+    assert (tmp_path / "panel_crop_evidence.json").exists()
     assert "Raw detector outputs are eval evidence only" in (tmp_path / "run_summary.json").read_text(encoding="utf-8")
 
     assert default_fp_output(model_a, 0.25).exists()
