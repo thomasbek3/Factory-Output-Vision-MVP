@@ -170,6 +170,14 @@ def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: P
     assert result["overlay_sheet_path"].endswith("overlay_sheet.jpg")
     assert result["track_receipts"] == [str(out_dir / "track_receipts" / "track-000001.json")]
     assert result["track_receipt_cards"] == [str(out_dir / "track_receipts" / "track-000001-sheet.jpg")]
+    assert result["hard_negative_manifest_path"] == str(out_dir / "hard_negative_manifest.json")
+    hard_negative_manifest = json.loads((out_dir / "hard_negative_manifest.json").read_text(encoding="utf-8"))
+    assert hard_negative_manifest["schema_version"] == "factory-hard-negative-manifest-v1"
+    assert hard_negative_manifest["count"] == 1
+    assert hard_negative_manifest["items"][0]["track_id"] == 1
+    assert hard_negative_manifest["items"][0]["label"] == "hard_negative"
+    assert hard_negative_manifest["items"][0]["reason"] == "static_stack_edge"
+    assert hard_negative_manifest["items"][0]["assets"]["track_sheet_path"] == str(out_dir / "track_receipts" / "track-000001-sheet.jpg")
     receipt = json.loads((out_dir / "track_receipts" / "track-000001.json").read_text(encoding="utf-8"))
     assert receipt["schema_version"] == "factory-track-receipt-v1"
     assert receipt["diagnosis"]["reason"] == "static_stack_edge"

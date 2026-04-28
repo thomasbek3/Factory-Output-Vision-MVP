@@ -240,6 +240,13 @@ def diagnose_event_window(
         fps=fps,
         receipt_card_maker=make_receipt_card,
     )
+    hard_negative_manifest_path = write_hard_negative_manifest(
+        out_dir=out_dir,
+        tracks=artifacts.track_evidence,
+        diagnoses=diagnoses,
+        gate_decisions=gate_decisions,
+        receipt_paths=receipt_paths,
+    )
 
     result = {
         "schema_version": "factory-event-diagnostic-v1",
@@ -260,6 +267,7 @@ def diagnose_event_window(
             for path in receipt_paths
             if path.with_name(f"{path.stem}-sheet.jpg").exists()
         ],
+        "hard_negative_manifest_path": _rel(hard_negative_manifest_path) if hard_negative_manifest_path is not None else None,
         "diagnosis": [asdict(item) for item in diagnoses],
         "summary": summarize_diagnoses(diagnoses),
         "perception_gate": [asdict(item) for item in gate_decisions],
@@ -337,6 +345,56 @@ def write_track_receipts(
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         paths.append(path)
     return paths
+
+
+def write_hard_negative_manifest(
+    *,
+    out_dir: Path,
+    tracks: list[TrackEvidence],
+    diagnoses: list[TrackDiagnosis],
+    gate_decisions: list[Any],
+    receipt_paths: list[Path],
+) -> Path | None:
+    """Write a manifest of rejected/uncertain false-positive evidence for retraining/audit."""
+    diagnosis_by_track = {item.track_id: item for item in diagnoses}
+    gate_by_track = {item.track_id: item for item in gate_decisions}
+    receipt_by_track = {int(path.stem.split("-")[-1]): path for path in receipt_paths}
+    items: list[dict[str, Any]] = []
+    for track in sorted(tracks, key=lambda item: item.track_id):
+        diagnosis = diagnosis_by_track.get(track.track_id)
+        gate = gate_by_track.get(track.track_id)
+        gate_decision = getattr(gate, "decision", None)
+        diagnosis_decision = diagnosis.decision if diagnosis is not None else None
+        if gate_decision == "allow_source_token" and diagnosis_decision != "reject":
+            continue
+        receipt_path = receipt_by_track.get(track.track_id)
+        card_path = receipt_path.with_name(f"{receipt_path.stem}-sheet.jpg") if receipt_path is not None else None
+        reason = getattr(gate, "reason", None) or (diagnosis.reason if diagnosis is not None else "unknown")
+        items.append(
+            {
+                "track_id": track.track_id,
+                "label": "hard_negative" if gate_decision == "reject" or diagnosis_decision == "reject" else "uncertain_negative",
+                "reason": reason,
+                "gate_decision": asdict(gate) if gate is not None else None,
+                "diagnosis": asdict(diagnosis) if diagnosis is not None else None,
+                "evidence": asdict(track),
+                "assets": {
+                    "receipt_path": _rel(receipt_path) if receipt_path is not None else None,
+                    "track_sheet_path": _rel(card_path) if card_path is not None and card_path.exists() else None,
+                },
+            }
+        )
+    if not items:
+        return None
+    path = out_dir / "hard_negative_manifest.json"
+    payload = {
+        "schema_version": "factory-hard-negative-manifest-v1",
+        "source": "diagnose_event_window",
+        "count": len(items),
+        "items": items,
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
 
 
 def make_track_receipt_card(
