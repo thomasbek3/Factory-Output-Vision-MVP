@@ -50,8 +50,19 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
         }
         """,
     )
+    positive_report = write_json(
+        tmp_path / "positive.json",
+        """
+        {
+          "confidence": 0.25,
+          "iou_threshold": 0.3,
+          "model_path": "models/panel_in_transit.pt",
+          "summary": {"positive_images": 2, "positive_labels": 2, "matched_labels": 1, "missed_labels": 1, "label_recall": 0.5}
+        }
+        """,
+    )
 
-    report = build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report])
+    report = build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report], positive_report_paths=[positive_report])
 
     assert report["verdict"] == "auditable_abstention_no_trusted_positive"
     assert report["accepted_count"] == 0
@@ -59,6 +70,9 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["uncertain_count"] == 1
     assert report["bottleneck"] == "perception_gate_worker_body_overlap"
     assert report["detector_false_positive_eval"]["false_positive_detections"] == 0
+    assert report["detector_positive_eval"]["positive_labels"] == 2
+    assert report["detector_positive_eval"]["matched_labels"] == 1
+    assert report["detector_positive_eval"]["label_recall"] == 0.5
     assert report["diagnostics"][0]["sample_receipts"] == ["diag/track-000001.json", "diag/track-000002.json"]
 
 
@@ -116,10 +130,22 @@ def test_main_writes_json_and_markdown(tmp_path: Path):
         """,
     )
     fp_report = write_json(tmp_path / "fp.json", "{\"hard_negative_images\": 1, \"false_positive_detections\": 0}")
+    positive_report = write_json(tmp_path / "positive.json", "{\"summary\": {\"positive_labels\": 1, \"matched_labels\": 1, \"missed_labels\": 0, \"label_recall\": 1.0}}")
     output = tmp_path / "report.json"
     markdown = tmp_path / "report.md"
 
-    assert main(["--diagnostic", str(diagnostic), "--fp-report", str(fp_report), "--output", str(output), "--markdown-output", str(markdown)]) == 0
+    assert main([
+        "--diagnostic",
+        str(diagnostic),
+        "--fp-report",
+        str(fp_report),
+        "--positive-report",
+        str(positive_report),
+        "--output",
+        str(output),
+        "--markdown-output",
+        str(markdown),
+    ]) == 0
 
     assert output.exists()
     assert markdown.exists()

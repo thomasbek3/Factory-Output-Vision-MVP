@@ -21,6 +21,9 @@ DEFAULT_DIAGNOSTICS = [
 DEFAULT_FP_REPORTS = [
     "data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf025.json",
 ]
+DEFAULT_POSITIVE_REPORTS = [
+    "data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf025_iou030.json",
+]
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -94,10 +97,13 @@ def summarize_diagnostic(path: Path) -> dict[str, Any]:
 
 def summarize_fp_report(path: Path) -> dict[str, Any]:
     payload = load_json(path)
-    hard_negative_images = int(payload.get("hard_negative_images") or len(as_list(payload.get("items"))))
-    false_positive_detections = int(payload.get("false_positive_detections") or 0)
-    images_with_false_positives = int(payload.get("images_with_false_positives") or 0)
-    rate = payload.get("false_positive_image_rate")
+    summary = payload.get("summary") or {}
+    hard_negative_images = int(summary.get("hard_negative_images") or payload.get("hard_negative_images") or len(as_list(payload.get("items"))))
+    false_positive_detections = int(summary.get("false_positive_detections") or payload.get("false_positive_detections") or 0)
+    images_with_false_positives = int(summary.get("images_with_false_positives") or payload.get("images_with_false_positives") or 0)
+    rate = summary.get("false_positive_image_rate")
+    if rate is None:
+        rate = payload.get("false_positive_image_rate")
     if rate is None:
         rate = images_with_false_positives / hard_negative_images if hard_negative_images else None
     return {
@@ -113,9 +119,41 @@ def summarize_fp_report(path: Path) -> dict[str, Any]:
     }
 
 
-def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[Path]) -> dict[str, Any]:
+def summarize_positive_report(path: Path) -> dict[str, Any]:
+    payload = load_json(path)
+    summary = payload.get("summary") or {}
+    positive_images = int(summary.get("positive_images") or payload.get("positive_images") or len(as_list(payload.get("items"))))
+    positive_labels = int(summary.get("positive_labels") or payload.get("positive_labels") or 0)
+    matched_labels = int(summary.get("matched_labels") or payload.get("matched_labels") or 0)
+    missed_labels = int(summary.get("missed_labels") or payload.get("missed_labels") or max(0, positive_labels - matched_labels))
+    label_recall = summary.get("label_recall")
+    if label_recall is None:
+        label_recall = payload.get("label_recall")
+    if label_recall is None:
+        label_recall = matched_labels / positive_labels if positive_labels else 0.0
+    return {
+        "report_path": str(path),
+        "model_path": payload.get("model_path"),
+        "confidence": payload.get("confidence"),
+        "iou_threshold": payload.get("iou_threshold"),
+        "data_yaml": payload.get("data_yaml"),
+        "dataset_manifest": payload.get("dataset_manifest"),
+        "positive_images": positive_images,
+        "positive_labels": positive_labels,
+        "images_with_any_detection": int(summary.get("images_with_any_detection") or payload.get("images_with_any_detection") or 0),
+        "images_with_match": int(summary.get("images_with_match") or payload.get("images_with_match") or 0),
+        "matched_labels": matched_labels,
+        "missed_labels": missed_labels,
+        "total_detections": int(summary.get("total_detections") or payload.get("total_detections") or 0),
+        "label_recall": label_recall,
+        "image_match_rate": summary.get("image_match_rate"),
+    }
+
+
+def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[Path], positive_report_paths: Iterable[Path] = ()) -> dict[str, Any]:
     diagnostics = [summarize_diagnostic(path) for path in diagnostic_paths]
     fp_reports = [summarize_fp_report(path) for path in fp_report_paths]
+    positive_reports = [summarize_positive_report(path) for path in positive_report_paths]
 
     accepted_count = sum(int(item["accepted_count"]) for item in diagnostics)
     suppressed_count = sum(int(item["suppressed_count"]) for item in diagnostics)
@@ -131,6 +169,9 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
     fp_images = sum(int(item["hard_negative_images"]) for item in fp_reports)
     fp_detections = sum(int(item["false_positive_detections"]) for item in fp_reports)
     fp_images_with_hits = sum(int(item["images_with_false_positives"]) for item in fp_reports)
+    positive_labels = sum(int(item["positive_labels"]) for item in positive_reports)
+    matched_positive_labels = sum(int(item["matched_labels"]) for item in positive_reports)
+    missed_positive_labels = sum(int(item["missed_labels"]) for item in positive_reports)
 
     bottleneck = "none"
     if accepted_count == 0:
@@ -161,7 +202,15 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
             "false_positive_detections": fp_detections,
             "reports": fp_reports,
         },
-        "morning_bar_moved": bool(diagnostics and fp_reports),
+        "detector_positive_eval": {
+            "report_count": len(positive_reports),
+            "positive_labels": positive_labels,
+            "matched_labels": matched_positive_labels,
+            "missed_labels": missed_positive_labels,
+            "label_recall": matched_positive_labels / positive_labels if positive_labels else None,
+            "reports": positive_reports,
+        },
+        "morning_bar_moved": bool(diagnostics and fp_reports and positive_reports),
         "note": (
             "Counts remain zero unless a perception-gate-approved source token exists. "
             "Suppressed/uncertain tracks are evidence, not failures to be force-counted."
@@ -192,6 +241,18 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- hard_negative_images: {fp['hard_negative_images']}",
             f"- images_with_false_positives: {fp['images_with_false_positives']}",
             f"- false_positive_detections: {fp['false_positive_detections']}",
+            "",
+        ]
+    )
+    positive_eval = report.get("detector_positive_eval") or {}
+    lines.extend(
+        [
+            "## Detector positive eval",
+            "",
+            f"- positive_labels: {positive_eval.get('positive_labels')}",
+            f"- matched_labels: {positive_eval.get('matched_labels')}",
+            f"- missed_labels: {positive_eval.get('missed_labels')}",
+            f"- label_recall: {positive_eval.get('label_recall')}",
             "",
             "## Representative diagnostic windows",
             "",
@@ -230,6 +291,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Build Factory2 morning proof report from existing receipts")
     parser.add_argument("--diagnostic", action="append", dest="diagnostics", default=None, help="diagnostic.json path; may repeat")
     parser.add_argument("--fp-report", action="append", dest="fp_reports", default=None, help="detector FP report JSON; may repeat")
+    parser.add_argument("--positive-report", action="append", dest="positive_reports", default=None, help="detector positive eval report JSON; may repeat")
     parser.add_argument("--output", type=Path, default=Path("data/reports/factory2_morning_proof_report.json"))
     parser.add_argument("--markdown-output", type=Path, default=Path("data/reports/factory2_morning_proof_report.md"))
     parser.add_argument("--force", action="store_true")
@@ -242,7 +304,12 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     diagnostic_paths = existing_paths(args.diagnostics or DEFAULT_DIAGNOSTICS)
     fp_report_paths = existing_paths(args.fp_reports or DEFAULT_FP_REPORTS)
-    report = build_report(diagnostic_paths=diagnostic_paths, fp_report_paths=fp_report_paths)
+    positive_report_paths = existing_paths(args.positive_reports or DEFAULT_POSITIVE_REPORTS)
+    report = build_report(
+        diagnostic_paths=diagnostic_paths,
+        fp_report_paths=fp_report_paths,
+        positive_report_paths=positive_report_paths,
+    )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
