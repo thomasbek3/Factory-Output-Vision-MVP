@@ -116,11 +116,93 @@ def track_id_from_path(path: str) -> Optional[int]:
 
 
 def load_receipt_assets(path: str) -> dict[str, Any]:
+    payload = load_receipt_payload(path)
+    return payload.get("review_assets") or {}
+
+
+def load_receipt_payload(path: str | None) -> dict[str, Any]:
+    if not path:
+        return {}
     try:
-        payload = load_json(Path(path))
+        return load_json(Path(path))
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return {}
-    return payload.get("review_assets") or {}
+
+
+def receipt_interval(row: dict[str, Any]) -> tuple[float, float] | None:
+    timestamps = row.get("receipt_timestamps") or {}
+    try:
+        first = float(timestamps.get("first"))
+        last = float(timestamps.get("last"))
+    except (TypeError, ValueError):
+        return None
+    if last < first:
+        first, last = last, first
+    return first, last
+
+
+def accepted_receipt_canonical_key(row: dict[str, Any]) -> tuple[float, int, int, float]:
+    interval = receipt_interval(row)
+    duration = 0.0
+    first = float("inf")
+    if interval is not None:
+        first, last = interval
+        duration = last - first
+    evidence = row.get("evidence_summary") or {}
+    source_frames = int(evidence.get("source_frames") or 0)
+    output_frames = int(evidence.get("output_frames") or 0)
+    return (duration, source_frames, output_frames, -first)
+
+
+def annotate_accepted_receipt_clusters(rows: list[dict[str, Any]]) -> dict[str, int]:
+    ordered = list(rows)
+    ordered.sort(
+        key=lambda row: (
+            receipt_interval(row)[0] if receipt_interval(row) is not None else float("inf"),
+            receipt_interval(row)[1] if receipt_interval(row) is not None else float("inf"),
+            str(row.get("diagnostic_path") or ""),
+            int(row.get("track_id") or 0),
+        )
+    )
+
+    clusters: list[list[dict[str, Any]]] = []
+    current_cluster: list[dict[str, Any]] = []
+    current_max_last: float | None = None
+    for row in ordered:
+        interval = receipt_interval(row)
+        if interval is None:
+            if current_cluster:
+                clusters.append(current_cluster)
+                current_cluster = []
+                current_max_last = None
+            clusters.append([row])
+            continue
+        first, last = interval
+        if current_cluster and current_max_last is not None and first <= current_max_last:
+            current_cluster.append(row)
+            current_max_last = max(current_max_last, last)
+        else:
+            if current_cluster:
+                clusters.append(current_cluster)
+            current_cluster = [row]
+            current_max_last = last
+    if current_cluster:
+        clusters.append(current_cluster)
+
+    for index, cluster in enumerate(clusters, start=1):
+        cluster_id = f"accepted-cluster-{index:03d}"
+        canonical = max(cluster, key=accepted_receipt_canonical_key)
+        for row in cluster:
+            row["accepted_cluster_id"] = cluster_id
+            row["counts_toward_accepted_total"] = row is canonical
+
+    receipt_count = len(rows)
+    distinct_count = len(clusters)
+    return {
+        "accepted_receipt_count": receipt_count,
+        "accepted_distinct_count": distinct_count,
+        "accepted_duplicate_receipt_count": max(0, receipt_count - distinct_count),
+    }
 
 
 def person_panel_separation_path(receipt_path: str | None) -> str | None:
@@ -152,7 +234,8 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
         except (TypeError, ValueError):
             normalized_track_id = None
         receipt_path = receipt_by_track.get(normalized_track_id) if normalized_track_id is not None else None
-        receipt_assets = load_receipt_assets(receipt_path) if receipt_path else {}
+        receipt_payload = load_receipt_payload(receipt_path) if receipt_path else {}
+        receipt_assets = receipt_payload.get("review_assets") or {}
         separation_path = person_panel_separation_path(receipt_path) if receipt_path else None
         separation_payload = load_person_panel_separation(separation_path)
         separation = person_panel_separation_features(separation_payload)
@@ -179,6 +262,7 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
                 "receipt_json_path": receipt_path,
                 "receipt_card_path": card_by_track.get(normalized_track_id) or receipt_assets.get("track_sheet_path"),
                 "raw_crop_paths": as_list(receipt_assets.get("raw_crop_paths")),
+                "receipt_timestamps": receipt_payload.get("timestamps") or {},
                 "person_panel_separation_path": separation_path if separation_payload else None,
                 "person_panel_recommendation": separation.get("person_panel_recommendation"),
                 "person_panel_summary": separation.get("person_panel_summary"),
@@ -509,11 +593,14 @@ def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str,
                     "receipt_json_path": receipt_json_path,
                     "receipt_card_path": receipt_card_path,
                     "raw_crop_paths": raw_crop_paths,
+                    "receipt_timestamps": receipt.get("receipt_timestamps") or {},
                     "person_panel_separation_path": receipt.get("person_panel_separation_path"),
                     "person_panel_recommendation": receipt.get("person_panel_recommendation"),
                     "person_panel_summary": receipt.get("person_panel_summary"),
                 }
             )
+
+    accepted_cluster_summary = annotate_accepted_receipt_clusters(groups["accepted"])
 
     return {
         "schema_version": "factory-proof-decision-receipt-index-v1",
@@ -521,6 +608,12 @@ def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str,
         "suppressed": groups["suppressed"],
         "uncertain": groups["uncertain"],
         "counts": {key: len(value) for key, value in groups.items()},
+        "counted_counts": {
+            "accepted": accepted_cluster_summary["accepted_distinct_count"],
+            "suppressed": len(groups["suppressed"]),
+            "uncertain": len(groups["uncertain"]),
+        },
+        **accepted_cluster_summary,
         "missing_review_asset_counts": counter_to_dict(missing_review_assets),
     }
 
@@ -717,7 +810,6 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
     fp_reports = [summarize_fp_report(path) for path in fp_report_paths]
     positive_reports = [summarize_positive_report(path) for path in positive_report_paths]
 
-    accepted_count = sum(int(item["accepted_count"]) for item in diagnostics)
     suppressed_count = sum(int(item["suppressed_count"]) for item in diagnostics)
     uncertain_count = sum(int(item["uncertain_count"]) for item in diagnostics)
     track_count = sum(int(item["track_count"]) for item in diagnostics)
@@ -739,6 +831,15 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
     matched_positive_labels = sum(int(item["matched_labels"]) for item in positive_reports)
     missed_positive_labels = sum(int(item["missed_labels"]) for item in positive_reports)
     detector_selection = select_detector_model(fp_reports, positive_reports)
+    decision_receipt_index = build_decision_receipt_index(diagnostics)
+    accepted_receipt_count = int(decision_receipt_index.get("accepted_receipt_count") or 0)
+    if accepted_receipt_count > 0:
+        accepted_count = int(decision_receipt_index.get("accepted_distinct_count") or 0)
+        accepted_duplicate_receipt_count = int(decision_receipt_index.get("accepted_duplicate_receipt_count") or 0)
+    else:
+        accepted_count = sum(int(item["accepted_count"]) for item in diagnostics)
+        accepted_receipt_count = accepted_count
+        accepted_duplicate_receipt_count = 0
 
     bottleneck = "none"
     if accepted_count == 0:
@@ -758,7 +859,6 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         detector_selection=detector_selection,
         failure_link_counts=failure_link_counts,
     )
-    decision_receipt_index = build_decision_receipt_index(diagnostics)
     source_token_work_queue = build_source_token_work_queue(decision_receipt_index)
     evidence_gap_matrix = build_evidence_gap_matrix(decision_receipt_index)
 
@@ -766,6 +866,8 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         "schema_version": SCHEMA_VERSION,
         "verdict": verdict,
         "accepted_count": accepted_count,
+        "accepted_receipt_count": accepted_receipt_count,
+        "accepted_duplicate_receipt_count": accepted_duplicate_receipt_count,
         "suppressed_count": suppressed_count,
         "uncertain_count": uncertain_count,
         "track_count": track_count,
@@ -812,6 +914,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "## Count decision summary",
         "",
         f"- accepted_count: {report['accepted_count']}",
+        f"- accepted_receipt_count: {report.get('accepted_receipt_count')}",
+        f"- accepted_duplicate_receipt_count: {report.get('accepted_duplicate_receipt_count')}",
         f"- suppressed_count: {report['suppressed_count']}",
         f"- uncertain_count: {report['uncertain_count']}",
         f"- total_tracks_reviewed: {report['track_count']}",

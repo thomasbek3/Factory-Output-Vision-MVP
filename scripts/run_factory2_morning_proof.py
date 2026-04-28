@@ -25,6 +25,7 @@ from scripts.build_morning_proof_report import DEFAULT_DIAGNOSTICS, build_report
 from scripts.build_panel_transfer_review_packets import build_transfer_review_packets
 from scripts.eval_detector_false_positives import evaluate_false_positives
 from scripts.eval_detector_positives import evaluate_detector_positives
+from scripts.freeze_factory2_diagnostics import freeze_diagnostics
 from scripts.analyze_panel_crop_evidence import analyze_work_queue_report
 from scripts.analyze_person_panel_separation import build_person_panel_separation_report
 from scripts.diagnose_event_window import rebuild_diagnostic_from_metadata, refresh_diagnostic_gate_receipts
@@ -47,6 +48,7 @@ TransferPacketBuilder = Callable[..., dict[str, Any]]
 PersonPanelSeparationAnalyzer = Callable[..., dict[str, Any]]
 DiagnosticRefresher = Callable[..., dict[str, Any]]
 DiagnosticRegenerator = Callable[..., dict[str, Any]]
+DiagnosticFreezer = Callable[..., dict[str, Any]]
 
 
 def model_slug(model_path: Path) -> str:
@@ -92,12 +94,14 @@ def run_factory2_morning_proof(
     panel_crop_evidence_json: Path = PANEL_CROP_EVIDENCE_JSON,
     transfer_review_packets_json: Path = TRANSFER_REVIEW_PACKETS_JSON,
     person_panel_separation_json: Path = PERSON_PANEL_SEPARATION_JSON,
+    freeze_diagnostics_dir: Optional[Path] = None,
     force: bool = False,
     fp_evaluator: FalsePositiveEvaluator = evaluate_false_positives,
     positive_evaluator: PositiveEvaluator = evaluate_detector_positives,
     crop_evidence_analyzer: CropEvidenceAnalyzer = analyze_work_queue_report,
     transfer_packet_builder: TransferPacketBuilder = build_transfer_review_packets,
     person_panel_separation_analyzer: PersonPanelSeparationAnalyzer = build_person_panel_separation_report,
+    diagnostic_freezer: DiagnosticFreezer = freeze_diagnostics,
     diagnostic_regenerator: DiagnosticRegenerator = rebuild_diagnostic_from_metadata,
     diagnostic_refresher: DiagnosticRefresher = refresh_diagnostic_gate_receipts,
 ) -> dict[str, Any]:
@@ -170,6 +174,20 @@ def run_factory2_morning_proof(
         ]
         raise FileExistsError(f"Output exists; pass --force: {existing}")
 
+    source_diagnostics = [Path(path) for path in selected_diagnostics]
+    frozen_manifest = None
+    if freeze_diagnostics_dir is not None:
+        frozen_manifest = diagnostic_freezer(
+            diagnostic_paths=source_diagnostics,
+            output_root=freeze_diagnostics_dir,
+            force=force,
+        )
+        selected_diagnostics = [
+            Path(row["frozen_diagnostic_path"])
+            for row in (frozen_manifest.get("diagnostics") or [])
+            if isinstance(row, dict) and row.get("frozen_diagnostic_path")
+        ]
+
     for diagnostic_path in selected_diagnostics:
         diagnostic_regenerator(diagnostic_path=diagnostic_path)
 
@@ -214,7 +232,10 @@ def run_factory2_morning_proof(
         "models_requested": [str(path) for path in selected_models],
         "confidences": selected_confidences,
         "iou_threshold": iou_threshold,
+        "source_diagnostics": [str(path) for path in source_diagnostics],
         "diagnostics": [str(path) for path in selected_diagnostics],
+        "frozen_diagnostics_dir": str(freeze_diagnostics_dir) if freeze_diagnostics_dir is not None else None,
+        "frozen_diagnostics_manifest": frozen_manifest,
         "fp_reports": [str(path) for path in fp_report_paths],
         "positive_reports": [str(path) for path in positive_report_paths],
         "transfer_review_packets_report": str(transfer_review_packets_json),
@@ -260,6 +281,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--panel-crop-evidence-json", type=Path, default=PANEL_CROP_EVIDENCE_JSON)
     parser.add_argument("--transfer-review-packets-json", type=Path, default=TRANSFER_REVIEW_PACKETS_JSON)
     parser.add_argument("--person-panel-separation-json", type=Path, default=PERSON_PANEL_SEPARATION_JSON)
+    parser.add_argument("--freeze-diagnostics-dir", type=Path, default=None)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 
@@ -275,6 +297,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         panel_crop_evidence_json=args.panel_crop_evidence_json,
         transfer_review_packets_json=args.transfer_review_packets_json,
         person_panel_separation_json=args.person_panel_separation_json,
+        freeze_diagnostics_dir=args.freeze_diagnostics_dir,
         force=args.force,
     )
     print(json.dumps(summary, sort_keys=True))

@@ -207,6 +207,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
   - false positives = 0
 - Broad mixed diagnostic windows undercount. Prefer narrow, event-centered windows when building recall-oriented proof sets.
 - When merging narrow diagnostics into one proof artifact, freeze or copy the finalized diagnostic directories first. Do not build merged proof results from mutable diagnostics that are still being regenerated.
+- Merged proof `accepted_count` must be a distinct-delivery count, not a raw accepted-receipt count. If overlapping windows produce two accepted receipts for the same physical carry, dedupe them at the report layer and keep both receipts only as audit evidence.
 - If recall stalls on worker-overlap cases, the next product move is not threshold loosening. Export blocked receipt crops and build a panel-vs-worker separation dataset.
 - Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
 - Active PRDs for this phase:

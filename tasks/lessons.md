@@ -13,6 +13,7 @@
 2. **Broad mixed windows hide recall.** When long busy periods undercount, split them into narrow event-centered windows before touching thresholds.
 3. **Do not merge mutable diagnostics.** Freeze or copy finalized diagnostic directories before building one merged proof artifact, or the report can be contaminated by in-progress sidecar regeneration.
 4. **Blocked worker-overlap cases need crop-level training evidence.** If recall stalls, export the blocked receipt crops and label panel-vs-worker separation cases instead of inventing looser count logic.
+5. **Merged accepted receipts can still double-count.** When overlapping windows both approve the same physical carry, dedupe by overlapping accepted receipt intervals and keep only one canonical receipt in the top-level accepted total.
 
 ## 2026-03-18: Vision Pipeline Architecture Overhaul
 

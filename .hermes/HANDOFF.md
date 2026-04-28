@@ -1,8 +1,112 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 19:16:01 EDT
+Updated: 2026-04-28 20:01:00 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+
+## Factory2 frozen narrow merged proof set + accepted dedupe — 2026-04-28 20:01 EDT
+
+Implemented the next recall-proof slice:
+
+```text
+AGENTS.md
+CLAUDE.md
+scripts/freeze_factory2_diagnostics.py
+scripts/build_morning_proof_report.py
+scripts/run_factory2_morning_proof.py
+tests/test_freeze_factory2_diagnostics.py
+tests/test_build_morning_proof_report.py
+tests/test_run_factory2_morning_proof.py
+tasks/lessons.md
+```
+
+What changed:
+
+```text
+- Added `freeze_factory2_diagnostics.py` to copy selected diagnostic directories into an isolated frozen tree and rewrite all embedded JSON asset paths so merged proof runs stop mutating the shared source diagnostics.
+- Added `--freeze-diagnostics-dir` support to `scripts/run_factory2_morning_proof.py`, and the run summary now records both source diagnostics and frozen diagnostics.
+- Added report-layer accepted-receipt deduping: overlapping accepted receipts across windows now remain visible for audit, but only one canonical receipt per overlapping interval cluster contributes to the top-level `accepted_count`.
+```
+
+Real merged narrow-proof result:
+
+```text
+Frozen merged proof command completed on:
+data/diagnostics/frozen/factory2-narrow-merged-v2
+
+Raw accepted receipts: 13
+Distinct accepted_count after overlap dedupe: 12
+Suppressed_count: 27
+Uncertain_count: 13
+Verdict: accepted_positive_count_available
+
+Artifacts:
+- data/reports/factory2_morning_proof_report.narrow_frozen_v2.json
+- data/reports/factory2_morning_proof_report.narrow_frozen_v2.md
+- data/reports/factory2_transfer_review_packets.narrow_frozen_v2.json
+- data/reports/factory2_person_panel_separation.narrow_frozen_v2.json
+```
+
+Per-window accepted counts in the frozen merged set:
+
+```text
+0–30s        -> 1
+98s anchor   -> 1
+145–185s     -> 1
+222s window  -> 2
+232–272s     -> 2
+288–328s     -> 1
+332–372s     -> 1
+372–412s     -> 2
+418s tail    -> 2 raw receipts, but one overlaps the 372–412 accepted carry and is deduped out of the top-level total
+```
+
+Exact duplicate that was removed from the top-level accepted total:
+
+```text
+Canonical kept:
+- factory2-review-0011-372-412s-panel-v1-5fps track 2
+- timestamps: 387.3–402.1
+
+Duplicate kept only as audit evidence:
+- factory2-review-0005-418s-panel-v1 track 1
+- timestamps: 398.081–402.081
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_build_morning_proof_report.py tests/test_freeze_factory2_diagnostics.py tests/test_run_factory2_morning_proof.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_build_factory2_recall_work_queue.py tests/test_runtime_event_counter.py tests/test_person_panel_gate_promotion.py -q
+.venv/bin/python -m py_compile scripts/build_morning_proof_report.py scripts/freeze_factory2_diagnostics.py scripts/run_factory2_morning_proof.py scripts/diagnose_event_window.py scripts/analyze_person_panel_separation.py scripts/build_factory2_recall_work_queue.py app/services/runtime_event_counter.py app/services/person_panel_gate_promotion.py tests/test_build_morning_proof_report.py tests/test_freeze_factory2_diagnostics.py tests/test_run_factory2_morning_proof.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_build_factory2_recall_work_queue.py tests/test_runtime_event_counter.py tests/test_person_panel_gate_promotion.py
+.venv/bin/python scripts/run_factory2_morning_proof.py --force --report-json data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --report-md data/reports/factory2_morning_proof_report.narrow_frozen_v2.md --run-summary-json data/reports/factory2_morning_proof_run_summary.narrow_frozen_v2.json --panel-crop-evidence-json data/reports/factory2_panel_crop_evidence.narrow_frozen_v2.json --transfer-review-packets-json data/reports/factory2_transfer_review_packets.narrow_frozen_v2.json --person-panel-separation-json data/reports/factory2_person_panel_separation.narrow_frozen_v2.json --freeze-diagnostics-dir data/diagnostics/frozen/factory2-narrow-merged-v2 --diagnostic data/diagnostics/event-windows/factory2-review-0014-000-030s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0012-145-185s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0002-222s-panel-v1/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0008-232-272s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0009-332-372s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0011-372-412s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0005-418s-panel-v1/diagnostic.json
+.venv/bin/python -m scripts.build_morning_proof_report --force --output data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --markdown-output data/reports/factory2_morning_proof_report.narrow_frozen_v2.md --fp-report data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf025.json --fp-report data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf010.json --positive-report data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf025_iou030.json --positive-report data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf010_iou030.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0014-000-030s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0012-145-185s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0002-222s-panel-v1/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0008-232-272s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0009-332-372s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0011-372-412s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0005-418s-panel-v1/diagnostic.json
+```
+
+Verification:
+
+```text
+52 tests passed
+py_compile passed
+Frozen merged proof now has a stable immutable diagnostic namespace and a deduped distinct accepted count of 12
+```
+
+Next blocker:
+
+```text
+The immutable narrow proof set is now real and beats the old broad baseline, but it is still at 12 distinct carries vs the human truth target of 23. The next bottlenecks are:
+- remaining worker-overlap suppressions/uncertains inside the frozen merged set
+- missing true carries outside the current accepted set
+- proof/runtime still not aligned to this 12-count merged proof path
+```
+
+Exact next recommended step:
+
+```text
+Implement `scripts/export_factory2_blocked_crops.py` and `tests/test_export_factory2_blocked_crops.py`
+against `data/reports/factory2_morning_proof_report.narrow_frozen_v2.json`, starting with the
+remaining worker-overlap receipts in the frozen merged set.
+```
 
 
 ## Factory2 recall recovery + crop-separation next PRD — 2026-04-28 19:16 EDT

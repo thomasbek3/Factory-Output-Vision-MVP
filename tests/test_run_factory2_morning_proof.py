@@ -371,6 +371,66 @@ def test_run_factory2_morning_proof_regenerates_diagnostics_before_reporting(tmp
     assert calls == [str(diagnostic)]
 
 
+def test_run_factory2_morning_proof_freezes_diagnostics_before_regenerating_them(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    data_yaml = write_dataset(tmp_path)
+    diagnostic = write_diagnostic(tmp_path)
+    model = tmp_path / "models" / "panel_in_transit.pt"
+    model.parent.mkdir(parents=True, exist_ok=True)
+    model.write_text("model", encoding="utf-8")
+    calls = {"frozen": None, "regenerated": []}
+    frozen_path = tmp_path / "data" / "diagnostics" / "frozen" / "factory2-narrow-v1" / "diag" / "diagnostic.json"
+
+    def fake_diagnostic_freezer(*, diagnostic_paths, output_root, force):
+        calls["frozen"] = {
+            "diagnostic_paths": [str(path) for path in diagnostic_paths],
+            "output_root": str(output_root),
+            "force": force,
+        }
+        frozen_path.parent.mkdir(parents=True, exist_ok=True)
+        frozen_path.write_text(Path(diagnostic).read_text(encoding="utf-8"), encoding="utf-8")
+        return {
+            "schema_version": "factory-frozen-diagnostics-v1",
+            "diagnostics": [
+                {
+                    "source_diagnostic_path": str(diagnostic),
+                    "frozen_diagnostic_path": str(frozen_path),
+                }
+            ],
+        }
+
+    def fake_diagnostic_regenerator(*, diagnostic_path):
+        calls["regenerated"].append(str(diagnostic_path))
+        return json.loads(Path(diagnostic_path).read_text(encoding="utf-8"))
+
+    summary = run_factory2_morning_proof(
+        data_yaml=data_yaml,
+        models=[model],
+        confidences=[0.25],
+        diagnostic_paths=[diagnostic],
+        freeze_diagnostics_dir=tmp_path / "data" / "diagnostics" / "frozen" / "factory2-narrow-v1",
+        report_json=tmp_path / "report.json",
+        report_md=tmp_path / "report.md",
+        run_summary_json=tmp_path / "run_summary.json",
+        panel_crop_evidence_json=tmp_path / "panel_crop_evidence.json",
+        force=True,
+        fp_evaluator=fake_fp_evaluator,
+        positive_evaluator=fake_positive_evaluator,
+        crop_evidence_analyzer=fake_crop_evidence_analyzer,
+        diagnostic_freezer=fake_diagnostic_freezer,
+        diagnostic_regenerator=fake_diagnostic_regenerator,
+    )
+
+    assert calls["frozen"] == {
+        "diagnostic_paths": [str(diagnostic)],
+        "output_root": str(tmp_path / "data" / "diagnostics" / "frozen" / "factory2-narrow-v1"),
+        "force": True,
+    }
+    assert calls["regenerated"] == [str(frozen_path)]
+    assert summary["diagnostics"] == [str(frozen_path)]
+    assert summary["frozen_diagnostics_dir"] == str(tmp_path / "data" / "diagnostics" / "frozen" / "factory2-narrow-v1")
+
+
 def test_run_factory2_morning_proof_refreshes_diagnostic_receipts_after_separation(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     data_yaml = write_dataset(tmp_path)

@@ -209,6 +209,98 @@ def test_build_report_counts_allowed_source_tokens(tmp_path: Path):
     assert report["bottleneck"] == "none"
 
 
+def test_build_report_dedupes_overlapping_accepted_receipts_across_diagnostics(tmp_path: Path):
+    receipt_a = tmp_path / "diag-a" / "track_receipts" / "track-000001.json"
+    receipt_a.parent.mkdir(parents=True, exist_ok=True)
+    receipt_a.write_text(
+        """
+        {
+          "timestamps": {"first": 387.3, "last": 402.1},
+          "review_assets": {"raw_crop_paths": ["diag-a/crop-a.jpg"]}
+        }
+        """,
+        encoding="utf-8",
+    )
+    receipt_b = tmp_path / "diag-b" / "track_receipts" / "track-000002.json"
+    receipt_b.parent.mkdir(parents=True, exist_ok=True)
+    receipt_b.write_text(
+        """
+        {
+          "timestamps": {"first": 398.081, "last": 402.081},
+          "review_assets": {"raw_crop_paths": ["diag-b/crop-b.jpg"]}
+        }
+        """,
+        encoding="utf-8",
+    )
+    diagnostic_a = write_json(
+        tmp_path / "diag-a" / "diagnostic.json",
+        f"""
+        {{
+          "video_path": "data/videos/from-pc/factory2.MOV",
+          "start_timestamp": 372.0,
+          "end_timestamp": 412.0,
+          "perception_gate_summary": {{
+            "allowed_source_token_tracks": [1],
+            "track_count": 1,
+            "decision_counts": {{"allow_source_token": 1}},
+            "reason_counts": {{"moving_panel_candidate": 1}}
+          }},
+          "perception_gate": [
+            {{
+              "track_id": 1,
+              "decision": "allow_source_token",
+              "reason": "moving_panel_candidate",
+              "flags": ["source_token_allowed_by_person_panel_separation"],
+              "evidence": {{"source_frames": 9, "output_frames": 2}}
+            }}
+          ],
+          "track_receipts": ["{receipt_a}"],
+          "track_receipt_cards": []
+        }}
+        """,
+    )
+    diagnostic_b = write_json(
+        tmp_path / "diag-b" / "diagnostic.json",
+        f"""
+        {{
+          "video_path": "data/videos/from-pc/factory2.MOV",
+          "start_timestamp": 396.0,
+          "end_timestamp": 427.0,
+          "perception_gate_summary": {{
+            "allowed_source_token_tracks": [2],
+            "track_count": 1,
+            "decision_counts": {{"allow_source_token": 1}},
+            "reason_counts": {{"moving_panel_candidate": 1}}
+          }},
+          "perception_gate": [
+            {{
+              "track_id": 2,
+              "decision": "allow_source_token",
+              "reason": "moving_panel_candidate",
+              "flags": ["source_token_allowed_by_person_panel_separation"],
+              "evidence": {{"source_frames": 1, "output_frames": 1}}
+            }}
+          ],
+          "track_receipts": ["{receipt_b}"],
+          "track_receipt_cards": []
+        }}
+        """,
+    )
+    fp_report = write_json(tmp_path / "fp.json", "{\"items\": []}")
+
+    report = build_report(diagnostic_paths=[diagnostic_a, diagnostic_b], fp_report_paths=[fp_report])
+
+    assert report["verdict"] == "accepted_positive_count_available"
+    assert report["accepted_count"] == 1
+    assert report["accepted_receipt_count"] == 2
+    assert report["accepted_duplicate_receipt_count"] == 1
+    accepted = report["decision_receipt_index"]["accepted"]
+    assert len(accepted) == 2
+    assert accepted[0]["accepted_cluster_id"] == accepted[1]["accepted_cluster_id"]
+    assert accepted[0]["counts_toward_accepted_total"] is True
+    assert accepted[1]["counts_toward_accepted_total"] is False
+
+
 def test_build_report_rehydrates_gate_with_person_panel_separation_receipt(tmp_path: Path):
     receipt = tmp_path / "diag" / "track_receipts" / "track-000005.json"
     receipt.parent.mkdir(parents=True, exist_ok=True)
