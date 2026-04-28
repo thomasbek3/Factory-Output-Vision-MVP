@@ -83,6 +83,61 @@ def test_gate_allows_plausible_source_to_output_panel_track() -> None:
     assert decision.evidence["source_frames"] == 8
 
 
+def test_gate_allows_high_person_overlap_when_panel_protrudes_from_body() -> None:
+    decision = evaluate_track(
+        GateTrackFeatures(
+            track_id=12,
+            source_frames=5,
+            output_frames=4,
+            zones_seen=["source", "transfer", "output"],
+            first_zone="source",
+            max_displacement=360.0,
+            mean_internal_motion=0.17,
+            max_internal_motion=0.39,
+            detections=11,
+            person_overlap_ratio=0.82,
+            outside_person_ratio=0.44,
+            static_stack_overlap_ratio=0.03,
+            static_location_ratio=0.0,
+            flow_coherence=0.68,
+        ),
+        GateConfig(),
+    )
+
+    assert decision.decision == "allow_source_token"
+    assert decision.reason == "moving_panel_candidate"
+    assert "high_person_overlap" in decision.flags
+    assert "person_overlap_with_panel_protrusion" in decision.flags
+    assert "source_token_allowed_by_protrusion" in decision.flags
+
+
+def test_gate_marks_high_person_overlap_without_protrusion_uncertain_not_countable() -> None:
+    decision = evaluate_track(
+        GateTrackFeatures(
+            track_id=13,
+            source_frames=5,
+            output_frames=4,
+            zones_seen=["source", "transfer", "output"],
+            first_zone="source",
+            max_displacement=360.0,
+            mean_internal_motion=0.17,
+            max_internal_motion=0.39,
+            detections=11,
+            person_overlap_ratio=0.82,
+            outside_person_ratio=0.28,
+            static_stack_overlap_ratio=0.03,
+            static_location_ratio=0.0,
+            flow_coherence=0.68,
+        ),
+        GateConfig(),
+    )
+
+    assert decision.decision == "uncertain"
+    assert decision.reason == "source_to_output_evidence_incomplete"
+    assert "high_person_overlap" in decision.flags
+    assert "source_token_allowed_by_protrusion" not in decision.flags
+
+
 def test_gate_summary_counts_decisions_and_reasons() -> None:
     decisions = [
         evaluate_track(

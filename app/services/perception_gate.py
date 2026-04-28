@@ -19,6 +19,7 @@ class GateConfig:
     min_internal_motion: float = 0.04
     max_person_overlap: float = 0.70
     min_outside_person_ratio: float = 0.20
+    min_protruding_panel_ratio: float = 0.35
     max_static_stack_overlap: float = 0.65
     max_static_location_ratio: float = 0.70
     min_flow_coherence: float = 0.12
@@ -61,6 +62,7 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
     low_displacement = features.max_displacement < cfg.min_displacement
     high_person_overlap = features.person_overlap_ratio > cfg.max_person_overlap
     low_outside_person = features.outside_person_ratio < cfg.min_outside_person_ratio
+    protrudes_from_person = features.outside_person_ratio >= cfg.min_protruding_panel_ratio
     high_static_stack = features.static_stack_overlap_ratio > cfg.max_static_stack_overlap
     high_static_location = features.static_location_ratio > cfg.max_static_location_ratio
     low_flow_coherence = features.flow_coherence < cfg.min_flow_coherence
@@ -77,6 +79,8 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
         flags.append("high_person_overlap")
     if low_outside_person:
         flags.append("not_enough_object_outside_person")
+    if high_person_overlap and protrudes_from_person:
+        flags.append("person_overlap_with_panel_protrusion")
     if high_static_stack:
         flags.append("high_static_stack_overlap")
     if high_static_location:
@@ -96,9 +100,18 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
     elif saw_output and not saw_source:
         decision = "reject"
         reason = "output_only_no_source_token"
-    elif saw_source and saw_output and not low_displacement and not low_motion and not high_person_overlap and not high_static_stack:
+    elif (
+        saw_source
+        and saw_output
+        and not low_displacement
+        and not low_motion
+        and not high_static_stack
+        and (not high_person_overlap or protrudes_from_person)
+    ):
         decision = "allow_source_token"
         reason = "moving_panel_candidate"
+        if high_person_overlap and protrudes_from_person:
+            flags.append("source_token_allowed_by_protrusion")
         if low_flow_coherence:
             flags.append("flow_coherence_needs_review")
     elif saw_source and not saw_output:
