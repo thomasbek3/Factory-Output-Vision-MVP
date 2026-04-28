@@ -91,6 +91,98 @@ def test_run_clip_eval_writes_summary_tracks_events_and_review_cards(tmp_path: P
     assert (out_dir / "review_cards" / "count-000002.json").exists()
 
 
+def test_run_clip_eval_perception_gate_blocks_worker_overlap_before_count(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "frames.json"
+    write_manifest(
+        manifest_path,
+        [
+            {"frame_path": "f1.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.0, "width": 100, "height": 100},
+            {"frame_path": "f2.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.1, "width": 100, "height": 100},
+            {"frame_path": "f3.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.2, "width": 100, "height": 100},
+            {"frame_path": "f4.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.3, "width": 100, "height": 100},
+        ],
+    )
+    calibration_path = tmp_path / "calibration.json"
+    write_calibration(calibration_path)
+    out_dir = tmp_path / "eval"
+    detections_by_frame = [
+        [{"box": (5, 20, 20, 20), "confidence": 0.9, "person_overlap_ratio": 1.0, "outside_person_ratio": 0.0}],
+        [{"box": (10, 20, 20, 20), "confidence": 0.9, "person_overlap_ratio": 1.0, "outside_person_ratio": 0.0}],
+        [{"box": (65, 20, 20, 20), "confidence": 0.9, "person_overlap_ratio": 1.0, "outside_person_ratio": 0.0}],
+        [{"box": (65, 20, 20, 20), "confidence": 0.9, "person_overlap_ratio": 1.0, "outside_person_ratio": 0.0}],
+    ]
+
+    def fake_detector(*, frame, frame_index: int, frame_row: dict, model_path: Path | None, confidence: float):
+        return detections_by_frame[frame_index - 1]
+
+    result = run_clip_eval.run_clip_eval(
+        manifest_path=manifest_path,
+        calibration_path=calibration_path,
+        out_dir=out_dir,
+        model_path=None,
+        confidence=0.25,
+        force=False,
+        detector_runner=fake_detector,
+        tracker_match_distance=100.0,
+        enable_perception_gate=True,
+    )
+
+    summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+    tracks = read_jsonl(out_dir / "tracks.jsonl")
+
+    assert result["total_count"] == 0
+    assert summary["perception_gate_summary"]["decision_counts"]["reject"] == 1
+    assert summary["perception_gate_summary"]["reason_counts"] == {"worker_body_overlap": 1}
+    assert tracks[0]["tracks"][0]["perception_gate"]["decision"] == "reject"
+    assert not (out_dir / "events.jsonl").exists()
+
+
+def test_run_clip_eval_perception_gate_uses_person_detector_overlap(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "frames.json"
+    write_manifest(
+        manifest_path,
+        [
+            {"frame_path": "f1.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.0, "width": 100, "height": 100},
+            {"frame_path": "f2.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.1, "width": 100, "height": 100},
+            {"frame_path": "f3.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.2, "width": 100, "height": 100},
+            {"frame_path": "f4.jpg", "video_path": "clip.mp4", "timestamp_seconds": 0.3, "width": 100, "height": 100},
+        ],
+    )
+    calibration_path = tmp_path / "calibration.json"
+    write_calibration(calibration_path)
+    out_dir = tmp_path / "eval-person"
+    detections_by_frame = [
+        [{"box": (5, 20, 20, 20), "confidence": 0.9}],
+        [{"box": (10, 20, 20, 20), "confidence": 0.9}],
+        [{"box": (65, 20, 20, 20), "confidence": 0.9}],
+        [{"box": (65, 20, 20, 20), "confidence": 0.9}],
+    ]
+
+    def fake_detector(*, frame, frame_index: int, frame_row: dict, model_path: Path | None, confidence: float):
+        return detections_by_frame[frame_index - 1]
+
+    def fake_person_detector(*, frame, frame_index: int, frame_row: dict, model_path: Path | None, confidence: float):
+        return [(0, 0, 100, 100)]
+
+    result = run_clip_eval.run_clip_eval(
+        manifest_path=manifest_path,
+        calibration_path=calibration_path,
+        out_dir=out_dir,
+        model_path=None,
+        confidence=0.25,
+        force=False,
+        detector_runner=fake_detector,
+        person_detector_runner=fake_person_detector,
+        tracker_match_distance=100.0,
+        enable_perception_gate=True,
+    )
+
+    tracks = read_jsonl(out_dir / "tracks.jsonl")
+
+    assert result["total_count"] == 0
+    assert tracks[0]["tracks"][0]["perception_gate"]["reason"] == "worker_body_overlap"
+
+
 def test_run_clip_eval_refuses_existing_out_dir_without_force(tmp_path: Path) -> None:
     manifest_path = tmp_path / "frames.json"
     write_manifest(manifest_path, [])
