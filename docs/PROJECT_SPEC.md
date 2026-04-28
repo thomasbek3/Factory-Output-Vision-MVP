@@ -9,7 +9,14 @@ Active perception PRD for the current `factory2.MOV` blocker:
 docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md
 ```
 
-Work on the worker-entangled carried-panel problem should follow that PRD before changing count logic.
+Next-phase PRD after the first accepted Factory2 carry:
+
+```text
+docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md
+```
+
+Work on the worker-entangled carried-panel problem should follow those PRDs before changing count logic.
+Current Factory2 human truth target: 23 real carried-panel transfers with 0 false positives.
 
 ---
 

@@ -387,9 +387,11 @@ def _observation_rows(receipt: JsonDict) -> List[JsonDict]:
 
 
 def _select_observations(observations: Sequence[JsonDict]) -> List[JsonDict]:
-    if len(observations) <= 3:
+    max_samples = 9
+    if len(observations) <= max_samples:
         return list(observations)
-    indices = sorted({0, len(observations) // 2, len(observations) - 1})
+    last_index = len(observations) - 1
+    indices = sorted({round(last_index * step / (max_samples - 1)) for step in range(max_samples)})
     return [observations[index] for index in indices]
 
 

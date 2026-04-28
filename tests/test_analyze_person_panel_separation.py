@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from scripts import analyze_person_panel_separation as separation
 from scripts.analyze_person_panel_separation import (
     analyze_frame_person_panel_separation,
     build_person_panel_separation_report,
@@ -94,6 +95,32 @@ def test_static_background_mesh_away_from_person_is_rejected():
     assert result["person_bbox_overlap_ratio"] == 0.0
     assert result["silhouette_border_contact_ratio"] == 0.0
     assert result["separation_decision"] == "static_or_background_edge"
+
+
+def test_select_observations_keeps_short_tracks_dense():
+    observations = [{"timestamp": float(index)} for index in range(9)]
+
+    selected = separation._select_observations(observations)
+
+    assert selected == observations
+
+
+def test_select_observations_uses_nine_samples_for_long_tracks():
+    observations = [{"timestamp": float(index)} for index in range(17)]
+
+    selected = separation._select_observations(observations)
+
+    assert selected == [
+        {"timestamp": 0.0},
+        {"timestamp": 2.0},
+        {"timestamp": 4.0},
+        {"timestamp": 6.0},
+        {"timestamp": 8.0},
+        {"timestamp": 10.0},
+        {"timestamp": 12.0},
+        {"timestamp": 14.0},
+        {"timestamp": 16.0},
+    ]
 
 
 def test_build_report_reads_transfer_packets_and_writes_summary_artifacts(tmp_path: Path):

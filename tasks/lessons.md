@@ -7,6 +7,13 @@
 3. **For Factory2, verify the real product path.** Run the actual `VisionWorker`/FastAPI monitoring flow on `factory2.MOV`, not just unit tests or proof scripts.
 4. **If stuck on the next move, escalate to Oracle before asking the user for direction.**
 
+## 2026-04-28: Factory2 Recall Recovery
+
+1. **One accepted carry is only the midpoint.** After proof/runtime count one real carry, the target becomes the human truth set: `23` counts on `factory2.MOV` with `0` false positives.
+2. **Broad mixed windows hide recall.** When long busy periods undercount, split them into narrow event-centered windows before touching thresholds.
+3. **Do not merge mutable diagnostics.** Freeze or copy finalized diagnostic directories before building one merged proof artifact, or the report can be contaminated by in-progress sidecar regeneration.
+4. **Blocked worker-overlap cases need crop-level training evidence.** If recall stalls, export the blocked receipt crops and label panel-vs-worker separation cases instead of inventing looser count logic.
+
 ## 2026-03-18: Vision Pipeline Architecture Overhaul
 
 ### Key Decisions Made

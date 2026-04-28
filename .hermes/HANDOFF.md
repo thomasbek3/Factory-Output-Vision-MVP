@@ -1,8 +1,97 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 14:37:42 EDT
+Updated: 2026-04-28 19:16:01 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+
+## Factory2 recall recovery + crop-separation next PRD — 2026-04-28 19:16 EDT
+
+Implemented the next bounded slice after the first proof/runtime success:
+
+```text
+AGENTS.md
+CLAUDE.md
+docs/PROJECT_SPEC.md
+docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md
+scripts/analyze_person_panel_separation.py
+scripts/build_factory2_recall_work_queue.py
+scripts/diagnose_event_window.py
+tests/test_analyze_person_panel_separation.py
+tests/test_build_factory2_recall_work_queue.py
+tests/test_diagnose_event_window.py
+tasks/lessons.md
+```
+
+What changed:
+
+```text
+- Increased representative receipt sampling from 3 snapshots to 9 evenly spaced observations for longer tracks, while keeping short tracks dense.
+- Added receipt/gate tests proving split source-only predecessors can be merged into short source->output successors before perception gating, including multi-hop predecessor chains.
+- Added a Factory2 recall work-queue builder that turns reviewed positive frame labels into cluster-level proof coverage targets.
+- Wrote the next PRD: narrow-window recall recovery plus blocked crop export for panel-vs-worker separation training.
+- Updated repo doctrine so the explicit target is now the human truth set of 23 carried-panel transfers with 0 false positives.
+```
+
+Real results gathered this slice:
+
+```text
+Broad resampled baseline:
+- data/reports/factory2_morning_proof_report.candidate6_resampled.json
+- accepted_count: 8
+- suppressed_count: 41
+- uncertain_count: 23
+
+Focused narrow-window proof results already on disk:
+- 0–30s: accepted_count 1
+- 145–185s: accepted_count 1
+- 232–272s: accepted_count 2
+- 288–328s: accepted_count 1
+- 332–372s: accepted_count 1
+- 372–412s: accepted_count 2
+
+Recall work queue:
+- 8 reviewed positive Factory2 frames collapse into 5 likely transfer clusters
+- current narrow proof windows cover all 5 reviewed-positive clusters
+- the next gap is no longer obvious coverage holes; it is turning those covered windows into one immutable merged proof set that preserves the stronger narrow-window gains
+```
+
+Why this matters:
+
+```text
+The count architecture is no longer the mystery. The limiting factor is recall construction: broad mixed windows merge too much activity, while narrow windows plus denser receipts recover real carries. The next serious recall lever after window restructuring is a blocked-crop dataset for panel-vs-worker separation training on the exact worker-overlap misses.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py -q
+.venv/bin/python -m py_compile scripts/diagnose_event_window.py scripts/analyze_person_panel_separation.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py
+.venv/bin/python scripts/build_factory2_recall_work_queue.py --force
+```
+
+Verification:
+
+```text
+19 tests passed
+representative observation sampling now preserves 9-frame evidence on long tracks
+receipt refresh/gate merge logic now has coverage for split predecessor chains
+```
+
+Next blocker:
+
+```text
+The repo still does not have one clean immutable merged proof set that rolls the stronger narrow-window gains together. Shared diagnostic directories were reused during merged proof attempts, which contaminated some combined reports while sidecars were still regenerating.
+```
+
+Exact next recommended step:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/build_factory2_recall_work_queue.py --force
+```
+
+Then freeze/copy the finalized narrow diagnostic directories, build one merged proof artifact from those immutable copies, and only after that start the blocked-crop export path in `docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md`.
 
 
 ## Factory2 runtime/app path completion — live counting aligned with proof — 2026-04-28 14:37 EDT

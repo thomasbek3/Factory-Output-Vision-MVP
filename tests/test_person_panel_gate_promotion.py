@@ -102,3 +102,63 @@ def test_promote_worker_overlap_gate_row_keeps_weak_separation_rejected(tmp_path
     assert promoted["decision"] == "reject"
     assert promoted["reason"] == "worker_body_overlap"
     assert "source_token_allowed_by_person_panel_separation" not in promoted["flags"]
+
+
+def test_promote_worker_overlap_gate_row_uses_stronger_raw_mesh_signal_when_summary_signal_is_low(tmp_path: Path) -> None:
+    receipt = write_json(
+        tmp_path / "diag" / "track_receipts" / "track-000005.json",
+        {"review_assets": {"raw_crop_paths": []}},
+    )
+    write_json(
+        receipt.with_name("track-000005-person-panel-separation.json"),
+        {
+            "packet_id": "event0006-track000001",
+            "diagnostic_only": True,
+            "recommendation": "countable_panel_candidate",
+            "summary": {
+                "frame_count": 5,
+                "separable_panel_candidate_frames": 3,
+                "worker_body_overlap_frames": 1,
+                "static_or_background_edge_frames": 0,
+                "max_visible_nonperson_ratio": 0.822163,
+                "max_estimated_visible_signal": 0.038852,
+            },
+            "selected_frames": [
+                {
+                    "zone": "source",
+                    "separation_decision": "separable_panel_candidate",
+                    "mesh_signal_nonperson_score": 0.055749,
+                    "mesh_signal_border_score": 0.069883,
+                },
+                {
+                    "zone": "source",
+                    "separation_decision": "separable_panel_candidate",
+                    "mesh_signal_nonperson_score": 0.034261,
+                    "mesh_signal_border_score": 0.067007,
+                },
+                {
+                    "zone": "source",
+                    "separation_decision": "insufficient_visibility",
+                    "mesh_signal_nonperson_score": 0.029959,
+                    "mesh_signal_border_score": 0.020144,
+                },
+                {
+                    "zone": "source",
+                    "separation_decision": "separable_panel_candidate",
+                    "mesh_signal_nonperson_score": 0.055749,
+                    "mesh_signal_border_score": 0.069883,
+                },
+                {
+                    "zone": "output",
+                    "separation_decision": "worker_body_overlap",
+                    "mesh_signal_nonperson_score": 0.0,
+                    "mesh_signal_border_score": 0.0,
+                },
+            ],
+        },
+    )
+
+    promoted = promote_worker_overlap_gate_row(worker_overlap_row(), str(receipt))
+
+    assert promoted["decision"] == "allow_source_token"
+    assert promoted["reason"] == "moving_panel_candidate"

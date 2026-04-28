@@ -184,14 +184,14 @@ def run_factory2_morning_proof(
         proof_report=report_json,
         output=transfer_review_packets_json,
         repo_root=Path.cwd(),
-        limit=10,
+        limit=0,
         force=force,
     )
     person_panel_separation_analyzer(
         packets_report=transfer_review_packets_json,
         output=person_panel_separation_json,
         repo_root=Path.cwd(),
-        limit=3,
+        limit=0,
         packet_ids=None,
         force=force,
     )

@@ -28,3 +28,4 @@ training_runs/*/weights/
 training_runs/*/train/
 training_runs/*/val/
 snapshot_test.jpg
+/yolo11n.pt

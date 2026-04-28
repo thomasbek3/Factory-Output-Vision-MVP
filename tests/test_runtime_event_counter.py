@@ -37,6 +37,7 @@ def test_runtime_event_counter_counts_worker_overlap_track_only_after_live_separ
 
     counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     counter.process_frame(frame=frame, detections=[{"box": (10, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
 
     assert counter.total_count == 1
@@ -77,6 +78,7 @@ def test_runtime_event_counter_counts_approved_delivery_chain_without_extra_outp
 
     counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     counter.process_frame(frame=frame, detections=[{"box": (10, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
 
     assert counter.total_count == 1
@@ -113,6 +115,7 @@ def test_runtime_event_counter_keeps_worker_overlap_track_blocked_without_live_s
 
     counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     counter.process_frame(frame=frame, detections=[{"box": (10, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
 
     assert counter.total_count == 0
@@ -236,3 +239,166 @@ def test_runtime_event_counter_counts_proof_grade_split_delivery_without_waiting
     assert result.events[0].track_id == 2
     assert result.events[0].reason == "approved_delivery_chain"
     assert result.gate_decisions[2].decision == "allow_source_token"
+
+
+def test_runtime_event_counter_prefers_output_zone_when_output_overlap_is_stronger() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate",
+            "visible_nonperson_ratio": 0.42,
+            "estimated_visible_nonperson_region_signal": 0.08,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=1,
+        output_stable_frames=1,
+        tracker_match_distance=80.0,
+        separation_analyzer=fake_separation_analyzer,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (25, 20, 60, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    accumulator = counter._gate_accumulators[1]
+    assert accumulator.source_frames == 1
+    assert accumulator.output_frames == 1
+    assert accumulator.last_zone == "output"
+
+
+def test_runtime_event_counter_uses_stronger_live_mesh_signal_when_weighted_signal_is_low() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate" if zone == "source" else "worker_body_overlap",
+            "visible_nonperson_ratio": 0.55 if zone == "source" else 0.0,
+            "estimated_visible_nonperson_region_signal": 0.02 if zone == "source" else 0.0,
+            "mesh_signal_nonperson_score": 0.055 if zone == "source" else 0.0,
+            "mesh_signal_border_score": 0.07 if zone == "source" else 0.0,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=1,
+        tracker_match_distance=100.0,
+        separation_analyzer=fake_separation_analyzer,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (10, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert result.gate_decisions[1].decision == "allow_source_token"
+
+
+def test_runtime_event_counter_merges_source_track_into_short_source_output_successor() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate",
+            "visible_nonperson_ratio": 0.42,
+            "estimated_visible_nonperson_region_signal": 0.08,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=2,
+        tracker_match_distance=40.0,
+        tracker_max_missing_frames=1,
+        separation_analyzer=fake_separation_analyzer,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (35, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert result.events[0].track_id == 2
+    assert result.events[0].reason == "approved_delivery_chain"
+    assert result.gate_decisions[2].decision == "allow_source_token"
+
+
+def test_runtime_event_counter_merges_multi_hop_source_chain_before_output_successor() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate",
+            "visible_nonperson_ratio": 0.42,
+            "estimated_visible_nonperson_region_signal": 0.08,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=2,
+        tracker_match_distance=40.0,
+        tracker_max_missing_frames=1,
+        separation_analyzer=fake_separation_analyzer,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (35, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (25, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (35, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert result.events[0].track_id == 3
+    assert result.events[0].reason == "approved_delivery_chain"
+    assert result.gate_decisions[3].decision == "allow_source_token"

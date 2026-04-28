@@ -227,7 +227,7 @@ def fake_crop_evidence_analyzer(report, *, limit):
 
 
 def fake_transfer_packet_builder(proof_report, output, *, repo_root, limit, force):
-    assert limit == 10
+    assert limit == 0
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         json.dumps(
@@ -243,7 +243,7 @@ def fake_transfer_packet_builder(proof_report, output, *, repo_root, limit, forc
 
 
 def fake_person_panel_separation_analyzer(packets_report, output, *, repo_root, limit, packet_ids, force):
-    assert limit == 3
+    assert limit == 0
     assert packet_ids is None
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(

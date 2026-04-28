@@ -46,20 +46,38 @@ class _TrackGateAccumulator:
     person_overlap_ratio: float = 0.0
     outside_person_ratio: float = 1.0
     static_stack_overlap_ratio: float = 0.0
+    first_seen_frame_index: int = -1
+    last_seen_frame_index: int = -1
 
-    def update(self, detection: TrackDetection, metadata: dict[str, Any] | None = None) -> None:
+    def update(self, detection: TrackDetection, metadata: dict[str, Any] | None = None, frame_index: int = 0) -> None:
         metadata = metadata or {}
         membership = zone_membership(detection.bbox, self.zones)
         zone = "outside"
-        if membership.source_overlap >= 0.25:
+        source_active = membership.source_overlap >= 0.25
+        output_active = membership.output_overlap >= 0.25
+        if source_active and output_active:
+            if membership.output_overlap > membership.source_overlap:
+                zone = "output"
+                self.output_frames += 1
+            elif membership.source_overlap > membership.output_overlap:
+                zone = "source"
+                self.source_frames += 1
+            elif membership.center_in_output and not membership.center_in_source:
+                zone = "output"
+                self.output_frames += 1
+            else:
+                zone = "source"
+                self.source_frames += 1
+        elif source_active:
             zone = "source"
             self.source_frames += 1
-        elif membership.output_overlap >= 0.25:
+        elif output_active:
             zone = "output"
             self.output_frames += 1
         self.last_zone = zone
         if self.detections == 0:
             self.first_zone = zone
+            self.first_seen_frame_index = frame_index
         if zone not in self.zones_seen:
             self.zones_seen.append(zone)
         center = box_center(detection.bbox)
@@ -68,6 +86,7 @@ class _TrackGateAccumulator:
             self.max_displacement = max(self.max_displacement, _distance(first, center))
         self.centers.append(center)
         self.detections += 1
+        self.last_seen_frame_index = frame_index
         self.person_overlap_ratio = max(self.person_overlap_ratio, float(metadata.get("person_overlap_ratio", 0.0)))
         self.outside_person_ratio = min(self.outside_person_ratio, float(metadata.get("outside_person_ratio", 1.0)))
         self.static_stack_overlap_ratio = max(
@@ -130,6 +149,8 @@ class _LiveSeparationSummary:
         self.max_signal = max(
             self.max_signal,
             float(frame_result.get("estimated_visible_nonperson_region_signal") or 0.0),
+            float(frame_result.get("mesh_signal_nonperson_score") or 0.0),
+            float(frame_result.get("mesh_signal_border_score") or 0.0),
         )
 
     @property
@@ -268,7 +289,7 @@ class RuntimeEventCounter:
                 item.track_id,
                 _TrackGateAccumulator(track_id=item.track_id, zones=self._zones),
             )
-            accumulator.update(item, metadata)
+            accumulator.update(item, metadata, frame_index=self._frame_index)
             selected_person_box = _select_person_box(item.bbox, person_boxes)
             if selected_person_box is None:
                 continue
@@ -286,22 +307,29 @@ class RuntimeEventCounter:
         approved_delivery_chains: list[tuple[str, int, int, Box]] = []
         for track_id, accumulator in self._gate_accumulators.items():
             separation = self._separation_summaries.get(track_id)
-            predecessor_id = self._select_gate_predecessor(track_id, accumulator)
+            predecessor_ids = self._select_gate_predecessor_chain(track_id, accumulator)
             merged_accumulator = accumulator
             merged_separation = separation
-            if predecessor_id is not None:
-                merged_accumulator = merge_gate_accumulators(self._gate_accumulators[predecessor_id], accumulator)
-                merged_separation = merge_separation_summaries(
-                    self._separation_summaries.get(predecessor_id),
-                    separation,
-                )
+            if predecessor_ids:
+                merged_accumulator = self._gate_accumulators[predecessor_ids[0]]
+                for predecessor_id in predecessor_ids[1:] + [track_id]:
+                    merged_accumulator = merge_gate_accumulators(
+                        merged_accumulator,
+                        self._gate_accumulators[predecessor_id],
+                    )
+                merged_separation = self._separation_summaries.get(predecessor_ids[0])
+                for predecessor_id in predecessor_ids[1:] + [track_id]:
+                    merged_separation = merge_separation_summaries(
+                        merged_separation,
+                        self._separation_summaries.get(predecessor_id),
+                    )
             decision = evaluate_track(merged_accumulator.to_features(merged_separation), self._gate_config)
             gate_decisions[track_id] = decision
             if decision.decision == "allow_source_token":
                 approved_track_ids.add(track_id)
                 tracked_item = tracked_by_id.get(track_id)
                 if tracked_item is not None:
-                    source_track_id = predecessor_id if predecessor_id is not None else track_id
+                    source_track_id = predecessor_ids[0] if predecessor_ids else track_id
                     approved_delivery_chains.append(
                         (
                             f"proof-source-track:{source_track_id}",
@@ -321,6 +349,7 @@ class RuntimeEventCounter:
             )
             if event is not None:
                 events.append(event)
+        self._frame_index += 1
         return RuntimeFrameResult(events=events, gate_decisions=gate_decisions, tracks=tracked)
 
     def _reset_state(self) -> None:
@@ -331,28 +360,51 @@ class RuntimeEventCounter:
         self._gate_accumulators: dict[int, _TrackGateAccumulator] = {}
         self._separation_summaries: dict[int, _LiveSeparationSummary] = {}
         self._state_machine = CountStateMachine(self._count_config)
+        self._frame_index = 0
 
     def _select_gate_predecessor(self, track_id: int, accumulator: _TrackGateAccumulator) -> int | None:
-        if accumulator.output_frames <= 0 or accumulator.source_frames > 0:
-            return None
         if not accumulator.centers:
             return None
         output_center = accumulator.centers[0]
         max_link_distance = max(self._tracker_match_distance * 12.0, 500.0)
-        candidates: list[tuple[float, int, int]] = []
+        max_gap_frames = max(self._tracker_max_missing_frames * 2 + 1, 3)
+        candidates: list[tuple[int, float, int, int]] = []
         for candidate_id, candidate in self._gate_accumulators.items():
             if candidate_id == track_id or candidate.source_frames < self._count_config.source_min_frames:
                 continue
+            if candidate.output_frames > 0:
+                continue
             if not candidate.centers:
+                continue
+            if candidate.last_seen_frame_index < 0 or accumulator.first_seen_frame_index < 0:
+                continue
+            gap_frames = accumulator.first_seen_frame_index - candidate.last_seen_frame_index
+            if gap_frames <= 0 or gap_frames > max_gap_frames:
                 continue
             distance = _distance(candidate.centers[-1], output_center)
             if distance > max_link_distance:
                 continue
-            candidates.append((distance, -candidate.source_frames, candidate_id))
+            candidates.append((gap_frames, distance, -candidate.source_frames, candidate_id))
         if not candidates:
             return None
         candidates.sort()
-        return candidates[0][2]
+        return candidates[0][3]
+
+    def _select_gate_predecessor_chain(self, track_id: int, accumulator: _TrackGateAccumulator) -> list[int]:
+        if accumulator.output_frames <= 0 or accumulator.source_frames > 1:
+            return []
+        predecessor_ids: list[int] = []
+        current_id = track_id
+        current_accumulator = accumulator
+        for _ in range(3):
+            predecessor_id = self._select_gate_predecessor(current_id, current_accumulator)
+            if predecessor_id is None:
+                break
+            predecessor_ids.append(predecessor_id)
+            current_id = predecessor_id
+            current_accumulator = self._gate_accumulators[predecessor_id]
+        predecessor_ids.reverse()
+        return predecessor_ids
 
 
 def load_runtime_calibration(path: Path) -> tuple[CalibrationZones, Gate | None]:

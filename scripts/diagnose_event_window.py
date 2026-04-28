@@ -26,7 +26,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.services.calibration import Box, CalibrationZones, box_center, point_in_polygon
 from app.services.perception_gate import GateConfig, GateDecision, GateTrackFeatures, evaluate_track, summarize_gate_decisions
-from app.services.person_panel_gate_promotion import promote_worker_overlap_gate_row
+from app.services.person_panel_gate_promotion import (
+    load_person_panel_separation,
+    person_panel_separation_features,
+    person_panel_separation_path,
+    promote_worker_overlap_gate_row,
+)
 from scripts.run_clip_eval import SimpleBoxTracker, normalize_detection_box
 
 DEFAULT_OUT_DIR = Path("data/diagnostics/event-windows")
@@ -337,6 +342,272 @@ def track_evidence_from_payload(payload: dict[str, Any]) -> TrackEvidence:
     )
 
 
+def track_observation_center(observation: dict[str, Any]) -> tuple[float, float] | None:
+    box = observation.get("box_xywh")
+    if not isinstance(box, list) or len(box) != 4:
+        return None
+    try:
+        return box_center(tuple(float(value) for value in box))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def track_first_center(track: TrackEvidence) -> tuple[float, float] | None:
+    for observation in track.observations:
+        center = track_observation_center(observation)
+        if center is not None:
+            return center
+    return None
+
+
+def track_last_center(track: TrackEvidence) -> tuple[float, float] | None:
+    for observation in reversed(track.observations):
+        center = track_observation_center(observation)
+        if center is not None:
+            return center
+    return None
+
+
+def merge_zones_seen(predecessor: TrackEvidence, current: TrackEvidence) -> list[str]:
+    zones_seen = list(predecessor.zones_seen)
+    for zone in current.zones_seen:
+        if zone not in zones_seen:
+            zones_seen.append(zone)
+    return zones_seen
+
+
+def load_receipt_person_panel_features(receipt_path: Path) -> dict[str, Any]:
+    separation_payload = load_person_panel_separation(person_panel_separation_path(str(receipt_path)))
+    features = person_panel_separation_features(separation_payload)
+    summary = separation_payload.get("summary") or {}
+    selected_frames = [item for item in (separation_payload.get("selected_frames") or []) if isinstance(item, dict)]
+    frame_count = int(summary.get("frame_count") or len(selected_frames))
+    worker_overlap_frames = int(summary.get("worker_body_overlap_frames") or 0)
+    if worker_overlap_frames <= 0:
+        worker_overlap_frames = sum(1 for item in selected_frames if item.get("separation_decision") == "worker_body_overlap")
+    static_frames = int(summary.get("static_or_background_edge_frames") or 0)
+    if static_frames <= 0:
+        static_frames = sum(1 for item in selected_frames if item.get("separation_decision") == "static_or_background_edge")
+    features.update(
+        {
+            "person_panel_frame_count": frame_count,
+            "person_panel_worker_overlap_frames": worker_overlap_frames,
+            "person_panel_static_frames": static_frames,
+        }
+    )
+    return features
+
+
+def merged_person_panel_features(receipt_paths: list[Path]) -> dict[str, Any]:
+    merged = {
+        "person_panel_total_candidate_frames": 0,
+        "person_panel_source_candidate_frames": 0,
+        "person_panel_max_visible_nonperson_ratio": 0.0,
+        "person_panel_max_signal": 0.0,
+        "person_panel_frame_count": 0,
+        "person_panel_worker_overlap_frames": 0,
+        "person_panel_static_frames": 0,
+    }
+    for receipt_path in receipt_paths:
+        features = load_receipt_person_panel_features(receipt_path)
+        merged["person_panel_total_candidate_frames"] += int(features.get("person_panel_total_candidate_frames") or 0)
+        merged["person_panel_source_candidate_frames"] += int(features.get("person_panel_source_candidate_frames") or 0)
+        merged["person_panel_max_visible_nonperson_ratio"] = max(
+            float(merged["person_panel_max_visible_nonperson_ratio"]),
+            float(features.get("person_panel_max_visible_nonperson_ratio") or 0.0),
+        )
+        merged["person_panel_max_signal"] = max(
+            float(merged["person_panel_max_signal"]),
+            float(features.get("person_panel_max_signal") or 0.0),
+        )
+        merged["person_panel_frame_count"] += int(features.get("person_panel_frame_count") or 0)
+        merged["person_panel_worker_overlap_frames"] += int(features.get("person_panel_worker_overlap_frames") or 0)
+        merged["person_panel_static_frames"] += int(features.get("person_panel_static_frames") or 0)
+
+    frame_count = int(merged["person_panel_frame_count"])
+    total_candidate_frames = int(merged["person_panel_total_candidate_frames"])
+    source_candidate_frames = int(merged["person_panel_source_candidate_frames"])
+    worker_overlap_frames = int(merged["person_panel_worker_overlap_frames"])
+    static_frames = int(merged["person_panel_static_frames"])
+    if frame_count <= 0:
+        recommendation = None
+    elif source_candidate_frames >= 2:
+        recommendation = "countable_panel_candidate"
+    elif total_candidate_frames == 0 and static_frames > 0 and worker_overlap_frames == 0:
+        recommendation = "not_panel"
+    elif worker_overlap_frames == frame_count:
+        recommendation = "not_panel"
+    else:
+        recommendation = "insufficient_visibility"
+    merged["person_panel_recommendation"] = recommendation
+    return merged
+
+
+def merged_gate_features_from_tracks(
+    tracks: list[TrackEvidence],
+    *,
+    receipt_paths: list[Path],
+) -> GateTrackFeatures:
+    centers = [
+        center
+        for track in tracks
+        for center in (track_observation_center(item) for item in track.observations)
+        if center is not None
+    ]
+    max_displacement = max((track.max_displacement for track in tracks), default=0.0)
+    if centers:
+        first_center = centers[0]
+        max_displacement = max(max_displacement, max(_distance(first_center, center) for center in centers))
+        static_location_ratio = round(calculate_static_location_ratio(centers), 6)
+        flow_coherence = round(calculate_flow_coherence(centers), 6)
+    else:
+        total_detections = max(sum(track.detections for track in tracks), 1)
+        static_location_ratio = round(
+            sum(track.static_location_ratio * track.detections for track in tracks) / total_detections,
+            6,
+        )
+        flow_coherence = round(max((track.flow_coherence for track in tracks), default=0.0), 6)
+
+    total_detections = sum(track.detections for track in tracks)
+    mean_internal_motion = 0.0
+    if total_detections > 0:
+        mean_internal_motion = round(
+            sum(track.mean_internal_motion * track.detections for track in tracks) / total_detections,
+            6,
+        )
+
+    separation = merged_person_panel_features(receipt_paths)
+    first_track = tracks[0]
+    current_track = tracks[-1]
+    zones_seen = list(first_track.zones_seen)
+    for track in tracks[1:]:
+        for zone in track.zones_seen:
+            if zone not in zones_seen:
+                zones_seen.append(zone)
+    return GateTrackFeatures(
+        track_id=current_track.track_id,
+        source_frames=sum(track.source_frames for track in tracks),
+        output_frames=sum(track.output_frames for track in tracks),
+        zones_seen=zones_seen,
+        first_zone=first_track.first_zone,
+        max_displacement=round(max_displacement, 6),
+        mean_internal_motion=mean_internal_motion,
+        max_internal_motion=max((track.max_internal_motion for track in tracks), default=0.0),
+        detections=total_detections,
+        person_overlap_ratio=max((track.person_overlap_ratio for track in tracks), default=0.0),
+        outside_person_ratio=min((track.outside_person_ratio for track in tracks), default=1.0),
+        static_stack_overlap_ratio=max((track.static_stack_overlap_ratio for track in tracks), default=0.0),
+        static_location_ratio=static_location_ratio,
+        flow_coherence=flow_coherence,
+        person_panel_recommendation=str(separation.get("person_panel_recommendation") or ""),
+        person_panel_total_candidate_frames=int(separation.get("person_panel_total_candidate_frames") or 0),
+        person_panel_source_candidate_frames=int(separation.get("person_panel_source_candidate_frames") or 0),
+        person_panel_max_visible_nonperson_ratio=float(separation.get("person_panel_max_visible_nonperson_ratio") or 0.0),
+        person_panel_max_signal=float(separation.get("person_panel_max_signal") or 0.0),
+    )
+
+
+def select_gate_predecessor_index(
+    tracks: list[TrackEvidence],
+    *,
+    current_index: int,
+    fps: float,
+) -> int | None:
+    current = tracks[current_index]
+    current_center = track_first_center(current)
+    if current_center is None:
+        return None
+    max_gap_seconds = max(2.0, 4.0 / fps) if fps > 0 and math.isfinite(fps) else 2.0
+    max_link_distance = 350.0
+    candidates: list[tuple[float, float, int, int]] = []
+    for index, predecessor in enumerate(tracks):
+        if index == current_index or predecessor.source_frames < 2 or predecessor.output_frames > 0:
+            continue
+        if predecessor.last_timestamp > current.first_timestamp:
+            continue
+        gap = current.first_timestamp - predecessor.last_timestamp
+        if gap > max_gap_seconds:
+            continue
+        predecessor_center = track_last_center(predecessor)
+        if predecessor_center is None:
+            continue
+        distance = _distance(predecessor_center, current_center)
+        if distance > max_link_distance:
+            continue
+        candidates.append((gap, distance, -predecessor.source_frames, index))
+    if not candidates:
+        return None
+    candidates.sort()
+    return candidates[0][3]
+
+
+def select_gate_predecessor_chain_indices(
+    tracks: list[TrackEvidence],
+    *,
+    current_index: int,
+    fps: float,
+    max_chain_length: int = 3,
+) -> list[int]:
+    current = tracks[current_index]
+    if current.output_frames <= 0 or current.source_frames > 1:
+        return []
+    chain_indices: list[int] = []
+    cursor = current_index
+    for _ in range(max_chain_length):
+        predecessor_index = select_gate_predecessor_index(tracks, current_index=cursor, fps=fps)
+        if predecessor_index is None:
+            break
+        chain_indices.append(predecessor_index)
+        cursor = predecessor_index
+    return list(reversed(chain_indices))
+
+
+def evaluate_receipt_gate_decisions(
+    *,
+    tracks: list[TrackEvidence],
+    receipt_paths: list[Path],
+    gate_config: GateConfig,
+    fps: float,
+    existing_gate_rows: dict[int, dict[str, Any]] | None = None,
+) -> list[GateDecision]:
+    gate_decisions: list[GateDecision] = []
+    existing_gate_rows = existing_gate_rows or {}
+    for index, (track, receipt_path) in enumerate(zip(tracks, receipt_paths)):
+        base_row = existing_gate_rows.get(track.track_id)
+        if base_row is None:
+            base_row = asdict(evaluate_track(gate_features_from_track(track), gate_config))
+
+        predecessor_chain = select_gate_predecessor_chain_indices(tracks, current_index=index, fps=fps)
+        if predecessor_chain:
+            chain_tracks = [tracks[item] for item in predecessor_chain] + [track]
+            chain_receipts = [receipt_paths[item] for item in predecessor_chain] + [receipt_path]
+            merged_features = merged_gate_features_from_tracks(
+                chain_tracks,
+                receipt_paths=chain_receipts,
+            )
+            merged_decision = evaluate_track(merged_features, gate_config)
+            if merged_decision.decision == "allow_source_token":
+                merged_evidence = dict(merged_decision.evidence)
+                predecessor_track_ids = [tracks[item].track_id for item in predecessor_chain]
+                merged_evidence["merged_predecessor_track_id"] = predecessor_track_ids[-1]
+                merged_evidence["merged_predecessor_track_ids"] = predecessor_track_ids
+                merged_evidence["merged_predecessor_receipt_paths"] = [_rel(receipt_paths[item]) for item in predecessor_chain]
+                gate_decisions.append(
+                    GateDecision(
+                        track_id=merged_decision.track_id,
+                        decision=merged_decision.decision,
+                        reason=merged_decision.reason,
+                        flags=merged_decision.flags,
+                        evidence=merged_evidence,
+                    )
+                )
+                continue
+
+        promoted_row = promote_worker_overlap_gate_row(base_row, str(receipt_path))
+        gate_decisions.append(gate_decision_from_row(promoted_row))
+    return gate_decisions
+
+
 def diagnosis_from_payload(payload: dict[str, Any], *, fallback_track: TrackEvidence) -> TrackDiagnosis:
     diagnosis = payload.get("diagnosis") or {}
     if diagnosis:
@@ -432,13 +703,13 @@ def refresh_diagnostic_gate_receipts(*, diagnostic_path: Path) -> dict[str, Any]
         except (TypeError, ValueError):
             continue
     gate_config = GateConfig()
-    gate_decisions = []
-    for track, receipt_path in zip(tracks, receipt_paths):
-        base_row = existing_gate_rows.get(track.track_id)
-        if base_row is None:
-            base_row = asdict(evaluate_track(gate_features_from_track(track), gate_config))
-        promoted_row = promote_worker_overlap_gate_row(base_row, str(receipt_path))
-        gate_decisions.append(gate_decision_from_row(promoted_row))
+    gate_decisions = evaluate_receipt_gate_decisions(
+        tracks=tracks,
+        receipt_paths=receipt_paths,
+        gate_config=gate_config,
+        fps=float(payload.get("fps") or 1.0),
+        existing_gate_rows=existing_gate_rows,
+    )
 
     overlay_sheet_path = resolve_repo_path(payload.get("overlay_sheet_path")) or (out_dir / "overlay_sheet.jpg")
     overlay_video_path = resolve_repo_path(payload.get("overlay_video_path")) or (out_dir / "overlay_video.mp4")
@@ -981,9 +1252,11 @@ def build_track_evidence(
 
 
 def select_representative_observations(observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    if len(observations) <= 3:
+    max_samples = 9
+    if len(observations) <= max_samples:
         return observations
-    indices = sorted({0, len(observations) // 2, len(observations) - 1})
+    last_index = len(observations) - 1
+    indices = sorted({round(last_index * step / (max_samples - 1)) for step in range(max_samples)})
     return [observations[index] for index in indices]
 
 

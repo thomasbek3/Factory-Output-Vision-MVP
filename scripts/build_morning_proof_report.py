@@ -25,7 +25,10 @@ from app.services.perception_gate import GateTrackFeatures, evaluate_track
 SCHEMA_VERSION = "factory-morning-proof-report-v1"
 DEFAULT_DIAGNOSTICS = [
     "data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json",
+    "data/diagnostics/event-windows/factory2-review-0002-222s-panel-v1/diagnostic.json",
+    "data/diagnostics/event-windows/factory2-review-0003-258-311s-panel-v1/diagnostic.json",
     "data/diagnostics/event-windows/factory2-event0006-370s-panel-v4-protrusion-gated/diagnostic.json",
+    "data/diagnostics/event-windows/factory2-review-0005-418s-panel-v1/diagnostic.json",
 ]
 DEFAULT_FP_REPORTS = [
     "data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf025.json",

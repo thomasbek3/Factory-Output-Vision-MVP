@@ -199,6 +199,20 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - Do not stop to summarize partial progress while that runtime path is still failing. Keep working until the runtime path counts correctly or you are genuinely blocked.
 - If you become genuinely blocked, use the Oracle escalation rule before asking the user what to do next.
 
+### 9. Factory2 Recall Doctrine
+- The human truth set for `factory2.MOV` is 23 real carried-panel transfers. That is the current target.
+- A single accepted carry is not the finish line. After the first proof/runtime success, the next definition of done is:
+  - proof path accepted_count = 23
+  - runtime/app path count = 23
+  - false positives = 0
+- Broad mixed diagnostic windows undercount. Prefer narrow, event-centered windows when building recall-oriented proof sets.
+- When merging narrow diagnostics into one proof artifact, freeze or copy the finalized diagnostic directories first. Do not build merged proof results from mutable diagnostics that are still being regenerated.
+- If recall stalls on worker-overlap cases, the next product move is not threshold loosening. Export blocked receipt crops and build a panel-vs-worker separation dataset.
+- Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
+- Active PRDs for this phase:
+  - `docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md`
+  - `docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md`
+
 ## Task Management
 
 1. **Plan First**: Write plan to tasks/todo.md with checkable items

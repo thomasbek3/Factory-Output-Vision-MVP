@@ -43,12 +43,20 @@ def person_panel_separation_features(payload: dict[str, Any]) -> dict[str, Any]:
         for item in selected_frames
         if item.get("separation_decision") == "separable_panel_candidate" and str(item.get("zone") or "unknown") != "output"
     )
+    max_signal = float(summary.get("max_estimated_visible_signal") or 0.0)
+    for item in selected_frames:
+        max_signal = max(
+            max_signal,
+            float(item.get("estimated_visible_nonperson_region_signal") or 0.0),
+            float(item.get("mesh_signal_nonperson_score") or 0.0),
+            float(item.get("mesh_signal_border_score") or 0.0),
+        )
     return {
         "person_panel_recommendation": payload.get("recommendation"),
         "person_panel_total_candidate_frames": total_candidate_frames,
         "person_panel_source_candidate_frames": source_candidate_frames,
         "person_panel_max_visible_nonperson_ratio": float(summary.get("max_visible_nonperson_ratio") or 0.0),
-        "person_panel_max_signal": float(summary.get("max_estimated_visible_signal") or 0.0),
+        "person_panel_max_signal": max_signal,
         "person_panel_summary": summary if summary else None,
     }
 
