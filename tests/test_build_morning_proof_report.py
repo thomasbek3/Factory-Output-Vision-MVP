@@ -10,6 +10,19 @@ def write_json(path: Path, payload: str) -> Path:
 
 
 def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
+    receipt = tmp_path / "diag" / "track_receipts" / "track-000001.json"
+    receipt.parent.mkdir(parents=True, exist_ok=True)
+    receipt.write_text(
+        """
+        {
+          "review_assets": {
+            "track_sheet_path": "diag/track_receipts/track-000001-sheet.jpg",
+            "raw_crop_paths": ["diag/track_receipts/track-000001-crops/crop-01.jpg"]
+          }
+        }
+        """,
+        encoding="utf-8",
+    )
     diagnostic = write_json(
         tmp_path / "diag" / "diagnostic.json",
         """
@@ -31,11 +44,34 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
             "decision_counts": {"allow_source_token": 0, "reject": 2, "uncertain": 1},
             "reason_counts": {"worker_body_overlap": 2, "source_without_output_settle": 1}
           },
+          "perception_gate": [
+            {
+              "track_id": 1,
+              "decision": "reject",
+              "reason": "worker_body_overlap",
+              "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+              "evidence": {"source_frames": 5, "output_frames": 0, "person_overlap_ratio": 1.0, "outside_person_ratio": 0.0, "max_displacement": 100.0, "flow_coherence": 0.2}
+            },
+            {
+              "track_id": 2,
+              "decision": "reject",
+              "reason": "worker_body_overlap",
+              "flags": ["high_person_overlap"],
+              "evidence": {"source_frames": 4, "output_frames": 0, "person_overlap_ratio": 0.95, "outside_person_ratio": 0.05}
+            },
+            {
+              "track_id": 3,
+              "decision": "uncertain",
+              "reason": "source_without_output_settle",
+              "flags": [],
+              "evidence": {"source_frames": 8, "output_frames": 0, "person_overlap_ratio": 0.0, "outside_person_ratio": 1.0}
+            }
+          ],
           "summary": {"has_source_to_output_candidate": true},
-          "track_receipts": ["diag/track-000001.json", "diag/track-000002.json"],
-          "track_receipt_cards": ["diag/track-000001-sheet.jpg"]
+          "track_receipts": ["RECEIPT_PATH", "diag/track_receipts/track-000002.json"],
+          "track_receipt_cards": ["diag/track_receipts/track-000001-sheet.jpg"]
         }
-        """,
+        """.replace("RECEIPT_PATH", str(receipt)),
     )
     fp_report = write_json(
         tmp_path / "fp.json",
@@ -73,7 +109,12 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["detector_positive_eval"]["positive_labels"] == 2
     assert report["detector_positive_eval"]["matched_labels"] == 1
     assert report["detector_positive_eval"]["label_recall"] == 0.5
-    assert report["diagnostics"][0]["sample_receipts"] == ["diag/track-000001.json", "diag/track-000002.json"]
+    assert report["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
+    assert report["diagnostics"][0]["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
+    track_receipt = report["diagnostics"][0]["track_decision_receipts"][0]
+    assert track_receipt["failure_link"] == "worker_body_overlap"
+    assert track_receipt["receipt_json_path"] == str(receipt)
+    assert track_receipt["raw_crop_paths"] == ["diag/track_receipts/track-000001-crops/crop-01.jpg"]
 
 
 def test_build_report_counts_allowed_source_tokens(tmp_path: Path):
