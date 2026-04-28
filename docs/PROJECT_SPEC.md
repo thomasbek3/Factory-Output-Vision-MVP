@@ -51,6 +51,30 @@ A cron slice is successful if it leaves behind one of:
 
 It is **not** successful if it merely reports an unaudited raw count.
 
+### 1.3) Morning target — "this works" bar
+
+By morning, the expected outcome is an end-to-end working proof loop on representative footage, not a collection of disconnected utilities. The system should be able to run from factory footage through evidence-backed count/suppress decisions:
+
+```text
+factory2.MOV
+→ candidate event windows
+→ diagnostic receipts/overlays/raw crops
+→ perception-gated source-token counting
+→ hard-negative / positive eval artifacts
+→ clear accepted_count / suppressed / uncertain report
+```
+
+The morning bar is met if:
+
+- at least one representative end-to-end eval path runs without manual intervention;
+- the report separates accepted counts from suppressed/uncertain candidates;
+- repositioned/output-resident/static-stack/worker-body tracks are suppressed with explicit reasons;
+- detector false-positive behavior on exported hard negatives is measured;
+- any new trained or candidate model is evaluated before being trusted;
+- docs and `.hermes/HANDOFF.md` identify the exact current command path and next bottleneck.
+
+If the model still cannot produce a trusted positive count from `factory2.MOV`, the fallback success condition is a precise evidence failure report with receipts showing why: missed active panel, static-stack ambiguity, worker/body overlap, calibration issue, sampling issue, or model false positive. Guessing is failure; auditable abstention is acceptable.
+
 ---
 
 ## 2) Target environment

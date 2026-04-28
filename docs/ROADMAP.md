@@ -79,7 +79,7 @@ v11.0  "The factory runs itself."
 **Hardware:** ~$200-260 (edge PC + camera)
 **Pricing:** $49/line/mo
 **Ship when:** First factory pilot runs a full shift with usable data.
-**Success metric:** Count accuracy ≥ 90% on easy lines, zero audited double-counts from resident/repositioned output parts in the proof clips, and zero crashes in 8 hours.
+**Success metric:** Count accuracy ≥ 90% on easy lines, zero audited double-counts from resident/repositioned output parts in the proof clips, at least one end-to-end representative footage eval report with accepted/suppressed/uncertain decisions and receipts, and zero crashes in 8 hours.
 
 ---
 
