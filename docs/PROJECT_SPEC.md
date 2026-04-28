@@ -51,7 +51,7 @@ A cron slice is successful if it leaves behind one of:
 
 It is **not** successful if it merely reports an unaudited raw count.
 
-### 1.3) Morning target — "this works" bar
+### 1.3) Morning target — "this works and works well" bar
 
 By morning, the expected outcome is an end-to-end working proof loop on representative footage, not a collection of disconnected utilities. The system should be able to run from factory footage through evidence-backed count/suppress decisions:
 
@@ -60,18 +60,34 @@ factory2.MOV
 → candidate event windows
 → diagnostic receipts/overlays/raw crops
 → perception-gated source-token counting
-→ hard-negative / positive eval artifacts
+→ detector/model eval on positives + hard negatives
 → clear accepted_count / suppressed / uncertain report
 ```
 
-The morning bar is met if:
+Define "works" as:
 
-- at least one representative end-to-end eval path runs without manual intervention;
-- the report separates accepted counts from suppressed/uncertain candidates;
-- repositioned/output-resident/static-stack/worker-body tracks are suppressed with explicit reasons;
-- detector false-positive behavior on exported hard negatives is measured;
-- any new trained or candidate model is evaluated before being trusted;
-- docs and `.hermes/HANDOFF.md` identify the exact current command path and next bottleneck.
+- one command or documented command sequence runs the representative `factory2.MOV` proof path without manual intervention;
+- the output report separates `accepted_count`, `suppressed`, and `uncertain` events;
+- every accepted/suppressed/uncertain event links to receipts: JSON, image card/overlay, and relevant crop/frame evidence;
+- raw detector detections cannot directly increment counts;
+- output-only, resident/repositioned, static-stack, and worker/body-overlap tracks are suppressed or marked uncertain with explicit reasons.
+
+Define "works well" as:
+
+- on known hard-negative `factory2.MOV` windows, audited false positive counts are zero;
+- detector false-positive behavior is measured on exported hard negatives at multiple confidence thresholds, not just one optimistic threshold;
+- positive/active-panel behavior is measured separately from hard-negative suppression;
+- any newly trained/candidate model must beat or match the current model on hard negatives before it is used in clip eval;
+- the final morning report says exactly which clips/windows passed, which failed, and why;
+- docs and `.hermes/HANDOFF.md` contain the exact command path to rerun the proof.
+
+The morning bar is **not** met by:
+
+- an unaudited raw count;
+- a model metric with no event receipts;
+- a pile of generated crops with no count/suppress report;
+- suppressing everything without explaining whether the model missed the active panel or the gate rejected it;
+- loosening the count state machine to get a nicer-looking number.
 
 If the model still cannot produce a trusted positive count from `factory2.MOV`, the fallback success condition is a precise evidence failure report with receipts showing why: missed active panel, static-stack ambiguity, worker/body overlap, calibration issue, sampling issue, or model false positive. Guessing is failure; auditable abstention is acceptable.
 
