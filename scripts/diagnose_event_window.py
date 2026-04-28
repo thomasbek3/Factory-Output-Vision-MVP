@@ -18,7 +18,7 @@ import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -32,7 +32,7 @@ DEFAULT_OUT_DIR = Path("data/diagnostics/event-windows")
 FrameExtractor = Callable[..., list[Path]]
 Analyzer = Callable[..., "AnalysisArtifacts"]
 MediaMaker = Callable[..., None]
-ReceiptCardMaker = Callable[..., Path | None]
+ReceiptCardMaker = Callable[..., Optional[Path]]
 
 
 @dataclass(frozen=True)
