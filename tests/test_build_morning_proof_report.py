@@ -110,9 +110,12 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["detector_positive_eval"]["matched_labels"] == 1
     assert report["detector_positive_eval"]["label_recall"] == 0.5
     assert report["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
+    assert report["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
     assert report["diagnostics"][0]["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
+    assert report["diagnostics"][0]["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
     track_receipt = report["diagnostics"][0]["track_decision_receipts"][0]
     assert track_receipt["failure_link"] == "worker_body_overlap"
+    assert track_receipt["worker_overlap_detail"] == "fully_entangled_with_worker"
     assert track_receipt["receipt_json_path"] == str(receipt)
     assert track_receipt["raw_crop_paths"] == ["diag/track_receipts/track-000001-crops/crop-01.jpg"]
 
@@ -142,6 +145,36 @@ def test_build_report_counts_allowed_source_tokens(tmp_path: Path):
     assert report["bottleneck"] == "none"
 
 
+def test_worker_overlap_details_separate_entangled_from_protruding(tmp_path: Path):
+    diagnostic = write_json(
+        tmp_path / "diagnostic.json",
+        """
+        {
+          "perception_gate_summary": {
+            "allowed_source_token_tracks": [3],
+            "track_count": 3,
+            "decision_counts": {"allow_source_token": 1, "reject": 2},
+            "reason_counts": {"moving_panel_candidate": 1, "worker_body_overlap": 2}
+          },
+          "perception_gate": [
+            {"track_id": 1, "decision": "reject", "reason": "worker_body_overlap", "flags": ["high_person_overlap", "not_enough_object_outside_person"], "evidence": {"person_overlap_ratio": 0.95, "outside_person_ratio": 0.05}},
+            {"track_id": 2, "decision": "reject", "reason": "worker_body_overlap", "flags": ["high_person_overlap", "person_overlap_with_panel_protrusion"], "evidence": {"person_overlap_ratio": 0.85, "outside_person_ratio": 0.40}},
+            {"track_id": 3, "decision": "allow_source_token", "reason": "moving_panel_candidate", "flags": ["source_token_allowed_by_protrusion"], "evidence": {"person_overlap_ratio": 0.78, "outside_person_ratio": 0.38}}
+          ]
+        }
+        """,
+    )
+    fp_report = write_json(tmp_path / "fp.json", "{\"items\": []}")
+
+    report = build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report])
+
+    assert report["worker_overlap_detail_counts"] == {
+        "allowed_by_protrusion": 1,
+        "fully_entangled_with_worker": 1,
+        "protrusion_candidate_not_approved": 1,
+    }
+
+
 def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     diagnostic = write_json(
         tmp_path / "diagnostic.json",
@@ -157,6 +190,7 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     markdown = render_markdown(build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report]))
 
     assert "accepted_count: 0" in markdown
+    assert "worker_overlap_details" in markdown
     assert "receipts/track-1.json" in markdown
     assert "overlay.jpg" in markdown
 

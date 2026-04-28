@@ -64,6 +64,34 @@ def failure_link_for(row: dict[str, Any]) -> str:
     return "unclassified_evidence_failure"
 
 
+def worker_overlap_detail_for(row: dict[str, Any]) -> Optional[str]:
+    """Classify worker/body-overlap failures into actionable perception buckets.
+
+    A plain `worker_body_overlap` reason is safe but too blunt for the morning
+    proof. The next engineering choice depends on whether the detector box is
+    fully swallowed by the person box, whether there is possible protruding panel
+    evidence, or whether a protruding track was actually allowed.
+    """
+    flags = {str(flag) for flag in as_list(row.get("flags"))}
+    evidence = row.get("evidence") or {}
+    reason = str(row.get("reason") or "unknown")
+    decision = str(row.get("decision") or "unknown")
+    person_overlap = float(evidence.get("person_overlap_ratio") or 0.0)
+    outside_person = float(evidence.get("outside_person_ratio") or 0.0)
+
+    if decision == "allow_source_token" and "source_token_allowed_by_protrusion" in flags:
+        return "allowed_by_protrusion"
+    if reason != "worker_body_overlap" and "high_person_overlap" not in flags:
+        return None
+    if "not_enough_object_outside_person" in flags or outside_person < 0.20:
+        return "fully_entangled_with_worker"
+    if "person_overlap_with_panel_protrusion" in flags or outside_person >= 0.35:
+        return "protrusion_candidate_not_approved"
+    if person_overlap > 0.70:
+        return "high_overlap_partial_outside_worker"
+    return "worker_overlap_unclear"
+
+
 def track_id_from_path(path: str) -> Optional[int]:
     stem = Path(path).stem
     if not stem.startswith("track-"):
@@ -116,6 +144,7 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
                         "static_stack_overlap_ratio",
                     ]
                 },
+                "worker_overlap_detail": worker_overlap_detail_for(row),
                 "receipt_json_path": receipt_path,
                 "receipt_card_path": card_by_track.get(normalized_track_id) or receipt_assets.get("track_sheet_path"),
                 "raw_crop_paths": as_list(receipt_assets.get("raw_crop_paths")),
@@ -153,6 +182,9 @@ def summarize_diagnostic(path: Path) -> dict[str, Any]:
     card_paths = [str(p) for p in as_list(payload.get("track_receipt_cards"))]
     track_receipts = build_track_receipts(gate_rows, receipt_paths, card_paths)
     failure_link_counts = Counter(str(item.get("failure_link") or "unknown") for item in track_receipts)
+    worker_overlap_detail_counts = Counter(
+        str(item.get("worker_overlap_detail")) for item in track_receipts if item.get("worker_overlap_detail")
+    )
 
     return {
         "diagnostic_path": str(path),
@@ -173,6 +205,7 @@ def summarize_diagnostic(path: Path) -> dict[str, Any]:
         "decision_counts": counter_to_dict(decision_counts),
         "reason_counts": counter_to_dict(reason_counts),
         "failure_link_counts": counter_to_dict(failure_link_counts),
+        "worker_overlap_detail_counts": counter_to_dict(worker_overlap_detail_counts),
         "has_source_to_output_candidate": bool((payload.get("summary") or {}).get("has_source_to_output_candidate")),
         "overlay_sheet_path": payload.get("overlay_sheet_path"),
         "overlay_video_path": payload.get("overlay_video_path"),
@@ -253,10 +286,12 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
     reason_counts: Counter[str] = Counter()
     decision_counts: Counter[str] = Counter()
     failure_link_counts: Counter[str] = Counter()
+    worker_overlap_detail_counts: Counter[str] = Counter()
     for item in diagnostics:
         reason_counts.update({str(k): int(v) for k, v in item.get("reason_counts", {}).items()})
         decision_counts.update({str(k): int(v) for k, v in item.get("decision_counts", {}).items()})
         failure_link_counts.update({str(k): int(v) for k, v in item.get("failure_link_counts", {}).items()})
+        worker_overlap_detail_counts.update({str(k): int(v) for k, v in item.get("worker_overlap_detail_counts", {}).items()})
 
     fp_images = sum(int(item["hard_negative_images"]) for item in fp_reports)
     fp_detections = sum(int(item["false_positive_detections"]) for item in fp_reports)
@@ -286,6 +321,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         "decision_counts": counter_to_dict(decision_counts),
         "reason_counts": counter_to_dict(reason_counts),
         "failure_link_counts": counter_to_dict(failure_link_counts),
+        "worker_overlap_detail_counts": counter_to_dict(worker_overlap_detail_counts),
         "bottleneck": bottleneck,
         "diagnostics": diagnostics,
         "detector_false_positive_eval": {
@@ -325,6 +361,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- total_tracks_reviewed: {report['track_count']}",
         f"- bottleneck: `{report['bottleneck']}`",
         f"- failure_links: `{report.get('failure_link_counts')}`",
+        f"- worker_overlap_details: `{report.get('worker_overlap_detail_counts')}`",
         "",
         "## Detector false-positive eval",
         "",
@@ -362,6 +399,7 @@ def render_markdown(report: dict[str, Any]) -> str:
                 f"- accepted: {item['accepted_count']}; suppressed: {item['suppressed_count']}; uncertain: {item['uncertain_count']}",
                 f"- reasons: `{item['reason_counts']}`",
                 f"- failure_links: `{item.get('failure_link_counts')}`",
+                f"- worker_overlap_details: `{item.get('worker_overlap_detail_counts')}`",
                 f"- overlay_sheet: `{item.get('overlay_sheet_path')}`",
                 f"- hard_negative_manifest: `{item.get('hard_negative_manifest_path')}`",
                 f"- sample_receipts: `{item.get('sample_receipts')}`",
