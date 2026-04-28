@@ -136,7 +136,15 @@ def build_export_row(
     write_yolo_negative: bool,
 ) -> dict[str, Any]:
     assets = item.get("assets") or {}
-    source_asset = resolve_asset_path(assets.get("track_sheet_path") or assets.get("receipt_path"), manifest_path=manifest_path)
+    raw_crop_paths = [
+        path
+        for path in (resolve_asset_path(value, manifest_path=manifest_path) for value in assets.get("raw_crop_paths", []))
+        if path is not None
+    ]
+    source_asset = raw_crop_paths[0] if raw_crop_paths else resolve_asset_path(
+        assets.get("track_sheet_path") or assets.get("receipt_path"), manifest_path=manifest_path
+    )
+    review_only = not bool(raw_crop_paths)
     stem = make_export_stem(manifest_path=manifest_path, item=item, source_index=source_index)
     exported_image_path = None
     exported_label_path = None
@@ -156,12 +164,17 @@ def build_export_row(
         "track_id": item.get("track_id"),
         "source_manifest": str(manifest_path),
         "source_asset_path": str(source_asset) if source_asset is not None else None,
+        "raw_crop_paths": [str(path) for path in raw_crop_paths],
         "exported_image_path": exported_image_path,
         "exported_label_path": exported_label_path,
         "yolo_class_name": "active_panel",
         "yolo_label_contents": "",
-        "review_only": True,
-        "training_note": "Empty-label negative from diagnostic receipt/overlay; review before using for detector training.",
+        "review_only": review_only,
+        "training_note": (
+            "Raw diagnostic crop with empty YOLO label; verify before detector training."
+            if not review_only
+            else "Empty-label negative from diagnostic receipt/overlay; review before using for detector training."
+        ),
         "evidence": item.get("evidence"),
         "gate_decision": item.get("gate_decision"),
         "diagnosis": item.get("diagnosis"),

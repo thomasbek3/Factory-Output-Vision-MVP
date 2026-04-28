@@ -85,6 +85,34 @@ def test_select_track_overlay_frames_uses_first_mid_last_timestamps(tmp_path: Pa
     ]
 
 
+def test_select_representative_observations_keeps_first_mid_last() -> None:
+    observations = [{"timestamp": idx} for idx in range(7)]
+
+    assert diag.select_representative_observations(observations) == [
+        {"timestamp": 0},
+        {"timestamp": 3},
+        {"timestamp": 6},
+    ]
+
+
+def test_build_track_evidence_preserves_representative_observations() -> None:
+    evidence = diag.build_track_evidence(
+        track_points={1: [(0.0, 0.0), (10.0, 0.0), (20.0, 0.0), (30.0, 0.0)]},
+        track_motion={1: [0.1, 0.2, 0.3, 0.4]},
+        track_zones={1: ["source", "source", "output", "output"]},
+        track_times={1: [1.0, 2.0, 3.0, 4.0]},
+        track_detections={1: 4},
+        track_person_overlaps={1: [0.0, 0.1]},
+        track_observations={1: [{"timestamp": idx, "box_xywh": [idx, idx, 10, 10]} for idx in range(4)]},
+    )[0]
+
+    assert evidence.observations == [
+        {"timestamp": 0, "box_xywh": [0, 0, 10, 10]},
+        {"timestamp": 2, "box_xywh": [2, 2, 10, 10]},
+        {"timestamp": 3, "box_xywh": [3, 3, 10, 10]},
+    ]
+
+
 def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: Path) -> None:
     video = tmp_path / "factory2.MOV"
     video.write_text("not video", encoding="utf-8")

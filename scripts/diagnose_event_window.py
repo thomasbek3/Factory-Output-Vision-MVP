@@ -16,7 +16,7 @@ import math
 import shutil
 import subprocess
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -53,6 +53,7 @@ class TrackEvidence:
     static_stack_overlap_ratio: float = 0.0
     person_overlap_ratio: float = 0.0
     outside_person_ratio: float = 1.0
+    observations: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -329,6 +330,7 @@ def write_track_receipts(
                 fps=fps,
                 output_path=card_path,
             )
+        crop_paths = write_track_crop_assets(track=track, receipts_dir=receipts_dir)
         payload = {
             "schema_version": "factory-track-receipt-v1",
             "track_id": track.track_id,
@@ -340,11 +342,79 @@ def write_track_receipts(
                 "overlay_sheet_path": _rel(overlay_sheet_path),
                 "overlay_video_path": _rel(overlay_video_path),
                 "track_sheet_path": _rel(card_path) if card_path.exists() else None,
+                "raw_crop_paths": [_rel(path) for path in crop_paths],
             },
         }
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         paths.append(path)
     return paths
+
+
+def write_track_crop_assets(*, track: TrackEvidence, receipts_dir: Path, padding: float = 0.20) -> list[Path]:
+    """Write raw crop/context assets for a track when representative observations exist."""
+    observations = track.observations or []
+    if not observations:
+        return []
+    try:
+        import cv2
+    except Exception:  # pragma: no cover - optional runtime dependency
+        return []
+    crop_dir = receipts_dir / f"track-{track.track_id:06d}-crops"
+    crop_dir.mkdir(parents=True, exist_ok=True)
+    paths: list[Path] = []
+    for index, observation in enumerate(observations):
+        frame_path = resolve_repo_path(observation.get("frame_path"))
+        box = observation.get("box_xywh")
+        if frame_path is None or box is None:
+            continue
+        image = cv2.imread(str(frame_path))
+        if image is None:
+            continue
+        crop = crop_with_padding(image, box, padding=padding)
+        if crop is None:
+            continue
+        zone = str(observation.get("zone", "unknown")).replace("/", "-")
+        output_path = crop_dir / f"crop-{index + 1:02d}-{zone}.jpg"
+        if cv2.imwrite(str(output_path), crop):
+            paths.append(output_path)
+    return paths
+
+
+def resolve_repo_path(value: Any) -> Path | None:
+    if not value:
+        return None
+    path = Path(str(value))
+    if path.is_absolute():
+        return path
+    return REPO_ROOT / path
+
+
+def crop_with_padding(image: Any, box_xywh: Any, *, padding: float) -> Any | None:
+    try:
+        x, y, width, height = [float(value) for value in box_xywh]
+    except Exception:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    image_height, image_width = image.shape[:2]
+    pad_x = width * padding
+    pad_y = height * padding
+    x1 = max(0, int(math.floor(x - pad_x)))
+    y1 = max(0, int(math.floor(y - pad_y)))
+    x2 = min(image_width, int(math.ceil(x + width + pad_x)))
+    y2 = min(image_height, int(math.ceil(y + height + pad_y)))
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return image[y1:y2, x1:x2].copy()
+
+
+def read_receipt_raw_crop_paths(receipt_path: Path) -> list[str]:
+    try:
+        payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    assets = payload.get("review_assets") or {}
+    return [str(path) for path in assets.get("raw_crop_paths", [])]
 
 
 def write_hard_negative_manifest(
@@ -369,6 +439,7 @@ def write_hard_negative_manifest(
             continue
         receipt_path = receipt_by_track.get(track.track_id)
         card_path = receipt_path.with_name(f"{receipt_path.stem}-sheet.jpg") if receipt_path is not None else None
+        raw_crop_paths = read_receipt_raw_crop_paths(receipt_path) if receipt_path is not None else []
         reason = getattr(gate, "reason", None) or (diagnosis.reason if diagnosis is not None else "unknown")
         items.append(
             {
@@ -381,6 +452,7 @@ def write_hard_negative_manifest(
                 "assets": {
                     "receipt_path": _rel(receipt_path) if receipt_path is not None else None,
                     "track_sheet_path": _rel(card_path) if card_path is not None and card_path.exists() else None,
+                    "raw_crop_paths": raw_crop_paths,
                 },
             }
         )
@@ -570,6 +642,7 @@ def analyze_frames(
     track_times: dict[int, list[float]] = {}
     track_detections: dict[int, int] = {}
     track_person_overlaps: dict[int, list[float]] = {}
+    track_observations: dict[int, list[dict[str, Any]]] = {}
     overlay_frames: list[Path] = []
     yolo_model = load_yolo_model(model_path) if model_path else None
     person_model = load_yolo_model(person_model_path) if person_model_path else None
@@ -604,6 +677,17 @@ def analyze_frames(
             track_zones.setdefault(track.track_id, []).append(zone)
             track_times.setdefault(track.track_id, []).append(round(timestamp, 3))
             track_detections[track.track_id] = track_detections.get(track.track_id, 0) + 1
+            track_observations.setdefault(track.track_id, []).append(
+                {
+                    "timestamp": round(timestamp, 3),
+                    "frame_path": _rel(frame_path),
+                    "box_xywh": [round(float(value), 3) for value in box],
+                    "zone": zone,
+                    "motion": round(float(motion), 6),
+                    "person_overlap": round(float(person_overlap), 6),
+                    "confidence": round(float(track.confidence), 6),
+                }
+            )
             color = (0, 255, 255) if zone == "source" else (0, 255, 0) if zone == "output" else (255, 128, 0)
             x1, y1, width, height = [int(round(value)) for value in box]
             x2 = x1 + width
@@ -636,6 +720,7 @@ def analyze_frames(
         track_times=track_times,
         track_detections=track_detections,
         track_person_overlaps=track_person_overlaps,
+        track_observations=track_observations,
     )
     return AnalysisArtifacts(track_evidence=evidence, overlay_frames=overlay_frames, frame_count=len(frame_paths))
 
@@ -688,6 +773,7 @@ def build_track_evidence(
     track_times: dict[int, list[float]],
     track_detections: dict[int, int],
     track_person_overlaps: dict[int, list[float]],
+    track_observations: dict[int, list[dict[str, Any]]] | None = None,
 ) -> list[TrackEvidence]:
     evidence: list[TrackEvidence] = []
     for track_id, points in sorted(track_points.items()):
@@ -726,9 +812,17 @@ def build_track_evidence(
                 static_stack_overlap_ratio=round(static_stack_overlap_ratio, 6),
                 person_overlap_ratio=round(person_overlap_ratio, 6),
                 outside_person_ratio=round(max(0.0, 1.0 - person_overlap_ratio), 6),
+                observations=select_representative_observations((track_observations or {}).get(track_id, [])),
             )
         )
     return evidence
+
+
+def select_representative_observations(observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if len(observations) <= 3:
+        return observations
+    indices = sorted({0, len(observations) // 2, len(observations) - 1})
+    return [observations[index] for index in indices]
 
 
 def box_overlap_fraction(box: Box, other: Box) -> float:

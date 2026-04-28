@@ -6,9 +6,14 @@ import pytest
 from scripts import export_hard_negatives as exporter
 
 
-def _write_manifest(tmp_path: Path, *, label: str = "hard_negative", asset_name: str = "track.jpg") -> Path:
+def _write_manifest(tmp_path: Path, *, label: str = "hard_negative", asset_name: str = "track.jpg", raw_crop: bool = False) -> Path:
     asset = tmp_path / asset_name
     asset.write_text("image-ish", encoding="utf-8")
+    raw_assets = []
+    if raw_crop:
+        raw = tmp_path / "raw-crop.jpg"
+        raw.write_text("raw", encoding="utf-8")
+        raw_assets.append(str(raw))
     manifest = tmp_path / "hard_negative_manifest.json"
     manifest.write_text(
         json.dumps(
@@ -21,7 +26,7 @@ def _write_manifest(tmp_path: Path, *, label: str = "hard_negative", asset_name:
                         "track_id": 7,
                         "label": label,
                         "reason": "worker_body_overlap",
-                        "assets": {"track_sheet_path": str(asset)},
+                        "assets": {"track_sheet_path": str(asset), "raw_crop_paths": raw_assets},
                         "evidence": {"person_overlap_ratio": 1.0},
                         "gate_decision": {"decision": "reject", "reason": "worker_body_overlap"},
                         "diagnosis": {"decision": "uncertain", "reason": "source_without_output_settle"},
@@ -58,6 +63,7 @@ def test_export_writes_review_manifest_without_copying_images_by_default(tmp_pat
     row = payload["items"][0]
     assert row["negative_id"].endswith("track-000007-hard-negative-worker-body-overlap")
     assert row["source_asset_path"].endswith("track.jpg")
+    assert row["raw_crop_paths"] == []
     assert row["exported_image_path"] is None
     assert row["exported_label_path"] is None
     assert row["review_only"] is True
@@ -83,6 +89,24 @@ def test_export_can_write_empty_yolo_negative_labels(tmp_path):
     assert image_path.read_text(encoding="utf-8") == "image-ish"
     assert label_path.exists()
     assert label_path.read_text(encoding="utf-8") == ""
+
+
+def test_raw_crops_are_preferred_and_not_marked_review_only(tmp_path):
+    manifest = _write_manifest(tmp_path, raw_crop=True)
+    out_dir = tmp_path / "export"
+
+    export_path = exporter.export_hard_negatives(
+        manifest_paths=[manifest],
+        out_dir=out_dir,
+        write_yolo_negatives=True,
+        force=False,
+    )
+
+    row = json.loads(export_path.read_text(encoding="utf-8"))["items"][0]
+    assert row["source_asset_path"].endswith("raw-crop.jpg")
+    assert row["raw_crop_paths"][0].endswith("raw-crop.jpg")
+    assert Path(row["exported_image_path"]).read_text(encoding="utf-8") == "raw"
+    assert row["review_only"] is False
 
 
 def test_uncertain_negatives_are_filtered_unless_requested(tmp_path):
