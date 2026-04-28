@@ -566,6 +566,103 @@ def build_source_token_work_queue(decision_receipt_index: dict[str, Any]) -> dic
     }
 
 
+def build_evidence_gap_matrix(decision_receipt_index: dict[str, Any]) -> dict[str, Any]:
+    """Summarize which physical proof link blocked each non-counted receipt.
+
+    A zero accepted count is only useful if the report says *why* it is zero.
+    This matrix turns the suppressed/uncertain receipt index into product-level
+    evidence links: worker/part separation, output settle, static-stack rejection,
+    and receipt completeness. It remains reporting only; it cannot approve a count.
+    """
+    gap_by_failure_link = {
+        "worker_body_overlap": {
+            "evidence_link": "panel_vs_worker_separation",
+            "description": "prove the candidate is a discrete active panel rather than worker torso/arms/clothing/background motion",
+            "next_evidence": "crop/shape/person-mask or pose-aware separation on the linked receipt crops/cards",
+        },
+        "missing_output_settle": {
+            "evidence_link": "output_entry_and_settle",
+            "description": "prove the same source-origin panel entered/settled in output or disappeared into the output stack",
+            "next_evidence": "denser before/during/after frames or longer diagnostic window around the receipt",
+        },
+        "incomplete_source_to_output_path": {
+            "evidence_link": "continuous_source_to_output_path",
+            "description": "prove the track has a credible source-to-output path rather than partial motion evidence",
+            "next_evidence": "tracker continuity, occlusion TTL/relink evidence, and before/after frames",
+        },
+        "static_stack_or_resident_output": {
+            "evidence_link": "non_resident_active_panel",
+            "description": "prove the candidate is not a resident output stack edge or repositioned output panel",
+            "next_evidence": "resident baseline/static-stack anchors and raw crops showing separation from the stack",
+        },
+        "insufficient_active_panel_evidence": {
+            "evidence_link": "active_panel_visual_evidence",
+            "description": "prove the detector crop contains an active panel with coherent motion",
+            "next_evidence": "hard-negative harvesting, optical-flow coherence, and crop-level active-panel review",
+        },
+        "unclassified_evidence_failure": {
+            "evidence_link": "unclassified_evidence_failure",
+            "description": "classify the physical evidence failure before changing count logic",
+            "next_evidence": "inspect the linked receipt card/crops and add a more specific failure link",
+        },
+    }
+    rows_by_link: dict[str, list[dict[str, Any]]] = {}
+    bucket_counts_by_link: dict[str, Counter[str]] = {}
+    accepted_rows = as_list(decision_receipt_index.get("accepted"))
+
+    for bucket in ["suppressed", "uncertain"]:
+        for row in as_list(decision_receipt_index.get(bucket)):
+            if not isinstance(row, dict):
+                continue
+            failure_link = str(row.get("failure_link") or "unclassified_evidence_failure")
+            spec = gap_by_failure_link.get(failure_link, gap_by_failure_link["unclassified_evidence_failure"])
+            evidence_link = spec["evidence_link"]
+            bucket_counts_by_link.setdefault(evidence_link, Counter())[bucket] += 1
+            rows_by_link.setdefault(evidence_link, []).append(
+                {
+                    "bucket": bucket,
+                    "diagnostic_path": row.get("diagnostic_path"),
+                    "track_id": row.get("track_id"),
+                    "reason": row.get("reason") or "unknown",
+                    "failure_link": failure_link,
+                    "worker_overlap_detail": row.get("worker_overlap_detail"),
+                    "receipt_json_path": row.get("receipt_json_path"),
+                    "receipt_card_path": row.get("receipt_card_path"),
+                    "raw_crop_paths": as_list(row.get("raw_crop_paths")),
+                }
+            )
+
+    evidence_links: list[dict[str, Any]] = []
+    for evidence_link, rows in rows_by_link.items():
+        spec = next(
+            (item for item in gap_by_failure_link.values() if item["evidence_link"] == evidence_link),
+            gap_by_failure_link["unclassified_evidence_failure"],
+        )
+        counts = bucket_counts_by_link.get(evidence_link, Counter())
+        evidence_links.append(
+            {
+                "evidence_link": evidence_link,
+                "blocked_count": len(rows),
+                "bucket_counts": counter_to_dict(counts),
+                "description": spec["description"],
+                "next_evidence": spec["next_evidence"],
+                "sample_receipts": rows[:3],
+            }
+        )
+
+    evidence_links.sort(key=lambda item: (-int(item.get("blocked_count") or 0), str(item.get("evidence_link") or "")))
+    return {
+        "schema_version": "factory-proof-evidence-gap-matrix-v1",
+        "purpose": "explain which physical evidence link blocks trusted source-token counts; not a count source",
+        "accepted_receipts": len(accepted_rows),
+        "blocked_receipts": sum(int(item.get("blocked_count") or 0) for item in evidence_links),
+        "dominant_gap": evidence_links[0]["evidence_link"] if evidence_links else "none",
+        "why_accepted_count_is_zero": "no perception-gate-approved source-token receipts" if not accepted_rows else None,
+        "missing_review_asset_counts": decision_receipt_index.get("missing_review_asset_counts") or {},
+        "evidence_links": evidence_links,
+    }
+
+
 def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[Path], positive_report_paths: Iterable[Path] = ()) -> dict[str, Any]:
     diagnostics = [summarize_diagnostic(path) for path in diagnostic_paths]
     fp_reports = [summarize_fp_report(path) for path in fp_report_paths]
@@ -614,6 +711,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
     )
     decision_receipt_index = build_decision_receipt_index(diagnostics)
     source_token_work_queue = build_source_token_work_queue(decision_receipt_index)
+    evidence_gap_matrix = build_evidence_gap_matrix(decision_receipt_index)
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -647,6 +745,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         "proof_readiness": proof_readiness,
         "decision_receipt_index": decision_receipt_index,
         "source_token_work_queue": source_token_work_queue,
+        "evidence_gap_matrix": evidence_gap_matrix,
         "morning_bar_moved": bool(diagnostics and fp_reports and positive_reports),
         "note": (
             "Counts remain zero unless a perception-gate-approved source token exists. "
@@ -730,6 +829,30 @@ def render_markdown(report: dict[str, Any]) -> str:
     )
     work_queue = report.get("source_token_work_queue") or {}
     work_items = as_list(work_queue.get("top_items"))
+    evidence_gap_matrix = report.get("evidence_gap_matrix") or {}
+    evidence_links = as_list(evidence_gap_matrix.get("evidence_links"))
+    if evidence_links:
+        lines.extend(
+            [
+                "## Evidence gap matrix",
+                "",
+                f"- purpose: {evidence_gap_matrix.get('purpose')}",
+                f"- dominant_gap: `{evidence_gap_matrix.get('dominant_gap')}`",
+                f"- why_accepted_count_is_zero: {evidence_gap_matrix.get('why_accepted_count_is_zero')}",
+                f"- missing_review_asset_counts: `{evidence_gap_matrix.get('missing_review_asset_counts')}`",
+                "",
+            ]
+        )
+        for gap in evidence_links[:5]:
+            lines.extend(
+                [
+                    f"- `{gap.get('evidence_link')}` blocked {gap.get('blocked_count')} receipts; buckets: `{gap.get('bucket_counts')}`",
+                    f"  - description: {gap.get('description')}",
+                    f"  - next_evidence: {gap.get('next_evidence')}",
+                    f"  - sample_receipts: `{gap.get('sample_receipts')}`",
+                ]
+            )
+        lines.append("")
     if work_items:
         lines.extend(["### Highest-priority worker-entangled receipts", ""])
         for row in work_items[:5]:

@@ -163,6 +163,14 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
         "panel evidence persists for several frames instead of appearing as a single noisy detector box",
         "the track can be separated from torso/arm motion before a source token is allowed",
     ]
+    assert report["evidence_gap_matrix"]["dominant_gap"] == "panel_vs_worker_separation"
+    assert report["evidence_gap_matrix"]["why_accepted_count_is_zero"] == "no perception-gate-approved source-token receipts"
+    assert report["evidence_gap_matrix"]["blocked_receipts"] == 3
+    assert report["evidence_gap_matrix"]["evidence_links"][0]["evidence_link"] == "panel_vs_worker_separation"
+    assert report["evidence_gap_matrix"]["evidence_links"][0]["blocked_count"] == 2
+    assert report["evidence_gap_matrix"]["evidence_links"][0]["bucket_counts"] == {"suppressed": 2}
+    assert "discrete active panel" in report["evidence_gap_matrix"]["evidence_links"][0]["description"]
+    assert report["evidence_gap_matrix"]["evidence_links"][1]["evidence_link"] == "output_entry_and_settle"
     assert any(item["receipt_json_path"] == str(receipt) for item in report["source_token_work_queue"]["top_items"])
     assert report["decision_receipt_index"]["missing_review_asset_counts"] == {
         "raw_crop_paths": 2,
@@ -250,6 +258,9 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     assert "Proof readiness" in markdown
     assert "Decision receipt index" in markdown
     assert "Source-token work queue" in markdown
+    assert "Evidence gap matrix" in markdown
+    assert "panel_vs_worker_separation" in markdown
+    assert "why_accepted_count_is_zero" in markdown
     assert "Highest-priority worker-entangled receipts" in markdown
     assert "do not count from the current box alone" in markdown
     assert "audit_question" in markdown
