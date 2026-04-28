@@ -25,6 +25,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.calibration import Box, CalibrationZones, box_center, point_in_polygon
+from app.services.perception_gate import GateConfig, GateTrackFeatures, evaluate_track, summarize_gate_decisions
 from scripts.run_clip_eval import SimpleBoxTracker, normalize_detection_box
 
 DEFAULT_OUT_DIR = Path("data/diagnostics/event-windows")
@@ -46,6 +47,11 @@ class TrackEvidence:
     mean_internal_motion: float
     max_internal_motion: float
     detections: int
+    static_location_ratio: float = 0.0
+    flow_coherence: float = 0.0
+    static_stack_overlap_ratio: float = 0.0
+    person_overlap_ratio: float = 0.0
+    outside_person_ratio: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -73,6 +79,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--end", type=float, required=True)
     parser.add_argument("--fps", type=float, default=5.0)
     parser.add_argument("--model", type=Path, default=None)
+    parser.add_argument("--person-model", type=Path, default=None, help="Optional COCO person detector model, e.g. yolo11n.pt")
     parser.add_argument("--confidence", type=float, default=0.20)
     parser.add_argument("--tracker-match-distance", type=float, default=220.0)
     parser.add_argument("--min-displacement", type=float, default=30.0)
@@ -161,6 +168,7 @@ def diagnose_event_window(
     model_path: Path | None,
     confidence: float,
     force: bool,
+    person_model_path: Path | None = None,
     tracker_match_distance: float = 220.0,
     min_displacement: float = 30.0,
     min_internal_motion: float = 0.04,
@@ -197,6 +205,7 @@ def diagnose_event_window(
         start_timestamp=start_timestamp,
         fps=fps,
         model_path=model_path,
+        person_model_path=person_model_path,
         confidence=confidence,
         tracker_match_distance=tracker_match_distance,
     )
@@ -209,6 +218,8 @@ def diagnose_event_window(
         )
         for track in artifacts.track_evidence
     ]
+    gate_config = GateConfig(min_displacement=min_displacement, min_internal_motion=min_internal_motion)
+    gate_decisions = [evaluate_track(gate_features_from_track(track), gate_config) for track in artifacts.track_evidence]
 
     sheet_path = out_dir / "overlay_sheet.jpg"
     overlay_video_path = out_dir / "overlay_video.mp4"
@@ -222,15 +233,37 @@ def diagnose_event_window(
         "end_timestamp": end_timestamp,
         "fps": fps,
         "model_path": _rel(model_path) if model_path else None,
+        "person_model_path": _rel(person_model_path) if person_model_path else None,
         "confidence": confidence,
         "frame_count": artifacts.frame_count,
         "overlay_sheet_path": _rel(sheet_path),
         "overlay_video_path": _rel(overlay_video_path),
         "diagnosis": [asdict(item) for item in diagnoses],
         "summary": summarize_diagnoses(diagnoses),
+        "perception_gate": [asdict(item) for item in gate_decisions],
+        "perception_gate_summary": summarize_gate_decisions(gate_decisions),
     }
     (out_dir / "diagnostic.json").write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
+
+
+def gate_features_from_track(track: TrackEvidence) -> GateTrackFeatures:
+    return GateTrackFeatures(
+        track_id=track.track_id,
+        source_frames=track.source_frames,
+        output_frames=track.output_frames,
+        zones_seen=track.zones_seen,
+        first_zone=track.first_zone,
+        max_displacement=track.max_displacement,
+        mean_internal_motion=track.mean_internal_motion,
+        max_internal_motion=track.max_internal_motion,
+        detections=track.detections,
+        person_overlap_ratio=track.person_overlap_ratio,
+        outside_person_ratio=track.outside_person_ratio,
+        static_stack_overlap_ratio=track.static_stack_overlap_ratio,
+        static_location_ratio=track.static_location_ratio,
+        flow_coherence=track.flow_coherence,
+    )
 
 
 def summarize_diagnoses(diagnoses: list[TrackDiagnosis]) -> dict[str, Any]:
@@ -281,6 +314,7 @@ def analyze_frames(
     start_timestamp: float,
     fps: float,
     model_path: Path | None,
+    person_model_path: Path | None,
     confidence: float,
     tracker_match_distance: float,
 ) -> AnalysisArtifacts:
@@ -297,8 +331,10 @@ def analyze_frames(
     track_zones: dict[int, list[str]] = {}
     track_times: dict[int, list[float]] = {}
     track_detections: dict[int, int] = {}
+    track_person_overlaps: dict[int, list[float]] = {}
     overlay_frames: list[Path] = []
     yolo_model = load_yolo_model(model_path) if model_path else None
+    person_model = load_yolo_model(person_model_path) if person_model_path else None
     previous_gray = None
 
     for index, frame_path in enumerate(frame_paths):
@@ -307,19 +343,26 @@ def analyze_frames(
             continue
         timestamp = start_timestamp + index / fps
         detections = detect_with_yolo_model(yolo_model, frame_path=frame_path, confidence=confidence) if yolo_model else []
+        person_boxes = detect_person_boxes(person_model, frame_path=frame_path, confidence=0.20) if person_model else []
         tracks = tracker.update(detections)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         diff = None if previous_gray is None else cv2.absdiff(gray, previous_gray)
         previous_gray = gray
 
         draw_diagnostic_overlay(image=image, zones=zones)
+        for person_box in person_boxes:
+            px, py, pw, ph = [int(round(value)) for value in person_box]
+            cv2.rectangle(image, (px, py), (px + pw, py + ph), (0, 0, 255), 2)
+            cv2.putText(image, "person", (px, max(20, py - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2, cv2.LINE_AA)
         for track in tracks:
             box = normalize_detection_box(track.bbox)
             center = box_center(box)
             zone = classify_point_zone(center, zones)
             motion = box_motion_fraction(diff, box) if diff is not None else 0.0
+            person_overlap = max((box_overlap_fraction(box, person_box) for person_box in person_boxes), default=0.0)
             track_points.setdefault(track.track_id, []).append(center)
             track_motion.setdefault(track.track_id, []).append(motion)
+            track_person_overlaps.setdefault(track.track_id, []).append(person_overlap)
             track_zones.setdefault(track.track_id, []).append(zone)
             track_times.setdefault(track.track_id, []).append(round(timestamp, 3))
             track_detections[track.track_id] = track_detections.get(track.track_id, 0) + 1
@@ -330,7 +373,7 @@ def analyze_frames(
             cv2.rectangle(image, (x1, y1), (x2, y2), color, 3)
             cv2.putText(
                 image,
-                f"id={track.track_id} {zone} m={motion:.2f} c={track.confidence:.2f}",
+                f"id={track.track_id} {zone} m={motion:.2f} p={person_overlap:.2f} c={track.confidence:.2f}",
                 (x1, max(20, y1 - 8)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.65,
@@ -348,7 +391,14 @@ def analyze_frames(
         cv2.imwrite(str(overlay_path), image)
         overlay_frames.append(overlay_path)
 
-    evidence = build_track_evidence(track_points=track_points, track_motion=track_motion, track_zones=track_zones, track_times=track_times, track_detections=track_detections)
+    evidence = build_track_evidence(
+        track_points=track_points,
+        track_motion=track_motion,
+        track_zones=track_zones,
+        track_times=track_times,
+        track_detections=track_detections,
+        track_person_overlaps=track_person_overlaps,
+    )
     return AnalysisArtifacts(track_evidence=evidence, overlay_frames=overlay_frames, frame_count=len(frame_paths))
 
 
@@ -377,6 +427,21 @@ def detect_with_yolo_model(model: Any, *, frame_path: Path, confidence: float) -
     return detections
 
 
+def detect_person_boxes(model: Any, *, frame_path: Path, confidence: float) -> list[Box]:
+    results = model.predict(str(frame_path), conf=confidence, verbose=False, device="cpu", classes=[0])
+    person_boxes: list[Box] = []
+    for result in results:
+        boxes = getattr(result, "boxes", None)
+        if boxes is None:
+            continue
+        xyxy_values = _to_list(getattr(boxes, "xyxy", []))
+        for xyxy in xyxy_values:
+            x1, y1, x2, y2 = [float(value) for value in xyxy]
+            if x2 > x1 and y2 > y1:
+                person_boxes.append((x1, y1, x2 - x1, y2 - y1))
+    return person_boxes
+
+
 def build_track_evidence(
     *,
     track_points: dict[int, list[tuple[float, float]]],
@@ -384,6 +449,7 @@ def build_track_evidence(
     track_zones: dict[int, list[str]],
     track_times: dict[int, list[float]],
     track_detections: dict[int, int],
+    track_person_overlaps: dict[int, list[float]],
 ) -> list[TrackEvidence]:
     evidence: list[TrackEvidence] = []
     for track_id, points in sorted(track_points.items()):
@@ -398,6 +464,12 @@ def build_track_evidence(
         for left in points:
             for right in points:
                 max_displacement = max(max_displacement, _distance(left, right))
+        static_location_ratio = calculate_static_location_ratio(points)
+        flow_coherence = calculate_flow_coherence(points)
+        output_ratio = (sum(1 for zone in zones if zone == "output") / len(zones)) if zones else 0.0
+        static_stack_overlap_ratio = output_ratio if (zones[0] if zones else "unknown") == "output" or static_location_ratio > 0.5 else 0.0
+        person_overlaps = track_person_overlaps.get(track_id, [])
+        person_overlap_ratio = max(person_overlaps) if person_overlaps else 0.0
         evidence.append(
             TrackEvidence(
                 track_id=track_id,
@@ -411,9 +483,48 @@ def build_track_evidence(
                 mean_internal_motion=round(sum(motions) / len(motions), 6) if motions else 0.0,
                 max_internal_motion=round(max(motions), 6) if motions else 0.0,
                 detections=track_detections.get(track_id, 0),
+                static_location_ratio=round(static_location_ratio, 6),
+                flow_coherence=round(flow_coherence, 6),
+                static_stack_overlap_ratio=round(static_stack_overlap_ratio, 6),
+                person_overlap_ratio=round(person_overlap_ratio, 6),
+                outside_person_ratio=round(max(0.0, 1.0 - person_overlap_ratio), 6),
             )
         )
     return evidence
+
+
+def box_overlap_fraction(box: Box, other: Box) -> float:
+    x1, y1, w1, h1 = box
+    x2, y2, w2, h2 = other
+    left = max(x1, x2)
+    top = max(y1, y2)
+    right = min(x1 + w1, x2 + w2)
+    bottom = min(y1 + h1, y2 + h2)
+    if right <= left or bottom <= top or w1 <= 0 or h1 <= 0:
+        return 0.0
+    return ((right - left) * (bottom - top)) / (w1 * h1)
+
+
+def calculate_static_location_ratio(points: list[tuple[float, float]], *, radius: float = 18.0) -> float:
+    if not points:
+        return 0.0
+    median_x = sorted(point[0] for point in points)[len(points) // 2]
+    median_y = sorted(point[1] for point in points)[len(points) // 2]
+    nearby = sum(1 for point in points if _distance(point, (median_x, median_y)) <= radius)
+    return nearby / len(points)
+
+
+def calculate_flow_coherence(points: list[tuple[float, float]]) -> float:
+    vectors = [(right[0] - left[0], right[1] - left[1]) for left, right in zip(points, points[1:])]
+    vectors = [vector for vector in vectors if math.hypot(vector[0], vector[1]) > 1e-6]
+    if not vectors:
+        return 0.0
+    total_magnitude = sum(math.hypot(dx, dy) for dx, dy in vectors)
+    net_dx = sum(dx for dx, _ in vectors)
+    net_dy = sum(dy for _, dy in vectors)
+    if total_magnitude <= 0:
+        return 0.0
+    return min(1.0, math.hypot(net_dx, net_dy) / total_magnitude)
 
 
 def box_motion_fraction(diff: Any, box: Box, *, threshold: int = 24) -> float:
@@ -548,6 +659,7 @@ def main(argv: list[str] | None = None) -> int:
         end_timestamp=args.end,
         fps=args.fps,
         model_path=args.model,
+        person_model_path=args.person_model,
         confidence=args.confidence,
         force=args.force,
         tracker_match_distance=args.tracker_match_distance,
