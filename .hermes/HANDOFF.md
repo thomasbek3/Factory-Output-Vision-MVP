@@ -1,10 +1,96 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 10:50:00 EDT
+Updated: 2026-04-28 11:27:38 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
 
 
+
+## PRD Milestone 3 start — person/panel separation diagnostics — 2026-04-28 11:27 EDT
+
+Implemented the next bounded perception slice after transfer packets:
+
+```text
+scripts/analyze_person_panel_separation.py
+tests/test_analyze_person_panel_separation.py
+```
+
+Purpose:
+
+```text
+transfer review packet + receipt observations
+→ detect the overlapping person on sampled frames
+→ estimate a conservative person silhouette
+→ measure mesh-like evidence in panel-box regions outside that silhouette
+→ emit diagnostic-only JSON + visual receipts
+```
+
+Generated on the bounded target:
+
+```text
+data/reports/factory2_person_panel_separation.json
+data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/track_receipts/track-000005-person-panel-separation.json
+track-000005-person-panel-separation-frame_000060.png
+track-000005-person-panel-separation-frame_000081.png
+track-000005-person-panel-separation-frame_000100.png
+```
+
+What the first real slice says for `event0002 track 5`:
+
+```text
+packet_id: event0002-track000005
+recommendation: countable_panel_candidate
+diagnostic_only: true
+packet_outside_person_ratio (old bbox signal): 0.0
+frame_000060 visible_nonperson_ratio: 0.542531
+frame_000081 visible_nonperson_ratio: 0.319453
+frame_000100 visible_nonperson_ratio: 0.226362
+```
+
+Interpretation:
+
+```text
+This is still not a count approval and did not change the gate. It is the first auditable evidence slice showing silhouette-separated mesh-like signal on the top transfer packet even when the prior coarse packet metrics said outside_person_ratio=0.0. The current output is diagnostic-only and should be treated as a candidate receipt, not a minted source token.
+```
+
+Commands run:
+
+```bash
+.venv/bin/pip install pytest
+.venv/bin/python -m pytest tests/test_analyze_person_panel_separation.py -q
+.venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py -q
+python -m py_compile scripts/analyze_person_panel_separation.py tests/test_analyze_person_panel_separation.py
+.venv/bin/python -m py_compile scripts/analyze_person_panel_separation.py tests/test_analyze_person_panel_separation.py
+.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/analyze_person_panel_separation.py --packet-id event0002-track000005 --force
+.venv/bin/python scripts/run_factory2_morning_proof.py --force
+```
+
+Verification / proof result:
+
+```text
+14 tests passed
+proof verdict: auditable_abstention_no_trusted_positive
+accepted_count: 0
+suppressed_count: 12
+uncertain_count: 4
+bottleneck: perception_gate_worker_body_overlap
+```
+
+Next blocker:
+
+```text
+The first silhouette estimate is promising but still heuristic: YOLO person boxes + GrabCut can over-separate edges. Before any gate integration, the same diagnostic must survive on the next top packets and on negative/control cases so we know this is discrete carried-panel evidence rather than a segmentation artifact.
+```
+
+Exact next recommended step:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/analyze_person_panel_separation.py --packet-id event0006-track000001 --packet-id event0006-track000004 --force
+```
+
+Then compare those packet JSON/PNG receipts against `event0002 track 5` before touching `app/services/perception_gate.py`.
 
 ## PRD Milestone 1 start — temporal transfer review packets — 2026-04-28 10:50 EDT
 
