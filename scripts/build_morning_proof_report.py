@@ -459,6 +459,7 @@ def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str,
                     "reason": receipt.get("reason") or "unknown",
                     "failure_link": receipt.get("failure_link") or "unknown",
                     "worker_overlap_detail": receipt.get("worker_overlap_detail"),
+                    "evidence_summary": receipt.get("evidence_summary") or {},
                     "receipt_json_path": receipt_json_path,
                     "receipt_card_path": receipt_card_path,
                     "raw_crop_paths": raw_crop_paths,
@@ -472,6 +473,66 @@ def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str,
         "uncertain": groups["uncertain"],
         "counts": {key: len(value) for key, value in groups.items()},
         "missing_review_asset_counts": counter_to_dict(missing_review_assets),
+    }
+
+
+def build_source_token_work_queue(decision_receipt_index: dict[str, Any]) -> dict[str, Any]:
+    """Rank the next evidence tasks for converting abstention into trusted counts.
+
+    This is deliberately not a count path. It is a small operational queue built
+    from suppressed/uncertain receipts so the next slice attacks the precise
+    failed source-token link instead of rummaging through montages by hand.
+    """
+    priority_by_detail = {
+        "protrusion_candidate_not_approved": 10,
+        "high_overlap_partial_outside_worker": 8,
+        "worker_overlap_unclear": 6,
+        "fully_entangled_with_worker": 4,
+    }
+    action_by_detail = {
+        "protrusion_candidate_not_approved": "add crop/shape/person-mask evidence; this may become a true carried-panel source token if the crop proves panel protrusion rather than arm/torso motion",
+        "high_overlap_partial_outside_worker": "inspect raw crops and add finer person/part separation before allowing source tokens",
+        "worker_overlap_unclear": "inspect receipt card/crops and classify whether the box is panel, worker, or static stack edge",
+        "fully_entangled_with_worker": "needs person-mask/pose or better active-panel crop evidence; do not count from the current box alone",
+    }
+    rows: list[dict[str, Any]] = []
+    for bucket in ["uncertain", "suppressed"]:
+        for row in as_list(decision_receipt_index.get(bucket)):
+            if not isinstance(row, dict):
+                continue
+            if row.get("failure_link") != "worker_body_overlap":
+                continue
+            detail = row.get("worker_overlap_detail") or "worker_overlap_unclear"
+            evidence = row.get("evidence_summary") or {}
+            outside_person = float(evidence.get("outside_person_ratio") or 0.0)
+            person_overlap = float(evidence.get("person_overlap_ratio") or 0.0)
+            priority = priority_by_detail.get(str(detail), 5) + outside_person
+            rows.append(
+                {
+                    "priority": round(priority, 3),
+                    "bucket": bucket,
+                    "diagnostic_path": row.get("diagnostic_path"),
+                    "window": row.get("window"),
+                    "track_id": row.get("track_id"),
+                    "reason": row.get("reason") or "unknown",
+                    "worker_overlap_detail": detail,
+                    "person_overlap_ratio": person_overlap,
+                    "outside_person_ratio": outside_person,
+                    "recommended_action": action_by_detail.get(str(detail), action_by_detail["worker_overlap_unclear"]),
+                    "receipt_json_path": row.get("receipt_json_path"),
+                    "receipt_card_path": row.get("receipt_card_path"),
+                    "raw_crop_paths": as_list(row.get("raw_crop_paths")),
+                }
+            )
+
+    rows.sort(key=lambda item: (-float(item.get("priority") or 0.0), str(item.get("diagnostic_path") or ""), int(item.get("track_id") or 0)))
+    detail_counts = Counter(str(row.get("worker_overlap_detail") or "unknown") for row in rows)
+    return {
+        "schema_version": "factory-source-token-work-queue-v1",
+        "purpose": "actionable receipt queue for worker-entangled tracks; not a count source",
+        "item_count": len(rows),
+        "worker_overlap_detail_counts": counter_to_dict(detail_counts),
+        "top_items": rows[:10],
     }
 
 
@@ -522,6 +583,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         failure_link_counts=failure_link_counts,
     )
     decision_receipt_index = build_decision_receipt_index(diagnostics)
+    source_token_work_queue = build_source_token_work_queue(decision_receipt_index)
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -554,6 +616,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         "detector_selection": detector_selection,
         "proof_readiness": proof_readiness,
         "decision_receipt_index": decision_receipt_index,
+        "source_token_work_queue": source_token_work_queue,
         "morning_bar_moved": bool(diagnostics and fp_reports and positive_reports),
         "note": (
             "Counts remain zero unless a perception-gate-approved source token exists. "
@@ -625,10 +688,32 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- counts: `{(report.get('decision_receipt_index') or {}).get('counts')}`",
             f"- missing_review_asset_counts: `{(report.get('decision_receipt_index') or {}).get('missing_review_asset_counts')}`",
             "",
+            "## Source-token work queue",
+            "",
+            f"- purpose: {(report.get('source_token_work_queue') or {}).get('purpose')}",
+            f"- item_count: {(report.get('source_token_work_queue') or {}).get('item_count')}",
+            f"- worker_overlap_detail_counts: `{(report.get('source_token_work_queue') or {}).get('worker_overlap_detail_counts')}`",
+            "",
             "## Representative diagnostic windows",
             "",
         ]
     )
+    work_queue = report.get("source_token_work_queue") or {}
+    work_items = as_list(work_queue.get("top_items"))
+    if work_items:
+        lines.extend(["### Highest-priority worker-entangled receipts", ""])
+        for row in work_items[:5]:
+            lines.extend(
+                [
+                    f"- track {row.get('track_id')} priority {row.get('priority')} in `{row.get('diagnostic_path')}`: `{row.get('worker_overlap_detail')}`",
+                    f"  - action: {row.get('recommended_action')}",
+                    f"  - person_overlap/outside_person: {row.get('person_overlap_ratio')} / {row.get('outside_person_ratio')}",
+                    f"  - receipt_json: `{row.get('receipt_json_path')}`",
+                    f"  - receipt_card: `{row.get('receipt_card_path')}`",
+                    f"  - raw_crops: `{row.get('raw_crop_paths')}`",
+                ]
+            )
+        lines.append("")
     decision_index = report.get("decision_receipt_index") or {}
     for bucket in ["accepted", "suppressed", "uncertain"]:
         rows = as_list(decision_index.get(bucket))

@@ -153,6 +153,11 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["decision_receipt_index"]["suppressed"][0]["receipt_json_path"] == str(receipt)
     assert report["decision_receipt_index"]["suppressed"][0]["raw_crop_paths"] == ["diag/track_receipts/track-000001-crops/crop-01.jpg"]
     assert report["decision_receipt_index"]["uncertain"][0]["failure_link"] == "missing_output_settle"
+    assert report["source_token_work_queue"]["item_count"] == 2
+    assert report["source_token_work_queue"]["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
+    assert report["source_token_work_queue"]["top_items"][0]["worker_overlap_detail"] == "fully_entangled_with_worker"
+    assert "do not count from the current box alone" in report["source_token_work_queue"]["top_items"][0]["recommended_action"]
+    assert any(item["receipt_json_path"] == str(receipt) for item in report["source_token_work_queue"]["top_items"])
     assert report["decision_receipt_index"]["missing_review_asset_counts"] == {
         "raw_crop_paths": 2,
         "receipt_card_path": 2,
@@ -238,6 +243,9 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     assert "accepted_count: 0" in markdown
     assert "Proof readiness" in markdown
     assert "Decision receipt index" in markdown
+    assert "Source-token work queue" in markdown
+    assert "Highest-priority worker-entangled receipts" in markdown
+    assert "do not count from the current box alone" in markdown
     assert "Suppressed receipt samples" in markdown
     assert "worker_overlap_details" in markdown
     assert "receipts/track-1.json" in markdown
