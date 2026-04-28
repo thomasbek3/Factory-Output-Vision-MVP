@@ -13,6 +13,44 @@ Build a plug-and-play factory output counter appliance that:
 - requires no CLI after install
 - can be configured in under 15 minutes
 
+### 1.1) Current proof target — representative factory footage
+
+For the current wire-mesh/panel proof, success is not generic object counting. The product must prove this physical event rule on representative factory footage such as `factory2.MOV`:
+
+```text
+worker brings a new panel from source/process area → system counts 1
+worker picks up/repositions an already-output panel → system counts 0
+new panel later arrives from source/process area → system counts 1
+```
+
+Non-negotiable doctrine:
+
+- detector boxes are observations, not counts;
+- output-zone-only motion is not count evidence;
+- static finished stacks, resident panels, worker/body overlap, and background edges must not count;
+- a count requires a valid source→output delivery token consumed exactly once;
+- every count, suppression, and uncertain decision needs reviewable evidence receipts;
+- AI/VLM audit reviews receipts and failure cases, but raw VLM counting is not the source of truth.
+
+### 1.2) Definition of done for the current overnight loop
+
+Tonight's loop is done when it produces a repeatable evidence pipeline, not just a raw count:
+
+1. Mine or select candidate event windows from `factory2.MOV`.
+2. Generate diagnostic overlays, per-track JSON receipts, image receipt cards, raw crops, and hard-negative manifests.
+3. Gate tracks before the count state machine so only approved source-token candidates can count.
+4. Export hard negatives with empty YOLO labels and assemble them with reviewed positives into a trainable `active_panel` dataset.
+5. Add/verify a detector false-positive evaluation path on hard-negative images before any expensive retraining.
+6. Update `.hermes/HANDOFF.md` before and after each bounded cron slice.
+
+A cron slice is successful if it leaves behind one of:
+
+- a tested commit that improves the evidence/training/eval loop;
+- a real diagnostic/eval artifact with receipts; or
+- a clear failure report explaining exactly which evidence link failed.
+
+It is **not** successful if it merely reports an unaudited raw count.
+
 ---
 
 ## 2) Target environment
@@ -54,8 +92,14 @@ Optional:
 
 ### v1.0 — Vision-only
 Primary method:
-- YOLOv8 object detection (person-excluded) + centroid tracking + new-object counting in output zone
-- Person-ignore masking is always on by default (persons are excluded from part detections)
+- custom active-panel detection + tracking + source-token state machine;
+- source/process and finished/output zones are both calibrated;
+- detections are treated as observations only — a detection inside output is never by itself a count;
+- a count is committed only after a perception-gate-approved source→output delivery token is consumed;
+- resident/output-only objects, static finished stacks, repositioning, worker/body overlap, and background edges are suppressed or sent to review;
+- every count/suppression/uncertain event produces receipts that can be audited.
+
+Person masking is not always safe with custom in-transit part models because the part may overlap the worker. Use the pre-count perception gate/person-overlap/protrusion logic rather than blindly deleting pixels inside person boxes.
 
 ### v1.5 — Beam + vision (not in v1.0 scope)
 - USB photo-eye via serial bridge for deterministic count
@@ -226,7 +270,7 @@ Logging rules:
 ## 9) Performance constraints
 - Vision processing capped at 10 FPS
 - UI snapshot capped at 2 FPS
-- Person-ignore masking runs always (not gated to Drop)
+- Person/body handling must be explicit and testable; do not globally mask custom active-panel detections inside person boxes because carried panels often overlap workers
 - Must run for 8 hours without leaking memory
 
 ### v1.5 note:

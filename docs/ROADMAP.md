@@ -56,7 +56,7 @@ v11.0  "The factory runs itself."
 
 ## v1.0 — Camera-Only MVP (current build)
 
-**Goal:** Prove that vision-based counting works on real factory lines.
+**Goal:** Prove that vision-based counting works on real factory lines, including representative source→output delivery workflows where parts can be picked up, repositioned, and partially occluded by workers.
 
 **What it does:**
 - Camera watches conveyor, counts parts crossing a line
@@ -69,6 +69,9 @@ v11.0  "The factory runs itself."
 
 **What it proves:**
 - CV accuracy on easy conveyor lines
+- Source-token counting works for source→output deliveries on representative footage
+- Resident/repositioned output parts do not double-count
+- Every count/suppression has auditable evidence receipts
 - Setup flow works for non-technical users
 - Anomaly detection catches real events
 - System runs stable for 8+ hours
@@ -76,7 +79,7 @@ v11.0  "The factory runs itself."
 **Hardware:** ~$200-260 (edge PC + camera)
 **Pricing:** $49/line/mo
 **Ship when:** First factory pilot runs a full shift with usable data.
-**Success metric:** Count accuracy ≥ 90% on easy lines. Zero crashes in 8 hours.
+**Success metric:** Count accuracy ≥ 90% on easy lines, zero audited double-counts from resident/repositioned output parts in the proof clips, and zero crashes in 8 hours.
 
 ---
 
