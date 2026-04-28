@@ -273,6 +273,82 @@ def summarize_positive_report(path: Path) -> dict[str, Any]:
     }
 
 
+def report_key(report: dict[str, Any]) -> tuple[str, Optional[float]]:
+    return (str(report.get("model_path") or "unknown"), report.get("confidence"))
+
+
+def select_detector_model(fp_reports: list[dict[str, Any]], positive_reports: list[dict[str, Any]]) -> dict[str, Any]:
+    """Pick the safest currently evaluated detector/threshold pair.
+
+    The proof report needs to say more than "we tested some models". For the
+    current source-token pipeline, a detector candidate is usable only if it does
+    not create hard-negative false positives; among safe candidates, prefer the
+    highest positive-label recall. This selection is advisory evidence for the
+    proof loop, not permission for raw detections to count.
+    """
+    fp_by_key = {report_key(report): report for report in fp_reports}
+    candidates: list[dict[str, Any]] = []
+    for positive in positive_reports:
+        key = report_key(positive)
+        fp = fp_by_key.get(key)
+        if not fp:
+            continue
+        fp_detections = int(fp.get("false_positive_detections") or 0)
+        fp_images_with_hits = int(fp.get("images_with_false_positives") or 0)
+        positive_labels = int(positive.get("positive_labels") or 0)
+        matched_labels = int(positive.get("matched_labels") or 0)
+        label_recall = positive.get("label_recall")
+        if label_recall is None:
+            label_recall = matched_labels / positive_labels if positive_labels else 0.0
+        candidates.append(
+            {
+                "model_path": positive.get("model_path"),
+                "confidence": positive.get("confidence"),
+                "iou_threshold": positive.get("iou_threshold"),
+                "label_recall": label_recall,
+                "positive_labels": positive_labels,
+                "matched_labels": matched_labels,
+                "missed_labels": int(positive.get("missed_labels") or max(0, positive_labels - matched_labels)),
+                "hard_negative_images": int(fp.get("hard_negative_images") or 0),
+                "false_positive_detections": fp_detections,
+                "images_with_false_positives": fp_images_with_hits,
+                "false_positive_image_rate": fp.get("false_positive_image_rate"),
+                "positive_report_path": positive.get("report_path"),
+                "false_positive_report_path": fp.get("report_path"),
+                "safe_on_hard_negatives": fp_detections == 0 and fp_images_with_hits == 0,
+            }
+        )
+
+    safe_candidates = [candidate for candidate in candidates if candidate["safe_on_hard_negatives"]]
+    selection_pool = safe_candidates or candidates
+    selected = None
+    if selection_pool:
+        selected = max(
+            selection_pool,
+            key=lambda candidate: (
+                1 if candidate["safe_on_hard_negatives"] else 0,
+                float(candidate.get("label_recall") or 0.0),
+                int(candidate.get("matched_labels") or 0),
+                float(candidate.get("confidence") or 0.0),
+                str(candidate.get("model_path") or ""),
+            ),
+        )
+
+    return {
+        "selection_rule": "zero hard-negative false positives first, then highest positive-label recall",
+        "candidate_count": len(candidates),
+        "safe_candidate_count": len(safe_candidates),
+        "selected": selected,
+        "candidates": sorted(
+            candidates,
+            key=lambda candidate: (
+                str(candidate.get("model_path") or ""),
+                float(candidate.get("confidence") or 0.0),
+            ),
+        ),
+    }
+
+
 def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[Path], positive_report_paths: Iterable[Path] = ()) -> dict[str, Any]:
     diagnostics = [summarize_diagnostic(path) for path in diagnostic_paths]
     fp_reports = [summarize_fp_report(path) for path in fp_report_paths]
@@ -299,6 +375,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
     positive_labels = sum(int(item["positive_labels"]) for item in positive_reports)
     matched_positive_labels = sum(int(item["matched_labels"]) for item in positive_reports)
     missed_positive_labels = sum(int(item["missed_labels"]) for item in positive_reports)
+    detector_selection = select_detector_model(fp_reports, positive_reports)
 
     bottleneck = "none"
     if accepted_count == 0:
@@ -339,6 +416,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
             "label_recall": matched_positive_labels / positive_labels if positive_labels else None,
             "reports": positive_reports,
         },
+        "detector_selection": detector_selection,
         "morning_bar_moved": bool(diagnostics and fp_reports and positive_reports),
         "note": (
             "Counts remain zero unless a perception-gate-approved source token exists. "
@@ -376,6 +454,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         ]
     )
     positive_eval = report.get("detector_positive_eval") or {}
+    detector_selection = report.get("detector_selection") or {}
+    selected_detector = detector_selection.get("selected") or {}
     lines.extend(
         [
             "## Detector positive eval",
@@ -384,6 +464,15 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- matched_labels: {positive_eval.get('matched_labels')}",
             f"- missed_labels: {positive_eval.get('missed_labels')}",
             f"- label_recall: {positive_eval.get('label_recall')}",
+            "",
+            "## Detector selection",
+            "",
+            f"- selection_rule: {detector_selection.get('selection_rule')}",
+            f"- candidates: {detector_selection.get('candidate_count')}; safe_on_hard_negatives: {detector_selection.get('safe_candidate_count')}",
+            f"- selected_model: `{selected_detector.get('model_path')}`",
+            f"- selected_confidence: {selected_detector.get('confidence')}",
+            f"- selected_label_recall: {selected_detector.get('label_recall')}",
+            f"- selected_false_positive_detections: {selected_detector.get('false_positive_detections')}",
             "",
             "## Representative diagnostic windows",
             "",
