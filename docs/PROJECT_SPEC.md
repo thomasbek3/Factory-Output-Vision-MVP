@@ -3,6 +3,14 @@ This is the single source of truth for behavior. Do not implement features not d
 
 See ROADMAP.md for v1.5 (beam), v2.0 (OEE/intelligence), and beyond.
 
+Active perception PRD for the current `factory2.MOV` blocker:
+
+```text
+docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md
+```
+
+Work on the worker-entangled carried-panel problem should follow that PRD before changing count logic.
+
 ---
 
 ## 1) Mission (non-negotiable)
