@@ -111,6 +111,38 @@ def test_gate_allows_high_person_overlap_when_panel_protrudes_from_body() -> Non
     assert "source_token_allowed_by_protrusion" in decision.flags
 
 
+def test_gate_allows_high_person_overlap_when_strong_person_panel_separation_exists() -> None:
+    decision = evaluate_track(
+        GateTrackFeatures(
+            track_id=15,
+            source_frames=38,
+            output_frames=1,
+            zones_seen=["source", "output"],
+            first_zone="source",
+            max_displacement=603.294,
+            mean_internal_motion=0.337425,
+            max_internal_motion=0.730217,
+            detections=39,
+            person_overlap_ratio=1.0,
+            outside_person_ratio=0.0,
+            static_stack_overlap_ratio=0.0,
+            static_location_ratio=0.333333,
+            flow_coherence=0.501419,
+            person_panel_recommendation="countable_panel_candidate",
+            person_panel_total_candidate_frames=3,
+            person_panel_source_candidate_frames=2,
+            person_panel_max_visible_nonperson_ratio=0.542531,
+            person_panel_max_signal=0.075512,
+        ),
+        GateConfig(),
+    )
+
+    assert decision.decision == "allow_source_token"
+    assert decision.reason == "moving_panel_candidate"
+    assert "high_person_overlap" in decision.flags
+    assert "source_token_allowed_by_person_panel_separation" in decision.flags
+
+
 def test_gate_marks_high_person_overlap_without_protrusion_uncertain_not_countable() -> None:
     decision = evaluate_track(
         GateTrackFeatures(
@@ -136,6 +168,37 @@ def test_gate_marks_high_person_overlap_without_protrusion_uncertain_not_countab
     assert decision.reason == "source_to_output_evidence_incomplete"
     assert "high_person_overlap" in decision.flags
     assert "source_token_allowed_by_protrusion" not in decision.flags
+
+
+def test_gate_keeps_worker_overlap_rejected_when_separation_is_not_persistent() -> None:
+    decision = evaluate_track(
+        GateTrackFeatures(
+            track_id=16,
+            source_frames=9,
+            output_frames=1,
+            zones_seen=["source", "output"],
+            first_zone="source",
+            max_displacement=275.0,
+            mean_internal_motion=0.18,
+            max_internal_motion=0.42,
+            detections=10,
+            person_overlap_ratio=0.92,
+            outside_person_ratio=0.0,
+            static_stack_overlap_ratio=0.0,
+            static_location_ratio=0.1,
+            flow_coherence=0.41,
+            person_panel_recommendation="insufficient_visibility",
+            person_panel_total_candidate_frames=1,
+            person_panel_source_candidate_frames=1,
+            person_panel_max_visible_nonperson_ratio=0.491658,
+            person_panel_max_signal=0.048451,
+        ),
+        GateConfig(),
+    )
+
+    assert decision.decision == "reject"
+    assert decision.reason == "worker_body_overlap"
+    assert "source_token_allowed_by_person_panel_separation" not in decision.flags
 
 
 def test_gate_summary_counts_decisions_and_reasons() -> None:

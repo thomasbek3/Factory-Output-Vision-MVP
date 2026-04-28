@@ -100,6 +100,45 @@ def fake_crop_evidence_analyzer(report, *, limit):
     }
 
 
+def fake_transfer_packet_builder(proof_report, output, *, repo_root, limit, force):
+    assert limit == 10
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-transfer-review-packets-v1",
+                "packet_count": 1,
+                "packets": [{"track_id": 5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return {"schema_version": "factory-transfer-review-packets-v1", "packet_count": 1, "packets": [{"track_id": 5}]}
+
+
+def fake_person_panel_separation_analyzer(packets_report, output, *, repo_root, limit, packet_ids, force):
+    assert limit == 3
+    assert packet_ids is None
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-person-panel-separation-v1",
+                "diagnostic_only": True,
+                "packet_count": 1,
+                "packets": [{"packet_id": "event0002-track000005", "recommendation": "countable_panel_candidate"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return {
+        "schema_version": "factory-person-panel-separation-v1",
+        "diagnostic_only": True,
+        "packet_count": 1,
+        "packets": [{"packet_id": "event0002-track000005", "recommendation": "countable_panel_candidate"}],
+    }
+
+
 def test_run_factory2_morning_proof_runs_eval_matrix_and_report(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     data_yaml = write_dataset(tmp_path)
@@ -141,6 +180,37 @@ def test_run_factory2_morning_proof_runs_eval_matrix_and_report(tmp_path: Path, 
 
     assert default_fp_output(model_a, 0.25).exists()
     assert default_positive_output(model_b, 0.10, 0.30).exists()
+
+
+def test_run_factory2_morning_proof_builds_transfer_and_person_panel_artifacts(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    data_yaml = write_dataset(tmp_path)
+    diagnostic = write_diagnostic(tmp_path)
+    model = tmp_path / "models" / "panel_in_transit.pt"
+    model.parent.mkdir(parents=True, exist_ok=True)
+    model.write_text("model", encoding="utf-8")
+
+    summary = run_factory2_morning_proof(
+        data_yaml=data_yaml,
+        models=[model],
+        confidences=[0.25],
+        diagnostic_paths=[diagnostic],
+        report_json=tmp_path / "report.json",
+        report_md=tmp_path / "report.md",
+        run_summary_json=tmp_path / "run_summary.json",
+        panel_crop_evidence_json=tmp_path / "panel_crop_evidence.json",
+        force=True,
+        fp_evaluator=fake_fp_evaluator,
+        positive_evaluator=fake_positive_evaluator,
+        crop_evidence_analyzer=fake_crop_evidence_analyzer,
+        transfer_packet_builder=fake_transfer_packet_builder,
+        person_panel_separation_analyzer=fake_person_panel_separation_analyzer,
+    )
+
+    assert summary["transfer_review_packets_report"] == "data/reports/factory2_transfer_review_packets.json"
+    assert summary["person_panel_separation_report"] == "data/reports/factory2_person_panel_separation.json"
+    assert (tmp_path / "data" / "reports" / "factory2_transfer_review_packets.json").exists()
+    assert (tmp_path / "data" / "reports" / "factory2_person_panel_separation.json").exists()
 
 
 def test_run_factory2_morning_proof_skips_missing_models_but_records_them(tmp_path: Path, monkeypatch):

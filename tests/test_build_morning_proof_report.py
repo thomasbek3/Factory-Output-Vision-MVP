@@ -209,6 +209,157 @@ def test_build_report_counts_allowed_source_tokens(tmp_path: Path):
     assert report["bottleneck"] == "none"
 
 
+def test_build_report_rehydrates_gate_with_person_panel_separation_receipt(tmp_path: Path):
+    receipt = tmp_path / "diag" / "track_receipts" / "track-000005.json"
+    receipt.parent.mkdir(parents=True, exist_ok=True)
+    receipt.write_text(
+        """
+        {
+          "review_assets": {
+            "track_sheet_path": "diag/track_receipts/track-000005-sheet.jpg",
+            "raw_crop_paths": ["diag/track_receipts/track-000005-crops/crop-01-source.jpg"]
+          }
+        }
+        """,
+        encoding="utf-8",
+    )
+    separation = receipt.with_name("track-000005-person-panel-separation.json")
+    separation.write_text(
+        """
+        {
+          "packet_id": "event0002-track000005",
+          "diagnostic_only": true,
+          "recommendation": "countable_panel_candidate",
+          "summary": {
+            "frame_count": 3,
+            "separable_panel_candidate_frames": 3,
+            "worker_body_overlap_frames": 0,
+            "static_or_background_edge_frames": 0,
+            "max_visible_nonperson_ratio": 0.542531,
+            "max_estimated_visible_signal": 0.075512
+          },
+          "selected_frames": [
+            {"zone": "source", "separation_decision": "separable_panel_candidate"},
+            {"zone": "source", "separation_decision": "separable_panel_candidate"},
+            {"zone": "output", "separation_decision": "separable_panel_candidate"}
+          ]
+        }
+        """,
+        encoding="utf-8",
+    )
+    weak_receipt = tmp_path / "diag" / "track_receipts" / "track-000007.json"
+    weak_receipt.write_text('{"review_assets": {"raw_crop_paths": []}}', encoding="utf-8")
+    weak_receipt.with_name("track-000007-person-panel-separation.json").write_text(
+        """
+        {
+          "packet_id": "event0002-track000007",
+          "diagnostic_only": true,
+          "recommendation": "insufficient_visibility",
+          "summary": {
+            "frame_count": 1,
+            "separable_panel_candidate_frames": 1,
+            "worker_body_overlap_frames": 0,
+            "static_or_background_edge_frames": 0,
+            "max_visible_nonperson_ratio": 0.491658,
+            "max_estimated_visible_signal": 0.048451
+          },
+          "selected_frames": [
+            {"zone": "source", "separation_decision": "separable_panel_candidate"}
+          ]
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    diagnostic = write_json(
+        tmp_path / "diag" / "diagnostic.json",
+        f"""
+        {{
+          "schema_version": "factory-event-diagnostic-v1",
+          "video_path": "data/videos/from-pc/factory2.MOV",
+          "start_timestamp": 78.0,
+          "end_timestamp": 118.0,
+          "fps": 3.0,
+          "frame_count": 120,
+          "overlay_sheet_path": "diag/overlay_sheet.jpg",
+          "overlay_video_path": "diag/overlay_video.mp4",
+          "perception_gate_summary": {{
+            "allowed_source_token_tracks": [],
+            "track_count": 2,
+            "decision_counts": {{"allow_source_token": 0, "reject": 2}},
+            "reason_counts": {{"worker_body_overlap": 2}}
+          }},
+          "perception_gate": [
+            {{
+              "track_id": 5,
+              "decision": "reject",
+              "reason": "worker_body_overlap",
+              "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+              "evidence": {{
+                "track_id": 5,
+                "detections": 39,
+                "first_zone": "source",
+                "zones_seen": ["source", "output"],
+                "source_frames": 38,
+                "output_frames": 1,
+                "max_displacement": 603.294,
+                "mean_internal_motion": 0.337425,
+                "max_internal_motion": 0.730217,
+                "person_overlap_ratio": 1.0,
+                "outside_person_ratio": 0.0,
+                "static_stack_overlap_ratio": 0.0,
+                "static_location_ratio": 0.333333,
+                "flow_coherence": 0.501419,
+                "edge_like_ratio": 0.0
+              }}
+            }},
+            {{
+              "track_id": 7,
+              "decision": "reject",
+              "reason": "worker_body_overlap",
+              "flags": ["high_person_overlap", "not_enough_object_outside_person"],
+              "evidence": {{
+                "track_id": 7,
+                "detections": 1,
+                "first_zone": "source",
+                "zones_seen": ["source"],
+                "source_frames": 1,
+                "output_frames": 0,
+                "max_displacement": 22.0,
+                "mean_internal_motion": 0.11,
+                "max_internal_motion": 0.24,
+                "person_overlap_ratio": 0.708349,
+                "outside_person_ratio": 0.291651,
+                "static_stack_overlap_ratio": 0.0,
+                "static_location_ratio": 0.0,
+                "flow_coherence": 0.2,
+                "edge_like_ratio": 0.0
+              }}
+            }}
+          ],
+          "track_receipts": ["{receipt}", "{weak_receipt}"],
+          "track_receipt_cards": []
+        }}
+        """,
+    )
+    fp_report = write_json(tmp_path / "fp.json", '{"items": []}')
+
+    report = build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report])
+
+    assert report["accepted_count"] == 1
+    assert report["suppressed_count"] == 1
+    assert report["verdict"] == "accepted_positive_count_available"
+    accepted = report["decision_receipt_index"]["accepted"][0]
+    suppressed = report["decision_receipt_index"]["suppressed"][0]
+    assert accepted["track_id"] == 5
+    assert accepted["person_panel_separation_path"] == str(separation)
+    assert suppressed["track_id"] == 7
+    promoted_track = next(item for item in report["diagnostics"][0]["track_decision_receipts"] if item["track_id"] == 5)
+    assert promoted_track["decision"] == "allow_source_token"
+    assert promoted_track["reason"] == "moving_panel_candidate"
+    assert promoted_track["failure_link"] == "source_token_approved"
+
+
 def test_worker_overlap_details_separate_entangled_from_protruding(tmp_path: Path):
     diagnostic = write_json(
         tmp_path / "diagnostic.json",

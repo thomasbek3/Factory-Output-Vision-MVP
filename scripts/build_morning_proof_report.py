@@ -10,8 +10,11 @@ from __future__ import annotations
 import argparse
 import json
 from collections import Counter
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Iterable, Optional
+
+from app.services.perception_gate import GateTrackFeatures, evaluate_track
 
 SCHEMA_VERSION = "factory-morning-proof-report-v1"
 DEFAULT_DIAGNOSTICS = [
@@ -111,6 +114,87 @@ def load_receipt_assets(path: str) -> dict[str, Any]:
     return payload.get("review_assets") or {}
 
 
+def person_panel_separation_path(receipt_path: str | None) -> str | None:
+    if not receipt_path:
+        return None
+    path = Path(receipt_path)
+    return str(path.with_name(path.stem + "-person-panel-separation.json"))
+
+
+def load_person_panel_separation(path: str | None) -> dict[str, Any]:
+    if not path:
+        return {}
+    try:
+        return load_json(Path(path))
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return {}
+
+
+def person_panel_separation_features(payload: dict[str, Any]) -> dict[str, Any]:
+    summary = payload.get("summary") or {}
+    selected_frames = [item for item in as_list(payload.get("selected_frames")) if isinstance(item, dict)]
+    total_candidate_frames = int(summary.get("separable_panel_candidate_frames") or 0)
+    if not total_candidate_frames:
+        total_candidate_frames = sum(1 for item in selected_frames if item.get("separation_decision") == "separable_panel_candidate")
+    source_candidate_frames = sum(
+        1
+        for item in selected_frames
+        if item.get("separation_decision") == "separable_panel_candidate" and str(item.get("zone") or "unknown") != "output"
+    )
+    return {
+        "person_panel_recommendation": payload.get("recommendation"),
+        "person_panel_total_candidate_frames": total_candidate_frames,
+        "person_panel_source_candidate_frames": source_candidate_frames,
+        "person_panel_max_visible_nonperson_ratio": float(summary.get("max_visible_nonperson_ratio") or 0.0),
+        "person_panel_max_signal": float(summary.get("max_estimated_visible_signal") or 0.0),
+        "person_panel_summary": summary if summary else None,
+    }
+
+
+def maybe_promote_worker_overlap_gate_row(row: dict[str, Any], receipt_path: str | None) -> dict[str, Any]:
+    if not isinstance(row, dict):
+        return row
+    if str(row.get("decision") or "") != "reject" or str(row.get("reason") or "") != "worker_body_overlap":
+        return row
+
+    evidence = row.get("evidence") or {}
+    separation_payload = load_person_panel_separation(person_panel_separation_path(receipt_path))
+    separation = person_panel_separation_features(separation_payload)
+    if separation.get("person_panel_recommendation") != "countable_panel_candidate":
+        return row
+
+    try:
+        features = GateTrackFeatures(
+            track_id=int(evidence.get("track_id") or row.get("track_id") or 0),
+            source_frames=int(evidence.get("source_frames") or 0),
+            output_frames=int(evidence.get("output_frames") or 0),
+            zones_seen=[str(zone) for zone in as_list(evidence.get("zones_seen"))],
+            first_zone=str(evidence.get("first_zone") or "unknown"),
+            max_displacement=float(evidence.get("max_displacement") or 0.0),
+            mean_internal_motion=float(evidence.get("mean_internal_motion") or 0.0),
+            max_internal_motion=float(evidence.get("max_internal_motion") or 0.0),
+            detections=int(evidence.get("detections") or 0),
+            person_overlap_ratio=float(evidence.get("person_overlap_ratio") or 0.0),
+            outside_person_ratio=float(evidence.get("outside_person_ratio") or 0.0),
+            static_stack_overlap_ratio=float(evidence.get("static_stack_overlap_ratio") or 0.0),
+            static_location_ratio=float(evidence.get("static_location_ratio") or 0.0),
+            flow_coherence=float(evidence.get("flow_coherence") or 0.0),
+            edge_like_ratio=float(evidence.get("edge_like_ratio") or 0.0),
+            person_panel_recommendation=str(separation.get("person_panel_recommendation") or ""),
+            person_panel_total_candidate_frames=int(separation.get("person_panel_total_candidate_frames") or 0),
+            person_panel_source_candidate_frames=int(separation.get("person_panel_source_candidate_frames") or 0),
+            person_panel_max_visible_nonperson_ratio=float(separation.get("person_panel_max_visible_nonperson_ratio") or 0.0),
+            person_panel_max_signal=float(separation.get("person_panel_max_signal") or 0.0),
+        )
+    except (TypeError, ValueError):
+        return row
+
+    promoted = evaluate_track(features)
+    if promoted.decision != "allow_source_token":
+        return row
+    return asdict(promoted)
+
+
 def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_paths: list[str]) -> list[dict[str, Any]]:
     receipt_by_track = {track_id: path for path in receipt_paths if (track_id := track_id_from_path(path)) is not None}
     card_by_track = {track_id: path for path in card_paths if (track_id := track_id_from_path(path)) is not None}
@@ -125,6 +209,9 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
             normalized_track_id = None
         receipt_path = receipt_by_track.get(normalized_track_id) if normalized_track_id is not None else None
         receipt_assets = load_receipt_assets(receipt_path) if receipt_path else {}
+        separation_path = person_panel_separation_path(receipt_path) if receipt_path else None
+        separation_payload = load_person_panel_separation(separation_path)
+        separation = person_panel_separation_features(separation_payload)
         rows.append(
             {
                 "track_id": normalized_track_id,
@@ -148,6 +235,9 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
                 "receipt_json_path": receipt_path,
                 "receipt_card_path": card_by_track.get(normalized_track_id) or receipt_assets.get("track_sheet_path"),
                 "raw_crop_paths": as_list(receipt_assets.get("raw_crop_paths")),
+                "person_panel_separation_path": separation_path if separation_payload else None,
+                "person_panel_recommendation": separation.get("person_panel_recommendation"),
+                "person_panel_summary": separation.get("person_panel_summary"),
             }
         )
     return rows
@@ -156,8 +246,14 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
 def summarize_diagnostic(path: Path) -> dict[str, Any]:
     payload = load_json(path)
     gate_summary = payload.get("perception_gate_summary") or {}
-    gate_rows = as_list(payload.get("perception_gate"))
+    raw_gate_rows = [item for item in as_list(payload.get("perception_gate")) if isinstance(item, dict)]
     diagnosis_rows = as_list(payload.get("diagnosis"))
+    receipt_paths = [str(p) for p in as_list(payload.get("track_receipts"))]
+    receipt_by_track = {track_id: receipt for receipt in receipt_paths if (track_id := track_id_from_path(receipt)) is not None}
+    gate_rows = [
+        maybe_promote_worker_overlap_gate_row(row, receipt_by_track.get(int(row.get("track_id") or 0)))
+        for row in raw_gate_rows
+    ]
 
     decision_counts = Counter()
     reason_counts = Counter()
@@ -167,18 +263,24 @@ def summarize_diagnostic(path: Path) -> dict[str, Any]:
         decision_counts[decision] += 1
         reason_counts[reason] += 1
 
-    if gate_summary.get("decision_counts"):
+    if not gate_rows and gate_summary.get("decision_counts"):
         decision_counts = Counter({str(k): int(v) for k, v in gate_summary.get("decision_counts", {}).items()})
-    if gate_summary.get("reason_counts"):
+    if not gate_rows and gate_summary.get("reason_counts"):
         reason_counts = Counter({str(k): int(v) for k, v in gate_summary.get("reason_counts", {}).items()})
 
-    allowed_tracks = [int(track_id) for track_id in as_list(gate_summary.get("allowed_source_token_tracks"))]
+    if gate_rows:
+        allowed_tracks = [
+            int(row.get("track_id") or 0)
+            for row in gate_rows
+            if str(row.get("decision") or "") == "allow_source_token"
+        ]
+    else:
+        allowed_tracks = [int(track_id) for track_id in as_list(gate_summary.get("allowed_source_token_tracks"))]
     accepted_count = len(allowed_tracks)
     track_count = int(gate_summary.get("track_count") or len(gate_rows) or len(diagnosis_rows))
     suppressed_count = int(decision_counts.get("reject", 0))
     uncertain_count = int(decision_counts.get("uncertain", 0))
 
-    receipt_paths = [str(p) for p in as_list(payload.get("track_receipts"))]
     card_paths = [str(p) for p in as_list(payload.get("track_receipt_cards"))]
     track_receipts = build_track_receipts(gate_rows, receipt_paths, card_paths)
     failure_link_counts = Counter(str(item.get("failure_link") or "unknown") for item in track_receipts)
@@ -463,6 +565,9 @@ def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str,
                     "receipt_json_path": receipt_json_path,
                     "receipt_card_path": receipt_card_path,
                     "raw_crop_paths": raw_crop_paths,
+                    "person_panel_separation_path": receipt.get("person_panel_separation_path"),
+                    "person_panel_recommendation": receipt.get("person_panel_recommendation"),
+                    "person_panel_summary": receipt.get("person_panel_summary"),
                 }
             )
 

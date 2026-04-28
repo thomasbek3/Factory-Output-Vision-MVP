@@ -22,15 +22,19 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.build_morning_proof_report import DEFAULT_DIAGNOSTICS, build_report, render_markdown
+from scripts.build_panel_transfer_review_packets import build_transfer_review_packets
 from scripts.eval_detector_false_positives import evaluate_false_positives
 from scripts.eval_detector_positives import evaluate_detector_positives
 from scripts.analyze_panel_crop_evidence import analyze_work_queue_report
+from scripts.analyze_person_panel_separation import build_person_panel_separation_report
 
 DATA_YAML = Path("data/labels/active_panel_dataset_with_hard_negatives_v1/data.yaml")
 REPORT_JSON = Path("data/reports/factory2_morning_proof_report.json")
 REPORT_MD = Path("data/reports/factory2_morning_proof_report.md")
 RUN_SUMMARY_JSON = Path("data/reports/factory2_morning_proof_run_summary.json")
 PANEL_CROP_EVIDENCE_JSON = Path("data/reports/factory2_panel_crop_evidence.json")
+TRANSFER_REVIEW_PACKETS_JSON = Path("data/reports/factory2_transfer_review_packets.json")
+PERSON_PANEL_SEPARATION_JSON = Path("data/reports/factory2_person_panel_separation.json")
 DEFAULT_MODELS = [Path("models/panel_in_transit.pt"), Path("models/caleb_metal_panel.pt")]
 DEFAULT_CONFIDENCES = [0.25, 0.10]
 DEFAULT_IOU_THRESHOLD = 0.30
@@ -38,6 +42,8 @@ DEFAULT_IOU_THRESHOLD = 0.30
 FalsePositiveEvaluator = Callable[..., dict[str, Any]]
 PositiveEvaluator = Callable[..., dict[str, Any]]
 CropEvidenceAnalyzer = Callable[..., dict[str, Any]]
+TransferPacketBuilder = Callable[..., dict[str, Any]]
+PersonPanelSeparationAnalyzer = Callable[..., dict[str, Any]]
 
 
 def model_slug(model_path: Path) -> str:
@@ -81,10 +87,14 @@ def run_factory2_morning_proof(
     report_md: Path = REPORT_MD,
     run_summary_json: Path = RUN_SUMMARY_JSON,
     panel_crop_evidence_json: Path = PANEL_CROP_EVIDENCE_JSON,
+    transfer_review_packets_json: Path = TRANSFER_REVIEW_PACKETS_JSON,
+    person_panel_separation_json: Path = PERSON_PANEL_SEPARATION_JSON,
     force: bool = False,
     fp_evaluator: FalsePositiveEvaluator = evaluate_false_positives,
     positive_evaluator: PositiveEvaluator = evaluate_detector_positives,
     crop_evidence_analyzer: CropEvidenceAnalyzer = analyze_work_queue_report,
+    transfer_packet_builder: TransferPacketBuilder = build_transfer_review_packets,
+    person_panel_separation_analyzer: PersonPanelSeparationAnalyzer = build_person_panel_separation_report,
 ) -> dict[str, Any]:
     selected_models = models if models is not None else DEFAULT_MODELS
     selected_confidences = confidences if confidences is not None else DEFAULT_CONFIDENCES
@@ -133,9 +143,50 @@ def run_factory2_morning_proof(
     if not positive_report_paths:
         raise RuntimeError("No detector positive reports were produced; no available model files found")
 
-    if (report_json.exists() or report_md.exists() or run_summary_json.exists() or panel_crop_evidence_json.exists()) and not force:
-        existing = [str(path) for path in [report_json, report_md, run_summary_json, panel_crop_evidence_json] if path.exists()]
+    if (
+        report_json.exists()
+        or report_md.exists()
+        or run_summary_json.exists()
+        or panel_crop_evidence_json.exists()
+        or transfer_review_packets_json.exists()
+        or person_panel_separation_json.exists()
+    ) and not force:
+        existing = [
+            str(path)
+            for path in [
+                report_json,
+                report_md,
+                run_summary_json,
+                panel_crop_evidence_json,
+                transfer_review_packets_json,
+                person_panel_separation_json,
+            ]
+            if path.exists()
+        ]
         raise FileExistsError(f"Output exists; pass --force: {existing}")
+
+    initial_report = build_report(
+        diagnostic_paths=selected_diagnostics,
+        fp_report_paths=fp_report_paths,
+        positive_report_paths=positive_report_paths,
+    )
+    write_json(report_json, initial_report)
+
+    transfer_packet_builder(
+        proof_report=report_json,
+        output=transfer_review_packets_json,
+        repo_root=Path.cwd(),
+        limit=10,
+        force=force,
+    )
+    person_panel_separation_analyzer(
+        packets_report=transfer_review_packets_json,
+        output=person_panel_separation_json,
+        repo_root=Path.cwd(),
+        limit=3,
+        packet_ids=None,
+        force=force,
+    )
 
     report = build_report(
         diagnostic_paths=selected_diagnostics,
@@ -156,6 +207,8 @@ def run_factory2_morning_proof(
         "diagnostics": [str(path) for path in selected_diagnostics],
         "fp_reports": [str(path) for path in fp_report_paths],
         "positive_reports": [str(path) for path in positive_report_paths],
+        "transfer_review_packets_report": str(transfer_review_packets_json),
+        "person_panel_separation_report": str(person_panel_separation_json),
         "panel_crop_evidence_report": str(panel_crop_evidence_json),
         "panel_crop_evidence_summary": panel_crop_evidence.get("summary", {}),
         "skipped_models": skipped_models,
@@ -195,6 +248,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--report-md", type=Path, default=REPORT_MD)
     parser.add_argument("--run-summary-json", type=Path, default=RUN_SUMMARY_JSON)
     parser.add_argument("--panel-crop-evidence-json", type=Path, default=PANEL_CROP_EVIDENCE_JSON)
+    parser.add_argument("--transfer-review-packets-json", type=Path, default=TRANSFER_REVIEW_PACKETS_JSON)
+    parser.add_argument("--person-panel-separation-json", type=Path, default=PERSON_PANEL_SEPARATION_JSON)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 
@@ -208,6 +263,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         report_md=args.report_md,
         run_summary_json=args.run_summary_json,
         panel_crop_evidence_json=args.panel_crop_evidence_json,
+        transfer_review_packets_json=args.transfer_review_packets_json,
+        person_panel_separation_json=args.person_panel_separation_json,
         force=args.force,
     )
     print(json.dumps(summary, sort_keys=True))

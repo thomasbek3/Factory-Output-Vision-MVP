@@ -1,9 +1,91 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 11:27:38 EDT
+Updated: 2026-04-28 12:19:03 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
 
+
+## PRD Milestone 4 start — proof-path gate promotion from person/panel separation — 2026-04-28 12:19 EDT
+
+Implemented the first non-diagnostic promotion path for `factory2.MOV`:
+
+```text
+app/services/perception_gate.py
+scripts/build_morning_proof_report.py
+scripts/run_factory2_morning_proof.py
+tests/test_perception_gate.py
+tests/test_build_morning_proof_report.py
+tests/test_run_factory2_morning_proof.py
+```
+
+What changed:
+
+```text
+- The perception gate now recognizes strong person/panel separation evidence as a valid override for coarse worker-body overlap, but only when the separation receipt says countable_panel_candidate and shows persistent multi-frame source/transfer evidence.
+- The morning proof report now rehydrates worker-overlap gate rows from sibling `*-person-panel-separation.json` receipts and promotes only tracks that satisfy the stronger gate rule.
+- The canonical proof command now auto-builds:
+  - data/reports/factory2_transfer_review_packets.json
+  - data/reports/factory2_person_panel_separation.json
+  before rebuilding the final proof report.
+- Accepted proof receipts now surface `person_panel_separation_path` directly in the decision receipt index.
+```
+
+Real proof result now:
+
+```text
+verdict: accepted_positive_count_available
+accepted_count: 1
+suppressed_count: 11
+uncertain_count: 4
+bottleneck: none
+accepted receipt: event0002 track 5
+accepted receipt person/panel separation: data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/track_receipts/track-000005-person-panel-separation.json
+```
+
+Why this matters:
+
+```text
+This is the first proof run where factory2 morning evidence produces a real accepted count without lowering thresholds or counting from boxes/texture alone. The promotion is constrained to the one track whose separation receipt shows persistent silhouette-separated evidence; weaker packets remain suppressed/uncertain.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_perception_gate.py tests/test_build_morning_proof_report.py -q
+.venv/bin/python -m pytest tests/test_run_factory2_morning_proof.py -q
+.venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_build_morning_proof_report.py tests/test_perception_gate.py -q
+python -m py_compile app/services/perception_gate.py scripts/build_morning_proof_report.py scripts/run_factory2_morning_proof.py tests/test_perception_gate.py tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py
+.venv/bin/python scripts/run_factory2_morning_proof.py --force
+```
+
+Verification:
+
+```text
+29 tests passed
+proof verdict: accepted_positive_count_available
+accepted_count: 1
+suppressed_count: 11
+uncertain_count: 4
+near-neighbor validation:
+- event0002 track 2 → insufficient_visibility
+- event0006 track 8 → insufficient_visibility
+- event0006 track 6 → not_panel
+```
+
+Next blocker:
+
+```text
+The proof now cracks one carried-panel case, and nearby weaker packets did not promote, but the gate still relies on legacy stored event-window gate rows plus proof-time rehydration. The remaining product risk is end-to-end consistency: push the same separation-aware gate logic down into `scripts/diagnose_event_window.py` / live diagnostic generation so fresh diagnostics and proof replay share the same promotion path.
+```
+
+Exact next recommended step:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_perception_gate.py tests/test_run_factory2_morning_proof.py -q
+```
+
+Then move the same separation-aware promotion rule into `scripts/diagnose_event_window.py` so regenerated event-window diagnostics can produce the accepted `track 5` count without relying on proof-time rehydration.
 
 
 ## PRD Milestone 3 start — person/panel separation diagnostics — 2026-04-28 11:27 EDT
