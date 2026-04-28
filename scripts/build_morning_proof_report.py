@@ -495,6 +495,34 @@ def build_source_token_work_queue(decision_receipt_index: dict[str, Any]) -> dic
         "worker_overlap_unclear": "inspect receipt card/crops and classify whether the box is panel, worker, or static stack edge",
         "fully_entangled_with_worker": "needs person-mask/pose or better active-panel crop evidence; do not count from the current box alone",
     }
+    requirements_by_detail = {
+        "protrusion_candidate_not_approved": [
+            "panel-shaped pixels protrude outside the worker silhouette/body box in multiple consecutive frames",
+            "protruding region moves coherently with the candidate track rather than the torso/arm boundary",
+            "candidate has source-zone evidence and later output-zone/settle evidence in the same receipt window",
+        ],
+        "high_overlap_partial_outside_worker": [
+            "raw crops show a discrete wire-mesh/panel edge separate from worker clothing or arms",
+            "outside-person pixels are large enough and stable enough to be a physical panel, not detector jitter",
+            "source and output evidence both survive after person/part separation",
+        ],
+        "worker_overlap_unclear": [
+            "receipt card/crops classify the box as active_panel rather than worker/body/background edge",
+            "motion evidence follows the panel-sized object, not whole-worker motion",
+            "static-stack overlap is low or the track visibly separates from the resident stack",
+        ],
+        "fully_entangled_with_worker": [
+            "person-mask or pose-aware crop evidence exposes a panel-like region inside the coarse person box",
+            "panel evidence persists for several frames instead of appearing as a single noisy detector box",
+            "the track can be separated from torso/arm motion before a source token is allowed",
+        ],
+    }
+    audit_question_by_detail = {
+        "protrusion_candidate_not_approved": "Does the protruding crop region look like a carried wire-mesh panel, and does it remain the same object from source toward output?",
+        "high_overlap_partial_outside_worker": "Is the partially outside-person evidence a real panel edge/sheet, or just worker limbs/clothing/background?",
+        "worker_overlap_unclear": "What physical object does this receipt actually show: active panel, worker/body, static stack, or background edge?",
+        "fully_entangled_with_worker": "Can any panel-shaped evidence be separated from the worker body, or should this remain suppressed?",
+    }
     rows: list[dict[str, Any]] = []
     for bucket in ["uncertain", "suppressed"]:
         for row in as_list(decision_receipt_index.get(bucket)):
@@ -519,6 +547,8 @@ def build_source_token_work_queue(decision_receipt_index: dict[str, Any]) -> dic
                     "person_overlap_ratio": person_overlap,
                     "outside_person_ratio": outside_person,
                     "recommended_action": action_by_detail.get(str(detail), action_by_detail["worker_overlap_unclear"]),
+                    "evidence_requirements_to_allow_source_token": requirements_by_detail.get(str(detail), requirements_by_detail["worker_overlap_unclear"]),
+                    "audit_question": audit_question_by_detail.get(str(detail), audit_question_by_detail["worker_overlap_unclear"]),
                     "receipt_json_path": row.get("receipt_json_path"),
                     "receipt_card_path": row.get("receipt_card_path"),
                     "raw_crop_paths": as_list(row.get("raw_crop_paths")),
@@ -707,6 +737,8 @@ def render_markdown(report: dict[str, Any]) -> str:
                 [
                     f"- track {row.get('track_id')} priority {row.get('priority')} in `{row.get('diagnostic_path')}`: `{row.get('worker_overlap_detail')}`",
                     f"  - action: {row.get('recommended_action')}",
+                    f"  - audit_question: {row.get('audit_question')}",
+                    f"  - evidence_required: `{row.get('evidence_requirements_to_allow_source_token')}`",
                     f"  - person_overlap/outside_person: {row.get('person_overlap_ratio')} / {row.get('outside_person_ratio')}",
                     f"  - receipt_json: `{row.get('receipt_json_path')}`",
                     f"  - receipt_card: `{row.get('receipt_card_path')}`",

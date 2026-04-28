@@ -157,6 +157,12 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["source_token_work_queue"]["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
     assert report["source_token_work_queue"]["top_items"][0]["worker_overlap_detail"] == "fully_entangled_with_worker"
     assert "do not count from the current box alone" in report["source_token_work_queue"]["top_items"][0]["recommended_action"]
+    assert "Can any panel-shaped evidence be separated" in report["source_token_work_queue"]["top_items"][0]["audit_question"]
+    assert report["source_token_work_queue"]["top_items"][0]["evidence_requirements_to_allow_source_token"] == [
+        "person-mask or pose-aware crop evidence exposes a panel-like region inside the coarse person box",
+        "panel evidence persists for several frames instead of appearing as a single noisy detector box",
+        "the track can be separated from torso/arm motion before a source token is allowed",
+    ]
     assert any(item["receipt_json_path"] == str(receipt) for item in report["source_token_work_queue"]["top_items"])
     assert report["decision_receipt_index"]["missing_review_asset_counts"] == {
         "raw_crop_paths": 2,
@@ -246,6 +252,9 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     assert "Source-token work queue" in markdown
     assert "Highest-priority worker-entangled receipts" in markdown
     assert "do not count from the current box alone" in markdown
+    assert "audit_question" in markdown
+    assert "evidence_required" in markdown
+    assert "person-mask or pose-aware crop evidence" in markdown
     assert "Suppressed receipt samples" in markdown
     assert "worker_overlap_details" in markdown
     assert "receipts/track-1.json" in markdown
