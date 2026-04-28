@@ -410,6 +410,71 @@ def classify_proof_readiness(
     }
 
 
+def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str, Any]:
+    """Create a compact index from every gate decision to its review assets.
+
+    The full diagnostic summaries are intentionally detailed, but the morning
+    proof report also needs a top-level receipt index that answers, at a glance:
+    which tracks counted, which were suppressed, which are uncertain, and where
+    the corresponding JSON/card/crop evidence lives. This is still evidence
+    bookkeeping only; it does not let raw detections become counts.
+    """
+    groups: dict[str, list[dict[str, Any]]] = {
+        "accepted": [],
+        "suppressed": [],
+        "uncertain": [],
+    }
+    missing_review_assets: Counter[str] = Counter()
+
+    for diagnostic in diagnostics:
+        diagnostic_path = diagnostic.get("diagnostic_path")
+        window = diagnostic.get("window") or {}
+        for receipt in as_list(diagnostic.get("track_decision_receipts")):
+            if not isinstance(receipt, dict):
+                continue
+            decision = str(receipt.get("decision") or "unknown")
+            if decision == "allow_source_token":
+                bucket = "accepted"
+            elif decision == "uncertain":
+                bucket = "uncertain"
+            else:
+                bucket = "suppressed"
+
+            receipt_json_path = receipt.get("receipt_json_path")
+            receipt_card_path = receipt.get("receipt_card_path")
+            raw_crop_paths = as_list(receipt.get("raw_crop_paths"))
+            if not receipt_json_path:
+                missing_review_assets["receipt_json_path"] += 1
+            if not receipt_card_path:
+                missing_review_assets["receipt_card_path"] += 1
+            if not raw_crop_paths:
+                missing_review_assets["raw_crop_paths"] += 1
+
+            groups[bucket].append(
+                {
+                    "diagnostic_path": diagnostic_path,
+                    "window": window,
+                    "track_id": receipt.get("track_id"),
+                    "decision": decision,
+                    "reason": receipt.get("reason") or "unknown",
+                    "failure_link": receipt.get("failure_link") or "unknown",
+                    "worker_overlap_detail": receipt.get("worker_overlap_detail"),
+                    "receipt_json_path": receipt_json_path,
+                    "receipt_card_path": receipt_card_path,
+                    "raw_crop_paths": raw_crop_paths,
+                }
+            )
+
+    return {
+        "schema_version": "factory-proof-decision-receipt-index-v1",
+        "accepted": groups["accepted"],
+        "suppressed": groups["suppressed"],
+        "uncertain": groups["uncertain"],
+        "counts": {key: len(value) for key, value in groups.items()},
+        "missing_review_asset_counts": counter_to_dict(missing_review_assets),
+    }
+
+
 def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[Path], positive_report_paths: Iterable[Path] = ()) -> dict[str, Any]:
     diagnostics = [summarize_diagnostic(path) for path in diagnostic_paths]
     fp_reports = [summarize_fp_report(path) for path in fp_report_paths]
@@ -456,6 +521,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         detector_selection=detector_selection,
         failure_link_counts=failure_link_counts,
     )
+    decision_receipt_index = build_decision_receipt_index(diagnostics)
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -487,6 +553,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
         },
         "detector_selection": detector_selection,
         "proof_readiness": proof_readiness,
+        "decision_receipt_index": decision_receipt_index,
         "morning_bar_moved": bool(diagnostics and fp_reports and positive_reports),
         "note": (
             "Counts remain zero unless a perception-gate-approved source token exists. "
@@ -553,10 +620,31 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- has_safe_selected_detector: {proof_readiness.get('has_safe_selected_detector')}",
             f"- next_action: {proof_readiness.get('next_action')}",
             "",
+            "## Decision receipt index",
+            "",
+            f"- counts: `{(report.get('decision_receipt_index') or {}).get('counts')}`",
+            f"- missing_review_asset_counts: `{(report.get('decision_receipt_index') or {}).get('missing_review_asset_counts')}`",
+            "",
             "## Representative diagnostic windows",
             "",
         ]
     )
+    decision_index = report.get("decision_receipt_index") or {}
+    for bucket in ["accepted", "suppressed", "uncertain"]:
+        rows = as_list(decision_index.get(bucket))
+        if not rows:
+            continue
+        lines.extend([f"### {bucket.title()} receipt samples", ""])
+        for row in rows[:5]:
+            lines.extend(
+                [
+                    f"- track {row.get('track_id')} in `{row.get('diagnostic_path')}`: `{row.get('reason')}` / `{row.get('failure_link')}`",
+                    f"  - receipt_json: `{row.get('receipt_json_path')}`",
+                    f"  - receipt_card: `{row.get('receipt_card_path')}`",
+                    f"  - raw_crops: `{row.get('raw_crop_paths')}`",
+                ]
+            )
+        lines.append("")
     for item in report["diagnostics"]:
         window = item.get("window") or {}
         lines.extend(

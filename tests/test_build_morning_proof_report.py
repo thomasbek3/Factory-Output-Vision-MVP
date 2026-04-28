@@ -149,6 +149,15 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
     assert report["diagnostics"][0]["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
     assert report["diagnostics"][0]["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
+    assert report["decision_receipt_index"]["counts"] == {"accepted": 0, "suppressed": 2, "uncertain": 1}
+    assert report["decision_receipt_index"]["suppressed"][0]["receipt_json_path"] == str(receipt)
+    assert report["decision_receipt_index"]["suppressed"][0]["raw_crop_paths"] == ["diag/track_receipts/track-000001-crops/crop-01.jpg"]
+    assert report["decision_receipt_index"]["uncertain"][0]["failure_link"] == "missing_output_settle"
+    assert report["decision_receipt_index"]["missing_review_asset_counts"] == {
+        "raw_crop_paths": 2,
+        "receipt_card_path": 2,
+        "receipt_json_path": 1,
+    }
     track_receipt = report["diagnostics"][0]["track_decision_receipts"][0]
     assert track_receipt["failure_link"] == "worker_body_overlap"
     assert track_receipt["worker_overlap_detail"] == "fully_entangled_with_worker"
@@ -217,6 +226,7 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
         """
         {
           "perception_gate_summary": {"allowed_source_token_tracks": [], "track_count": 1, "decision_counts": {"reject": 1}, "reason_counts": {"worker_body_overlap": 1}},
+          "perception_gate": [{"track_id": 1, "decision": "reject", "reason": "worker_body_overlap", "flags": ["high_person_overlap"], "evidence": {"person_overlap_ratio": 0.9, "outside_person_ratio": 0.1}}],
           "track_receipts": ["receipts/track-1.json"],
           "overlay_sheet_path": "overlay.jpg"
         }
@@ -227,6 +237,8 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
 
     assert "accepted_count: 0" in markdown
     assert "Proof readiness" in markdown
+    assert "Decision receipt index" in markdown
+    assert "Suppressed receipt samples" in markdown
     assert "worker_overlap_details" in markdown
     assert "receipts/track-1.json" in markdown
     assert "overlay.jpg" in markdown
