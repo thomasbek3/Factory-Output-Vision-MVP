@@ -60,6 +60,31 @@ def test_classify_track_marks_source_to_output_motion_as_transfer_candidate() ->
     assert result.flags == []
 
 
+def test_select_track_overlay_frames_uses_first_mid_last_timestamps(tmp_path: Path) -> None:
+    frames = [tmp_path / f"overlay_{idx:06d}.jpg" for idx in range(1, 11)]
+    track = diag.TrackEvidence(
+        track_id=1,
+        first_timestamp=102.0,
+        last_timestamp=108.0,
+        first_zone="source",
+        zones_seen=["source", "output"],
+        source_frames=2,
+        output_frames=2,
+        max_displacement=100.0,
+        mean_internal_motion=0.2,
+        max_internal_motion=0.4,
+        detections=4,
+    )
+
+    selected = diag.select_track_overlay_frames(track=track, overlay_frames=frames, start_timestamp=100.0, fps=1.0)
+
+    assert selected == [
+        ("first/source-ish", frames[2]),
+        ("mid/high-evidence", frames[5]),
+        ("last/output-ish", frames[8]),
+    ]
+
+
 def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: Path) -> None:
     video = tmp_path / "factory2.MOV"
     video.write_text("not video", encoding="utf-8")
@@ -118,6 +143,11 @@ def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: P
         kwargs["sheet_path"].write_text("sheet", encoding="utf-8")
         kwargs["video_path"].write_text("video", encoding="utf-8")
 
+    def fake_receipt_card(**kwargs):
+        path = kwargs["output_path"]
+        path.write_bytes(b"fake jpg")
+        return path
+
     result = diag.diagnose_event_window(
         video_path=video,
         calibration_path=calibration,
@@ -131,6 +161,7 @@ def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: P
         frame_extractor=fake_extract_frames,
         analyzer=fake_analyze,
         media_maker=fake_media,
+        receipt_card_maker=fake_receipt_card,
     )
 
     assert result["schema_version"] == "factory-event-diagnostic-v1"
@@ -138,10 +169,13 @@ def test_diagnose_event_window_writes_manifest_and_refuses_overwrite(tmp_path: P
     assert result["diagnosis"][0]["reason"] == "static_stack_edge"
     assert result["overlay_sheet_path"].endswith("overlay_sheet.jpg")
     assert result["track_receipts"] == [str(out_dir / "track_receipts" / "track-000001.json")]
+    assert result["track_receipt_cards"] == [str(out_dir / "track_receipts" / "track-000001-sheet.jpg")]
     receipt = json.loads((out_dir / "track_receipts" / "track-000001.json").read_text(encoding="utf-8"))
     assert receipt["schema_version"] == "factory-track-receipt-v1"
     assert receipt["diagnosis"]["reason"] == "static_stack_edge"
     assert receipt["perception_gate"]["reason"] == "static_stack_edge"
+    assert receipt["review_assets"]["track_sheet_path"] == str(out_dir / "track_receipts" / "track-000001-sheet.jpg")
+    assert (out_dir / "track_receipts" / "track-000001-sheet.jpg").read_bytes() == b"fake jpg"
     assert json.loads((out_dir / "diagnostic.json").read_text(encoding="utf-8")) == result
 
     with pytest.raises(FileExistsError, match="--force"):

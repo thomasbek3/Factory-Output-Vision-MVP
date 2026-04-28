@@ -32,6 +32,7 @@ DEFAULT_OUT_DIR = Path("data/diagnostics/event-windows")
 FrameExtractor = Callable[..., list[Path]]
 Analyzer = Callable[..., "AnalysisArtifacts"]
 MediaMaker = Callable[..., None]
+ReceiptCardMaker = Callable[..., Path | None]
 
 
 @dataclass(frozen=True)
@@ -176,6 +177,7 @@ def diagnose_event_window(
     frame_extractor: FrameExtractor | None = None,
     analyzer: Analyzer | None = None,
     media_maker: MediaMaker | None = None,
+    receipt_card_maker: ReceiptCardMaker | None = None,
 ) -> dict[str, Any]:
     if end_timestamp <= start_timestamp:
         raise ValueError("end timestamp must be after start timestamp")
@@ -191,6 +193,7 @@ def diagnose_event_window(
     extract = frame_extractor or extract_dense_frames
     analyze = analyzer or analyze_frames
     make_media = media_maker or make_overlay_media
+    make_receipt_card = receipt_card_maker or make_track_receipt_card
 
     frame_paths = extract(
         video_path=video_path,
@@ -232,6 +235,10 @@ def diagnose_event_window(
         gate_decisions=gate_decisions,
         overlay_sheet_path=sheet_path,
         overlay_video_path=overlay_video_path,
+        overlay_frames=artifacts.overlay_frames,
+        start_timestamp=start_timestamp,
+        fps=fps,
+        receipt_card_maker=make_receipt_card,
     )
 
     result = {
@@ -248,6 +255,11 @@ def diagnose_event_window(
         "overlay_sheet_path": _rel(sheet_path),
         "overlay_video_path": _rel(overlay_video_path),
         "track_receipts": [_rel(path) for path in receipt_paths],
+        "track_receipt_cards": [
+            _rel(path.with_name(f"{path.stem}-sheet.jpg"))
+            for path in receipt_paths
+            if path.with_name(f"{path.stem}-sheet.jpg").exists()
+        ],
         "diagnosis": [asdict(item) for item in diagnoses],
         "summary": summarize_diagnoses(diagnoses),
         "perception_gate": [asdict(item) for item in gate_decisions],
@@ -284,6 +296,10 @@ def write_track_receipts(
     gate_decisions: list[Any],
     overlay_sheet_path: Path,
     overlay_video_path: Path,
+    overlay_frames: list[Path] | None = None,
+    start_timestamp: float = 0.0,
+    fps: float = 1.0,
+    receipt_card_maker: ReceiptCardMaker | None = None,
 ) -> list[Path]:
     receipts_dir = out_dir / "track_receipts"
     receipts_dir.mkdir(parents=True, exist_ok=True)
@@ -294,6 +310,17 @@ def write_track_receipts(
         diagnosis = diagnosis_by_track.get(track.track_id)
         gate = gate_by_track.get(track.track_id)
         path = receipts_dir / f"track-{track.track_id:06d}.json"
+        card_path = receipts_dir / f"track-{track.track_id:06d}-sheet.jpg"
+        if receipt_card_maker is not None:
+            receipt_card_maker(
+                track=track,
+                diagnosis=diagnosis,
+                gate_decision=gate,
+                overlay_frames=overlay_frames or [],
+                start_timestamp=start_timestamp,
+                fps=fps,
+                output_path=card_path,
+            )
         payload = {
             "schema_version": "factory-track-receipt-v1",
             "track_id": track.track_id,
@@ -304,11 +331,119 @@ def write_track_receipts(
             "review_assets": {
                 "overlay_sheet_path": _rel(overlay_sheet_path),
                 "overlay_video_path": _rel(overlay_video_path),
+                "track_sheet_path": _rel(card_path) if card_path.exists() else None,
             },
         }
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         paths.append(path)
     return paths
+
+
+def make_track_receipt_card(
+    *,
+    track: TrackEvidence,
+    diagnosis: TrackDiagnosis | None,
+    gate_decision: Any,
+    overlay_frames: list[Path],
+    start_timestamp: float,
+    fps: float,
+    output_path: Path,
+) -> Path | None:
+    """Write a compact per-track JPG receipt for VLM/Oracle review."""
+    if not overlay_frames:
+        return None
+    try:
+        import cv2
+        import numpy as np
+    except Exception:  # pragma: no cover - optional runtime dependency
+        return None
+
+    selected_frames = select_track_overlay_frames(
+        track=track,
+        overlay_frames=overlay_frames,
+        start_timestamp=start_timestamp,
+        fps=fps,
+    )
+    images = []
+    for label, frame_path in selected_frames:
+        image = cv2.imread(str(frame_path))
+        if image is None:
+            continue
+        image = resize_with_letterbox(image, width=420, height=260)
+        cv2.putText(image, label, (14, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 3, cv2.LINE_AA)
+        cv2.putText(image, label, (14, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 0, 0), 1, cv2.LINE_AA)
+        images.append(image)
+    if not images:
+        return None
+    while len(images) < 3:
+        images.append(images[-1].copy())
+
+    header = np.zeros((190, 1260, 3), dtype=np.uint8)
+    decision = getattr(gate_decision, "decision", "unknown") if gate_decision is not None else "unknown"
+    reason = getattr(gate_decision, "reason", None) or (diagnosis.reason if diagnosis is not None else "unknown")
+    diagnosis_decision = diagnosis.decision if diagnosis is not None else "unknown"
+    lines = [
+        f"track {track.track_id:06d} | gate={decision} | reason={reason}",
+        f"diagnosis={diagnosis_decision} | t={track.first_timestamp:.2f}-{track.last_timestamp:.2f}s | zones={','.join(track.zones_seen)}",
+        (
+            f"src={track.source_frames} out={track.output_frames} det={track.detections} "
+            f"disp={track.max_displacement:.1f}px motion={track.max_internal_motion:.3f} "
+            f"person={track.person_overlap_ratio:.2f} outside_person={track.outside_person_ratio:.2f}"
+        ),
+    ]
+    for idx, line in enumerate(lines):
+        cv2.putText(header, line[:150], (24, 46 + idx * 52), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+
+    strip = np.hstack(images[:3])
+    card = np.vstack([header, strip])
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if cv2.imwrite(str(output_path), card):
+        return output_path
+    return None
+
+
+def select_track_overlay_frames(
+    *,
+    track: TrackEvidence,
+    overlay_frames: list[Path],
+    start_timestamp: float,
+    fps: float,
+) -> list[tuple[str, Path]]:
+    if not overlay_frames:
+        return []
+    midpoint = (track.first_timestamp + track.last_timestamp) / 2.0
+    return [
+        ("first/source-ish", overlay_frame_at_timestamp(overlay_frames, track.first_timestamp, start_timestamp=start_timestamp, fps=fps)),
+        ("mid/high-evidence", overlay_frame_at_timestamp(overlay_frames, midpoint, start_timestamp=start_timestamp, fps=fps)),
+        ("last/output-ish", overlay_frame_at_timestamp(overlay_frames, track.last_timestamp, start_timestamp=start_timestamp, fps=fps)),
+    ]
+
+
+def overlay_frame_at_timestamp(overlay_frames: list[Path], timestamp: float, *, start_timestamp: float, fps: float) -> Path:
+    if not overlay_frames:
+        raise ValueError("overlay_frames cannot be empty")
+    safe_fps = fps if fps > 0 and math.isfinite(fps) else 1.0
+    index = int(round((timestamp - start_timestamp) * safe_fps))
+    index = max(0, min(len(overlay_frames) - 1, index))
+    return overlay_frames[index]
+
+
+def resize_with_letterbox(image: Any, *, width: int, height: int) -> Any:
+    import cv2
+    import numpy as np
+
+    original_height, original_width = image.shape[:2]
+    if original_width <= 0 or original_height <= 0:
+        return np.zeros((height, width, 3), dtype=np.uint8)
+    scale = min(width / original_width, height / original_height)
+    resized_width = max(1, int(round(original_width * scale)))
+    resized_height = max(1, int(round(original_height * scale)))
+    resized = cv2.resize(image, (resized_width, resized_height), interpolation=cv2.INTER_AREA)
+    canvas = np.zeros((height, width, 3), dtype=np.uint8)
+    x_offset = (width - resized_width) // 2
+    y_offset = (height - resized_height) // 2
+    canvas[y_offset : y_offset + resized_height, x_offset : x_offset + resized_width] = resized
+    return canvas
 
 
 def summarize_diagnoses(diagnoses: list[TrackDiagnosis]) -> dict[str, Any]:
