@@ -349,6 +349,67 @@ def select_detector_model(fp_reports: list[dict[str, Any]], positive_reports: li
     }
 
 
+def classify_proof_readiness(
+    *,
+    accepted_count: int,
+    suppressed_count: int,
+    uncertain_count: int,
+    bottleneck: str,
+    detector_selection: dict[str, Any],
+    failure_link_counts: Counter[str],
+) -> dict[str, Any]:
+    """Turn the morning evidence into a product-facing readiness verdict.
+
+    The report already has the raw ingredients. This compact classifier states
+    whether the current failure is detector coverage, detector hard-negative
+    safety, or source-token gate evidence. That keeps the morning artifact from
+    saying only "count is zero" when the positive detector eval is actually fine.
+    """
+    selected = detector_selection.get("selected") or {}
+    selected_recall = float(selected.get("label_recall") or 0.0)
+    selected_fp_detections = int(selected.get("false_positive_detections") or 0)
+    selected_fp_images = int(selected.get("images_with_false_positives") or 0)
+    safe_candidate_count = int(detector_selection.get("safe_candidate_count") or 0)
+    has_safe_selected_detector = bool(selected) and selected_fp_detections == 0 and selected_fp_images == 0
+    selected_detector_positive_pass = bool(selected) and selected_recall >= 0.80
+    dominant_failure_link = "none"
+    if failure_link_counts:
+        dominant_failure_link = failure_link_counts.most_common(1)[0][0]
+
+    if accepted_count > 0:
+        status = "trusted_positive_count_available"
+        next_action = "Audit accepted count receipts on more representative windows before broadening deployment."
+    elif not selected:
+        status = "missing_paired_detector_eval"
+        next_action = "Run paired positive and hard-negative detector eval before judging the count path."
+    elif not has_safe_selected_detector:
+        status = "detector_not_safe_on_hard_negatives"
+        next_action = "Improve or retrain the detector before allowing it into source-token clip eval."
+    elif not selected_detector_positive_pass:
+        status = "detector_positive_recall_too_low"
+        next_action = "Improve active-panel recall on reviewed positives before chasing count-state behavior."
+    elif bottleneck == "perception_gate_worker_body_overlap":
+        status = "detector_seed_passes_but_worker_overlap_blocks_source_tokens"
+        next_action = "Add crop/shape/person-mask or pose-aware evidence for worker-entangled tracks before minting source tokens."
+    else:
+        status = "source_token_evidence_incomplete_after_detector_pass"
+        next_action = "Inspect the dominant failure link and improve event evidence before loosening count logic."
+
+    return {
+        "status": status,
+        "dominant_failure_link": dominant_failure_link,
+        "selected_detector_positive_pass": selected_detector_positive_pass,
+        "has_safe_selected_detector": has_safe_selected_detector,
+        "selected_detector_label_recall": selected_recall if selected else None,
+        "selected_detector_false_positive_detections": selected_fp_detections if selected else None,
+        "safe_detector_candidates": safe_candidate_count,
+        "accepted_count": accepted_count,
+        "suppressed_count": suppressed_count,
+        "uncertain_count": uncertain_count,
+        "next_action": next_action,
+    }
+
+
 def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[Path], positive_report_paths: Iterable[Path] = ()) -> dict[str, Any]:
     diagnostics = [summarize_diagnostic(path) for path in diagnostic_paths]
     fp_reports = [summarize_fp_report(path) for path in fp_report_paths]
@@ -387,6 +448,14 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
             bottleneck = "no_gate_approved_source_tokens"
 
     verdict = "accepted_positive_count_available" if accepted_count else "auditable_abstention_no_trusted_positive"
+    proof_readiness = classify_proof_readiness(
+        accepted_count=accepted_count,
+        suppressed_count=suppressed_count,
+        uncertain_count=uncertain_count,
+        bottleneck=bottleneck,
+        detector_selection=detector_selection,
+        failure_link_counts=failure_link_counts,
+    )
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -417,6 +486,7 @@ def build_report(*, diagnostic_paths: Iterable[Path], fp_report_paths: Iterable[
             "reports": positive_reports,
         },
         "detector_selection": detector_selection,
+        "proof_readiness": proof_readiness,
         "morning_bar_moved": bool(diagnostics and fp_reports and positive_reports),
         "note": (
             "Counts remain zero unless a perception-gate-approved source token exists. "
@@ -456,6 +526,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     positive_eval = report.get("detector_positive_eval") or {}
     detector_selection = report.get("detector_selection") or {}
     selected_detector = detector_selection.get("selected") or {}
+    proof_readiness = report.get("proof_readiness") or {}
     lines.extend(
         [
             "## Detector positive eval",
@@ -473,6 +544,14 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- selected_confidence: {selected_detector.get('confidence')}",
             f"- selected_label_recall: {selected_detector.get('label_recall')}",
             f"- selected_false_positive_detections: {selected_detector.get('false_positive_detections')}",
+            "",
+            "## Proof readiness",
+            "",
+            f"- status: `{proof_readiness.get('status')}`",
+            f"- dominant_failure_link: `{proof_readiness.get('dominant_failure_link')}`",
+            f"- selected_detector_positive_pass: {proof_readiness.get('selected_detector_positive_pass')}",
+            f"- has_safe_selected_detector: {proof_readiness.get('has_safe_selected_detector')}",
+            f"- next_action: {proof_readiness.get('next_action')}",
             "",
             "## Representative diagnostic windows",
             "",

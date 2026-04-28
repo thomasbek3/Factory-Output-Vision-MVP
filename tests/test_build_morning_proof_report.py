@@ -141,6 +141,10 @@ def test_build_report_separates_accepted_suppressed_uncertain(tmp_path: Path):
     assert report["detector_selection"]["selected"]["model_path"] == "models/caleb_metal_panel.pt"
     assert report["detector_selection"]["selected"]["confidence"] == 0.10
     assert report["detector_selection"]["selected"]["label_recall"] == 1.0
+    assert report["proof_readiness"]["status"] == "detector_seed_passes_but_worker_overlap_blocks_source_tokens"
+    assert report["proof_readiness"]["dominant_failure_link"] == "worker_body_overlap"
+    assert report["proof_readiness"]["selected_detector_positive_pass"] is True
+    assert report["proof_readiness"]["has_safe_selected_detector"] is True
     assert report["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
     assert report["worker_overlap_detail_counts"] == {"fully_entangled_with_worker": 2}
     assert report["diagnostics"][0]["failure_link_counts"] == {"missing_output_settle": 1, "worker_body_overlap": 2}
@@ -222,6 +226,7 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     markdown = render_markdown(build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report]))
 
     assert "accepted_count: 0" in markdown
+    assert "Proof readiness" in markdown
     assert "worker_overlap_details" in markdown
     assert "receipts/track-1.json" in markdown
     assert "overlay.jpg" in markdown
