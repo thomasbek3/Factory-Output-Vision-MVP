@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -116,3 +118,18 @@ def test_load_calibration_rejects_missing_source_or_output(tmp_path: Path) -> No
 
     with pytest.raises(ValueError, match="source_polygons.*output_polygons"):
         run_clip_eval.load_calibration(calibration_path)
+
+
+def test_run_clip_eval_script_help_works_when_invoked_by_path() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+
+    result = subprocess.run(
+        [sys.executable, "scripts/run_clip_eval.py", "--help"],
+        cwd=repo_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "Run Factory Vision clip-level event evaluation" in result.stdout

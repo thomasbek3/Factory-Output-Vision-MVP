@@ -12,6 +12,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from app.services.calibration import Box, CalibrationZones, Gate, box_center
 from app.services.count_state_machine import CountConfig, CountStateMachine, TrackDetection
 from app.services.event_ledger import CountEventRecord, EventLedger, ResidentObject

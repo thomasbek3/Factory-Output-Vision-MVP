@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Union
 
 Point = tuple[float, float]
 Box = tuple[float, float, float, float]
-Polygon = list[Point] | tuple[Point, ...]
+Polygon = Union[list[Point], tuple[Point, ...]]
 
 
 @dataclass(frozen=True)
