@@ -416,7 +416,14 @@ class RuntimeEventCounter:
             return None
         output_center = accumulator.centers[0]
         max_link_distance = max(self._tracker_match_distance * 12.0, 500.0)
-        max_gap_frames = max(self._tracker_max_missing_frames * 2 + 1, 3)
+        # Keep gate-side predecessor stitching alive for the same lifetime as
+        # source tokens in the count state machine. Otherwise the runtime can
+        # still carry an eligible source token while the gate refuses to weld
+        # the corresponding split source/output fragments back together.
+        max_gap_frames = max(
+            self._tracker_max_missing_frames * 2 + 1,
+            self._count_config.source_token_ttl_frames,
+        )
         candidates: list[tuple[int, float, int, int]] = []
         for candidate_id, candidate in self._gate_accumulators.items():
             if candidate_id == track_id or candidate.source_frames < self._count_config.source_min_frames:

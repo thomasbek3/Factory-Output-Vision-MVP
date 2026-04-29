@@ -46,6 +46,7 @@ class CountConfig:
     max_missing_frames: int = 30
     source_token_ttl_frames: int = 45
     resident_match_center_distance: float = 30.0
+    recent_resident_dedupe_window_frames: int = 5
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,7 @@ class _ResidentObject:
     track_id: int
     bbox: Box
     center: tuple[float, float]
+    created_frame: int
     matched_track_ids: set[int] = field(default_factory=set)
 
 
@@ -178,6 +180,14 @@ class CountStateMachine:
             return None
 
         track = self._tracks.setdefault(output_track_id, _TrackMemory(track_id=output_track_id))
+        resident = self._matching_resident(output_bbox)
+        if resident is not None and self._frame_index - resident.created_frame <= self.config.recent_resident_dedupe_window_frames:
+            track.last_bbox = output_bbox
+            track.last_center = box_center(output_bbox)
+            track.last_seen_center = track.last_center
+            track.set_state("RESIDENT_OUTPUT_OBJECT")
+            self._committed_delivery_chains.add(chain_id)
+            return None
         if track.counted:
             self._committed_delivery_chains.add(chain_id)
             return None
@@ -227,7 +237,7 @@ class CountStateMachine:
         track.last_valid_detection_in_output = output_hit
 
         if track.state == "NEW_TRACK":
-            resident = self._matching_resident(current_center)
+            resident = self._matching_resident(detection.bbox, current_center)
             if resident is not None and output_hit:
                 resident.matched_track_ids.add(track.track_id)
                 track.set_state("RESIDENT_OUTPUT_OBJECT")
@@ -305,6 +315,7 @@ class CountStateMachine:
             track_id=track.track_id,
             bbox=track.last_bbox,
             center=box_center(track.last_bbox),
+            created_frame=self._frame_index,
             matched_track_ids={track.track_id},
         )
         self._residents[resident.resident_id] = resident
@@ -363,11 +374,20 @@ class CountStateMachine:
             return 0
         return self._frame_index - track.source_token.last_frame
 
-    def _matching_resident(self, center: tuple[float, float]) -> _ResidentObject | None:
+    def _matching_resident(
+        self,
+        bbox: Box,
+        center: tuple[float, float] | None = None,
+    ) -> _ResidentObject | None:
+        center = center or box_center(bbox)
         best: tuple[float, _ResidentObject] | None = None
         for resident in self._residents.values():
             distance = self._distance(center, resident.center)
-            if distance <= self.config.resident_match_center_distance:
+            overlap = _box_overlap_fraction(bbox, resident.bbox)
+            if (
+                distance <= self.config.resident_match_center_distance
+                or overlap >= self.config.resident_output_overlap_threshold
+            ):
                 if best is None or distance < best[0]:
                     best = (distance, resident)
         return best[1] if best is not None else None
@@ -400,3 +420,20 @@ class CountStateMachine:
         dx = a[0] - b[0]
         dy = a[1] - b[1]
         return (dx * dx + dy * dy) ** 0.5
+
+
+def _box_overlap_fraction(box: Box, other: Box) -> float:
+    x1, y1, width, height = box
+    ox1, oy1, other_width, other_height = other
+    x2 = x1 + width
+    y2 = y1 + height
+    ox2 = ox1 + other_width
+    oy2 = oy1 + other_height
+    ix1 = max(x1, ox1)
+    iy1 = max(y1, oy1)
+    ix2 = min(x2, ox2)
+    iy2 = min(y2, oy2)
+    if ix2 <= ix1 or iy2 <= iy1:
+        return 0.0
+    area = max(width * height, 1e-6)
+    return max(0.0, min(1.0, ((ix2 - ix1) * (iy2 - iy1)) / area))

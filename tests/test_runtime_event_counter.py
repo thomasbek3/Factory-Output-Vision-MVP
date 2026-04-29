@@ -312,6 +312,46 @@ def test_runtime_event_counter_bridges_brief_detection_dropout_before_output() -
     assert result.events[0].track_id == 1
 
 
+def test_runtime_event_counter_bridges_longer_split_gap_before_output() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate",
+            "visible_nonperson_ratio": 0.42,
+            "estimated_visible_nonperson_region_signal": 0.08,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=2,
+        tracker_match_distance=40.0,
+        separation_analyzer=fake_separation_analyzer,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (15, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    for _ in range(15):
+        counter.process_frame(frame=frame, detections=[], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert result.events[0].track_id == 2
+    assert result.events[0].reason == "approved_delivery_chain"
+    assert result.gate_decisions[2].decision == "allow_source_token"
+
+
 def test_runtime_event_counter_merges_source_track_into_output_successor() -> None:
     zones = CalibrationZones(
         source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],

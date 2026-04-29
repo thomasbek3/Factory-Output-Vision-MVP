@@ -2127,3 +2127,60 @@ Exact next step:
 1. Run `scripts/audit_factory2_runtime_events.py` on the full file and on late-window slices, save the JSON ledger under `data/reports/`.
 2. Diff the `17` one-pass runtime events against the human `23` truth set and identify the six missing deliveries.
 3. Then fix runtime/source-chain recall with bounded chain-link logic; do not loosen perception thresholds.
+
+---
+
+## 2026-04-28 Runtime Recall Audit And Chain Deduping
+
+What changed:
+- Added a runtime truth-gap analyzer:
+  - `scripts/analyze_factory2_runtime_truth_gap.py`
+  - `tests/test_analyze_factory2_runtime_truth_gap.py`
+- Added a truth-candidate reconstruction ledger builder:
+  - `scripts/reconstruct_factory2_truth_candidates.py`
+  - `tests/test_reconstruct_factory2_truth_candidates.py`
+- Extended runtime predecessor stitching in `app/services/runtime_event_counter.py` so gate-side split-chain linking survives for the same lifetime as source tokens instead of dying after a short fixed gap.
+- Fixed `app/services/count_state_machine.py` so `approved_delivery_chain` no longer double-counts overlapping output residents, while still allowing later real deliveries into the same output area after a bounded recent-resident window.
+- Added new regression coverage in:
+  - `tests/test_runtime_event_counter.py`
+  - `tests/test_count_state_machine.py`
+
+What was verified:
+- New targeted suites passed:
+  - `tests/test_analyze_factory2_runtime_truth_gap.py`: `3 passed`
+  - `tests/test_reconstruct_factory2_truth_candidates.py`: `3 passed`
+- Runtime/state-machine regression suites passed after the chain and dedupe fixes:
+  - `tests/test_count_state_machine.py tests/test_runtime_event_counter.py`: `26 passed`
+- Broader affected verification passed:
+  - `63 passed`
+  - command:
+    ```bash
+    .venv/bin/python -m pytest tests/test_count_state_machine.py tests/test_runtime_event_counter.py tests/test_audit_factory2_runtime_events.py tests/test_analyze_factory2_runtime_truth_gap.py tests/test_reconstruct_factory2_truth_candidates.py tests/test_perception_gate.py tests/test_person_panel_gate_promotion.py tests/test_diagnose_event_window.py -q
+    ```
+- Narrow runtime canary on `140–190s` with the final runtime logic:
+  - `data/reports/factory2_runtime_event_audit.140_190.gap45_recentdedupe.json`
+  - `final_count: 2`
+  - surviving events:
+    - `146.971`
+    - `184.272`
+- That canary matters because an intermediate runtime patch temporarily produced a bad duplicate near `184.372`, and the final recent-resident dedupe removed it without deleting the legitimate later carry.
+
+What Oracle clarified:
+- The repo evidence supports that the human target is `23`, but it does **not** appear to contain a single authoritative checked-in 23-event timestamp ledger.
+- `data/reports/factory2_track_labels.manual_v1.json` is crop/track carried-panel evidence, not the full event-truth ledger.
+- The defensible reconstruction path is:
+  - proof-confirmed accepted receipts
+  - no-loop runtime event audit JSON
+  - manual crop-visible track evidence as secondary prioritization only
+
+Current blocker:
+- Full-file post-fix runtime audit is still the gating measurement:
+  - target output path:
+    - `data/reports/factory2_runtime_event_audit.gap45_recentdedupe.json`
+- Until that completes, do not claim a new full `factory2.MOV` one-pass count.
+- After the earlier runtime bugs were fixed, the remaining task is to see the real full-file count on the corrected runtime and then continue eliminating the residual misses toward `23`.
+
+Exact next step:
+1. Wait for `data/reports/factory2_runtime_event_audit.gap45_recentdedupe.json` to finish writing and record its `final_count`.
+2. Run `scripts/reconstruct_factory2_truth_candidates.py` against that audit output to produce a concrete reconciliation ledger.
+3. Use the runtime-only reconciliation rows to identify the next missing delivery class, then patch chain recall again without loosening perception gates.

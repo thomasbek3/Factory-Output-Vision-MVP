@@ -182,6 +182,89 @@ class CountStateMachineTests(unittest.TestCase):
 
         self.assertEqual(counter.total_count, 0)
 
+    def test_approved_delivery_chain_does_not_double_count_overlapping_resident(self) -> None:
+        counter = CountStateMachine(
+            CountConfig(
+                zones=CalibrationZones(
+                    source_polygons=[SOURCE],
+                    output_polygons=[OUTPUT],
+                    ignore_polygons=[],
+                ),
+                source_min_frames=2,
+                output_stable_frames=2,
+                source_overlap_threshold=0.25,
+                output_overlap_threshold=0.25,
+                stable_center_epsilon=3.0,
+                disappear_in_output_frames=1,
+                resident_match_center_distance=10.0,
+                resident_output_overlap_threshold=0.4,
+            )
+        )
+
+        counter.update([det(1, (5, 20, 20, 20)), det(2, (5, 50, 20, 20))])
+        counter.update([det(1, (10, 20, 20, 20)), det(2, (10, 50, 20, 20))])
+
+        first = counter.commit_approved_delivery_chain(
+            chain_id="proof-source-track:1",
+            source_track_id=1,
+            output_track_id=3,
+            output_bbox=(60, 20, 40, 20),
+        )
+        second = counter.commit_approved_delivery_chain(
+            chain_id="proof-source-track:2",
+            source_track_id=2,
+            output_track_id=4,
+            output_bbox=(80, 20, 40, 20),
+        )
+
+        self.assertIsNotNone(first)
+        self.assertIsNone(second)
+        self.assertEqual(counter.total_count, 1)
+
+    def test_approved_delivery_chain_can_count_later_overlapping_delivery(self) -> None:
+        counter = CountStateMachine(
+            CountConfig(
+                zones=CalibrationZones(
+                    source_polygons=[SOURCE],
+                    output_polygons=[OUTPUT],
+                    ignore_polygons=[],
+                ),
+                source_min_frames=2,
+                output_stable_frames=2,
+                source_overlap_threshold=0.25,
+                output_overlap_threshold=0.25,
+                stable_center_epsilon=3.0,
+                disappear_in_output_frames=1,
+                resident_match_center_distance=10.0,
+                resident_output_overlap_threshold=0.4,
+            )
+        )
+
+        counter.update([det(1, (5, 20, 20, 20))])
+        counter.update([det(1, (10, 20, 20, 20))])
+        first = counter.commit_approved_delivery_chain(
+            chain_id="proof-source-track:1",
+            source_track_id=1,
+            output_track_id=3,
+            output_bbox=(60, 20, 40, 20),
+        )
+
+        for _ in range(6):
+            counter.update([])
+
+        counter.update([det(2, (5, 50, 20, 20))])
+        counter.update([det(2, (10, 50, 20, 20))])
+        second = counter.commit_approved_delivery_chain(
+            chain_id="proof-source-track:2",
+            source_track_id=2,
+            output_track_id=4,
+            output_bbox=(80, 20, 40, 20),
+        )
+
+        self.assertIsNotNone(first)
+        self.assertIsNotNone(second)
+        self.assertEqual(counter.total_count, 2)
+
 
 if __name__ == "__main__":
     unittest.main()
