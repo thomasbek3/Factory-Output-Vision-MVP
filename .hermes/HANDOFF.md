@@ -2269,3 +2269,76 @@ Exact next step:
 1. Read the Oracle answer for `factory2-final-two`.
 2. If Oracle confirms the current evidence is insufficient for distinct proof receipts, document the explicit runtime/proof divergence for `305.708` and `425.012` instead of inventing count authority.
 3. If Oracle identifies a non-cheating receipt-building move, implement it narrowly against those two timestamps only and rerun the `optimized_plus_0016_0019` proof set.
+
+## 2026-04-29: Oracle Follow-Through for Final Two Proof Misses
+
+What changed:
+- Added proof-side source-lineage accounting in:
+  - `scripts/build_morning_proof_report.py`
+- Added a runtime-event-centered packet builder for unresolved proof/runtime gaps:
+  - `scripts/build_factory2_runtime_event_receipt_packets.py`
+- Tightened proof-side predecessor stitching parity with runtime token lifetime in:
+  - `scripts/diagnose_event_window.py`
+- Added tests:
+  - `tests/test_build_factory2_runtime_event_receipt_packets.py`
+  - expanded `tests/test_build_morning_proof_report.py`
+  - expanded `tests/test_diagnose_event_window.py`
+
+What was verified:
+- Focused proof/report/runtime audit suite passed:
+  - `tests/test_build_morning_proof_report.py`
+  - `tests/test_build_factory2_runtime_event_receipt_packets.py`
+  - `tests/test_diagnose_event_window.py`
+  - `tests/test_reconstruct_factory2_truth_candidates.py`
+  - `tests/test_build_factory2_proof_alignment_queue.py`
+  - `tests/test_build_factory2_runtime_backed_proof_set.py`
+  - `tests/test_optimize_factory2_proof_set.py`
+  - result: `37 passed`
+- `py_compile` passed for:
+  - `scripts/build_morning_proof_report.py`
+  - `scripts/build_factory2_runtime_event_receipt_packets.py`
+  - `scripts/diagnose_event_window.py`
+- Built the new packet artifact on the committed `21`-count proof baseline:
+  - `data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json`
+
+What the new packet artifact proved:
+- Runtime-only `305.708s` now packetizes as:
+  - recommendation: `shared_source_lineage_no_distinct_proof_receipt`
+  - prior accepted proof receipt: `factory2-review-0010-288-328s-panel-v1-5fps` track `2`
+  - later stub: track `3`
+  - source token key on the prior accepted receipt:
+    - `factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002`
+- Runtime-only `425.012s` now packetizes as:
+  - recommendation: `shared_source_lineage_no_distinct_proof_receipt`
+  - prior accepted proof receipt: `factory2-review-0005-396-427s-panel-v2` track `5`
+  - later stub: track `6`
+  - source token key on the prior accepted receipt:
+    - `factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005`
+- This matches Oracle’s warning:
+  - the final two proof misses currently look like an earlier accepted carry followed by an output-only/static-edge stub
+  - they are **not** yet distinct proof receipts
+  - do **not** close them by reusing already-consumed source authority
+
+Important implementation notes:
+- Accepted-proof dedupe can no longer rely on overlapping receipt intervals alone.
+  - `scripts/build_morning_proof_report.py` now attaches:
+    - `source_lineage_track_ids`
+    - `source_lineage_receipt_paths`
+    - `source_token_key`
+  - accepted receipts are deduped by:
+    - overlapping receipt intervals, or
+    - shared `source_token_key`
+- The packet builder must not trust `failure_link` alone when searching for output-only stubs.
+  - some real stub rows still surface `reason: static_stack_edge` while the summary `failure_link` lands on `worker_body_overlap` because person-overlap flags dominate
+  - stub matching now uses raw reason as well
+
+Current blocker:
+- Proof remains short of runtime truth because the last two events still lack distinct source-backed proof receipts.
+- The blocker is no longer “find the timestamps.” It is:
+  - build a receipt strategy that surfaces distinct new source lineage for `305.708` and `425.012`, or
+  - explicitly document those two as runtime/proof divergence under the current proof bar
+
+Exact next step:
+1. Use `data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json` as the canonical audit surface for the final two proof gaps.
+2. Build a **new** event-centered receipt construction pass for `305.708` and `425.012` that proves fresh source lineage if it exists.
+3. If that pass still collapses into the earlier accepted receipt plus later stub, stop trying to tune thresholds and record an explicit `runtime counts 23 / proof honest ceiling 21` divergence for those two events.

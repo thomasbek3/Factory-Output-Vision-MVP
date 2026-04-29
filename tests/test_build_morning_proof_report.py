@@ -452,6 +452,82 @@ def test_build_report_rehydrates_gate_with_person_panel_separation_receipt(tmp_p
     assert promoted_track["failure_link"] == "source_token_approved"
 
 
+def test_build_report_dedupes_non_overlapping_receipts_that_reuse_same_source_lineage(tmp_path: Path):
+    receipt_a = tmp_path / "diag" / "track_receipts" / "track-000001.json"
+    receipt_a.parent.mkdir(parents=True, exist_ok=True)
+    receipt_a.write_text(
+        """
+        {
+          "timestamps": {"first": 300.2, "last": 303.7},
+          "review_assets": {"raw_crop_paths": ["diag/crop-a.jpg"]}
+        }
+        """,
+        encoding="utf-8",
+    )
+    receipt_b = tmp_path / "diag" / "track_receipts" / "track-000002.json"
+    receipt_b.write_text(
+        """
+        {
+          "timestamps": {"first": 305.2, "last": 306.1},
+          "review_assets": {"raw_crop_paths": ["diag/crop-b.jpg"]}
+        }
+        """,
+        encoding="utf-8",
+    )
+    diagnostic = write_json(
+        tmp_path / "diag" / "diagnostic.json",
+        f"""
+        {{
+          "video_path": "data/videos/from-pc/factory2.MOV",
+          "start_timestamp": 288.0,
+          "end_timestamp": 328.0,
+          "perception_gate_summary": {{
+            "allowed_source_token_tracks": [1, 2],
+            "track_count": 2,
+            "decision_counts": {{"allow_source_token": 2}},
+            "reason_counts": {{"moving_panel_candidate": 2}}
+          }},
+          "perception_gate": [
+            {{
+              "track_id": 1,
+              "decision": "allow_source_token",
+              "reason": "moving_panel_candidate",
+              "flags": ["source_token_allowed_by_crop_classifier"],
+              "evidence": {{"source_frames": 5, "output_frames": 1}}
+            }},
+            {{
+              "track_id": 2,
+              "decision": "allow_source_token",
+              "reason": "moving_panel_candidate",
+              "flags": ["source_token_allowed_by_crop_classifier"],
+              "evidence": {{
+                "source_frames": 0,
+                "output_frames": 1,
+                "merged_predecessor_track_id": 1,
+                "merged_predecessor_track_ids": [1],
+                "merged_predecessor_receipt_paths": ["{receipt_a}"]
+              }}
+            }}
+          ],
+          "track_receipts": ["{receipt_a}", "{receipt_b}"],
+          "track_receipt_cards": []
+        }}
+        """,
+    )
+    fp_report = write_json(tmp_path / "fp.json", "{\"items\": []}")
+
+    report = build_report(diagnostic_paths=[diagnostic], fp_report_paths=[fp_report])
+
+    assert report["accepted_count"] == 1
+    assert report["accepted_receipt_count"] == 2
+    assert report["accepted_duplicate_receipt_count"] == 1
+    accepted = report["decision_receipt_index"]["accepted"]
+    assert accepted[0]["source_token_key"] == accepted[1]["source_token_key"]
+    assert accepted[0]["counts_toward_accepted_total"] is True
+    assert accepted[1]["counts_toward_accepted_total"] is False
+    assert accepted[1]["accepted_duplicate_reasons"] == ["shared_source_token_key"]
+
+
 def test_worker_overlap_details_separate_entangled_from_protruding(tmp_path: Path):
     diagnostic = write_json(
         tmp_path / "diagnostic.json",

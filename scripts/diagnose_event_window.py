@@ -554,8 +554,11 @@ def select_gate_predecessor_index(
     current_center = track_first_center(current)
     if current_center is None:
         return None
-    max_gap_seconds = max(2.0, 4.0 / fps) if fps > 0 and math.isfinite(fps) else 2.0
-    max_link_distance = 350.0
+    # Keep proof-side stitching alive for roughly the same lifetime as runtime
+    # source tokens. Otherwise proof can drop the source fragment while runtime
+    # can still legitimately weld the split delivery chain back together.
+    max_gap_seconds = max(2.0, 45.0 / fps) if fps > 0 and math.isfinite(fps) else 2.0
+    max_link_distance = 500.0
     candidates: list[tuple[float, float, int, int]] = []
     for index, predecessor in enumerate(tracks):
         if index == current_index or predecessor.source_frames < 2 or predecessor.output_frames > 0:

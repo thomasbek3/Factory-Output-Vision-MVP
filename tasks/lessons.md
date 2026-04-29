@@ -123,6 +123,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **The final two proof misses are not plain panel-vs-worker misses.** `305.708s` and `425.012s` collapse into an earlier accepted carry plus a later `output_only_no_source_token` stub. Tighter windows that started later lost source evidence entirely; tighter windows that started earlier only restated the earlier accepted carry.
 4. **Do not recover proof gaps by reusing prior accepted count authority.** In this dataset, a heuristic that lets an `output_only_no_source_token` stub inherit from a nearby already-accepted carry would likely recover the final two counts, but that reuses prior source authority and is too close to cheating the proof bar.
 
+## 2026-04-29: Factory2 Final-Two Packetization Lessons
+
+1. **Accepted-proof dedupe needs source lineage, not just time overlap.** Overlap-based clustering is not enough once split deliveries and restated receipts exist. Attach a `source_token_key` derived from the source-supporting receipt lineage and treat shared lineage as duplicate proof authority unless new source evidence appears.
+2. **Runtime/proof disagreement should be packetized around the runtime event, not argued abstractly.** A runtime-event-centered receipt packet made the final two misses legible: each one reduced to an earlier accepted proof carry plus a later output-only/static-edge stub in the same covering diagnostic.
+3. **Do not trust top-level `failure_link` alone when looking for proof stubs.** Some rows with `reason: static_stack_edge` still summarize to `failure_link: worker_body_overlap` because person-overlap flags dominate. Audit tooling for proof/runtime gaps must inspect raw reason as well.
+4. **Oracle’s warning held up against the real artifact.** For `305.708s` and `425.012s`, the committed `21`-count proof baseline now packetizes to `shared_source_lineage_no_distinct_proof_receipt`. That is evidence for an honest proof/runtime divergence, not permission to stitch by threshold relaxation.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).

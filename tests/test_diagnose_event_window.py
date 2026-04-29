@@ -1286,6 +1286,140 @@ def test_refresh_diagnostic_gate_receipts_does_not_merge_distant_predecessor(tmp
     assert "merged_predecessor_track_id" not in by_track[2]["evidence"]
 
 
+def test_refresh_diagnostic_gate_receipts_keeps_runtime_sized_predecessor_gap_alive(tmp_path: Path) -> None:
+    out_dir = tmp_path / "diagnostic"
+    receipts_dir = out_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "overlay_sheet.jpg").write_bytes(b"sheet")
+    (out_dir / "overlay_video.mp4").write_bytes(b"video")
+
+    predecessor_path = receipts_dir / "track-000001.json"
+    predecessor_path.write_text(
+        json.dumps(
+            _track_receipt_payload(
+                track_id=1,
+                first_timestamp=100.0,
+                last_timestamp=104.0,
+                first_zone="source",
+                zones_seen=["source"],
+                source_frames=12,
+                output_frames=0,
+                max_displacement=80.0,
+                mean_internal_motion=0.28,
+                max_internal_motion=0.41,
+                detections=12,
+                static_location_ratio=0.2,
+                flow_coherence=0.5,
+                static_stack_overlap_ratio=0.0,
+                person_overlap_ratio=0.88,
+                outside_person_ratio=0.12,
+                observations=[
+                    {"timestamp": 100.0, "box_xywh": [900.0, 500.0, 120.0, 80.0], "zone": "source"},
+                    {"timestamp": 102.0, "box_xywh": [930.0, 505.0, 120.0, 80.0], "zone": "source"},
+                    {"timestamp": 104.0, "box_xywh": [960.0, 510.0, 120.0, 80.0], "zone": "source"},
+                ],
+            )
+        ),
+        encoding="utf-8",
+    )
+    _write_person_panel_sidecar(
+        predecessor_path.with_name("track-000001-person-panel-separation.json"),
+        recommendation="countable_panel_candidate",
+        max_visible_nonperson_ratio=0.55,
+        max_estimated_visible_signal=0.06,
+        selected_frames=[
+            {"zone": "source", "separation_decision": "separable_panel_candidate"},
+            {"zone": "source", "separation_decision": "separable_panel_candidate"},
+            {"zone": "source", "separation_decision": "separable_panel_candidate"},
+        ],
+    )
+
+    successor_path = receipts_dir / "track-000002.json"
+    successor_path.write_text(
+        json.dumps(
+            _track_receipt_payload(
+                track_id=2,
+                first_timestamp=107.0,
+                last_timestamp=108.0,
+                first_zone="source",
+                zones_seen=["source", "output"],
+                source_frames=1,
+                output_frames=2,
+                max_displacement=145.0,
+                mean_internal_motion=0.31,
+                max_internal_motion=0.5,
+                detections=3,
+                static_location_ratio=0.0,
+                flow_coherence=0.6,
+                static_stack_overlap_ratio=0.0,
+                person_overlap_ratio=0.95,
+                outside_person_ratio=0.05,
+                observations=[
+                    {"timestamp": 107.0, "box_xywh": [970.0, 512.0, 210.0, 45.0], "zone": "source"},
+                    {"timestamp": 107.5, "box_xywh": [930.0, 520.0, 210.0, 45.0], "zone": "output"},
+                    {"timestamp": 108.0, "box_xywh": [885.0, 528.0, 210.0, 45.0], "zone": "output"},
+                ],
+            )
+        ),
+        encoding="utf-8",
+    )
+    _write_person_panel_sidecar(
+        successor_path.with_name("track-000002-person-panel-separation.json"),
+        recommendation="not_panel",
+        max_visible_nonperson_ratio=0.0,
+        max_estimated_visible_signal=0.0,
+        selected_frames=[
+            {"zone": "source", "separation_decision": "worker_body_overlap"},
+            {"zone": "output", "separation_decision": "worker_body_overlap"},
+            {"zone": "output", "separation_decision": "worker_body_overlap"},
+        ],
+    )
+
+    diagnostic_path = out_dir / "diagnostic.json"
+    diagnostic_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-event-diagnostic-v1",
+                "video_path": "data/videos/from-pc/factory2.MOV",
+                "start_timestamp": 100.0,
+                "end_timestamp": 109.0,
+                "fps": 5.0,
+                "track_receipts": [str(predecessor_path), str(successor_path)],
+                "track_receipt_cards": [],
+                "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                "diagnosis": [
+                    {"track_id": 1, "decision": "uncertain", "reason": "source_without_output_settle", "flags": [], "evidence": {"track_id": 1}},
+                    {"track_id": 2, "decision": "candidate", "reason": "source_to_output_motion", "flags": [], "evidence": {"track_id": 2}},
+                ],
+                "summary": {
+                    "track_count": 2,
+                    "decision_counts": {"candidate": 1, "reject": 0, "uncertain": 1},
+                    "reason_counts": {"source_to_output_motion": 1, "source_without_output_settle": 1},
+                    "has_source_to_output_candidate": True,
+                },
+                "perception_gate": [
+                    json.loads(predecessor_path.read_text(encoding="utf-8"))["perception_gate"],
+                    json.loads(successor_path.read_text(encoding="utf-8"))["perception_gate"],
+                ],
+                "perception_gate_summary": {
+                    "allowed_source_token_tracks": [],
+                    "track_count": 2,
+                    "decision_counts": {"allow_source_token": 0, "reject": 2, "uncertain": 0},
+                    "reason_counts": {"worker_body_overlap": 2},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = diag.refresh_diagnostic_gate_receipts(diagnostic_path=diagnostic_path)
+
+    by_track = {row["track_id"]: row for row in result["perception_gate"]}
+    assert by_track[2]["decision"] == "allow_source_token"
+    assert by_track[2]["evidence"]["merged_predecessor_track_id"] == 1
+
+
 def test_refresh_diagnostic_gate_receipts_uses_existing_gate_row_as_baseline(tmp_path: Path) -> None:
     out_dir = tmp_path / "diagnostic"
     receipts_dir = out_dir / "track_receipts"

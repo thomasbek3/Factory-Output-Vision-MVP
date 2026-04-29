@@ -115,6 +115,71 @@ def track_id_from_path(path: str) -> Optional[int]:
         return None
 
 
+def diagnostic_id_from_receipt_path(path: str | None) -> str | None:
+    if not path:
+        return None
+    receipt_path = Path(path)
+    parent = receipt_path.parent
+    if parent.name == "track_receipts":
+        return parent.parent.name or None
+    return receipt_path.parent.name or None
+
+
+def _normalized_track_ids(values: Iterable[Any]) -> list[int]:
+    normalized: list[int] = []
+    for value in values:
+        try:
+            track_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if track_id not in normalized:
+            normalized.append(track_id)
+    return normalized
+
+
+def source_lineage_track_ids(*, track_id: int | None, row: dict[str, Any]) -> list[int]:
+    evidence = row.get("evidence") or {}
+    predecessor_ids = _normalized_track_ids(as_list(evidence.get("merged_predecessor_track_ids")))
+    if not predecessor_ids and evidence.get("merged_predecessor_track_id") is not None:
+        predecessor_ids = _normalized_track_ids([evidence.get("merged_predecessor_track_id")])
+
+    lineage_ids = list(predecessor_ids)
+    try:
+        source_frames = int(evidence.get("source_frames") or 0)
+    except (TypeError, ValueError):
+        source_frames = 0
+    if track_id is not None and source_frames > 0 and track_id not in lineage_ids:
+        lineage_ids.append(track_id)
+    return lineage_ids
+
+
+def source_lineage_receipt_paths(*, receipt_path: str | None, row: dict[str, Any]) -> list[str]:
+    evidence = row.get("evidence") or {}
+    lineage_paths: list[str] = []
+    for value in as_list(evidence.get("merged_predecessor_receipt_paths")):
+        if not value:
+            continue
+        normalized = str(value)
+        if normalized not in lineage_paths:
+            lineage_paths.append(normalized)
+    try:
+        source_frames = int(evidence.get("source_frames") or 0)
+    except (TypeError, ValueError):
+        source_frames = 0
+    if receipt_path and source_frames > 0 and str(receipt_path) not in lineage_paths:
+        lineage_paths.append(str(receipt_path))
+    return lineage_paths
+
+
+def source_token_key(*, track_id: int | None, receipt_path: str | None, row: dict[str, Any]) -> str | None:
+    diagnostic_id = diagnostic_id_from_receipt_path(receipt_path)
+    lineage_track_ids = source_lineage_track_ids(track_id=track_id, row=row)
+    if not diagnostic_id or not lineage_track_ids:
+        return None
+    suffix = "-".join(f"{item:06d}" for item in lineage_track_ids)
+    return f"{diagnostic_id}:tracks:{suffix}"
+
+
 def load_receipt_assets(path: str) -> dict[str, Any]:
     payload = load_receipt_payload(path)
     return payload.get("review_assets") or {}
@@ -165,29 +230,44 @@ def annotate_accepted_receipt_clusters(rows: list[dict[str, Any]]) -> dict[str, 
         )
     )
 
+    def connected(left: dict[str, Any], right: dict[str, Any]) -> bool:
+        left_key = str(left.get("source_token_key") or "")
+        right_key = str(right.get("source_token_key") or "")
+        if left_key and left_key == right_key:
+            return True
+        left_interval = receipt_interval(left)
+        right_interval = receipt_interval(right)
+        if left_interval is None or right_interval is None:
+            return False
+        return left_interval[0] <= right_interval[1] and right_interval[0] <= left_interval[1]
+
     clusters: list[list[dict[str, Any]]] = []
-    current_cluster: list[dict[str, Any]] = []
-    current_max_last: float | None = None
-    for row in ordered:
-        interval = receipt_interval(row)
-        if interval is None:
-            if current_cluster:
-                clusters.append(current_cluster)
-                current_cluster = []
-                current_max_last = None
-            clusters.append([row])
+    visited: set[int] = set()
+    for start_index, row in enumerate(ordered):
+        if start_index in visited:
             continue
-        first, last = interval
-        if current_cluster and current_max_last is not None and first <= current_max_last:
-            current_cluster.append(row)
-            current_max_last = max(current_max_last, last)
-        else:
-            if current_cluster:
-                clusters.append(current_cluster)
-            current_cluster = [row]
-            current_max_last = last
-    if current_cluster:
-        clusters.append(current_cluster)
+        queue = [start_index]
+        component: list[dict[str, Any]] = []
+        visited.add(start_index)
+        while queue:
+            current_index = queue.pop()
+            current = ordered[current_index]
+            component.append(current)
+            for candidate_index, candidate in enumerate(ordered):
+                if candidate_index in visited:
+                    continue
+                if connected(current, candidate):
+                    visited.add(candidate_index)
+                    queue.append(candidate_index)
+        component.sort(
+            key=lambda item: (
+                receipt_interval(item)[0] if receipt_interval(item) is not None else float("inf"),
+                receipt_interval(item)[1] if receipt_interval(item) is not None else float("inf"),
+                str(item.get("diagnostic_path") or ""),
+                int(item.get("track_id") or 0),
+            )
+        )
+        clusters.append(component)
 
     for index, cluster in enumerate(clusters, start=1):
         cluster_id = f"accepted-cluster-{index:03d}"
@@ -195,6 +275,16 @@ def annotate_accepted_receipt_clusters(rows: list[dict[str, Any]]) -> dict[str, 
         for row in cluster:
             row["accepted_cluster_id"] = cluster_id
             row["counts_toward_accepted_total"] = row is canonical
+            duplicate_reasons: list[str] = []
+            if row is not canonical:
+                if row.get("source_token_key") and row.get("source_token_key") == canonical.get("source_token_key"):
+                    duplicate_reasons.append("shared_source_token_key")
+                row_interval = receipt_interval(row)
+                canonical_interval = receipt_interval(canonical)
+                if row_interval is not None and canonical_interval is not None:
+                    if row_interval[0] <= canonical_interval[1] and canonical_interval[0] <= row_interval[1]:
+                        duplicate_reasons.append("overlapping_receipt_window")
+            row["accepted_duplicate_reasons"] = duplicate_reasons
 
     receipt_count = len(rows)
     distinct_count = len(clusters)
@@ -239,6 +329,8 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
         separation_path = person_panel_separation_path(receipt_path) if receipt_path else None
         separation_payload = load_person_panel_separation(separation_path)
         separation = person_panel_separation_features(separation_payload)
+        lineage_track_ids = source_lineage_track_ids(track_id=normalized_track_id, row=row)
+        lineage_receipt_paths = source_lineage_receipt_paths(receipt_path=receipt_path, row=row)
         rows.append(
             {
                 "track_id": normalized_track_id,
@@ -263,6 +355,13 @@ def build_track_receipts(gate_rows: list[Any], receipt_paths: list[str], card_pa
                 "receipt_card_path": card_by_track.get(normalized_track_id) or receipt_assets.get("track_sheet_path"),
                 "raw_crop_paths": as_list(receipt_assets.get("raw_crop_paths")),
                 "receipt_timestamps": receipt_payload.get("timestamps") or {},
+                "source_lineage_track_ids": lineage_track_ids,
+                "source_lineage_receipt_paths": lineage_receipt_paths,
+                "source_token_key": source_token_key(
+                    track_id=normalized_track_id,
+                    receipt_path=receipt_path,
+                    row=row,
+                ),
                 "person_panel_separation_path": separation_path if separation_payload else None,
                 "person_panel_recommendation": separation.get("person_panel_recommendation"),
                 "person_panel_summary": separation.get("person_panel_summary"),
@@ -594,6 +693,9 @@ def build_decision_receipt_index(diagnostics: list[dict[str, Any]]) -> dict[str,
                     "receipt_card_path": receipt_card_path,
                     "raw_crop_paths": raw_crop_paths,
                     "receipt_timestamps": receipt.get("receipt_timestamps") or {},
+                    "source_lineage_track_ids": _normalized_track_ids(receipt.get("source_lineage_track_ids") or []),
+                    "source_lineage_receipt_paths": [str(path) for path in as_list(receipt.get("source_lineage_receipt_paths"))],
+                    "source_token_key": receipt.get("source_token_key"),
                     "person_panel_separation_path": receipt.get("person_panel_separation_path"),
                     "person_panel_recommendation": receipt.get("person_panel_recommendation"),
                     "person_panel_summary": receipt.get("person_panel_summary"),
