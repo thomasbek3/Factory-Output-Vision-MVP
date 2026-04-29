@@ -1,0 +1,163 @@
+{
+  "baseline_packet_path": "data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json",
+  "divergent_events": [
+    {
+      "baseline_recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "focused_10fps_search": {
+        "candidate_count": 12,
+        "recommendation_counts": {
+          "shared_source_lineage_no_distinct_proof_receipt": 12
+        },
+        "sample_accepted_track_ids": [
+          1,
+          2
+        ],
+        "sample_stub_track_ids": [
+          2,
+          3
+        ]
+      },
+      "focused_8fps_search": {
+        "candidate_count": 12,
+        "recommendation_counts": {
+          "shared_source_lineage_no_distinct_proof_receipt": 12
+        },
+        "sample_accepted_track_ids": [
+          1
+        ],
+        "sample_stub_track_ids": [
+          2,
+          3
+        ]
+      },
+      "nearest_output_only_stub_receipt": {
+        "decision": "reject",
+        "diagnostic_path": "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json",
+        "failure_link": "worker_body_overlap",
+        "raw_crop_paths": [
+          "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000003-crops/crop-01-output.jpg"
+        ],
+        "reason": "static_stack_edge",
+        "receipt_card_path": "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000003-sheet.jpg",
+        "receipt_json_path": "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000003.json",
+        "receipt_timestamps": {
+          "first": 306.9,
+          "last": 306.9
+        },
+        "source_lineage_track_ids": [],
+        "source_token_key": null,
+        "track_id": 3
+      },
+      "prior_accepted_receipt": {
+        "decision": "allow_source_token",
+        "diagnostic_path": "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json",
+        "failure_link": "source_token_approved",
+        "raw_crop_paths": [
+          "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000002-crops/crop-01-source.jpg",
+          "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000002-crops/crop-02-source.jpg",
+          "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000002-crops/crop-03-output.jpg",
+          "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000002-crops/crop-04-output.jpg"
+        ],
+        "reason": "moving_panel_candidate",
+        "receipt_card_path": "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000002-sheet.jpg",
+        "receipt_json_path": "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/track_receipts/track-000002.json",
+        "receipt_timestamps": {
+          "first": 303.1,
+          "last": 303.7
+        },
+        "source_lineage_track_ids": [
+          2
+        ],
+        "source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+        "track_id": 2
+      },
+      "runtime_track_id": 108,
+      "status": "shared_source_lineage_no_distinct_proof_receipt"
+    },
+    {
+      "baseline_recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "focused_10fps_search": {
+        "candidate_count": 12,
+        "recommendation_counts": {
+          "shared_source_lineage_no_distinct_proof_receipt": 12
+        },
+        "sample_accepted_track_ids": [
+          1
+        ],
+        "sample_stub_track_ids": [
+          3,
+          4
+        ]
+      },
+      "focused_8fps_search": {
+        "candidate_count": 12,
+        "recommendation_counts": {
+          "shared_source_lineage_no_distinct_proof_receipt": 12
+        },
+        "sample_accepted_track_ids": [
+          1
+        ],
+        "sample_stub_track_ids": [
+          3,
+          4
+        ]
+      },
+      "nearest_output_only_stub_receipt": {
+        "decision": "reject",
+        "diagnostic_path": "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/diagnostic.json",
+        "failure_link": "worker_body_overlap",
+        "raw_crop_paths": [
+          "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000006-crops/crop-01-output.jpg"
+        ],
+        "reason": "static_stack_edge",
+        "receipt_card_path": "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000006-sheet.jpg",
+        "receipt_json_path": "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000006.json",
+        "receipt_timestamps": {
+          "first": 424.833,
+          "last": 424.833
+        },
+        "source_lineage_track_ids": [],
+        "source_token_key": null,
+        "track_id": 6
+      },
+      "prior_accepted_receipt": {
+        "decision": "allow_source_token",
+        "diagnostic_path": "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/diagnostic.json",
+        "failure_link": "source_token_approved",
+        "raw_crop_paths": [
+          "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000005-crops/crop-01-source.jpg",
+          "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000005-crops/crop-02-output.jpg"
+        ],
+        "reason": "moving_panel_candidate",
+        "receipt_card_path": "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000005-sheet.jpg",
+        "receipt_json_path": "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/track_receipts/track-000005.json",
+        "receipt_timestamps": {
+          "first": 422.167,
+          "last": 422.5
+        },
+        "source_lineage_track_ids": [
+          1,
+          3,
+          5
+        ],
+        "source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+        "track_id": 5
+      },
+      "runtime_track_id": 152,
+      "status": "shared_source_lineage_no_distinct_proof_receipt"
+    }
+  ],
+  "focused_search_reports": [
+    "data/reports/factory2_final_gap_search_report.focused_v1.json",
+    "data/reports/factory2_final_gap_search_report.focused_v2_10fps.json"
+  ],
+  "proof_baseline_path": "data/reports/factory2_morning_proof_report.optimized_plus_0016_0019_v1.json",
+  "proof_honest_ceiling": 21,
+  "runtime_audit_path": "data/reports/factory2_runtime_event_audit.gap45_recentdedupe.json",
+  "runtime_count": 23,
+  "schema_version": "factory2-proof-runtime-divergence-v1"
+}

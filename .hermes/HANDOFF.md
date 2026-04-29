@@ -2342,3 +2342,90 @@ Exact next step:
 1. Use `data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json` as the canonical audit surface for the final two proof gaps.
 2. Build a **new** event-centered receipt construction pass for `305.708` and `425.012` that proves fresh source lineage if it exists.
 3. If that pass still collapses into the earlier accepted receipt plus later stub, stop trying to tune thresholds and record an explicit `runtime counts 23 / proof honest ceiling 21` divergence for those two events.
+
+## 2026-04-29: Focused Final-Gap Search Result
+
+What changed:
+- Added targeted final-gap search tooling:
+  - `scripts/build_factory2_final_gap_search_plan.py`
+  - `scripts/run_factory2_final_gap_search.py`
+  - `scripts/build_factory2_final_gap_search_report.py`
+- Added tests:
+  - `tests/test_build_factory2_final_gap_search_plan.py`
+  - `tests/test_run_factory2_final_gap_search.py`
+  - `tests/test_build_factory2_final_gap_search_report.py`
+- Saved the overnight attack plan at:
+  - `docs/superpowers/plans/2026-04-29-factory2-overnight-final-two-to-goal.md`
+
+What was verified:
+- New focused search suite passed:
+  - `tests/test_build_factory2_final_gap_search_plan.py`
+  - `tests/test_run_factory2_final_gap_search.py`
+  - `tests/test_build_factory2_final_gap_search_report.py`
+  - result: `9 passed`
+- Combined proof/report/runtime suite also still passed after the new tooling:
+  - `tests/test_build_morning_proof_report.py`
+  - `tests/test_build_factory2_runtime_event_receipt_packets.py`
+  - `tests/test_diagnose_event_window.py`
+  - `tests/test_reconstruct_factory2_truth_candidates.py`
+  - `tests/test_build_factory2_proof_alignment_queue.py`
+  - `tests/test_build_factory2_runtime_backed_proof_set.py`
+  - `tests/test_optimize_factory2_proof_set.py`
+  - result: `46 passed`
+
+What the search did:
+- Built the bounded 8fps plan:
+  - `data/reports/factory2_final_gap_search_plan.focused_v1.json`
+  - `24` candidates total (`12` per final runtime-only event)
+- Ran the 8fps search:
+  - `data/reports/factory2_final_gap_search_run.focused_v1.json`
+- Scored the 8fps search:
+  - `data/reports/factory2_final_gap_search_report.focused_v1.json`
+- Built the matching 10fps confirmation plan:
+  - `data/reports/factory2_final_gap_search_plan.focused_v2_10fps.json`
+- Ran the 10fps search:
+  - `data/reports/factory2_final_gap_search_run.focused_v2_10fps.json`
+- Scored the 10fps search:
+  - `data/reports/factory2_final_gap_search_report.focused_v2_10fps.json`
+- Wrote the explicit divergence artifact:
+  - `data/reports/factory2_proof_runtime_divergence.final_two_v1.json`
+
+What the search proved:
+- For `factory2-runtime-only-0007` (`305.708s`):
+  - all `12/12` focused 8fps windows scored:
+    - `shared_source_lineage_no_distinct_proof_receipt`
+  - all `12/12` focused 10fps windows scored:
+    - `shared_source_lineage_no_distinct_proof_receipt`
+  - pattern:
+    - earlier accepted carry inside the candidate window
+    - later output-only/static-edge stub near the runtime event
+    - no event-local fresh proof receipt
+- For `factory2-runtime-only-0008` (`425.012s`):
+  - all `12/12` focused 8fps windows scored:
+    - `shared_source_lineage_no_distinct_proof_receipt`
+  - all `12/12` focused 10fps windows scored:
+    - `shared_source_lineage_no_distinct_proof_receipt`
+  - same pattern:
+    - earlier accepted carry
+    - later output-only/static-edge stub
+    - no event-local fresh proof receipt
+
+Important scorer correction:
+- A naive “new `source_token_key` means fresh lineage” rule was wrong because every search diagnostic gets a new diagnostic-local namespace.
+- The scorer now requires:
+  - accepted proof evidence to be event-local, not just earlier in the same candidate window
+  - otherwise, if a later stub follows the earlier accepted receipt, the result stays:
+    - `shared_source_lineage_no_distinct_proof_receipt`
+
+Current honest state:
+- Runtime/app path: `23`
+- Proof honest ceiling after targeted final-gap search: `21`
+- Divergent events:
+  - `305.708s`
+  - `425.012s`
+
+Exact next step:
+1. Stop searching this branch by threshold/fps/window tweaking alone; the focused 8fps and 10fps sweeps both collapsed the same way.
+2. Either:
+  - design a brand-new receipt-construction method that can prove distinct fresh source lineage for those two events, or
+  - accept the explicit divergence artifact and move the next product investment into new training/data/model work for split deliveries under worker overlap.

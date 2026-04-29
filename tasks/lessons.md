@@ -130,6 +130,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Do not trust top-level `failure_link` alone when looking for proof stubs.** Some rows with `reason: static_stack_edge` still summarize to `failure_link: worker_body_overlap` because person-overlap flags dominate. Audit tooling for proof/runtime gaps must inspect raw reason as well.
 4. **Oracle’s warning held up against the real artifact.** For `305.708s` and `425.012s`, the committed `21`-count proof baseline now packetizes to `shared_source_lineage_no_distinct_proof_receipt`. That is evidence for an honest proof/runtime divergence, not permission to stitch by threshold relaxation.
 
+## 2026-04-29: Factory2 Focused Gap Search Lessons
+
+1. **A new diagnostic-local key is not fresh proof lineage.** Search windows naturally mint new diagnostic-specific `source_token_key` strings. To qualify as fresh proof, the accepted receipt must also be event-local; otherwise it can still be the same earlier physical carry in a new namespace.
+2. **Event-locality is the right check for final-gap rescue windows.** In the focused searches, accepted proof receipts often ended `1.5–2.0s` before the runtime event while a later static/output-only stub landed near the runtime timestamp. Those must score as `shared_source_lineage_no_distinct_proof_receipt`, not as recovered proof.
+3. **Both 8fps and 10fps sweeps converged on the same answer.** For both divergent events (`305.708s`, `425.012s`), all `12/12` focused windows at `8fps` and all `12/12` focused windows at `10fps` collapsed into earlier accepted lineage plus later stub. That makes the current divergence materially stronger than a single-window anecdote.
+4. **Once focused sweeps stabilize, stop spending time on more threshold/fps/window nudges.** After two bounded confirmation bands returned the same `24/24` outcome, the next real lever is a new receipt-construction method or new training/data/model work, not more minor search-parameter churn.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).

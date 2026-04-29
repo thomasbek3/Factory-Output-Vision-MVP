@@ -1,0 +1,272 @@
+{
+  "diagnostics_root": "data/diagnostics/event-windows",
+  "plan_path": "data/reports/factory2_final_gap_search_plan.focused_v2_10fps.json",
+  "result_count": 24,
+  "results": [
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead040-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-301-307s-10fps-0007-lead040-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-301-307s-10fps-0007-lead040-tail020-fps100",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 301.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead040-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-301-308s-10fps-0007-lead040-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-301-308s-10fps-0007-lead040-tail030-fps100",
+      "end_seconds": 308.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 301.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead040-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-301-309s-10fps-0007-lead040-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-301-309s-10fps-0007-lead040-tail040-fps100",
+      "end_seconds": 309.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 301.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead060-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-299-307s-10fps-0007-lead060-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-299-307s-10fps-0007-lead060-tail020-fps100",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 299.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead060-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-299-308s-10fps-0007-lead060-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-299-308s-10fps-0007-lead060-tail030-fps100",
+      "end_seconds": 308.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 299.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead060-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-299-309s-10fps-0007-lead060-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-299-309s-10fps-0007-lead060-tail040-fps100",
+      "end_seconds": 309.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 299.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead080-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-297-307s-10fps-0007-lead080-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-297-307s-10fps-0007-lead080-tail020-fps100",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 297.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead080-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-297-308s-10fps-0007-lead080-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-297-308s-10fps-0007-lead080-tail030-fps100",
+      "end_seconds": 308.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 297.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead080-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-297-309s-10fps-0007-lead080-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-297-309s-10fps-0007-lead080-tail040-fps100",
+      "end_seconds": 309.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 297.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead100-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-295-307s-10fps-0007-lead100-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-295-307s-10fps-0007-lead100-tail020-fps100",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 295.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead100-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-295-308s-10fps-0007-lead100-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-295-308s-10fps-0007-lead100-tail030-fps100",
+      "end_seconds": 308.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 295.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lead100-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-295-309s-10fps-0007-lead100-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-295-309s-10fps-0007-lead100-tail040-fps100",
+      "end_seconds": 309.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 295.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead040-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-421-427s-10fps-0008-lead040-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-421-427s-10fps-0008-lead040-tail020-fps100",
+      "end_seconds": 427.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 421.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead040-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-421-428s-10fps-0008-lead040-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-421-428s-10fps-0008-lead040-tail030-fps100",
+      "end_seconds": 428.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 421.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead040-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-421-429s-10fps-0008-lead040-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-421-429s-10fps-0008-lead040-tail040-fps100",
+      "end_seconds": 429.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 421.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead060-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-419-427s-10fps-0008-lead060-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-419-427s-10fps-0008-lead060-tail020-fps100",
+      "end_seconds": 427.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 419.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead060-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-419-428s-10fps-0008-lead060-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-419-428s-10fps-0008-lead060-tail030-fps100",
+      "end_seconds": 428.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 419.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead060-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-419-429s-10fps-0008-lead060-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-419-429s-10fps-0008-lead060-tail040-fps100",
+      "end_seconds": 429.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 419.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead080-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-417-427s-10fps-0008-lead080-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-417-427s-10fps-0008-lead080-tail020-fps100",
+      "end_seconds": 427.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 417.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead080-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-417-428s-10fps-0008-lead080-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-417-428s-10fps-0008-lead080-tail030-fps100",
+      "end_seconds": 428.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 417.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead080-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-417-429s-10fps-0008-lead080-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-417-429s-10fps-0008-lead080-tail040-fps100",
+      "end_seconds": 429.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 417.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead100-tail020-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-415-427s-10fps-0008-lead100-tail020-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-415-427s-10fps-0008-lead100-tail020-fps100",
+      "end_seconds": 427.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 415.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead100-tail030-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-415-428s-10fps-0008-lead100-tail030-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-415-428s-10fps-0008-lead100-tail030-fps100",
+      "end_seconds": 428.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 415.012
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidate_id": "0008-lead100-tail040-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0008-415-429s-10fps-0008-lead100-tail040-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0008-415-429s-10fps-0008-lead100-tail040-fps100",
+      "end_seconds": 429.012,
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "fps": 10.0,
+      "start_seconds": 415.012
+    }
+  ],
+  "schema_version": "factory2-final-gap-search-run-v1"
+}
