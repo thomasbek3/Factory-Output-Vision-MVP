@@ -2119,12 +2119,11 @@ What this means:
 - One-pass runtime moved from the old single-count story to `17`, but that is still below the human truth target of `23`.
 - The dominant remaining blocker is now source→output chain recall across split tracks, not person/panel separation alone.
 
+Additional tool now built:
+- `scripts/audit_factory2_runtime_events.py`
+- `tests/test_audit_factory2_runtime_events.py`
+
 Exact next step:
-1. Build a dedicated runtime event audit harness that writes every `CountEvent` with:
-   - video timestamp
-   - track id
-   - predecessor chain ids
-   - gate flags
-   - crop-classifier recommendation summary
-2. Use that harness to diff the `17` one-pass runtime events against the human `23` truth set and identify the six missing deliveries.
+1. Run `scripts/audit_factory2_runtime_events.py` on the full file and on late-window slices, save the JSON ledger under `data/reports/`.
+2. Diff the `17` one-pass runtime events against the human `23` truth set and identify the six missing deliveries.
 3. Then fix runtime/source-chain recall with bounded chain-link logic; do not loosen perception thresholds.
