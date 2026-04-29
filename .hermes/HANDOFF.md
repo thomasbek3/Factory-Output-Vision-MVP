@@ -2184,3 +2184,88 @@ Exact next step:
 1. Wait for `data/reports/factory2_runtime_event_audit.gap45_recentdedupe.json` to finish writing and record its `final_count`.
 2. Run `scripts/reconstruct_factory2_truth_candidates.py` against that audit output to produce a concrete reconciliation ledger.
 3. Use the runtime-only reconciliation rows to identify the next missing delivery class, then patch chain recall again without loosening perception gates.
+
+---
+
+## 2026-04-28 Proof Alignment Search To 23
+
+What changed:
+- Added proof-alignment helpers:
+  - `scripts/build_factory2_proof_alignment_queue.py`
+  - `scripts/build_factory2_runtime_backed_proof_set.py`
+  - `scripts/optimize_factory2_proof_set.py`
+- Added tests:
+  - `tests/test_build_factory2_proof_alignment_queue.py`
+  - `tests/test_build_factory2_runtime_backed_proof_set.py`
+  - `tests/test_optimize_factory2_proof_set.py`
+- Saved the execution plan at:
+  - `docs/superpowers/plans/2026-04-28-factory2-proof-alignment-to-23.md`
+- Built new focused diagnostics for the uncovered runtime-only proof gaps:
+  - `factory2-review-0015-000-016s-panel-v1-5fps`
+  - `factory2-review-0016-274-294s-panel-v1-5fps`
+  - `factory2-review-0017-298-314s-panel-v1-5fps`
+  - `factory2-review-0018-414-427s-panel-v1-5fps`
+  - `factory2-review-0019-000-010s-panel-v1-8fps`
+  - `factory2-review-0020-304-309s-panel-v1-8fps`
+  - `factory2-review-0021-423-427s-panel-v1-8fps`
+  - `factory2-review-0022-302-307s-panel-v1-8fps`
+  - `factory2-review-0023-421-427s-panel-v1-8fps`
+
+What was verified:
+- New proof-set helper suites passed:
+  - `tests/test_build_factory2_proof_alignment_queue.py`
+  - `tests/test_build_factory2_runtime_backed_proof_set.py`
+  - `tests/test_optimize_factory2_proof_set.py`
+  - result: `7 passed`
+- `tests/test_diagnose_event_window.py` still passed after the focused diagnostic work:
+  - result: `14 passed`
+- The optimizer found the strongest existing proof set from the current diagnostic pool:
+  - artifact: `data/reports/factory2_optimized_proof_set.runtime23_live_narrow_v1.json`
+  - best existing-window result:
+    - `accepted_count: 19`
+    - `covered_runtime_events: 19`
+    - selected added diagnostics:
+      - `factory2-review-0000-000-078s-panel-v2-5fps`
+      - `factory2-review-0006-058-099s-panel-v1-5fps`
+      - `factory2-review-0007-112-152s-panel-v1-5fps`
+      - `factory2-review-0005-396-427s-panel-v2`
+- Focused proof-gap results:
+  - `factory2-review-0016-274-294s-panel-v1-5fps` recovered the missing `286.408s` runtime event as an accepted proof carry.
+  - `factory2-review-0019-000-010s-panel-v1-8fps` recovered the missing opener at `5.5s` as an accepted proof carry ending exactly at `5.5`.
+  - combined proof artifact:
+    - `data/reports/factory2_morning_proof_report.optimized_plus_0016_0019_v1.json`
+    - `accepted_count: 21`
+    - remaining uncovered runtime timestamps:
+      - `305.708`
+      - `425.012`
+
+What the failed probes proved:
+- `factory2-review-0020-304-309s-panel-v1-8fps` and `factory2-review-0021-423-427s-panel-v1-8fps` started too late and only produced output-only/static-edge stubs.
+- `factory2-review-0022-302-307s-panel-v1-8fps` and `factory2-review-0023-421-427s-panel-v1-8fps` started earlier and did produce accepted proof carries, but those carries terminated at:
+  - `304.375`
+  - `423.0`
+- Those two windows restated the earlier already-accepted carries; they did **not** prove the later runtime events at `305.708` or `425.012`.
+
+Current blocker:
+- The last two proof misses are not the same class as the earlier worker-overlap gaps.
+- Around `305.708`, proof currently collapses into:
+  - accepted carry `303.1–303.7`
+  - then an `output_only_no_source_token` stub at `306.9`
+  - then a later `source_without_output_settle` stub at `309.9–314.7`
+- Around `425.012`, proof currently collapses into:
+  - source-only track ending `421.167`
+  - accepted carry `422.167–422.5`
+  - then an `output_only_no_source_token` stub at `424.833`
+- Important constraint:
+  - a heuristic that simply lets an output-only stub inherit count authority from a nearby already-accepted carry would recover the final two in this dataset, but that would reuse prior accepted source authority and is too close to cheating the proof standard. Do **not** ship that shortcut without a much stronger product argument.
+
+Oracle:
+- A new Oracle browser session is running for the final-two question:
+  - slug: `factory2-final-two`
+- Prompt focus:
+  - whether the final two proof misses should be solved by proof-side stitch logic, a different receipt-building strategy, or an explicit documented proof/runtime divergence.
+
+Exact next step:
+1. Read the Oracle answer for `factory2-final-two`.
+2. If Oracle confirms the current evidence is insufficient for distinct proof receipts, document the explicit runtime/proof divergence for `305.708` and `425.012` instead of inventing count authority.
+3. If Oracle identifies a non-cheating receipt-building move, implement it narrowly against those two timestamps only and rerun the `optimized_plus_0016_0019` proof set.

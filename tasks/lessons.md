@@ -116,6 +116,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Crop-classifier evidence must survive predecessor-chain merges.** Runtime split-track delivery chains merge `_LiveSeparationSummary` state. If crop-classifier fields are not merged there, proof/runtime diverge and split worker-overlap deliveries stay invisible even after the classifier is trained.
 4. **Current runtime truth is still below the human target.** After crop-classifier promotion, the refreshed frozen proof reached `accepted_count: 15`, and the no-loop runtime harness reached `final_count: 17` on `factory2.MOV`. The next blocker is source→output chain recall, not person/panel perception alone.
 
+## 2026-04-28: Factory2 Proof Alignment Lessons
+
+1. **Proof recall can move materially just by selecting the right diagnostic set.** An optimizer over the current narrow proof winners plus nearby gap-region windows pushed the best existing-window proof set to `19/23` runtime-event coverage before any new detector/model work.
+2. **Two specific runtime-only gaps were recoverable by tighter windows.** `factory2-review-0019-000-010s-panel-v1-8fps` recovered the `5.5s` opener, and `factory2-review-0016-274-294s-panel-v1-5fps` recovered `286.408s`, moving the proof artifact to `accepted_count: 21`.
+3. **The final two proof misses are not plain panel-vs-worker misses.** `305.708s` and `425.012s` collapse into an earlier accepted carry plus a later `output_only_no_source_token` stub. Tighter windows that started later lost source evidence entirely; tighter windows that started earlier only restated the earlier accepted carry.
+4. **Do not recover proof gaps by reusing prior accepted count authority.** In this dataset, a heuristic that lets an `output_only_no_source_token` stub inherit from a nearby already-accepted carry would likely recover the final two counts, but that reuses prior source authority and is too close to cheating the proof bar.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).
