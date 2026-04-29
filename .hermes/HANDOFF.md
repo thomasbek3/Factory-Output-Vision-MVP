@@ -1,8 +1,78 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 20:01:00 EDT
+Updated: 2026-04-28 20:16:00 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+
+## Factory2 blocked crop dataset export — 2026-04-28 20:16 EDT
+
+Implemented the next recall-training slice:
+
+```text
+scripts/export_factory2_blocked_crops.py
+tests/test_export_factory2_blocked_crops.py
+```
+
+What changed:
+
+```text
+- Added a crop exporter that reads the frozen merged proof report decision receipt index and emits a label-ready dataset manifest plus copied crop assets.
+- Blocked worker-overlap receipts are exported as `blocked_worker_overlap`.
+- Canonical accepted carries are also exported as `accepted_positive_boundary` so the future training set has both sides of the decision boundary.
+- Each exported crop item preserves provenance: diagnostic/window, track id, timestamp, zone, gate decision/reason, person overlap, outside-person ratio, separation recommendation, receipt paths, and a label placeholder.
+```
+
+Real artifact created:
+
+```text
+Manifest:
+- data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json
+
+Dataset directory:
+- data/datasets/factory2_blocked_crops_narrow_frozen_v2/
+
+Counts:
+- blocked_track_count: 29
+- blocked_crop_count: 123
+- positive_track_count: 12
+- positive_crop_count: 95
+- total exported items: 218
+```
+
+Why this matters:
+
+```text
+The next blocker is no longer missing crop plumbing. The repo now has a concrete, provenance-preserving dataset built directly from the frozen merged proof state. That makes panel-vs-worker labeling and second-stage training possible without hand-curating files from receipt directories.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_export_factory2_blocked_crops.py -q
+.venv/bin/python -m py_compile scripts/export_factory2_blocked_crops.py tests/test_export_factory2_blocked_crops.py
+.venv/bin/python scripts/export_factory2_blocked_crops.py --proof-report data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --output-report data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json --dataset-dir data/datasets/factory2_blocked_crops_narrow_frozen_v2 --force
+```
+
+Verification:
+
+```text
+36 tests passed
+py_compile passed
+real blocked crop dataset artifact exists on disk with copied crops and manifest
+```
+
+Next blocker:
+
+```text
+The remaining blocker is no longer exporter plumbing; it is turning the 123 blocked worker-overlap crops into labeled training evidence and then feeding that second-stage signal back into the proof/runtime gate.
+```
+
+Exact next recommended step:
+
+```text
+Label the highest-priority blocked crops first, starting with the frozen merged worker-overlap receipts that already have `countable_panel_candidate` person/panel recommendations but still failed the gate.
+```
 
 
 ## Factory2 frozen narrow merged proof set + accepted dedupe — 2026-04-28 20:01 EDT
