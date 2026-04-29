@@ -808,7 +808,8 @@ def test_refresh_diagnostic_gate_receipts_merges_source_predecessor_into_output_
     result = diag.refresh_diagnostic_gate_receipts(diagnostic_path=diagnostic_path)
 
     by_track = {row["track_id"]: row for row in result["perception_gate"]}
-    assert by_track[8]["decision"] == "reject"
+    assert by_track[8]["decision"] == "uncertain"
+    assert by_track[8]["reason"] == "source_without_output_settle"
     assert by_track[10]["decision"] == "allow_source_token"
     assert by_track[10]["reason"] == "moving_panel_candidate"
     assert "source_token_allowed_by_person_panel_separation" in by_track[10]["flags"]
@@ -820,6 +821,154 @@ def test_refresh_diagnostic_gate_receipts_merges_source_predecessor_into_output_
     refreshed_successor = json.loads(successor_path.read_text(encoding="utf-8"))
     assert refreshed_successor["perception_gate"]["decision"] == "allow_source_token"
     assert refreshed_successor["perception_gate"]["evidence"]["merged_predecessor_track_id"] == 8
+
+
+def test_refresh_diagnostic_gate_receipts_merges_source_predecessor_using_crop_classifier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    out_dir = tmp_path / "diagnostic"
+    receipts_dir = out_dir / "track_receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "overlay_sheet.jpg").write_bytes(b"sheet")
+    (out_dir / "overlay_video.mp4").write_bytes(b"video")
+
+    predecessor_path = receipts_dir / "track-000004.json"
+    predecessor_path.write_text(
+        json.dumps(
+            _track_receipt_payload(
+                track_id=4,
+                first_timestamp=217.051,
+                last_timestamp=224.717,
+                first_zone="source",
+                zones_seen=["source"],
+                source_frames=23,
+                output_frames=0,
+                max_displacement=141.535,
+                mean_internal_motion=0.33,
+                max_internal_motion=0.44,
+                detections=23,
+                static_location_ratio=0.22,
+                flow_coherence=0.58,
+                static_stack_overlap_ratio=0.0,
+                person_overlap_ratio=1.0,
+                outside_person_ratio=0.0,
+                observations=[
+                    {"timestamp": 217.051, "box_xywh": [1128.0, 492.0, 150.0, 90.0], "zone": "source"},
+                    {"timestamp": 221.051, "box_xywh": [1133.0, 494.0, 149.0, 91.0], "zone": "source"},
+                    {"timestamp": 224.717, "box_xywh": [1138.077, 495.782, 152.724, 91.305], "zone": "source"},
+                ],
+            )
+        ),
+        encoding="utf-8",
+    )
+    _write_person_panel_sidecar(
+        predecessor_path.with_name("track-000004-person-panel-separation.json"),
+        recommendation="not_panel",
+        max_visible_nonperson_ratio=0.0,
+        max_estimated_visible_signal=0.0,
+        selected_frames=[
+            {"zone": "source", "separation_decision": "worker_body_overlap"},
+            {"zone": "source", "separation_decision": "worker_body_overlap"},
+        ],
+    )
+
+    successor_path = receipts_dir / "track-000005.json"
+    successor_path.write_text(
+        json.dumps(
+            _track_receipt_payload(
+                track_id=5,
+                first_timestamp=225.051,
+                last_timestamp=225.717,
+                first_zone="source",
+                zones_seen=["source", "output"],
+                source_frames=1,
+                output_frames=2,
+                max_displacement=152.0,
+                mean_internal_motion=0.42,
+                max_internal_motion=0.49,
+                detections=3,
+                static_location_ratio=0.0,
+                flow_coherence=0.62,
+                static_stack_overlap_ratio=0.0,
+                person_overlap_ratio=1.0,
+                outside_person_ratio=0.0,
+                observations=[
+                    {"timestamp": 225.051, "box_xywh": [1100.0, 500.0, 150.0, 90.0], "zone": "source"},
+                    {"timestamp": 225.384, "box_xywh": [980.0, 514.0, 190.0, 80.0], "zone": "output"},
+                    {"timestamp": 225.717, "box_xywh": [860.0, 540.0, 210.0, 60.0], "zone": "output"},
+                ],
+            )
+        ),
+        encoding="utf-8",
+    )
+    _write_person_panel_sidecar(
+        successor_path.with_name("track-000005-person-panel-separation.json"),
+        recommendation="not_panel",
+        max_visible_nonperson_ratio=0.0,
+        max_estimated_visible_signal=0.0,
+        selected_frames=[
+            {"zone": "source", "separation_decision": "worker_body_overlap"},
+            {"zone": "output", "separation_decision": "worker_body_overlap"},
+            {"zone": "output", "separation_decision": "worker_body_overlap"},
+        ],
+    )
+
+    diagnostic_path = out_dir / "diagnostic.json"
+    diagnostic_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-event-diagnostic-v1",
+                "video_path": "data/videos/from-pc/factory2.MOV",
+                "start_timestamp": 217.0,
+                "end_timestamp": 226.0,
+                "fps": 3.0,
+                "track_receipts": [str(predecessor_path), str(successor_path)],
+                "track_receipt_cards": [],
+                "overlay_sheet_path": str(out_dir / "overlay_sheet.jpg"),
+                "overlay_video_path": str(out_dir / "overlay_video.mp4"),
+                "diagnosis": [
+                    {"track_id": 4, "decision": "uncertain", "reason": "source_without_output_settle", "flags": [], "evidence": {"track_id": 4}},
+                    {"track_id": 5, "decision": "candidate", "reason": "source_to_output_motion", "flags": [], "evidence": {"track_id": 5}},
+                ],
+                "summary": {
+                    "track_count": 2,
+                    "decision_counts": {"candidate": 1, "reject": 0, "uncertain": 1},
+                    "reason_counts": {"source_to_output_motion": 1, "source_without_output_settle": 1},
+                    "has_source_to_output_candidate": True,
+                },
+                "perception_gate": [
+                    json.loads(predecessor_path.read_text(encoding="utf-8"))["perception_gate"],
+                    json.loads(successor_path.read_text(encoding="utf-8"))["perception_gate"],
+                ],
+                "perception_gate_summary": {
+                    "allowed_source_token_tracks": [],
+                    "track_count": 2,
+                    "decision_counts": {"allow_source_token": 0, "reject": 2, "uncertain": 0},
+                    "reason_counts": {"worker_body_overlap": 2},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        diag,
+        "receipt_crop_classifier_features",
+        lambda payload: {
+            "person_panel_crop_recommendation": "carried_panel",
+            "person_panel_crop_positive_crops": 3,
+            "person_panel_crop_negative_crops": 0,
+            "person_panel_crop_total_crops": 3,
+            "person_panel_crop_positive_ratio": 1.0,
+            "person_panel_crop_max_confidence": 0.999,
+        },
+    )
+
+    result = diag.refresh_diagnostic_gate_receipts(diagnostic_path=diagnostic_path)
+
+    by_track = {row["track_id"]: row for row in result["perception_gate"]}
+    assert by_track[5]["decision"] == "allow_source_token"
+    assert "source_token_allowed_by_crop_classifier" in by_track[5]["flags"]
+    assert by_track[5]["evidence"]["merged_predecessor_track_id"] == 4
 
 
 def test_refresh_diagnostic_gate_receipts_merges_multi_hop_source_chain_into_output_successor(tmp_path: Path) -> None:

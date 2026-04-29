@@ -201,6 +201,69 @@ def test_gate_keeps_worker_overlap_rejected_when_separation_is_not_persistent() 
     assert "source_token_allowed_by_person_panel_separation" not in decision.flags
 
 
+def test_gate_allows_high_overlap_track_when_crop_classifier_is_strong() -> None:
+    decision = evaluate_track(
+        GateTrackFeatures(
+            track_id=17,
+            source_frames=2,
+            output_frames=2,
+            zones_seen=["source", "output"],
+            first_zone="source",
+            max_displacement=188.0,
+            mean_internal_motion=0.16,
+            max_internal_motion=0.34,
+            detections=4,
+            person_overlap_ratio=0.94,
+            outside_person_ratio=0.0,
+            static_stack_overlap_ratio=0.0,
+            static_location_ratio=0.0,
+            flow_coherence=0.41,
+            person_panel_recommendation="not_panel",
+            person_panel_crop_recommendation="carried_panel",
+            person_panel_crop_positive_crops=2,
+            person_panel_crop_total_crops=2,
+            person_panel_crop_positive_ratio=1.0,
+            person_panel_crop_max_confidence=0.998,
+        ),
+        GateConfig(),
+    )
+
+    assert decision.decision == "allow_source_token"
+    assert decision.reason == "moving_panel_candidate"
+    assert "source_token_allowed_by_crop_classifier" in decision.flags
+
+
+def test_gate_demotes_high_overlap_track_to_uncertain_when_crop_classifier_is_strong_but_output_missing() -> None:
+    decision = evaluate_track(
+        GateTrackFeatures(
+            track_id=18,
+            source_frames=4,
+            output_frames=0,
+            zones_seen=["source"],
+            first_zone="source",
+            max_displacement=188.0,
+            mean_internal_motion=0.16,
+            max_internal_motion=0.34,
+            detections=4,
+            person_overlap_ratio=0.94,
+            outside_person_ratio=0.0,
+            static_stack_overlap_ratio=0.0,
+            static_location_ratio=0.0,
+            flow_coherence=0.41,
+            person_panel_recommendation="not_panel",
+            person_panel_crop_recommendation="carried_panel",
+            person_panel_crop_positive_crops=4,
+            person_panel_crop_total_crops=4,
+            person_panel_crop_positive_ratio=1.0,
+            person_panel_crop_max_confidence=0.999,
+        ),
+        GateConfig(),
+    )
+
+    assert decision.decision == "uncertain"
+    assert decision.reason == "source_without_output_settle"
+
+
 def test_gate_summary_counts_decisions_and_reasons() -> None:
     decisions = [
         evaluate_track(

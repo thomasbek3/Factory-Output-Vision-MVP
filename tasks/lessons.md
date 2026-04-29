@@ -109,6 +109,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 2. **For non-conveyor factories (worker at station), event-based counting is more robust.** Detecting panels in transit is better than monitoring output stacks because stacks are static and don't produce countable events.
 3. **Event-based mode auto-disables person-ignore masking and makes ROI optional.** The transit model already ignores persons, and detections happen across the full frame as the worker moves.
 
+## 2026-04-28: Factory2 Crop-Classifier Promotion Lessons
+
+1. **Blocked worker-overlap crops were not a real negative set.** Manual review of the `worker_body_overlap` receipt package showed the blocked tracks were still mostly real carried panels. Treating them as negatives would have poisoned the second-stage model. Build `worker_only` references from nearby non-track person crops instead.
+2. **Single-pass runtime verification cannot use looped demo totals.** In demo mode, [`app/services/frame_reader.py`](/Users/thomas/Projects/Factory-Output-Vision-MVP/app/services/frame_reader.py) runs `ffmpeg -stream_loop -1`, so `counts_this_hour` will eventually overcount on repeated passes. Use a no-loop harness or an explicit loop boundary before claiming a true one-pass `factory2.MOV` result.
+3. **Crop-classifier evidence must survive predecessor-chain merges.** Runtime split-track delivery chains merge `_LiveSeparationSummary` state. If crop-classifier fields are not merged there, proof/runtime diverge and split worker-overlap deliveries stay invisible even after the classifier is trained.
+4. **Current runtime truth is still below the human target.** After crop-classifier promotion, the refreshed frozen proof reached `accepted_count: 15`, and the no-loop runtime harness reached `final_count: 17` on `factory2.MOV`. The next blocker is source→output chain recall, not person/panel perception alone.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).

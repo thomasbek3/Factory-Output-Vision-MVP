@@ -210,6 +210,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - Merged proof `accepted_count` must be a distinct-delivery count, not a raw accepted-receipt count. If overlapping windows produce two accepted receipts for the same physical carry, dedupe them at the report layer and keep both receipts only as audit evidence.
 - If recall stalls on worker-overlap cases, the next product move is not threshold loosening. Export blocked receipt crops and build a panel-vs-worker separation dataset.
 - Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
+- Demo-mode app verification has a trap: `app/services/frame_reader.py` uses `ffmpeg -stream_loop -1` for demo files. Do not treat a long-running demo `counts_this_hour` total as a one-pass truth count for `factory2.MOV` unless you control the loop boundary or use a no-loop harness.
 - Active PRDs for this phase:
   - `docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md`
   - `docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md`

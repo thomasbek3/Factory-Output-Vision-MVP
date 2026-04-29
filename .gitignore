@@ -27,5 +27,7 @@ roboflow_dataset/valid/
 training_runs/*/weights/
 training_runs/*/train/
 training_runs/*/val/
+/training_runs/
 snapshot_test.jpg
 /yolo11n.pt
+/yolo11n-cls.pt

@@ -9,10 +9,12 @@ import numpy as np
 
 from app.services.calibration import Box, CalibrationZones, Gate, box_center, zone_membership
 from app.services.count_state_machine import CountConfig, CountEvent, CountStateMachine, TrackDetection
+from app.services.person_panel_crop_classifier import summarize_panel_box_crop
 from app.services.perception_gate import GateConfig, GateDecision, GateTrackFeatures, evaluate_track
 from scripts.analyze_person_panel_separation import analyze_frame_person_panel_separation
 
 SeparationAnalyzer = Callable[..., dict[str, Any]]
+CropClassifier = Callable[..., dict[str, Any]]
 
 
 @dataclass(frozen=True)
@@ -120,6 +122,12 @@ class _TrackGateAccumulator:
             person_panel_source_candidate_frames=separation.source_candidate_frames if separation is not None else 0,
             person_panel_max_visible_nonperson_ratio=separation.max_visible_ratio if separation is not None else 0.0,
             person_panel_max_signal=separation.max_signal if separation is not None else 0.0,
+            person_panel_crop_recommendation=separation.crop_recommendation if separation is not None else None,
+            person_panel_crop_positive_crops=separation.crop_positive_frames if separation is not None else 0,
+            person_panel_crop_negative_crops=separation.crop_negative_frames if separation is not None else 0,
+            person_panel_crop_total_crops=separation.crop_total_frames if separation is not None else 0,
+            person_panel_crop_positive_ratio=separation.crop_positive_ratio if separation is not None else 0.0,
+            person_panel_crop_max_confidence=separation.crop_max_confidence if separation is not None else 0.0,
         )
 
 
@@ -132,8 +140,12 @@ class _LiveSeparationSummary:
     static_frames: int = 0
     max_visible_ratio: float = 0.0
     max_signal: float = 0.0
+    crop_positive_frames: int = 0
+    crop_negative_frames: int = 0
+    crop_total_frames: int = 0
+    crop_max_confidence: float = 0.0
 
-    def update(self, frame_result: dict[str, Any]) -> None:
+    def update(self, frame_result: dict[str, Any], crop_summary: dict[str, Any] | None = None) -> None:
         self.sample_count += 1
         decision = str(frame_result.get("separation_decision") or "insufficient_visibility")
         zone = str(frame_result.get("zone") or "unknown")
@@ -152,6 +164,18 @@ class _LiveSeparationSummary:
             float(frame_result.get("mesh_signal_nonperson_score") or 0.0),
             float(frame_result.get("mesh_signal_border_score") or 0.0),
         )
+        crop_summary = crop_summary or {}
+        crop_recommendation = str(crop_summary.get("recommendation") or "")
+        if int(crop_summary.get("prediction_count") or 0) > 0:
+            self.crop_total_frames += 1
+            if crop_recommendation == "carried_panel":
+                self.crop_positive_frames += 1
+            elif crop_recommendation == "worker_only":
+                self.crop_negative_frames += 1
+            self.crop_max_confidence = max(
+                self.crop_max_confidence,
+                float(crop_summary.get("carried_panel_max_confidence") or 0.0),
+            )
 
     @property
     def recommendation(self) -> str | None:
@@ -163,6 +187,22 @@ class _LiveSeparationSummary:
             return "not_panel"
         if self.worker_overlap_frames == self.sample_count:
             return "not_panel"
+        return "insufficient_visibility"
+
+    @property
+    def crop_positive_ratio(self) -> float:
+        if self.crop_total_frames <= 0:
+            return 0.0
+        return self.crop_positive_frames / self.crop_total_frames
+
+    @property
+    def crop_recommendation(self) -> str | None:
+        if self.crop_total_frames <= 0:
+            return None
+        if self.crop_positive_frames >= 1 and self.crop_positive_ratio >= 0.75 and self.crop_max_confidence >= 0.95:
+            return "carried_panel"
+        if self.crop_negative_frames >= 1 and self.crop_negative_frames >= self.crop_positive_frames:
+            return "worker_only"
         return "insufficient_visibility"
 
 
@@ -244,6 +284,7 @@ class RuntimeEventCounter:
         tracker_match_distance: float = 30.0,
         tracker_max_missing_frames: int = 3,
         separation_analyzer: SeparationAnalyzer = analyze_frame_person_panel_separation,
+        crop_classifier: CropClassifier | None = summarize_panel_box_crop,
         gate_config: GateConfig | None = None,
     ) -> None:
         self._zones = zones
@@ -251,6 +292,7 @@ class RuntimeEventCounter:
         self._tracker_max_missing_frames = max(1, tracker_max_missing_frames)
         self._gate_config = gate_config or GateConfig()
         self._separation_analyzer = separation_analyzer
+        self._crop_classifier = crop_classifier
         self._count_config = CountConfig(
             zones=zones,
             gate=gate,
@@ -299,8 +341,15 @@ class RuntimeEventCounter:
                 person_box_xywh=selected_person_box,
                 zone=accumulator.last_zone,
             )
+            crop_summary = None
+            if self._crop_classifier is not None and str(frame_result.get("separation_decision") or "") != "separable_panel_candidate":
+                crop_summary = self._crop_classifier(
+                    image=frame,
+                    panel_box_xywh=item.bbox,
+                    zone=accumulator.last_zone,
+                )
             summary = self._separation_summaries.setdefault(item.track_id, _LiveSeparationSummary())
-            summary.update(frame_result)
+            summary.update(frame_result, crop_summary)
 
         gate_decisions: dict[int, GateDecision] = {}
         approved_track_ids: set[int] = set()
@@ -518,6 +567,10 @@ def merge_separation_summaries(
     merged.static_frames = predecessor.static_frames + current.static_frames
     merged.max_visible_ratio = max(predecessor.max_visible_ratio, current.max_visible_ratio)
     merged.max_signal = max(predecessor.max_signal, current.max_signal)
+    merged.crop_positive_frames = predecessor.crop_positive_frames + current.crop_positive_frames
+    merged.crop_negative_frames = predecessor.crop_negative_frames + current.crop_negative_frames
+    merged.crop_total_frames = predecessor.crop_total_frames + current.crop_total_frames
+    merged.crop_max_confidence = max(predecessor.crop_max_confidence, current.crop_max_confidence)
     return merged
 
 

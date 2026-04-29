@@ -123,6 +123,8 @@ def test_build_crop_training_dataset_uses_review_labels_and_groups_tracks(tmp_pa
     assert Path(result["items"][0]["image_path"]).read_bytes() == b"panel-a"
     assert Path(result["items"][1]["image_path"]).read_bytes() == b"panel-b"
     assert Path(result["items"][2]["image_path"]).read_bytes() == b"worker"
+    assert Path(result["items"][0]["classification_image_path"]).exists()
+    assert Path(result["items"][2]["classification_image_path"]).exists()
     assert json.loads(output_report.read_text(encoding="utf-8")) == result
 
 
@@ -169,3 +171,62 @@ def test_build_crop_training_dataset_refuses_to_overwrite_without_force(tmp_path
             review_labels_csv_path=None,
             force=False,
         )
+
+
+def test_build_crop_training_dataset_can_include_worker_reference_candidates_for_binary_mode(tmp_path: Path) -> None:
+    panel = _write_image(tmp_path / "package" / "images" / "panel.jpg", b"panel")
+    worker = _write_image(tmp_path / "worker_reference.jpg", b"worker")
+    review_csv = _write_review_csv(
+        tmp_path / "package" / "review_labels.csv",
+        [{"item_id": "diag-a-track-000005-crop-01", "crop_label": "carried_panel", "mask_status": "missing", "notes": ""}],
+    )
+    package_report = _write_json(
+        tmp_path / "package" / "review_package.json",
+        {
+            "schema_version": "factory-crop-review-package-v1",
+            "review_labels_csv_path": str(review_csv),
+            "items": [
+                {
+                    "item_id": "diag-a-track-000005-crop-01",
+                    "diagnostic_id": "diag-a",
+                    "track_id": 5,
+                    "crop_index": 1,
+                    "dataset_bucket": "accepted_positive_boundary",
+                    "packaged_image_path": str(panel),
+                    "label_placeholder": {"crop_label": "carried_panel", "mask_status": "missing", "notes": ""},
+                }
+            ],
+        },
+    )
+    worker_reference_report = _write_json(
+        tmp_path / "worker_refs.json",
+        {
+            "schema_version": "factory2-worker-reference-crops-v1",
+            "items": [
+                {
+                    "dataset_bucket": "reference_worker_only_candidate",
+                    "diagnostic_id": "diag-worker",
+                    "track_id": 9,
+                    "exported_crop_path": str(worker),
+                    "label_placeholder": {"crop_label": "worker_only", "mask_status": "missing", "notes": "ref"},
+                }
+            ],
+        },
+    )
+
+    result = builder.build_crop_training_dataset(
+        review_package_report_path=package_report,
+        output_report_path=tmp_path / "out" / "dataset.json",
+        dataset_dir=tmp_path / "out" / "dataset",
+        review_labels_csv_path=None,
+        worker_reference_report_path=worker_reference_report,
+        target_classes=["carried_panel", "worker_only"],
+        force=False,
+    )
+
+    assert result["target_classes"] == ["carried_panel", "worker_only"]
+    assert result["label_counts"] == {"carried_panel": 1, "worker_only": 1}
+    assert result["missing_classes"] == []
+    assert result["ready_for_training"] is True
+    assert Path(result["items"][0]["classification_image_path"]).exists()
+    assert Path(result["items"][1]["classification_image_path"]).exists()

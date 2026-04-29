@@ -27,6 +27,9 @@ class GateConfig:
     min_person_panel_source_frames: int = 2
     min_person_panel_visible_ratio: float = 0.20
     min_person_panel_signal: float = 0.04
+    min_person_panel_crop_positive_crops: int = 1
+    min_person_panel_crop_positive_ratio: float = 0.75
+    min_person_panel_crop_confidence: float = 0.95
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,12 @@ class GateTrackFeatures:
     person_panel_source_candidate_frames: int = 0
     person_panel_max_visible_nonperson_ratio: float = 0.0
     person_panel_max_signal: float = 0.0
+    person_panel_crop_recommendation: str | None = None
+    person_panel_crop_positive_crops: int = 0
+    person_panel_crop_negative_crops: int = 0
+    person_panel_crop_total_crops: int = 0
+    person_panel_crop_positive_ratio: float = 0.0
+    person_panel_crop_max_confidence: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -82,6 +91,12 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
         and features.person_panel_max_visible_nonperson_ratio >= cfg.min_person_panel_visible_ratio
         and features.person_panel_max_signal >= cfg.min_person_panel_signal
     )
+    strong_person_panel_crop_classifier = (
+        features.person_panel_crop_recommendation == "carried_panel"
+        and features.person_panel_crop_positive_crops >= cfg.min_person_panel_crop_positive_crops
+        and features.person_panel_crop_positive_ratio >= cfg.min_person_panel_crop_positive_ratio
+        and features.person_panel_crop_max_confidence >= cfg.min_person_panel_crop_confidence
+    )
 
     if saw_output and not saw_source:
         flags.append("output_only_no_source_token")
@@ -99,6 +114,8 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
         flags.append("person_overlap_with_panel_protrusion")
     if strong_person_panel_separation:
         flags.append("strong_person_panel_separation")
+    if strong_person_panel_crop_classifier:
+        flags.append("strong_person_panel_crop_classifier")
     if high_static_stack:
         flags.append("high_static_stack_overlap")
     if high_static_location:
@@ -106,7 +123,7 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
     if low_flow_coherence:
         flags.append("low_flow_coherence")
 
-    if high_person_overlap and low_outside_person and not strong_person_panel_separation:
+    if high_person_overlap and low_outside_person and not strong_person_panel_separation and not strong_person_panel_crop_classifier:
         decision = "reject"
         reason = "worker_body_overlap"
     elif saw_output and not saw_source and (high_static_stack or high_static_location or low_motion or low_displacement):
@@ -124,7 +141,7 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
         and not low_displacement
         and not low_motion
         and not high_static_stack
-        and (not high_person_overlap or protrudes_from_person or strong_person_panel_separation)
+        and (not high_person_overlap or protrudes_from_person or strong_person_panel_separation or strong_person_panel_crop_classifier)
     ):
         decision = "allow_source_token"
         reason = "moving_panel_candidate"
@@ -132,6 +149,8 @@ def evaluate_track(features: GateTrackFeatures, config: GateConfig | None = None
             flags.append("source_token_allowed_by_protrusion")
         if strong_person_panel_separation:
             flags.append("source_token_allowed_by_person_panel_separation")
+        if strong_person_panel_crop_classifier:
+            flags.append("source_token_allowed_by_crop_classifier")
         if low_flow_coherence:
             flags.append("flow_coherence_needs_review")
     elif saw_source and not saw_output:

@@ -7,6 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from app.services.person_panel_crop_classifier import classifier_features, summarize_crop_paths
 from app.services.perception_gate import GateTrackFeatures, evaluate_track
 
 
@@ -61,6 +62,13 @@ def person_panel_separation_features(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def receipt_crop_classifier_features(receipt_payload: dict[str, Any]) -> dict[str, Any]:
+    assets = receipt_payload.get("review_assets") or {}
+    crop_paths = [str(path) for path in as_list(assets.get("raw_crop_paths")) if str(path).strip()]
+    summary = summarize_crop_paths(crop_paths)
+    return classifier_features(summary)
+
+
 def promote_worker_overlap_gate_row(row: dict[str, Any], receipt_path: str | None) -> dict[str, Any]:
     if not isinstance(row, dict):
         return row
@@ -68,9 +76,19 @@ def promote_worker_overlap_gate_row(row: dict[str, Any], receipt_path: str | Non
         return row
 
     evidence = row.get("evidence") or {}
+    try:
+        receipt_payload = json.loads(Path(receipt_path).read_text(encoding="utf-8")) if receipt_path else {}
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        receipt_payload = {}
     separation_payload = load_person_panel_separation(person_panel_separation_path(receipt_path))
     separation = person_panel_separation_features(separation_payload)
+    crop_classifier = {}
     if separation.get("person_panel_recommendation") != "countable_panel_candidate":
+        crop_classifier = receipt_crop_classifier_features(receipt_payload)
+    if (
+        separation.get("person_panel_recommendation") != "countable_panel_candidate"
+        and crop_classifier.get("person_panel_crop_recommendation") != "carried_panel"
+    ):
         return row
 
     try:
@@ -95,11 +113,17 @@ def promote_worker_overlap_gate_row(row: dict[str, Any], receipt_path: str | Non
             person_panel_source_candidate_frames=int(separation.get("person_panel_source_candidate_frames") or 0),
             person_panel_max_visible_nonperson_ratio=float(separation.get("person_panel_max_visible_nonperson_ratio") or 0.0),
             person_panel_max_signal=float(separation.get("person_panel_max_signal") or 0.0),
+            person_panel_crop_recommendation=str(crop_classifier.get("person_panel_crop_recommendation") or ""),
+            person_panel_crop_positive_crops=int(crop_classifier.get("person_panel_crop_positive_crops") or 0),
+            person_panel_crop_negative_crops=int(crop_classifier.get("person_panel_crop_negative_crops") or 0),
+            person_panel_crop_total_crops=int(crop_classifier.get("person_panel_crop_total_crops") or 0),
+            person_panel_crop_positive_ratio=float(crop_classifier.get("person_panel_crop_positive_ratio") or 0.0),
+            person_panel_crop_max_confidence=float(crop_classifier.get("person_panel_crop_max_confidence") or 0.0),
         )
     except (TypeError, ValueError):
         return row
 
     promoted = evaluate_track(features)
-    if promoted.decision != "allow_source_token":
+    if promoted.decision == str(row.get("decision") or "") and promoted.reason == str(row.get("reason") or ""):
         return row
     return asdict(promoted)

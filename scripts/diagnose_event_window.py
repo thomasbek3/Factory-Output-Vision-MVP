@@ -31,6 +31,7 @@ from app.services.person_panel_gate_promotion import (
     person_panel_separation_features,
     person_panel_separation_path,
     promote_worker_overlap_gate_row,
+    receipt_crop_classifier_features,
 )
 from scripts.run_clip_eval import SimpleBoxTracker, normalize_detection_box
 
@@ -377,8 +378,10 @@ def merge_zones_seen(predecessor: TrackEvidence, current: TrackEvidence) -> list
 
 
 def load_receipt_person_panel_features(receipt_path: Path) -> dict[str, Any]:
+    receipt_payload = json.loads(receipt_path.read_text(encoding="utf-8"))
     separation_payload = load_person_panel_separation(person_panel_separation_path(str(receipt_path)))
     features = person_panel_separation_features(separation_payload)
+    features.update(receipt_crop_classifier_features(receipt_payload))
     summary = separation_payload.get("summary") or {}
     selected_frames = [item for item in (separation_payload.get("selected_frames") or []) if isinstance(item, dict)]
     frame_count = int(summary.get("frame_count") or len(selected_frames))
@@ -407,6 +410,11 @@ def merged_person_panel_features(receipt_paths: list[Path]) -> dict[str, Any]:
         "person_panel_frame_count": 0,
         "person_panel_worker_overlap_frames": 0,
         "person_panel_static_frames": 0,
+        "person_panel_crop_positive_crops": 0,
+        "person_panel_crop_negative_crops": 0,
+        "person_panel_crop_total_crops": 0,
+        "person_panel_crop_positive_ratio": 0.0,
+        "person_panel_crop_max_confidence": 0.0,
     }
     for receipt_path in receipt_paths:
         features = load_receipt_person_panel_features(receipt_path)
@@ -423,6 +431,17 @@ def merged_person_panel_features(receipt_paths: list[Path]) -> dict[str, Any]:
         merged["person_panel_frame_count"] += int(features.get("person_panel_frame_count") or 0)
         merged["person_panel_worker_overlap_frames"] += int(features.get("person_panel_worker_overlap_frames") or 0)
         merged["person_panel_static_frames"] += int(features.get("person_panel_static_frames") or 0)
+        merged["person_panel_crop_positive_crops"] += int(features.get("person_panel_crop_positive_crops") or 0)
+        merged["person_panel_crop_negative_crops"] += int(features.get("person_panel_crop_negative_crops") or 0)
+        merged["person_panel_crop_total_crops"] += int(features.get("person_panel_crop_total_crops") or 0)
+        merged["person_panel_crop_positive_ratio"] = max(
+            float(merged["person_panel_crop_positive_ratio"]),
+            float(features.get("person_panel_crop_positive_ratio") or 0.0),
+        )
+        merged["person_panel_crop_max_confidence"] = max(
+            float(merged["person_panel_crop_max_confidence"]),
+            float(features.get("person_panel_crop_max_confidence") or 0.0),
+        )
 
     frame_count = int(merged["person_panel_frame_count"])
     total_candidate_frames = int(merged["person_panel_total_candidate_frames"])
@@ -440,6 +459,18 @@ def merged_person_panel_features(receipt_paths: list[Path]) -> dict[str, Any]:
     else:
         recommendation = "insufficient_visibility"
     merged["person_panel_recommendation"] = recommendation
+    crop_total = int(merged["person_panel_crop_total_crops"])
+    crop_positive = int(merged["person_panel_crop_positive_crops"])
+    crop_negative = int(merged["person_panel_crop_negative_crops"])
+    if crop_total <= 0:
+        crop_recommendation = ""
+    elif crop_positive >= 1 and float(merged["person_panel_crop_positive_ratio"]) >= 0.75 and float(merged["person_panel_crop_max_confidence"]) >= 0.95:
+        crop_recommendation = "carried_panel"
+    elif crop_negative >= 1 and crop_negative >= crop_positive:
+        crop_recommendation = "worker_only"
+    else:
+        crop_recommendation = "insufficient_visibility"
+    merged["person_panel_crop_recommendation"] = crop_recommendation
     return merged
 
 
@@ -504,6 +535,12 @@ def merged_gate_features_from_tracks(
         person_panel_source_candidate_frames=int(separation.get("person_panel_source_candidate_frames") or 0),
         person_panel_max_visible_nonperson_ratio=float(separation.get("person_panel_max_visible_nonperson_ratio") or 0.0),
         person_panel_max_signal=float(separation.get("person_panel_max_signal") or 0.0),
+        person_panel_crop_recommendation=str(separation.get("person_panel_crop_recommendation") or ""),
+        person_panel_crop_positive_crops=int(separation.get("person_panel_crop_positive_crops") or 0),
+        person_panel_crop_negative_crops=int(separation.get("person_panel_crop_negative_crops") or 0),
+        person_panel_crop_total_crops=int(separation.get("person_panel_crop_total_crops") or 0),
+        person_panel_crop_positive_ratio=float(separation.get("person_panel_crop_positive_ratio") or 0.0),
+        person_panel_crop_max_confidence=float(separation.get("person_panel_crop_max_confidence") or 0.0),
     )
 
 

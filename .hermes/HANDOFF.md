@@ -2063,3 +2063,68 @@ Stop doing:
 
 Immediate implementation target:
 `scripts/build_panel_transfer_review_packets.py` plus tests, emitting `data/reports/factory2_transfer_review_packets.json` and per-track temporal packet artifacts.
+
+---
+
+## 2026-04-28 Crop Classifier Promotion And Runtime Reality
+
+What changed in the working tree:
+- Added the track-label application helper:
+  - `scripts/apply_factory2_track_review_labels.py`
+  - `tests/test_apply_factory2_track_review_labels.py`
+- Added worker-reference negative export:
+  - `scripts/export_factory2_worker_reference_crops.py`
+  - `tests/test_export_factory2_worker_reference_crops.py`
+- Extended `scripts/build_factory2_crop_training_dataset.py` so it can build binary `carried_panel|worker_only` datasets and emit a classification-friendly directory layout.
+- Added the second-stage crop classifier service:
+  - `app/services/person_panel_crop_classifier.py`
+  - `tests/test_person_panel_crop_classifier.py`
+- Wired crop-classifier evidence into:
+  - `app/services/perception_gate.py`
+  - `app/services/person_panel_gate_promotion.py`
+  - `scripts/diagnose_event_window.py`
+  - `app/services/runtime_event_counter.py`
+- Copied trained weights to:
+  - `models/factory2_person_panel_binary_manual_v1.pt`
+
+What was verified:
+- Binary crop dataset report:
+  - `data/reports/factory2_crop_training_dataset.binary_manual_v1.json`
+  - `ready_for_training: true`
+  - label counts: `carried_panel: 218`, `worker_only: 41`
+- Trained classifier weights from the binary dataset and promoted the best checkpoint into `models/`.
+- Focused test suite:
+  - `80 passed`
+  - command:
+    ```bash
+    .venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_diagnose_event_window.py tests/test_build_morning_proof_report.py tests/test_runtime_event_counter.py tests/test_person_panel_gate_promotion.py tests/test_perception_gate.py tests/test_person_panel_crop_classifier.py tests/test_build_factory2_crop_training_dataset.py tests/test_apply_factory2_track_review_labels.py tests/test_export_factory2_worker_reference_crops.py -q
+    ```
+- Refreshed frozen narrow proof via direct freeze/refresh/report rebuild:
+  - `data/reports/factory2_morning_proof_report.narrow_frozen_v2.json`
+  - `accepted_count: 15`
+  - `suppressed_count: 2`
+  - `uncertain_count: 32`
+  - `reason_counts: moving_panel_candidate=19, source_without_output_settle=32, static_stack_edge=2`
+- Important runtime verification lesson:
+  - demo-mode uvicorn/app runs are looped forever because `app/services/frame_reader.py` uses `ffmpeg -stream_loop -1`
+  - long-running `counts_this_hour` values in demo mode are not one-pass truth
+- No-loop single-pass runtime harness result on `factory2.MOV` after crop-classifier promotion:
+  - `final_count: 17`
+  - event timestamps included:
+    - `5.5, 23.6, 60.5, 78.6, 110.9, 129.9, 147.0, 184.2, 210.4, 233.0, 252.0, 286.4, 303.5, 347.1, 367.2, 384.3, 422.6`
+
+What this means:
+- The perception blocker materially moved.
+- Proof moved from the old `12` floor to `15`.
+- One-pass runtime moved from the old single-count story to `17`, but that is still below the human truth target of `23`.
+- The dominant remaining blocker is now source→output chain recall across split tracks, not person/panel separation alone.
+
+Exact next step:
+1. Build a dedicated runtime event audit harness that writes every `CountEvent` with:
+   - video timestamp
+   - track id
+   - predecessor chain ids
+   - gate flags
+   - crop-classifier recommendation summary
+2. Use that harness to diff the `17` one-pass runtime events against the human `23` truth set and identify the six missing deliveries.
+3. Then fix runtime/source-chain recall with bounded chain-link logic; do not loosen perception thresholds.
