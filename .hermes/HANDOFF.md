@@ -2739,3 +2739,40 @@ Exact next recommended step:
 3. Then choose between:
   - keeping the explicit divergence as the honest shipped state, or
   - starting a new receipt-construction/model-data effort aimed only at converting the last two runtime-inferred-only events into true proof-backed receipts.
+
+## 2026-04-29 23:59 - Frontend And Health-Snapshot Count Split
+
+What was built:
+- Extended `health_samples` persistence to store:
+  - `runtime_total`
+  - `proof_backed_total`
+  - `runtime_inferred_only`
+- Added an explicit DB migration path for older `health_samples` tables missing those columns.
+- Updated the React dashboard and troubleshooting pages to surface the split directly instead of only showing an opaque hourly total.
+- `Runtime Total` now reflects the operational hour total, while `Proof-Backed` and `Runtime-Inferred` make the Factory2 `23 / 21 / 2` divergence visible in-product.
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_health_repo.py tests/test_event_ledger.py tests/test_api_smoke.py tests/test_vision_worker_states.py tests/test_demo_mode_flow.py -q`
+- `cd frontend && npm run build`
+- `cd frontend && PATH="/Users/thomas/Projects/Factory-Output-Vision-MVP/.venv/bin:$PATH" npx playwright test e2e/app.spec.ts -g "dashboard and troubleshooting expose runtime versus proof-backed totals"`
+
+Results:
+- Python regression slice: `19 passed`
+- Frontend production build: passed
+- Playwright targeted browser check: `1 passed`
+
+Current state:
+- Product surfaces now show the honest split:
+  - runtime/app total `23`
+  - proof-backed total `21`
+  - runtime-inferred-only total `2`
+- Health snapshots persist the same split for later support/audit review.
+
+Next blocker:
+- The remaining gap is no longer hidden in product status or persisted health history.
+- The actual unresolved problem is whether the final two runtime-inferred-only deliveries should remain an explicit divergence or trigger a new proof/data/model effort.
+
+Exact next recommended step:
+1. Decide whether the shipped Factory2 product should present both totals to operators as-is, or whether only support/troubleshooting surfaces should expose the split.
+2. If product behavior is acceptable at `runtime 23 / proof 21`, add a small explanatory UI copy block so operators understand what `Runtime-Inferred` means.
+3. If not acceptable, open the next PRD specifically for converting the final two runtime-inferred-only deliveries into fresh proof-backed receipts.

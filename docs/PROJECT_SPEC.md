@@ -301,6 +301,9 @@ The appliance must produce 3 kinds of operational records:
   - baseline_rate_per_min
   - counts_this_minute
   - counts_this_hour
+  - runtime_total
+  - proof_backed_total
+  - runtime_inferred_only
   - last_error_code (nullable)
   - last_error_message (nullable)
 

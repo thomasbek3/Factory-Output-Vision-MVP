@@ -21,10 +21,13 @@ def insert_health_sample(*, sample: dict[str, Any]) -> None:
                 baseline_rate_per_min,
                 counts_this_minute,
                 counts_this_hour,
+                runtime_total,
+                proof_backed_total,
+                runtime_inferred_only,
                 last_error_code,
                 last_error_message
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 sample["current_state"],
@@ -38,6 +41,9 @@ def insert_health_sample(*, sample: dict[str, Any]) -> None:
                 sample.get("baseline_rate_per_min"),
                 sample.get("counts_this_minute", 0),
                 sample.get("counts_this_hour", 0),
+                sample.get("runtime_total", sample.get("counts_this_hour", 0)),
+                sample.get("proof_backed_total", 0),
+                sample.get("runtime_inferred_only", 0),
                 sample.get("last_error_code"),
                 sample.get("last_error_message"),
             ),

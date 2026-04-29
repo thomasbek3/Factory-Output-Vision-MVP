@@ -877,6 +877,9 @@ class VisionWorker:
                 "baseline_rate_per_min": self.baseline_rate_per_min,
                 "counts_this_minute": self.counter_state.counts_this_minute,
                 "counts_this_hour": self.counter_state.counts_this_hour,
+                "runtime_total": self.counter_state.counts_this_hour,
+                "proof_backed_total": self._proof_backed_total,
+                "runtime_inferred_only": self._runtime_inferred_only_total,
                 "last_error_code": self.last_error_code,
                 "last_error_message": self.last_error_message,
             }

@@ -37,6 +37,9 @@ export type StatusResponse = {
   rolling_rate_per_min: number
   counts_this_minute: number
   counts_this_hour: number
+  runtime_total: number
+  proof_backed_total: number
+  runtime_inferred_only: number
   last_frame_age_sec: number | null
   reconnect_attempts_total: number
   operator_absent: boolean

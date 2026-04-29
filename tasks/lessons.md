@@ -157,6 +157,7 @@ Frame differencing approaches are fragile because the worker's body dominates th
 1. **The API cannot blur runtime and proof once authority diverges.** When runtime reaches `23` but proof stays at `21`, the app/backend status must expose separate numbers rather than implying one undifferentiated truth total.
 2. **Manual adjustments are neither proof-backed nor runtime-inferred lineage.** Positive operator corrections should still move `counts_this_hour`, but they must not silently inflate `proof_backed_total` or `runtime_inferred_only`.
 3. **Synthetic approved-chain counts need to survive serialization.** The event ledger must allow `source_token_id = null`, `reason = approved_delivery_chain`, and `count_authority = runtime_inferred_only` so downstream audit tools see the real provenance.
+4. **Schema-backed health snapshots must evolve with the status contract.** Once status gained `runtime_total`, `proof_backed_total`, and `runtime_inferred_only`, the `health_samples` table needed the same columns plus an explicit migration path for older DBs.
 
 ### Model Performance & Recall Requirements
 

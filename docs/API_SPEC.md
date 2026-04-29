@@ -111,6 +111,9 @@ Current `POST /api/control/restart_video` behavior:
   "rolling_rate_per_min": 41.2,
   "counts_this_minute": 12,
   "counts_this_hour": 520,
+  "runtime_total": 520,
+  "proof_backed_total": 518,
+  "runtime_inferred_only": 2,
   "last_frame_age_sec": 0.4,
   "reconnect_attempts_total": 3,
   "operator_absent": false
@@ -119,6 +122,11 @@ Current `POST /api/control/restart_video` behavior:
 Note: `count_source` is always "vision" in v1.0. Will be "vision" or "beam" in v1.5.
 During calibration, `calibration_progress_pct`, `calibration_elapsed_sec`, and `calibration_target_duration_sec`
 are reported by the backend based on the actual minute-boundary calibration window.
+
+Factory2 count-authority note:
+- `counts_this_hour` and `runtime_total` are the operational total for the active hour.
+- `proof_backed_total` is the subset backed by source-token-authorized proof lineage.
+- `runtime_inferred_only` is the subset counted operationally from synthetic approved-delivery-chain lineage without fresh proof receipts.
 
 ### v1.5 additions to status:
 - `beam_alive`: true/false (only when count_source = beam)

@@ -194,6 +194,23 @@ test('dashboard controls trigger calibration and monitoring state changes', asyn
   await expectNotice(page, /Monitoring stopped\./i)
 })
 
+test('dashboard and troubleshooting expose runtime versus proof-backed totals', async ({ page, request }) => {
+  await seedConfiguredLine(request)
+  await postOk(request, '/api/control/adjust_count', { delta: 3 })
+
+  await page.goto('/dashboard')
+  await expect(page.getByText(/^Runtime Total$/)).toBeVisible()
+  await expect(page.getByText(/^Proof-Backed$/)).toBeVisible()
+  await expect(page.getByText(/^Runtime-Inferred$/)).toBeVisible()
+  await expect(page.getByText(/^3$/).first()).toBeVisible()
+  await expect(page.getByText(/^0$/).first()).toBeVisible()
+
+  await page.goto('/troubleshooting')
+  await expect(page.getByText(/^Runtime Total$/)).toBeVisible()
+  await expect(page.getByText(/^Proof-Backed$/)).toBeVisible()
+  await expect(page.getByText(/^Runtime-Inferred$/)).toBeVisible()
+})
+
 test('dashboard shows concrete counting hints when monitoring is running but counts stay at zero', async ({ page, request }) => {
   await postOk(request, '/api/config/roi', roiPayload)
   await postOk(request, '/api/config/line', directionalLinePayload)

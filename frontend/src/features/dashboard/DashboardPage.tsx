@@ -70,8 +70,8 @@ export function DashboardPage() {
               <div className="metric-value">{status?.counts_this_minute ?? '--'}</div>
             </div>
             <div className="metric-card">
-              <div className="metric-label">Parts This Hour</div>
-              <div className="metric-value">{status?.counts_this_hour ?? '--'}</div>
+              <div className="metric-label">Runtime Total</div>
+              <div className="metric-value">{status?.runtime_total ?? status?.counts_this_hour ?? '--'}</div>
               <div className="metric-adjust-actions">
                 <button
                   className="adjust-button"
@@ -92,6 +92,17 @@ export function DashboardPage() {
                   +1
                 </button>
               </div>
+              <div className="metric-subvalue">Operational total for the active hour.</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Proof-Backed</div>
+              <div className="metric-value">{status?.proof_backed_total ?? '--'}</div>
+              <div className="metric-subvalue">Counts with source-token-backed proof lineage.</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Runtime-Inferred</div>
+              <div className="metric-value">{status?.runtime_inferred_only ?? '--'}</div>
+              <div className="metric-subvalue">Synthetic approved-chain counts without fresh proof receipts.</div>
             </div>
             <div className="metric-card">
               <div className="metric-label">Baseline Parts/Min</div>

@@ -572,8 +572,16 @@ export function TroubleshootingShellPage() {
               <div className="metric-value">{status?.counts_this_minute ?? '--'}</div>
             </div>
             <div className="metric-card">
-              <div className="metric-label">Parts This Hour</div>
-              <div className="metric-value">{status?.counts_this_hour ?? '--'}</div>
+              <div className="metric-label">Runtime Total</div>
+              <div className="metric-value">{status?.runtime_total ?? status?.counts_this_hour ?? '--'}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Proof-Backed</div>
+              <div className="metric-value">{status?.proof_backed_total ?? '--'}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Runtime-Inferred</div>
+              <div className="metric-value">{status?.runtime_inferred_only ?? '--'}</div>
             </div>
             <div className="metric-card">
               <div className="metric-label">Baseline Parts/Min</div>

@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS health_samples (
     baseline_rate_per_min REAL,
     counts_this_minute INTEGER NOT NULL DEFAULT 0,
     counts_this_hour INTEGER NOT NULL DEFAULT 0,
+    runtime_total INTEGER NOT NULL DEFAULT 0,
+    proof_backed_total INTEGER NOT NULL DEFAULT 0,
+    runtime_inferred_only INTEGER NOT NULL DEFAULT 0,
     last_error_code TEXT,
     last_error_message TEXT
 );
@@ -170,10 +173,23 @@ def _ensure_config_direction_constraint(conn: sqlite3.Connection) -> None:
     conn.execute("DROP TABLE config_old")
 
 
+def _ensure_health_sample_columns(conn: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(health_samples)").fetchall()}
+    missing_statements = {
+        "runtime_total": "ALTER TABLE health_samples ADD COLUMN runtime_total INTEGER NOT NULL DEFAULT 0",
+        "proof_backed_total": "ALTER TABLE health_samples ADD COLUMN proof_backed_total INTEGER NOT NULL DEFAULT 0",
+        "runtime_inferred_only": "ALTER TABLE health_samples ADD COLUMN runtime_inferred_only INTEGER NOT NULL DEFAULT 0",
+    }
+    for column, statement in missing_statements.items():
+        if column not in columns:
+            conn.execute(statement)
+
+
 def init_db() -> None:
     with get_connection() as conn:
         conn.executescript(SCHEMA_SQL)
         _ensure_config_columns(conn)
         _ensure_config_direction_constraint(conn)
+        _ensure_health_sample_columns(conn)
         conn.execute("INSERT OR IGNORE INTO config (id) VALUES (1)")
         conn.commit()
