@@ -1,8 +1,98 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 20:16:00 EDT
+Updated: 2026-04-28 21:06:00 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+
+## Factory2 crop review package + training interface — 2026-04-28 21:06 EDT
+
+Implemented the next labeling/training slice:
+
+```text
+scripts/package_factory2_crop_review.py
+scripts/build_factory2_crop_training_dataset.py
+tests/test_package_factory2_crop_review.py
+tests/test_build_factory2_crop_training_dataset.py
+docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md
+tasks/lessons.md
+```
+
+What changed:
+
+```text
+- Added a label-ready crop review packager that turns the frozen blocked-crop dataset into a flat image bundle plus manifest, writable CSV, classes list, and README for local review or later private Roboflow upload.
+- Review items are ranked by labeling priority:
+  - `p0_candidate_salvage`
+  - `p1_visibility_review`
+  - `p2_negative_confirmation`
+  - `p3_positive_boundary`
+- Added a deterministic crop-training dataset builder that consumes the package manifest plus review CSV and emits a classifier-oriented dataset manifest with track-level train/val/test grouping.
+- The training manifest records explicit integration targets back into the proof/runtime gate and reports whether the label set is actually ready for a second-stage model.
+```
+
+Real artifacts created:
+
+```text
+Review package:
+- data/reports/factory2_crop_review_package.narrow_frozen_v2.json
+- data/datasets/factory2_crop_review_package_narrow_frozen_v2/
+
+Current review-package counts:
+- total items: 218
+- p0_candidate_salvage: 90
+- p1_visibility_review: 1
+- p2_negative_confirmation: 32
+- p3_positive_boundary: 95
+
+Training interface artifact:
+- data/reports/factory2_crop_training_dataset.narrow_frozen_v2.json
+- data/datasets/factory2_crop_training_dataset_narrow_frozen_v2/
+
+Current training-interface status from placeholder labels:
+- eligible_item_count: 95
+- skipped_unclear_count: 123
+- label_counts: carried_panel=95
+- missing_classes: worker_only, static_stack
+- ready_for_training: false
+```
+
+Why this matters:
+
+```text
+The repo no longer stops at “we should label crops.” It now has the full label handoff and the immediate model-ingest contract on disk. The blocker is explicit and auditable: the current package still lacks reviewed `worker_only` and `static_stack` labels, so training would be premature.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py -q
+.venv/bin/python -m py_compile scripts/package_factory2_crop_review.py scripts/build_factory2_crop_training_dataset.py tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py
+.venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_export_factory2_blocked_crops.py tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py -q
+.venv/bin/python scripts/package_factory2_crop_review.py --crop-dataset-report data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json --output-report data/reports/factory2_crop_review_package.narrow_frozen_v2.json --package-dir data/datasets/factory2_crop_review_package_narrow_frozen_v2 --force
+.venv/bin/python scripts/build_factory2_crop_training_dataset.py --review-package-report data/reports/factory2_crop_review_package.narrow_frozen_v2.json --output-report data/reports/factory2_crop_training_dataset.narrow_frozen_v2.json --dataset-dir data/datasets/factory2_crop_training_dataset_narrow_frozen_v2 --force
+```
+
+Verification:
+
+```text
+40 tests passed
+py_compile passed
+real review package exists on disk
+real training-interface report exists on disk and correctly reports not-ready status until blocked crops are labeled
+```
+
+Next blocker:
+
+```text
+The blocker is now externalized to label truth, not pipeline code. The repo needs reviewed labels for the 90 `p0_candidate_salvage` crops first, then `p2_negative_confirmation`, so the second-stage crop classifier has both positive and negative classes.
+```
+
+Exact next recommended step:
+
+```text
+Open `data/datasets/factory2_crop_review_package_narrow_frozen_v2/review_labels.csv`, label the `p0_candidate_salvage` rows first as `carried_panel | worker_only | static_stack`, rerun `scripts/build_factory2_crop_training_dataset.py`, and do not start model training until `ready_for_training` flips true.
+```
 
 
 ## Factory2 blocked crop dataset export — 2026-04-28 20:16 EDT

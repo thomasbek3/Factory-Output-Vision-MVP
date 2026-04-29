@@ -316,7 +316,7 @@ It does not require shipping the trained model yet.
 Minimum verification for this PRD:
 
 ```bash
-.venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_export_factory2_blocked_crops.py -q
+.venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_export_factory2_blocked_crops.py tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py -q
 ```
 
 For proof-set work:

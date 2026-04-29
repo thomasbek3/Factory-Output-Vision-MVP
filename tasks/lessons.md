@@ -14,6 +14,8 @@
 3. **Do not merge mutable diagnostics.** Freeze or copy finalized diagnostic directories before building one merged proof artifact, or the report can be contaminated by in-progress sidecar regeneration.
 4. **Blocked worker-overlap cases need crop-level training evidence.** If recall stalls, export the blocked receipt crops and label panel-vs-worker separation cases instead of inventing looser count logic.
 5. **Merged accepted receipts can still double-count.** When overlapping windows both approve the same physical carry, dedupe by overlapping accepted receipt intervals and keep only one canonical receipt in the top-level accepted total.
+6. **Do not silently train on placeholder labels.** The crop-training builder must report `ready_for_training: false` until the review package actually contains `worker_only` and `static_stack` truth labels.
+7. **Split crop datasets by physical track, not by crop file.** All crops from the same `diagnostic_id + track_id` need to stay in one split to avoid train/val leakage from near-identical receipt frames.
 
 ## 2026-03-18: Vision Pipeline Architecture Overhaul
 
