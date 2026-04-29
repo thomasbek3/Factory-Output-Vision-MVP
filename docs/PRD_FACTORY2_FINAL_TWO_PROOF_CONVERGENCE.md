@@ -130,6 +130,8 @@ Success criteria:
 
 ### Milestone 2 — Relation Labeling
 
+Status: **Done (draft local labels)**
+
 Label the review CSV for the final-two package.
 
 Required labels:
@@ -153,7 +155,19 @@ Goal:
 - decide whether the divergent runtime output-only track is a true new delivery
 - decide which source-only context tracks belong to that delivery, if any
 
+Current local state:
+
+- `data/datasets/factory2_divergent_chain_review_v1/review_labels.csv` now has a conservative draft pass
+- all `37` reviewed crops are currently labeled `crop_label = carried_panel`
+- current relation-label counts:
+  - `same_delivery_as_prior: 21`
+  - `distinct_new_delivery: 5`
+  - `unclear: 11`
+- the draft labels should be treated as review seed truth, not as final converged labels
+
 ### Milestone 3 — Targeted Rescue Dataset
+
+Status: **Done**
 
 From the labeled chain package, export a tight final-two rescue dataset:
 
@@ -163,6 +177,29 @@ From the labeled chain package, export a tight final-two rescue dataset:
 - nearby worker-overlap negatives
 
 This dataset is specifically for the final-two convergence problem, not generic Factory2 training.
+
+Built locally:
+
+```text
+data/reports/factory2_static_resident_reference_crops.v1.json
+data/datasets/factory2_static_resident_reference_crops_v1/
+data/reports/factory2_final_two_rescue_dataset.v1.json
+data/datasets/factory2_final_two_rescue_dataset_v1/
+```
+
+Current rescue-dataset state:
+
+- `eligible_item_count: 30`
+- `skipped_unclear_relation_count: 11`
+- relation labels:
+  - `distinct_new_delivery: 5`
+  - `same_delivery_as_prior: 21`
+  - `static_resident: 4`
+- split counts:
+  - `train: 18`
+  - `val: 7`
+  - `test: 5`
+- `ready_for_training: true`
 
 ### Milestone 4 — Targeted Model / Evidence Pass
 
@@ -190,10 +227,8 @@ After targeted model/evidence changes:
 
 ## 8. Immediate next step
 
-Label:
+Do not stop at the rescue-dataset export. The next honest move is Milestone 4:
 
-```text
-data/datasets/factory2_divergent_chain_review_v1/review_labels.csv
-```
-
-Then use those labels to build the first final-two rescue dataset before any new model or proof change.
+1. decide whether the final-two rescue problem is learnable from single crops at all, or whether it needs pairwise/sequence lineage context
+2. build the minimal training/evaluation artifact that matches that answer
+3. feed the resulting evidence back into proof/runtime without reusing already-consumed source authority

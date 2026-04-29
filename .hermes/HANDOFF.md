@@ -1,6 +1,6 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-29 03:31:14 EDT
+Updated: 2026-04-29 12:40:04 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
 
@@ -2834,3 +2834,67 @@ Exact next recommended step:
 1. Label `data/datasets/factory2_divergent_chain_review_v1/review_labels.csv`.
 2. Use those labels to build the first final-two rescue dataset.
 3. Only then train or patch proof/runtime logic for the final two.
+
+## 2026-04-29 12:40 - Final-Two Rescue Dataset Tooling
+
+What was built:
+- Added the static-resident reference exporter:
+  - `scripts/export_factory2_static_resident_reference_crops.py`
+  - `tests/test_export_factory2_static_resident_reference_crops.py`
+- Added the final-two rescue-dataset builder:
+  - `scripts/build_factory2_final_two_rescue_dataset.py`
+  - `tests/test_build_factory2_final_two_rescue_dataset.py`
+- Updated the active PRD:
+  - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
+
+What the new tooling does:
+- exports proof-side `static_stack_edge` rejects into a small static-resident reference set
+- reads the divergent-chain review package plus `review_labels.csv`
+- builds a relation-classification dataset with:
+  - `distinct_new_delivery`
+  - `same_delivery_as_prior`
+  - `static_resident`
+- preserves split integrity by grouping on `event_id + track_id`
+
+Real local artifacts created:
+- `data/reports/factory2_static_resident_reference_crops.v1.json`
+- `data/datasets/factory2_static_resident_reference_crops_v1/`
+- `data/reports/factory2_final_two_rescue_dataset.v1.json`
+- `data/datasets/factory2_final_two_rescue_dataset_v1/`
+
+Current local review/dataset state:
+- `data/datasets/factory2_divergent_chain_review_v1/review_labels.csv` now has a conservative draft pass
+- current draft relation labels:
+  - `same_delivery_as_prior: 21`
+  - `distinct_new_delivery: 5`
+  - `unclear: 11`
+- the rescue dataset becomes class-complete once the static-resident references are merged:
+  - `eligible_item_count: 30`
+  - `skipped_unclear_relation_count: 11`
+  - `relation_label_counts`:
+    - `distinct_new_delivery: 5`
+    - `same_delivery_as_prior: 21`
+    - `static_resident: 4`
+  - `ready_for_training: true`
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_export_factory2_static_resident_reference_crops.py tests/test_build_factory2_final_two_rescue_dataset.py -q`
+- `.venv/bin/python -m pytest tests/test_export_factory2_static_resident_reference_crops.py tests/test_build_factory2_final_two_rescue_dataset.py tests/test_build_factory2_divergent_chain_review.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_factory2_synthetic_lineage_report.py tests/test_build_factory2_runtime_event_receipt_packets.py -q`
+- `.venv/bin/python -m py_compile scripts/export_factory2_static_resident_reference_crops.py scripts/build_factory2_final_two_rescue_dataset.py`
+- `.venv/bin/python scripts/export_factory2_static_resident_reference_crops.py --force`
+- `.venv/bin/python scripts/build_factory2_final_two_rescue_dataset.py --force`
+- `.venv/bin/python scripts/build_factory2_final_two_rescue_dataset.py --static-reference-report data/reports/factory2_static_resident_reference_crops.v1.json --force`
+
+Verification:
+- focused affected suite: `15 passed`
+- both new scripts compile cleanly
+- rescue dataset is reproducible and class-complete on the current local draft labels
+
+Important caution:
+- `same_delivery_as_prior` is a relation label, not obviously a pure single-crop visual class.
+- The rescue dataset is ready, but the next honest move still needs an architecture decision about whether the final-two problem is learnable from single crops or whether it needs pairwise/sequence lineage context.
+
+Exact next recommended step:
+1. Resolve the architecture question for Milestone 4 before training the wrong model.
+2. Then build the smallest viable final-two classifier/evidence pass that matches that structure.
+3. Only feed the result back into proof/runtime if it does not reuse already-consumed source authority.

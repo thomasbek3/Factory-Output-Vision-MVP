@@ -164,6 +164,9 @@ Frame differencing approaches are fragile because the worker's body dominates th
 1. **The missing unit was the chain neighborhood, not another proof window.** For the final two unresolved events, the useful evidence is the whole runtime lineage neighborhood: source anchor, nearby source-only context, prior counted delivery, divergent output-only fragment, and trailing output context.
 2. **Runtime-only events can hide extra source context outside the old proof receipts.** The divergent chain review package surfaced previously hidden source-only tracks (`104/105/106` and `143/144/145/147/148/149/150`) that were invisible in the simpler prior-accepted-vs-stub packet view.
 3. **Total-count agreement is not enough.** Even when runtime hits the human total of `23`, the final two still need per-event review because they could be either true missed proof cases or lucky runtime duplicates.
+4. **Static-resident references matter for the final-two rescue dataset.** The divergent-chain labels alone left the relation set incomplete. Pulling proof-side `static_stack_edge` receipts into a dedicated static-resident reference exporter was enough to make the rescue dataset class-complete and `ready_for_training`.
+5. **Draft relation labels are not the same as settled truth.** A conservative first pass over the final-two review package produced `21 same_delivery_as_prior`, `5 distinct_new_delivery`, and `11 unclear`. Those draft labels are enough to build the first rescue dataset, but they are still review seed truth, not a proven final answer.
+6. **Do not assume a relation problem is learnable from isolated crops.** `same_delivery_as_prior` is a lineage label, not obviously a pure visual category. Before training a model, validate whether the supervision target is single-crop, pairwise, or sequence-level.
 
 ### Model Performance & Recall Requirements
 
