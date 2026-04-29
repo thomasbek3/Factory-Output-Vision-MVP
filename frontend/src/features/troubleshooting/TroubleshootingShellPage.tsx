@@ -109,6 +109,7 @@ export function TroubleshootingShellPage() {
     snapshotView === 'live' && diagnostics?.source_kind === 'demo'
       ? {
           kind: 'video' as const,
+          fallbackImageSrc: apiClient.liveStreamUrl(videoTick),
           src: apiClient.activeDemoVideoUrl(videoTick),
           playbackRate: diagnostics.demo_playback_speed,
           showNativeControls: geometryEditMode == null,

@@ -211,6 +211,18 @@ test('dashboard and troubleshooting expose runtime versus proof-backed totals', 
   await expect(page.getByText(/^Runtime-Inferred$/)).toBeVisible()
 })
 
+test('dashboard falls back to MJPEG preview when demo video cannot be played in browser', async ({ page, request }) => {
+  await seedConfiguredLine(request)
+
+  await page.route('**/api/control/demo/videos/active/content**', async (route) => {
+    await route.abort('failed')
+  })
+
+  await page.goto('/dashboard')
+  await expect(page.getByRole('heading', { level: 2, name: 'Live View' })).toBeVisible()
+  await expectSnapshotSrc(page, '/api/stream.mjpg')
+})
+
 test('dashboard shows concrete counting hints when monitoring is running but counts stay at zero', async ({ page, request }) => {
   await postOk(request, '/api/config/roi', roiPayload)
   await postOk(request, '/api/config/line', directionalLinePayload)

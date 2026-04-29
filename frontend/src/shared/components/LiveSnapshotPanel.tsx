@@ -11,6 +11,7 @@ type LiveMedia =
     }
   | {
       kind: 'video'
+      fallbackImageSrc?: string
       src: string
       playbackRate?: number
       showNativeControls?: boolean
@@ -80,7 +81,16 @@ export function LiveSnapshotPanel({
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [containerSize, setContainerSize] = useState<Dimensions>({ width: 0, height: 0 })
   const [mediaSize, setMediaSize] = useState<Dimensions>({ width: 0, height: 0 })
+  const [videoReady, setVideoReady] = useState(false)
+  const [videoFallbackActive, setVideoFallbackActive] = useState(false)
   const videoPlaybackRate = media.kind === 'video' ? media.playbackRate : undefined
+  const fallbackImageSrc = media.kind === 'video' ? media.fallbackImageSrc : undefined
+  const showFallbackImage = media.kind === 'video' && videoFallbackActive && Boolean(fallbackImageSrc)
+
+  useEffect(() => {
+    setVideoReady(false)
+    setVideoFallbackActive(false)
+  }, [media.kind, media.src])
 
   useEffect(() => {
     if (media.kind !== 'video' || !videoRef.current) {
@@ -100,6 +110,20 @@ export function LiveSnapshotPanel({
       })
     }
   }, [media.kind, media.src])
+
+  useEffect(() => {
+    if (media.kind !== 'video' || !fallbackImageSrc || videoReady || videoFallbackActive) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => {
+      setVideoFallbackActive(true)
+    }, 2500)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [fallbackImageSrc, media.kind, videoFallbackActive, videoReady])
 
   useEffect(() => {
     const frame = frameRef.current
@@ -209,19 +233,33 @@ export function LiveSnapshotPanel({
         onClick={handleFrameClick}
         ref={frameRef}
       >
-        {media.kind === 'video' ? (
+        {media.kind === 'video' && !showFallbackImage ? (
           <video
             autoPlay
             controls={media.showNativeControls ?? false}
             key={media.src}
             loop
             muted
+            onCanPlay={() => {
+              setVideoReady(true)
+            }}
+            onError={() => {
+              if (fallbackImageSrc) {
+                setVideoFallbackActive(true)
+              }
+            }}
+            onLoadedData={() => {
+              setVideoReady(true)
+            }}
             onLoadedMetadata={(event) => {
               const element = event.currentTarget
               setMediaSize({
                 width: element.videoWidth || element.clientWidth,
                 height: element.videoHeight || element.clientHeight,
               })
+            }}
+            onPlaying={() => {
+              setVideoReady(true)
             }}
             playsInline
             preload="auto"
@@ -238,7 +276,7 @@ export function LiveSnapshotPanel({
                 height: element.naturalHeight || element.clientHeight,
               })
             }}
-            src={media.src}
+            src={showFallbackImage ? fallbackImageSrc : media.src}
           />
         )}
         {renderOverlays.length > 0 ? (
