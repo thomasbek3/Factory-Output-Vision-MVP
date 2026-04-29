@@ -1,0 +1,14 @@
+{
+  "conclusion": "runtime 23 / proof 21 remains the honest state on current evidence",
+  "inherited_live_source_token_count": 11,
+  "proof_accepted_total": 21,
+  "runtime_inferred_total": 23,
+  "schema_version": "factory2-count-authority-ledger-v1",
+  "source_report_path": "data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json",
+  "synthetic_with_overlapping_proof_count": 10,
+  "synthetic_without_distinct_proof_count": 2,
+  "synthetic_without_distinct_proof_event_timestamps": [
+    305.708,
+    425.012
+  ]
+}

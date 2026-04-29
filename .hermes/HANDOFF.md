@@ -1,8 +1,166 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-29 02:44:09 EDT
+Updated: 2026-04-29 03:31:14 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+## 2026-04-29: Factory2 Synthetic Count Authority Hardened
+
+Implemented the next honest Factory2 slice after the runtime/proof divergence audit:
+
+```text
+app/services/count_state_machine.py
+app/services/runtime_event_counter.py
+scripts/audit_factory2_runtime_events.py
+scripts/build_factory2_synthetic_lineage_report.py
+scripts/build_factory2_final_gap_search_plan.py
+tests/test_count_state_machine.py
+tests/test_runtime_event_counter.py
+tests/test_audit_factory2_runtime_events.py
+tests/test_build_factory2_synthetic_lineage_report.py
+tests/test_build_factory2_final_gap_search_plan.py
+AGENTS.md
+CLAUDE.md
+tasks/lessons.md
+docs/superpowers/plans/2026-04-29-factory2-synthetic-lineage-convergence.md
+```
+
+What changed:
+
+```text
+- Added `count_authority` to `CountEvent` with:
+  - `source_token_authorized`
+  - `runtime_inferred_only`
+- Synthetic `approved_delivery_chain` events no longer mint fake source-token evidence from the output bbox.
+- `CountStateMachine` now tracks:
+  - `source_token_authorized_event_count`
+  - `runtime_inferred_only_event_count`
+- Runtime audit rows now emit:
+  - `count_authority`
+  - `predecessor_chain_track_ids`
+  - source/output observation counts
+- Added a synthetic-lineage report that classifies runtime approved-chain events by proof overlap and source-gap behavior.
+- Fixed the final-gap search planner so unresolved proof gaps use source-history-driven windows instead of arbitrary short lead windows.
+```
+
+Real artifacts created:
+
+```text
+Reports:
+- data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json
+- data/reports/factory2_final_gap_search_plan.v2.json
+- data/reports/factory2_final_gap_search_run.v2.event0007.json
+- data/reports/factory2_final_gap_search_report.v2.event0007.json
+- data/reports/factory2_final_gap_search_run.v2.event0008.json
+- data/reports/factory2_final_gap_search_report.v2.event0008.json
+- data/reports/factory2_final_gap_search_summary.v2.json
+- data/reports/factory2_count_authority_ledger.v1.json
+
+Targeted post-hardening runtime audits:
+- data/reports/factory2_runtime_event_audit.lineage_280_308.v4.json
+- data/reports/factory2_runtime_event_audit.lineage_398_427.v4.json
+```
+
+Current truthful state:
+
+```text
+Runtime/app path:
+- still operationally counts Factory2 to the human truth target of 23
+
+Proof path:
+- remains at accepted_count = 21
+
+Authority ledger:
+- runtime_inferred_total: 23
+- proof_accepted_total: 21
+- inherited_live_source_token_count: 11
+- synthetic_with_overlapping_proof_count: 10
+- synthetic_without_distinct_proof_count: 2
+- unresolved runtime-inferred-only timestamps:
+  - 305.708s
+  - 425.012s
+```
+
+Why this matters:
+
+```text
+The repo now distinguishes operational runtime counts from source-token-backed proof authority.
+The remaining two proof gaps are no longer “maybe more window tuning” cases:
+- both corrected source-history-driven rescue searches still collapsed into
+  `shared_source_lineage_no_distinct_proof_receipt`
+- Oracle explicitly recommended preserving runtime 23 / proof 21 as the honest state on current evidence
+- the right hardening move was to stop fabricating source-token-shaped evidence for synthetic runtime counts
+```
+
+Oracle result:
+
+```text
+Oracle slug: factory2-synthetic-next-step
+
+Recommendation:
+- preserve runtime 23 / proof 21 as the honest state
+- do not keep tuning proof windows for 305.708s / 425.012s
+- harden semantics so synthetic approved-chain events are runtime-inferred only,
+  not source-token-backed proof authority
+
+That recommendation is now reflected in code and doctrine.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_build_factory2_synthetic_lineage_report.py -q
+.venv/bin/python -m pytest tests/test_build_factory2_final_gap_search_plan.py -q
+.venv/bin/python scripts/build_factory2_synthetic_lineage_report.py --runtime-audit data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json --proof-report data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json --divergence data/reports/factory2_proof_runtime_divergence.final_two_v2.json --output data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json --force
+.venv/bin/python scripts/build_factory2_final_gap_search_plan.py --packets data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json --lineage-report data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json --output data/reports/factory2_final_gap_search_plan.v2.json --lead-seconds 4 --lead-seconds 6 --lead-seconds 8 --lead-seconds 10 --lead-seconds 12 --tail-seconds 2 --tail-seconds 3 --tail-seconds 4 --tail-seconds 6 --fps 5 --fps 8 --fps 10 --force
+.venv/bin/python scripts/run_factory2_final_gap_search.py --plan data/reports/factory2_final_gap_search_plan.v2.json --output data/reports/factory2_final_gap_search_run.v2.event0007.json --event-id factory2-runtime-only-0007 --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --person-model yolo11n.pt --force
+.venv/bin/python scripts/build_factory2_final_gap_search_report.py --search-run data/reports/factory2_final_gap_search_run.v2.event0007.json --output data/reports/factory2_final_gap_search_report.v2.event0007.json --force
+.venv/bin/python scripts/run_factory2_final_gap_search.py --plan data/reports/factory2_final_gap_search_plan.v2.json --output data/reports/factory2_final_gap_search_run.v2.event0008.json --event-id factory2-runtime-only-0008 --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --person-model yolo11n.pt --force
+.venv/bin/python scripts/build_factory2_final_gap_search_report.py --search-run data/reports/factory2_final_gap_search_run.v2.event0008.json --output data/reports/factory2_final_gap_search_report.v2.event0008.json --force
+.venv/bin/python -m pytest tests/test_count_state_machine.py tests/test_runtime_event_counter.py tests/test_audit_factory2_runtime_events.py tests/test_build_factory2_synthetic_lineage_report.py tests/test_build_factory2_final_gap_search_plan.py tests/test_run_factory2_final_gap_search.py tests/test_build_factory2_final_gap_search_report.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_morning_proof_report.py -q
+.venv/bin/python scripts/audit_factory2_runtime_events.py --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --output data/reports/factory2_runtime_event_audit.lineage_280_308.v4.json --start-seconds 280 --end-seconds 308 --processing-fps 10 --include-track-histories --force
+.venv/bin/python scripts/audit_factory2_runtime_events.py --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --output data/reports/factory2_runtime_event_audit.lineage_398_427.v4.json --start-seconds 398 --end-seconds 427 --processing-fps 10 --include-track-histories --force
+oracle --slug factory2-synthetic-next-step ...
+```
+
+Verification:
+
+```text
+54 tests passed on the affected suite after the hardening change.
+Targeted runtime audit around ~305.7s now emits:
+- provenance_status = synthetic_approved_chain_token
+- count_authority = runtime_inferred_only
+- source_token_id = null
+- source_bbox = null
+
+Targeted runtime audit around ~425.0s now emits:
+- provenance_status = synthetic_approved_chain_token
+- count_authority = runtime_inferred_only
+- source_token_id = null
+- source_bbox = null
+
+Corrected 5/8/10fps rescue searches for both remaining proof gaps all still scored:
+- shared_source_lineage_no_distinct_proof_receipt
+```
+
+Next blocker:
+
+```text
+There is no remaining honest proof-window tuning move on current evidence.
+The remaining blocker is product semantics / product presentation:
+- what user-facing number should represent proof-backed counts
+- whether the product needs to expose the runtime/proof split directly
+```
+
+Exact next recommended step:
+
+```text
+Do not keep tuning proof windows for 305.708s / 425.012s.
+If product semantics matter next, thread `count_authority` through the event ledger / API layer and expose:
+- runtime inferred total
+- proof-backed total
+- unresolved runtime-inferred-only count
+```
 
 ## 2026-04-29: Factory2 Runtime Lineage Audit Closed The Final Two
 

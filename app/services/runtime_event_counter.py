@@ -436,6 +436,14 @@ class RuntimeEventCounter:
         self._state_machine = CountStateMachine(self._count_config)
         self._frame_index = 0
 
+    @property
+    def source_token_authorized_event_count(self) -> int:
+        return self._state_machine.source_token_authorized_event_count
+
+    @property
+    def runtime_inferred_only_event_count(self) -> int:
+        return self._state_machine.runtime_inferred_only_event_count
+
     def _select_gate_predecessor(self, track_id: int, accumulator: _TrackGateAccumulator) -> int | None:
         if not accumulator.centers:
             return None

@@ -36,6 +36,7 @@ def test_serialize_event_includes_gate_context() -> None:
             chain_id="proof-source-track:144",
             source_bbox=(8.0, 9.0, 10.0, 11.0),
             provenance_status="inherited_live_source_token",
+            count_authority="source_token_authorized",
         ),
         gate_decision=GateDecision(),
         count_total=17,
@@ -50,6 +51,7 @@ def test_serialize_event_includes_gate_context() -> None:
     assert payload["chain_id"] == "proof-source-track:144"
     assert payload["source_bbox"] == [8.0, 9.0, 10.0, 11.0]
     assert payload["provenance_status"] == "inherited_live_source_token"
+    assert payload["count_authority"] == "source_token_authorized"
 
 
 def test_serialize_track_observation_preserves_zone_and_overlap_metadata() -> None:
@@ -75,3 +77,36 @@ def test_serialize_track_observation_preserves_zone_and_overlap_metadata() -> No
         "outside_person_ratio": 0.02,
         "static_stack_overlap_ratio": 0.1,
     }
+
+
+def test_serialize_event_includes_predecessor_chain_context() -> None:
+    class GateDecision:
+        decision = "allow_source_token"
+        reason = "moving_panel_candidate"
+        flags = ["source_token_allowed_by_person_panel_separation"]
+
+    payload = serialize_event(
+        event_ts=120.0,
+        event=CountEvent(
+            track_id=12,
+            count=1,
+            reason="approved_delivery_chain",
+            bbox=(10.0, 20.0, 30.0, 40.0),
+            source_track_id=7,
+            chain_id="proof-source-track:7",
+            provenance_status="synthetic_approved_chain_token",
+            count_authority="runtime_inferred_only",
+        ),
+        gate_decision=GateDecision(),
+        count_total=3,
+        provenance={
+            "predecessor_chain_track_ids": [5, 7, 12],
+            "source_observation_count": 22,
+            "output_observation_count": 2,
+        },
+    )
+
+    assert payload["predecessor_chain_track_ids"] == [5, 7, 12]
+    assert payload["source_observation_count"] == 22
+    assert payload["output_observation_count"] == 2
+    assert payload["count_authority"] == "runtime_inferred_only"

@@ -52,7 +52,9 @@ def serialize_event(
     event: CountEvent,
     gate_decision: Any,
     count_total: int,
+    provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    provenance = provenance or {}
     return {
         "event_ts": round(float(event_ts), 3),
         "track_id": int(event.track_id),
@@ -64,6 +66,10 @@ def serialize_event(
         "chain_id": event.chain_id,
         "source_bbox": [round(float(value), 3) for value in event.source_bbox] if event.source_bbox is not None else None,
         "provenance_status": event.provenance_status,
+        "count_authority": event.count_authority,
+        "predecessor_chain_track_ids": [int(value) for value in (provenance.get("predecessor_chain_track_ids") or [])],
+        "source_observation_count": int(provenance.get("source_observation_count") or 0),
+        "output_observation_count": int(provenance.get("output_observation_count") or 0),
         "gate_decision": None
         if gate_decision is None
         else {
@@ -170,12 +176,16 @@ def audit_runtime_events(
                     )
                 )
         for event in frame_result.events:
+            provenance = dict(frame_result.event_provenance.get(event.track_id) or {})
+            provenance.setdefault("source_observation_count", len(track_histories.get(str(event.source_track_id), [])))
+            provenance.setdefault("output_observation_count", len(track_histories.get(str(event.track_id), [])))
             events.append(
                 serialize_event(
                     event_ts=timestamp,
                     event=event,
                     gate_decision=frame_result.gate_decisions.get(event.track_id),
                     count_total=counter.total_count,
+                    provenance=provenance,
                 )
             )
 

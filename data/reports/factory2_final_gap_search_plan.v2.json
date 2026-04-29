@@ -1,0 +1,130 @@
+{
+  "candidate_count": 6,
+  "event_count": 2,
+  "fps_values": [
+    5.0,
+    8.0,
+    10.0
+  ],
+  "lead_seconds": [
+    4.0,
+    6.0,
+    8.0,
+    10.0,
+    12.0
+  ],
+  "lineage_report_path": "data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json",
+  "packets_path": "data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json",
+  "schema_version": "factory2-final-gap-search-plan-v1",
+  "tail_seconds": [
+    2.0,
+    3.0,
+    4.0,
+    6.0
+  ],
+  "targets": [
+    {
+      "baseline_receipt_timestamps": {
+        "first": 303.1,
+        "last": 303.7
+      },
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidates": [
+        {
+          "candidate_id": "0007-lineage-fps050",
+          "duration_seconds": 18.0,
+          "end_seconds": 307.708,
+          "event_id": "factory2-runtime-only-0007",
+          "event_ts": 305.708,
+          "fps": 5.0,
+          "lead_seconds": 16.0,
+          "lineage_window": true,
+          "start_seconds": 289.708,
+          "tail_seconds": 2.0
+        },
+        {
+          "candidate_id": "0007-lineage-fps080",
+          "duration_seconds": 18.0,
+          "end_seconds": 307.708,
+          "event_id": "factory2-runtime-only-0007",
+          "event_ts": 305.708,
+          "fps": 8.0,
+          "lead_seconds": 16.0,
+          "lineage_window": true,
+          "start_seconds": 289.708,
+          "tail_seconds": 2.0
+        },
+        {
+          "candidate_id": "0007-lineage-fps100",
+          "duration_seconds": 18.0,
+          "end_seconds": 307.708,
+          "event_id": "factory2-runtime-only-0007",
+          "event_ts": 305.708,
+          "fps": 10.0,
+          "lead_seconds": 16.0,
+          "lineage_window": true,
+          "start_seconds": 289.708,
+          "tail_seconds": 2.0
+        }
+      ],
+      "covering_diagnostic_paths": [
+        "data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json"
+      ],
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "lineage_window_available": true
+    },
+    {
+      "baseline_receipt_timestamps": {
+        "first": 422.167,
+        "last": 422.5
+      },
+      "baseline_source_token_key": "factory2-review-0005-396-427s-panel-v2:tracks:000001-000003-000005",
+      "candidates": [
+        {
+          "candidate_id": "0008-lineage-fps050",
+          "duration_seconds": 27.301,
+          "end_seconds": 427.012,
+          "event_id": "factory2-runtime-only-0008",
+          "event_ts": 425.012,
+          "fps": 5.0,
+          "lead_seconds": 25.301,
+          "lineage_window": true,
+          "start_seconds": 399.711,
+          "tail_seconds": 2.0
+        },
+        {
+          "candidate_id": "0008-lineage-fps080",
+          "duration_seconds": 27.301,
+          "end_seconds": 427.012,
+          "event_id": "factory2-runtime-only-0008",
+          "event_ts": 425.012,
+          "fps": 8.0,
+          "lead_seconds": 25.301,
+          "lineage_window": true,
+          "start_seconds": 399.711,
+          "tail_seconds": 2.0
+        },
+        {
+          "candidate_id": "0008-lineage-fps100",
+          "duration_seconds": 27.301,
+          "end_seconds": 427.012,
+          "event_id": "factory2-runtime-only-0008",
+          "event_ts": 425.012,
+          "fps": 10.0,
+          "lead_seconds": 25.301,
+          "lineage_window": true,
+          "start_seconds": 399.711,
+          "tail_seconds": 2.0
+        }
+      ],
+      "covering_diagnostic_paths": [
+        "data/diagnostics/event-windows/factory2-review-0005-396-427s-panel-v2/diagnostic.json",
+        "data/diagnostics/event-windows/factory2-review-0005-418s-panel-v1/diagnostic.json"
+      ],
+      "event_id": "factory2-runtime-only-0008",
+      "event_ts": 425.012,
+      "lineage_window_available": true
+    }
+  ]
+}

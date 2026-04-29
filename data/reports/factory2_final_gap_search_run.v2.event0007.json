@@ -1,0 +1,41 @@
+{
+  "diagnostics_root": "data/diagnostics/event-windows",
+  "plan_path": "data/reports/factory2_final_gap_search_plan.v2.json",
+  "result_count": 3,
+  "results": [
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lineage-fps050",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-289-307s-5fps-0007-lineage-fps050/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-289-307s-5fps-0007-lineage-fps050",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 5.0,
+      "start_seconds": 289.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lineage-fps080",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-289-307s-8fps-0007-lineage-fps080/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-289-307s-8fps-0007-lineage-fps080",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 8.0,
+      "start_seconds": 289.708
+    },
+    {
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lineage-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-289-307s-10fps-0007-lineage-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-289-307s-10fps-0007-lineage-fps100",
+      "end_seconds": 307.708,
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "fps": 10.0,
+      "start_seconds": 289.708
+    }
+  ],
+  "schema_version": "factory2-final-gap-search-run-v1"
+}

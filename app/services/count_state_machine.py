@@ -22,6 +22,10 @@ TrackLifecycleState = Literal[
     "RESIDENT_OUTPUT_OBJECT",
     "UNCERTAIN_REVIEW",
 ]
+CountAuthority = Literal[
+    "source_token_authorized",
+    "runtime_inferred_only",
+]
 
 
 @dataclass(frozen=True)
@@ -60,6 +64,7 @@ class CountEvent:
     chain_id: str | None = None
     source_bbox: Box | None = None
     provenance_status: str | None = None
+    count_authority: CountAuthority = "source_token_authorized"
 
 
 @dataclass
@@ -127,6 +132,8 @@ class CountStateMachine:
     def __init__(self, config: CountConfig) -> None:
         self.config = config
         self.total_count = 0
+        self.source_token_authorized_event_count = 0
+        self.runtime_inferred_only_event_count = 0
         self._frame_index = 0
         self._token_sequence = 0
         self._resident_sequence = 0
@@ -217,8 +224,9 @@ class CountStateMachine:
             track.source_token.track_id = output_track_id
             track.source_token.last_frame = self._frame_index
             provenance_status = "inherited_live_source_token"
-        elif track.source_token is None:
-            track.source_token = self._create_source_token(track, output_bbox)
+        elif track.source_token is not None and not track.source_token.consumed:
+            track.source_token.last_frame = self._frame_index
+            provenance_status = "source_zone_token"
 
         self._committed_delivery_chains.add(chain_id)
         return self._commit_count(
@@ -320,12 +328,21 @@ class CountStateMachine:
         provenance_status: str | None = None,
     ) -> CountEvent:
         track.counted = True
+        count_authority: CountAuthority = (
+            "runtime_inferred_only"
+            if provenance_status == "synthetic_approved_chain_token"
+            else "source_token_authorized"
+        )
         source_token_id = track.source_token.token_id if track.source_token is not None else None
         source_bbox = track.source_token.source_bbox if track.source_token is not None else None
         if track.source_token is not None:
             track.source_token.consumed = True
         track.set_state("COUNTED_OUTPUT_RESIDENT")
         self.total_count += 1
+        if count_authority == "runtime_inferred_only":
+            self.runtime_inferred_only_event_count += 1
+        else:
+            self.source_token_authorized_event_count += 1
         assert track.last_bbox is not None
         self._resident_sequence += 1
         resident = _ResidentObject(
@@ -347,6 +364,7 @@ class CountStateMachine:
             chain_id=chain_id,
             source_bbox=source_bbox,
             provenance_status=provenance_status or ("source_zone_token" if source_token_id is not None else None),
+            count_authority=count_authority,
         )
 
     def _create_source_token(self, track: _TrackMemory, bbox: Box) -> _SourceToken:

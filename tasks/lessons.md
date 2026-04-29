@@ -145,6 +145,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 4. **Do not promote runtime-only delivery chains into proof by default.** A runtime-backed receipt must reject `synthetic_approved_chain_token` and treat it as `incomplete_source_to_output_path` until a genuinely fresh source-backed lineage exists.
 5. **Oracle’s recommendation was correct.** The right escalation path was from-start runtime provenance, not more proof-window searching. Once provenance still showed synthetic fallback, the honest action was to preserve the explicit `runtime 23 / proof 21` divergence.
 
+## 2026-04-29: Factory2 Count-Authority Hardening Lessons
+
+1. **Only two synthetic runtime counts remain unmatched by overlapping proof receipts.** The authority ledger now says: runtime total `23`, proof total `21`, inherited live source token `11`, synthetic with overlapping proof `10`, synthetic without distinct proof `2` (`305.708s`, `425.012s`).
+2. **Corrected lineage-window search is exhausted for the final two.** After switching from arbitrary lead/tail guesses to source-history-driven search windows, the focused `5/8/10fps` runs for both remaining events still scored `shared_source_lineage_no_distinct_proof_receipt`.
+3. **Synthetic approved-chain events must not mint fake source evidence.** If a runtime count is `synthetic_approved_chain_token`, do not fabricate `source_token_id` or `source_bbox` from the output-side box. Mark it as `count_authority = runtime_inferred_only`.
+4. **Do not throw away useful runtime recall just because proof is lower.** Removing synthetic approved-chain count authority from the operational runtime total would likely throw away legitimate recall that already overlaps accepted proof in `10` cases. The safer product move is to separate operational/runtime counts from proof-backed counts.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).

@@ -302,6 +302,7 @@ class CountStateMachineTests(unittest.TestCase):
         self.assertEqual(event.source_token_id, "source-token-1")
         self.assertEqual(event.source_bbox, (10, 20, 20, 20))
         self.assertEqual(event.provenance_status, "inherited_live_source_token")
+        self.assertEqual(event.count_authority, "source_token_authorized")
 
     def test_approved_delivery_chain_marks_synthetic_fallback_when_source_token_missing(self) -> None:
         counter = CountStateMachine(
@@ -333,7 +334,9 @@ class CountStateMachineTests(unittest.TestCase):
         assert event is not None
         self.assertEqual(event.source_track_id, 77)
         self.assertEqual(event.provenance_status, "synthetic_approved_chain_token")
-        self.assertEqual(event.source_bbox, (60, 20, 40, 20))
+        self.assertIsNone(event.source_token_id)
+        self.assertIsNone(event.source_bbox)
+        self.assertEqual(event.count_authority, "runtime_inferred_only")
 
 
 if __name__ == "__main__":

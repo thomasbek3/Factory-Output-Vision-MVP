@@ -1,0 +1,43 @@
+{
+  "result_count": 3,
+  "results": [
+    {
+      "accepted_source_token_key": "factory2-final-gap-search-0007-289-307s-5fps-0007-lineage-fps050:tracks:000001",
+      "accepted_track_id": 1,
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lineage-fps050",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-289-307s-5fps-0007-lineage-fps050/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-289-307s-5fps-0007-lineage-fps050",
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+      "stub_track_id": 5
+    },
+    {
+      "accepted_source_token_key": "factory2-final-gap-search-0007-289-307s-8fps-0007-lineage-fps080:tracks:000001",
+      "accepted_track_id": 1,
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lineage-fps080",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-289-307s-8fps-0007-lineage-fps080/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-289-307s-8fps-0007-lineage-fps080",
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+      "stub_track_id": 4
+    },
+    {
+      "accepted_source_token_key": "factory2-final-gap-search-0007-289-307s-10fps-0007-lineage-fps100:tracks:000001",
+      "accepted_track_id": 1,
+      "baseline_source_token_key": "factory2-review-0010-288-328s-panel-v1-5fps:tracks:000002",
+      "candidate_id": "0007-lineage-fps100",
+      "diagnostic_path": "data/diagnostics/event-windows/factory2-final-gap-search-0007-289-307s-10fps-0007-lineage-fps100/diagnostic.json",
+      "diagnostic_slug": "factory2-final-gap-search-0007-289-307s-10fps-0007-lineage-fps100",
+      "event_id": "factory2-runtime-only-0007",
+      "event_ts": 305.708,
+      "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+      "stub_track_id": 3
+    }
+  ],
+  "schema_version": "factory2-final-gap-search-report-v1",
+  "search_run_path": "data/reports/factory2_final_gap_search_run.v2.event0007.json"
+}

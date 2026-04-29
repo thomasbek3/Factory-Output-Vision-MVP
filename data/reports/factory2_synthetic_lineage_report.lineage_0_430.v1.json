@@ -1,0 +1,946 @@
+{
+  "approved_delivery_chain_count": 23,
+  "divergence_path": "data/reports/factory2_proof_runtime_divergence.final_two_v2.json",
+  "divergent_synthetic_count": 2,
+  "inherited_events": [
+    {
+      "bbox": [
+        730.0,
+        625.0,
+        236.0,
+        31.0
+      ],
+      "chain_id": "proof-source-track:1",
+      "count_total": 1,
+      "event_ts": 5.5,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 47,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 7.5,
+      "recommended_search_start_seconds": 0.0,
+      "source_bbox": [
+        1142.0,
+        611.0,
+        147.0,
+        51.0
+      ],
+      "source_gap_seconds": 0.0,
+      "source_token_id": "source-token-1",
+      "source_track_id": 1,
+      "source_track_observation_count": 47,
+      "track_id": 1
+    },
+    {
+      "bbox": [
+        736.0,
+        598.0,
+        252.0,
+        31.0
+      ],
+      "chain_id": "proof-source-track:2",
+      "count_total": 2,
+      "event_ts": 23.601,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 105,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 25.601,
+      "recommended_search_start_seconds": 10.7,
+      "source_bbox": [
+        1078.0,
+        627.0,
+        148.0,
+        160.0
+      ],
+      "source_gap_seconds": -0.2,
+      "source_token_id": "source-token-2",
+      "source_track_id": 2,
+      "source_track_observation_count": 105,
+      "track_id": 2
+    },
+    {
+      "bbox": [
+        711.0,
+        626.0,
+        241.0,
+        33.0
+      ],
+      "chain_id": "proof-source-track:16",
+      "count_total": 4,
+      "event_ts": 60.502,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 58,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 62.502,
+      "recommended_search_start_seconds": 53.001,
+      "source_bbox": [
+        1167.0,
+        511.0,
+        96.0,
+        159.0
+      ],
+      "source_gap_seconds": 0.0,
+      "source_token_id": "source-token-10",
+      "source_track_id": 16,
+      "source_track_observation_count": 58,
+      "track_id": 16
+    },
+    {
+      "bbox": [
+        736.0,
+        562.0,
+        261.0,
+        21.0
+      ],
+      "chain_id": "proof-source-track:31",
+      "count_total": 6,
+      "event_ts": 110.903,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 6,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 112.903,
+      "recommended_search_start_seconds": 109.603,
+      "source_bbox": [
+        824.0,
+        551.0,
+        223.0,
+        36.0
+      ],
+      "source_gap_seconds": -0.4,
+      "source_token_id": "source-token-22",
+      "source_track_id": 31,
+      "source_track_observation_count": 6,
+      "track_id": 31
+    },
+    {
+      "bbox": [
+        760.0,
+        529.0,
+        231.0,
+        50.0
+      ],
+      "chain_id": "proof-source-track:39",
+      "count_total": 7,
+      "event_ts": 129.904,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 9,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 131.904,
+      "recommended_search_start_seconds": 128.304,
+      "source_bbox": [
+        869.0,
+        489.0,
+        213.0,
+        86.0
+      ],
+      "source_gap_seconds": -0.4,
+      "source_token_id": "source-token-25",
+      "source_track_id": 39,
+      "source_track_observation_count": 9,
+      "track_id": 39
+    },
+    {
+      "bbox": [
+        759.0,
+        544.0,
+        233.0,
+        37.0
+      ],
+      "chain_id": "proof-source-track:44",
+      "count_total": 8,
+      "event_ts": 147.004,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 56,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 149.004,
+      "recommended_search_start_seconds": 140.204,
+      "source_bbox": [
+        1124.0,
+        544.0,
+        78.0,
+        48.0
+      ],
+      "source_gap_seconds": -0.5,
+      "source_token_id": "source-token-28",
+      "source_track_id": 44,
+      "source_track_observation_count": 56,
+      "track_id": 44
+    },
+    {
+      "bbox": [
+        748.0,
+        561.0,
+        249.0,
+        20.0
+      ],
+      "chain_id": "proof-source-track:61",
+      "count_total": 9,
+      "event_ts": 184.205,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 10,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 186.205,
+      "recommended_search_start_seconds": 182.805,
+      "source_bbox": [
+        815.0,
+        557.0,
+        217.0,
+        21.0
+      ],
+      "source_gap_seconds": -0.6,
+      "source_token_id": "source-token-35",
+      "source_track_id": 61,
+      "source_track_observation_count": 10,
+      "track_id": 61
+    },
+    {
+      "bbox": [
+        754.0,
+        532.0,
+        237.0,
+        44.0
+      ],
+      "chain_id": "proof-source-track:70",
+      "count_total": 10,
+      "event_ts": 210.406,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 15,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 212.406,
+      "recommended_search_start_seconds": 208.006,
+      "source_bbox": [
+        871.0,
+        464.0,
+        231.0,
+        160.0
+      ],
+      "source_gap_seconds": -0.4,
+      "source_token_id": "source-token-40",
+      "source_track_id": 70,
+      "source_track_observation_count": 15,
+      "track_id": 70
+    },
+    {
+      "bbox": [
+        726.0,
+        528.0,
+        221.0,
+        44.0
+      ],
+      "chain_id": "proof-source-track:107",
+      "count_total": 15,
+      "event_ts": 303.508,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 8,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 305.508,
+      "recommended_search_start_seconds": 301.408,
+      "source_bbox": [
+        982.0,
+        549.0,
+        121.0,
+        16.0
+      ],
+      "source_gap_seconds": -0.4,
+      "source_token_id": "source-token-64",
+      "source_track_id": 107,
+      "source_track_observation_count": 8,
+      "track_id": 107
+    },
+    {
+      "bbox": [
+        767.0,
+        528.0,
+        234.0,
+        47.0
+      ],
+      "chain_id": "proof-source-track:123",
+      "count_total": 18,
+      "event_ts": 347.109,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 7,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 349.109,
+      "recommended_search_start_seconds": 345.809,
+      "source_bbox": [
+        814.0,
+        527.0,
+        215.0,
+        49.0
+      ],
+      "source_gap_seconds": -0.5,
+      "source_token_id": "source-token-74",
+      "source_track_id": 123,
+      "source_track_observation_count": 7,
+      "track_id": 123
+    },
+    {
+      "bbox": [
+        743.0,
+        508.0,
+        227.0,
+        39.0
+      ],
+      "chain_id": "proof-source-track:151",
+      "count_total": 22,
+      "event_ts": 422.612,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 11,
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 424.612,
+      "recommended_search_start_seconds": 420.912,
+      "source_bbox": [
+        857.0,
+        482.0,
+        214.0,
+        94.0
+      ],
+      "source_gap_seconds": -0.5,
+      "source_token_id": "source-token-96",
+      "source_track_id": 151,
+      "source_track_observation_count": 11,
+      "track_id": 151
+    }
+  ],
+  "inherited_live_count": 11,
+  "proof_accepted_count": 21,
+  "proof_report_path": "data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json",
+  "runtime_audit_path": "data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json",
+  "schema_version": "factory2-synthetic-lineage-report-v1",
+  "synthetic_count": 12,
+  "synthetic_events": [
+    {
+      "bbox": [
+        763.0,
+        476.0,
+        230.0,
+        149.0
+      ],
+      "chain_id": "proof-source-track:5",
+      "count_total": 3,
+      "event_ts": 42.701,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 5,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 44.701,
+      "recommended_search_start_seconds": 27.501,
+      "source_bbox": [
+        763.0,
+        476.0,
+        230.0,
+        149.0
+      ],
+      "source_gap_seconds": 8.1,
+      "source_token_id": "source-token-8",
+      "source_track_id": 5,
+      "source_track_observation_count": 62,
+      "track_id": 11
+    },
+    {
+      "bbox": [
+        748.0,
+        569.0,
+        230.0,
+        62.0
+      ],
+      "chain_id": "proof-source-track:20",
+      "count_total": 5,
+      "event_ts": 78.602,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 3,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 80.602,
+      "recommended_search_start_seconds": 63.602,
+      "source_bbox": [
+        748.0,
+        569.0,
+        230.0,
+        62.0
+      ],
+      "source_gap_seconds": 13.1,
+      "source_token_id": "source-token-16",
+      "source_track_id": 20,
+      "source_track_observation_count": 7,
+      "track_id": 24
+    },
+    {
+      "bbox": [
+        758.0,
+        530.0,
+        237.0,
+        45.0
+      ],
+      "chain_id": "proof-source-track:72",
+      "count_total": 11,
+      "event_ts": 233.006,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 6,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 235.006,
+      "recommended_search_start_seconds": 216.106,
+      "source_bbox": [
+        758.0,
+        530.0,
+        237.0,
+        45.0
+      ],
+      "source_gap_seconds": 8.1,
+      "source_token_id": "source-token-44",
+      "source_track_id": 72,
+      "source_track_observation_count": 76,
+      "track_id": 79
+    },
+    {
+      "bbox": [
+        744.0,
+        502.0,
+        213.0,
+        53.0
+      ],
+      "chain_id": "proof-source-track:87",
+      "count_total": 12,
+      "event_ts": 252.007,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 6,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 254.007,
+      "recommended_search_start_seconds": 250.607,
+      "source_bbox": [
+        744.0,
+        502.0,
+        213.0,
+        53.0
+      ],
+      "source_gap_seconds": -0.3,
+      "source_token_id": "source-token-50",
+      "source_track_id": 87,
+      "source_track_observation_count": 6,
+      "track_id": 87
+    },
+    {
+      "bbox": [
+        641.0,
+        558.0,
+        271.0,
+        36.0
+      ],
+      "chain_id": "proof-source-track:89",
+      "count_total": 13,
+      "event_ts": 268.907,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 2,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 270.907,
+      "recommended_search_start_seconds": 255.107,
+      "source_bbox": [
+        641.0,
+        558.0,
+        271.0,
+        36.0
+      ],
+      "source_gap_seconds": 7.1,
+      "source_token_id": "source-token-56",
+      "source_track_id": 89,
+      "source_track_observation_count": 55,
+      "track_id": 96
+    },
+    {
+      "bbox": [
+        756.0,
+        547.0,
+        252.0,
+        20.0
+      ],
+      "chain_id": "proof-source-track:97",
+      "count_total": 14,
+      "event_ts": 286.408,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 4,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 288.408,
+      "recommended_search_start_seconds": 271.607,
+      "source_bbox": [
+        756.0,
+        547.0,
+        252.0,
+        20.0
+      ],
+      "source_gap_seconds": 6.4,
+      "source_token_id": "source-token-61",
+      "source_track_id": 97,
+      "source_track_observation_count": 68,
+      "track_id": 102
+    },
+    {
+      "bbox": [
+        659.0,
+        580.0,
+        247.0,
+        42.0
+      ],
+      "chain_id": "proof-source-track:105",
+      "count_total": 16,
+      "event_ts": 305.708,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": false,
+      "is_divergent": true,
+      "output_track_observation_count": 1,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 307.708,
+      "recommended_search_start_seconds": 289.708,
+      "source_bbox": [
+        659.0,
+        580.0,
+        247.0,
+        42.0
+      ],
+      "source_gap_seconds": 9.2,
+      "source_token_id": "source-token-65",
+      "source_track_id": 105,
+      "source_track_observation_count": 54,
+      "track_id": 108
+    },
+    {
+      "bbox": [
+        768.0,
+        503.0,
+        227.0,
+        55.0
+      ],
+      "chain_id": "proof-source-track:113",
+      "count_total": 17,
+      "event_ts": 326.109,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 4,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 328.109,
+      "recommended_search_start_seconds": 315.209,
+      "source_bbox": [
+        768.0,
+        503.0,
+        227.0,
+        55.0
+      ],
+      "source_gap_seconds": 7.9,
+      "source_token_id": "source-token-71",
+      "source_track_id": 113,
+      "source_track_observation_count": 21,
+      "track_id": 118
+    },
+    {
+      "bbox": [
+        752.0,
+        532.0,
+        257.0,
+        35.0
+      ],
+      "chain_id": "proof-source-track:132",
+      "count_total": 19,
+      "event_ts": 367.21,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 7,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 369.21,
+      "recommended_search_start_seconds": 366.01,
+      "source_bbox": [
+        752.0,
+        532.0,
+        257.0,
+        35.0
+      ],
+      "source_gap_seconds": -0.6,
+      "source_token_id": "source-token-80",
+      "source_track_id": 132,
+      "source_track_observation_count": 7,
+      "track_id": 132
+    },
+    {
+      "bbox": [
+        698.0,
+        532.0,
+        242.0,
+        35.0
+      ],
+      "chain_id": "proof-source-track:134",
+      "count_total": 20,
+      "event_ts": 384.311,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 8,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 386.311,
+      "recommended_search_start_seconds": 371.61,
+      "source_bbox": [
+        698.0,
+        532.0,
+        242.0,
+        35.0
+      ],
+      "source_gap_seconds": 6.801,
+      "source_token_id": "source-token-85",
+      "source_track_id": 134,
+      "source_track_observation_count": 47,
+      "track_id": 138
+    },
+    {
+      "bbox": [
+        666.0,
+        530.0,
+        259.0,
+        39.0
+      ],
+      "chain_id": "proof-source-track:140",
+      "count_total": 21,
+      "event_ts": 401.711,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": true,
+      "is_divergent": false,
+      "output_track_observation_count": 5,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 403.711,
+      "recommended_search_start_seconds": 387.611,
+      "source_bbox": [
+        666.0,
+        530.0,
+        259.0,
+        39.0
+      ],
+      "source_gap_seconds": 7.4,
+      "source_token_id": "source-token-93",
+      "source_track_id": 140,
+      "source_track_observation_count": 56,
+      "track_id": 146
+    },
+    {
+      "bbox": [
+        627.0,
+        533.0,
+        265.0,
+        34.0
+      ],
+      "chain_id": "proof-source-track:145",
+      "count_total": 23,
+      "event_ts": 425.012,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "has_overlapping_proof_receipt": false,
+      "is_divergent": true,
+      "output_track_observation_count": 2,
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "recommended_search_end_seconds": 427.012,
+      "recommended_search_start_seconds": 399.711,
+      "source_bbox": [
+        627.0,
+        533.0,
+        265.0,
+        34.0
+      ],
+      "source_gap_seconds": 24.201,
+      "source_token_id": "source-token-97",
+      "source_track_id": 145,
+      "source_track_observation_count": 2,
+      "track_id": 152
+    }
+  ],
+  "synthetic_with_overlapping_proof_count": 10,
+  "synthetic_without_overlapping_proof_count": 2,
+  "synthetic_without_overlapping_proof_event_timestamps": [
+    305.708,
+    425.012
+  ]
+}

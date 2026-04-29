@@ -1,0 +1,56 @@
+{
+  "events": {
+    "factory2-runtime-only-0007": {
+      "all_shared_source_lineage": true,
+      "recommendations": [
+        {
+          "accepted_source_token_key": "factory2-final-gap-search-0007-289-307s-5fps-0007-lineage-fps050:tracks:000001",
+          "candidate_id": "0007-lineage-fps050",
+          "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+          "stub_track_id": 5
+        },
+        {
+          "accepted_source_token_key": "factory2-final-gap-search-0007-289-307s-8fps-0007-lineage-fps080:tracks:000001",
+          "candidate_id": "0007-lineage-fps080",
+          "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+          "stub_track_id": 4
+        },
+        {
+          "accepted_source_token_key": "factory2-final-gap-search-0007-289-307s-10fps-0007-lineage-fps100:tracks:000001",
+          "candidate_id": "0007-lineage-fps100",
+          "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+          "stub_track_id": 3
+        }
+      ]
+    },
+    "factory2-runtime-only-0008": {
+      "all_shared_source_lineage": true,
+      "recommendations": [
+        {
+          "accepted_source_token_key": "factory2-final-gap-search-0008-399-427s-5fps-0008-lineage-fps050:tracks:000006",
+          "candidate_id": "0008-lineage-fps050",
+          "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+          "stub_track_id": 8
+        },
+        {
+          "accepted_source_token_key": "factory2-final-gap-search-0008-399-427s-8fps-0008-lineage-fps080:tracks:000008",
+          "candidate_id": "0008-lineage-fps080",
+          "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+          "stub_track_id": 10
+        },
+        {
+          "accepted_source_token_key": "factory2-final-gap-search-0008-399-427s-10fps-0008-lineage-fps100:tracks:000006",
+          "candidate_id": "0008-lineage-fps100",
+          "recommendation": "shared_source_lineage_no_distinct_proof_receipt",
+          "stub_track_id": 10
+        }
+      ]
+    }
+  },
+  "result_count": 6,
+  "schema_version": "factory2-final-gap-search-summary-v2",
+  "source_reports": [
+    "data/reports/factory2_final_gap_search_report.v2.event0007.json",
+    "data/reports/factory2_final_gap_search_report.v2.event0008.json"
+  ]
+}

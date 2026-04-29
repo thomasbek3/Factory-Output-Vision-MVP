@@ -1,0 +1,2785 @@
+{
+  "calibration_path": "data/calibration/factory2_ai_only_v1.json",
+  "elapsed_sec": 111.737,
+  "end_seconds": 427.0,
+  "events": [
+    {
+      "bbox": [
+        663.0,
+        530.0,
+        253.0,
+        41.0
+      ],
+      "chain_id": "proof-source-track:1",
+      "count_authority": "source_token_authorized",
+      "count_total": 1,
+      "event_ts": 401.678,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "output_observation_count": 1,
+      "predecessor_chain_track_ids": [
+        1,
+        3
+      ],
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "source_bbox": [
+        1148.0,
+        537.0,
+        146.0,
+        65.0
+      ],
+      "source_observation_count": 15,
+      "source_token_id": "source-token-1",
+      "source_track_id": 1,
+      "track_id": 6
+    },
+    {
+      "bbox": [
+        751.0,
+        506.0,
+        237.0,
+        46.0
+      ],
+      "chain_id": "proof-source-track:10",
+      "count_authority": "source_token_authorized",
+      "count_total": 2,
+      "event_ts": 422.578,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "output_observation_count": 8,
+      "predecessor_chain_track_ids": [],
+      "provenance_status": "inherited_live_source_token",
+      "reason": "approved_delivery_chain",
+      "source_bbox": [
+        908.0,
+        480.0,
+        201.0,
+        103.0
+      ],
+      "source_observation_count": 8,
+      "source_token_id": "source-token-6",
+      "source_track_id": 10,
+      "track_id": 10
+    },
+    {
+      "bbox": [
+        648.0,
+        529.0,
+        248.0,
+        36.0
+      ],
+      "chain_id": "proof-source-track:3",
+      "count_authority": "runtime_inferred_only",
+      "count_total": 3,
+      "event_ts": 424.978,
+      "gate_decision": {
+        "decision": "allow_source_token",
+        "flags": [
+          "high_person_overlap",
+          "not_enough_object_outside_person",
+          "strong_person_panel_separation",
+          "strong_person_panel_crop_classifier",
+          "source_token_allowed_by_person_panel_separation",
+          "source_token_allowed_by_crop_classifier"
+        ],
+        "reason": "moving_panel_candidate"
+      },
+      "output_observation_count": 1,
+      "predecessor_chain_track_ids": [
+        3,
+        7,
+        8
+      ],
+      "provenance_status": "synthetic_approved_chain_token",
+      "reason": "approved_delivery_chain",
+      "source_bbox": null,
+      "source_observation_count": 3,
+      "source_token_id": null,
+      "source_track_id": 3,
+      "track_id": 11
+    }
+  ],
+  "final_count": 3,
+  "model_path": "models/panel_in_transit.pt",
+  "processing_fps": 10.0,
+  "sampled_frame_count": 290,
+  "schema_version": "factory2-runtime-event-audit-v1",
+  "start_seconds": 398.0,
+  "track_histories": {
+    "1": [
+      {
+        "box_xywh": [
+          1158.0,
+          539.0,
+          135.0,
+          62.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.540741,
+        "person_overlap": 0.459259,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 397.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1148.0,
+          537.0,
+          146.0,
+          65.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.493151,
+        "person_overlap": 0.506849,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1156.0,
+          536.0,
+          135.0,
+          64.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.466667,
+        "person_overlap": 0.533333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          532.0,
+          135.0,
+          68.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.459259,
+        "person_overlap": 0.540741,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1156.0,
+          532.0,
+          139.0,
+          67.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.467626,
+        "person_overlap": 0.532374,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1156.0,
+          527.0,
+          135.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.422222,
+        "person_overlap": 0.577778,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          526.0,
+          132.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.44697,
+        "person_overlap": 0.55303,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          523.0,
+          132.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.44697,
+        "person_overlap": 0.55303,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          522.0,
+          127.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.456693,
+        "person_overlap": 0.543307,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          518.0,
+          127.0,
+          69.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.433071,
+        "person_overlap": 0.566929,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          517.0,
+          134.0,
+          73.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.492537,
+        "person_overlap": 0.507463,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 398.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1155.0,
+          514.0,
+          125.0,
+          67.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.384,
+        "person_overlap": 0.616,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 399.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          514.0,
+          131.0,
+          67.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.40458,
+        "person_overlap": 0.59542,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 399.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1155.0,
+          514.0,
+          130.0,
+          63.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.469231,
+        "person_overlap": 0.530769,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 399.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          512.0,
+          124.0,
+          74.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.362903,
+        "person_overlap": 0.637097,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 399.378,
+        "zone": "source"
+      }
+    ],
+    "10": [
+      {
+        "box_xywh": [
+          921.0,
+          484.0,
+          206.0,
+          89.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 421.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          908.0,
+          480.0,
+          201.0,
+          103.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.024876,
+        "person_overlap": 0.975124,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 421.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          864.0,
+          481.0,
+          213.0,
+          89.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.201878,
+        "person_overlap": 0.798122,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 421.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          859.0,
+          489.0,
+          195.0,
+          82.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.066667,
+        "person_overlap": 0.933333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          827.0,
+          483.0,
+          216.0,
+          83.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          802.0,
+          476.0,
+          238.0,
+          99.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.07563,
+        "person_overlap": 0.92437,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          780.0,
+          479.0,
+          244.0,
+          85.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.143443,
+        "person_overlap": 0.856557,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          751.0,
+          506.0,
+          237.0,
+          46.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.578,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          715.0,
+          514.0,
+          237.0,
+          36.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.678,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          686.0,
+          527.0,
+          256.0,
+          41.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.066406,
+        "person_overlap": 0.933594,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.778,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          664.0,
+          549.0,
+          234.0,
+          17.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.081197,
+        "person_overlap": 0.918803,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 422.878,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          648.0,
+          530.0,
+          262.0,
+          36.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.083969,
+        "person_overlap": 0.916031,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 423.078,
+        "zone": "output"
+      }
+    ],
+    "11": [
+      {
+        "box_xywh": [
+          648.0,
+          529.0,
+          248.0,
+          36.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.08871,
+        "person_overlap": 0.91129,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 424.978,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          632.0,
+          548.0,
+          239.0,
+          22.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.150628,
+        "person_overlap": 0.849372,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 425.078,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          649.0,
+          549.0,
+          238.0,
+          40.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.063025,
+        "person_overlap": 0.936975,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 425.178,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          657.0,
+          550.0,
+          231.0,
+          38.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.030303,
+        "person_overlap": 0.969697,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 425.278,
+        "zone": "output"
+      }
+    ],
+    "12": [
+      {
+        "box_xywh": [
+          650.0,
+          562.0,
+          261.0,
+          28.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.068966,
+        "person_overlap": 0.931034,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 426.178,
+        "zone": "output"
+      }
+    ],
+    "2": [
+      {
+        "box_xywh": [
+          1139.0,
+          469.0,
+          103.0,
+          92.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.708738,
+        "person_overlap": 0.291262,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 400.078,
+        "zone": "source"
+      }
+    ],
+    "3": [
+      {
+        "box_xywh": [
+          910.0,
+          474.0,
+          222.0,
+          210.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 400.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          917.0,
+          474.0,
+          212.0,
+          220.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 400.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          915.0,
+          455.0,
+          200.0,
+          202.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 400.878,
+        "zone": "source"
+      }
+    ],
+    "4": [
+      {
+        "box_xywh": [
+          923.0,
+          503.0,
+          238.0,
+          219.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.037815,
+        "person_overlap": 0.962185,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 400.778,
+        "zone": "source"
+      }
+    ],
+    "5": [
+      {
+        "box_xywh": [
+          941.0,
+          506.0,
+          186.0,
+          136.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 400.778,
+        "zone": "source"
+      }
+    ],
+    "6": [
+      {
+        "box_xywh": [
+          663.0,
+          530.0,
+          253.0,
+          41.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.158103,
+        "person_overlap": 0.841897,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 401.678,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          648.0,
+          551.0,
+          231.0,
+          44.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.12987,
+        "person_overlap": 0.87013,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 401.878,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          663.0,
+          567.0,
+          192.0,
+          29.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.078125,
+        "person_overlap": 0.921875,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 402.078,
+        "zone": "output"
+      },
+      {
+        "box_xywh": [
+          662.0,
+          567.0,
+          192.0,
+          29.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0625,
+        "person_overlap": 0.9375,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 402.178,
+        "zone": "output"
+      }
+    ],
+    "7": [
+      {
+        "box_xywh": [
+          999.0,
+          551.0,
+          103.0,
+          209.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 404.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1008.0,
+          551.0,
+          95.0,
+          200.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 405.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          978.0,
+          506.0,
+          152.0,
+          223.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 405.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          994.0,
+          505.0,
+          133.0,
+          152.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 405.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1001.0,
+          480.0,
+          149.0,
+          170.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.0,
+        "person_overlap": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 405.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1098.0,
+          536.0,
+          102.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.186275,
+        "person_overlap": 0.813725,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 405.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1138.0,
+          549.0,
+          87.0,
+          38.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.83908,
+        "person_overlap": 0.16092,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 405.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1132.0,
+          559.0,
+          136.0,
+          32.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.764706,
+        "person_overlap": 0.235294,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1123.0,
+          565.0,
+          143.0,
+          30.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.692308,
+        "person_overlap": 0.307692,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1134.0,
+          565.0,
+          140.0,
+          31.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.657143,
+        "person_overlap": 0.342857,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1145.0,
+          568.0,
+          130.0,
+          39.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.5,
+        "person_overlap": 0.5,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          569.0,
+          129.0,
+          40.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.387597,
+        "person_overlap": 0.612403,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          570.0,
+          121.0,
+          33.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.454545,
+        "person_overlap": 0.545455,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1166.0,
+          569.0,
+          121.0,
+          42.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.487603,
+        "person_overlap": 0.512397,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1173.0,
+          570.0,
+          113.0,
+          43.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.433628,
+        "person_overlap": 0.566372,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1180.0,
+          570.0,
+          107.0,
+          44.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.429907,
+        "person_overlap": 0.570093,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1169.0,
+          569.0,
+          118.0,
+          47.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.432203,
+        "person_overlap": 0.567797,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 406.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          569.0,
+          131.0,
+          51.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.40458,
+        "person_overlap": 0.59542,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          564.0,
+          138.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.384058,
+        "person_overlap": 0.615942,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          564.0,
+          141.0,
+          57.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.375887,
+        "person_overlap": 0.624113,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          565.0,
+          142.0,
+          56.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.394366,
+        "person_overlap": 0.605634,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          564.0,
+          141.0,
+          58.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.397163,
+        "person_overlap": 0.602837,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          563.0,
+          137.0,
+          60.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.423358,
+        "person_overlap": 0.576642,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          564.0,
+          136.0,
+          58.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.411765,
+        "person_overlap": 0.588235,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1158.0,
+          565.0,
+          134.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.402985,
+        "person_overlap": 0.597015,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          567.0,
+          132.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.401515,
+        "person_overlap": 0.598485,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          566.0,
+          140.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.392857,
+        "person_overlap": 0.607143,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 407.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1150.0,
+          566.0,
+          138.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.362319,
+        "person_overlap": 0.637681,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1158.0,
+          565.0,
+          134.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.432836,
+        "person_overlap": 0.567164,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          565.0,
+          132.0,
+          54.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.431818,
+        "person_overlap": 0.568182,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          565.0,
+          129.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.434109,
+        "person_overlap": 0.565891,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          564.0,
+          130.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.423077,
+        "person_overlap": 0.576923,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1188.0,
+          567.0,
+          96.0,
+          42.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.520833,
+        "person_overlap": 0.479167,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1150.0,
+          568.0,
+          121.0,
+          50.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.31405,
+        "person_overlap": 0.68595,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1173.0,
+          564.0,
+          98.0,
+          42.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.316327,
+        "person_overlap": 0.683673,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1167.0,
+          554.0,
+          106.0,
+          42.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.490566,
+        "person_overlap": 0.509434,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 408.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1167.0,
+          563.0,
+          116.0,
+          32.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.560345,
+        "person_overlap": 0.439655,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1166.0,
+          567.0,
+          119.0,
+          41.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.571429,
+        "person_overlap": 0.428571,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          569.0,
+          123.0,
+          44.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.528455,
+        "person_overlap": 0.471545,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1164.0,
+          570.0,
+          121.0,
+          40.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.53719,
+        "person_overlap": 0.46281,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1167.0,
+          569.0,
+          117.0,
+          37.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.589744,
+        "person_overlap": 0.410256,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1164.0,
+          567.0,
+          124.0,
+          39.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.596774,
+        "person_overlap": 0.403226,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1159.0,
+          566.0,
+          131.0,
+          50.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.526718,
+        "person_overlap": 0.473282,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          563.0,
+          140.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.492857,
+        "person_overlap": 0.507143,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          562.0,
+          139.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.510791,
+        "person_overlap": 0.489209,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          563.0,
+          141.0,
+          54.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.503546,
+        "person_overlap": 0.496454,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 409.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          563.0,
+          139.0,
+          54.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.503597,
+        "person_overlap": 0.496403,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          564.0,
+          136.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.507353,
+        "person_overlap": 0.492647,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          564.0,
+          133.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.526316,
+        "person_overlap": 0.473684,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          566.0,
+          129.0,
+          50.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.550388,
+        "person_overlap": 0.449612,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1165.0,
+          567.0,
+          126.0,
+          49.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.587302,
+        "person_overlap": 0.412698,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1175.0,
+          565.0,
+          115.0,
+          46.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.591304,
+        "person_overlap": 0.408696,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1184.0,
+          565.0,
+          108.0,
+          46.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.666667,
+        "person_overlap": 0.333333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1196.0,
+          569.0,
+          97.0,
+          39.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.721649,
+        "person_overlap": 0.278351,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1189.0,
+          566.0,
+          104.0,
+          45.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.673077,
+        "person_overlap": 0.326923,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1187.0,
+          566.0,
+          109.0,
+          45.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.66055,
+        "person_overlap": 0.33945,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 410.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1165.0,
+          564.0,
+          127.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.464567,
+        "person_overlap": 0.535433,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1180.0,
+          567.0,
+          113.0,
+          50.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.486726,
+        "person_overlap": 0.513274,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1164.0,
+          562.0,
+          129.0,
+          57.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.410853,
+        "person_overlap": 0.589147,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          560.0,
+          132.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.386364,
+        "person_overlap": 0.613636,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1166.0,
+          562.0,
+          130.0,
+          56.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.438462,
+        "person_overlap": 0.561538,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1168.0,
+          561.0,
+          124.0,
+          56.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.403226,
+        "person_overlap": 0.596774,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1165.0,
+          559.0,
+          127.0,
+          60.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.401575,
+        "person_overlap": 0.598425,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1158.0,
+          555.0,
+          133.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.398496,
+        "person_overlap": 0.601504,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1155.0,
+          555.0,
+          138.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.391304,
+        "person_overlap": 0.608696,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1156.0,
+          555.0,
+          135.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.422222,
+        "person_overlap": 0.577778,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 411.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1150.0,
+          549.0,
+          140.0,
+          66.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.414286,
+        "person_overlap": 0.585714,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          549.0,
+          136.0,
+          65.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.404412,
+        "person_overlap": 0.595588,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          547.0,
+          136.0,
+          64.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.426471,
+        "person_overlap": 0.573529,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          545.0,
+          135.0,
+          66.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.407407,
+        "person_overlap": 0.592593,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          537.0,
+          136.0,
+          74.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.367647,
+        "person_overlap": 0.632353,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1144.0,
+          535.0,
+          145.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.37931,
+        "person_overlap": 0.62069,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1152.0,
+          532.0,
+          138.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.442029,
+        "person_overlap": 0.557971,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1152.0,
+          529.0,
+          138.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.413043,
+        "person_overlap": 0.586957,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1152.0,
+          528.0,
+          138.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.413043,
+        "person_overlap": 0.586957,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          527.0,
+          138.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.42029,
+        "person_overlap": 0.57971,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 412.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          526.0,
+          135.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.466667,
+        "person_overlap": 0.533333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          524.0,
+          130.0,
+          72.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.4,
+        "person_overlap": 0.6,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          522.0,
+          132.0,
+          75.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.424242,
+        "person_overlap": 0.575758,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          520.0,
+          132.0,
+          73.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.439394,
+        "person_overlap": 0.560606,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1159.0,
+          515.0,
+          130.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.4,
+        "person_overlap": 0.6,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1149.0,
+          512.0,
+          142.0,
+          73.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.394366,
+        "person_overlap": 0.605634,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1148.0,
+          512.0,
+          144.0,
+          73.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.347222,
+        "person_overlap": 0.652778,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1147.0,
+          508.0,
+          150.0,
+          75.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.406667,
+        "person_overlap": 0.593333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1144.0,
+          504.0,
+          150.0,
+          80.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.393333,
+        "person_overlap": 0.606667,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1144.0,
+          508.0,
+          138.0,
+          58.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.369565,
+        "person_overlap": 0.630435,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 413.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1139.0,
+          484.0,
+          112.0,
+          199.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.517857,
+        "person_overlap": 0.482143,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 414.278,
+        "zone": "source"
+      }
+    ],
+    "8": [
+      {
+        "box_xywh": [
+          1122.0,
+          499.0,
+          79.0,
+          126.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.746835,
+        "person_overlap": 0.253165,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1128.0,
+          552.0,
+          99.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.393939,
+        "person_overlap": 0.606061,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1125.0,
+          568.0,
+          123.0,
+          40.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.536585,
+        "person_overlap": 0.463415,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1135.0,
+          567.0,
+          138.0,
+          41.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.688406,
+        "person_overlap": 0.311594,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1131.0,
+          573.0,
+          143.0,
+          37.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.643357,
+        "person_overlap": 0.356643,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1133.0,
+          570.0,
+          143.0,
+          44.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.41958,
+        "person_overlap": 0.58042,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1137.0,
+          568.0,
+          145.0,
+          54.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.441379,
+        "person_overlap": 0.558621,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1139.0,
+          566.0,
+          145.0,
+          56.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.386207,
+        "person_overlap": 0.613793,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1143.0,
+          566.0,
+          145.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.37931,
+        "person_overlap": 0.62069,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          565.0,
+          139.0,
+          49.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.460432,
+        "person_overlap": 0.539568,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          565.0,
+          127.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.425197,
+        "person_overlap": 0.574803,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          564.0,
+          132.0,
+          51.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.492424,
+        "person_overlap": 0.507576,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          564.0,
+          127.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.433071,
+        "person_overlap": 0.566929,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          565.0,
+          129.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.410853,
+        "person_overlap": 0.589147,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          564.0,
+          132.0,
+          49.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.462121,
+        "person_overlap": 0.537879,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          565.0,
+          129.0,
+          49.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.44186,
+        "person_overlap": 0.55814,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1166.0,
+          565.0,
+          127.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.472441,
+        "person_overlap": 0.527559,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1167.0,
+          565.0,
+          124.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.491935,
+        "person_overlap": 0.508065,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1169.0,
+          567.0,
+          122.0,
+          49.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.516393,
+        "person_overlap": 0.483607,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 416.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1167.0,
+          567.0,
+          128.0,
+          44.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.539062,
+        "person_overlap": 0.460938,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1167.0,
+          566.0,
+          123.0,
+          50.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.487805,
+        "person_overlap": 0.512195,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1168.0,
+          566.0,
+          122.0,
+          50.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.5,
+        "person_overlap": 0.5,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1182.0,
+          568.0,
+          113.0,
+          46.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.610619,
+        "person_overlap": 0.389381,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1182.0,
+          568.0,
+          115.0,
+          46.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.608696,
+        "person_overlap": 0.391304,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1181.0,
+          569.0,
+          112.0,
+          45.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.598214,
+        "person_overlap": 0.401786,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1171.0,
+          566.0,
+          120.0,
+          52.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.466667,
+        "person_overlap": 0.533333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1171.0,
+          567.0,
+          121.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.471074,
+        "person_overlap": 0.528926,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1185.0,
+          567.0,
+          111.0,
+          49.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.54955,
+        "person_overlap": 0.45045,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1180.0,
+          565.0,
+          111.0,
+          53.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.459459,
+        "person_overlap": 0.540541,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 417.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1168.0,
+          565.0,
+          123.0,
+          55.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.455285,
+        "person_overlap": 0.544715,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          560.0,
+          133.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.428571,
+        "person_overlap": 0.571429,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          559.0,
+          130.0,
+          59.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.430769,
+        "person_overlap": 0.569231,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          556.0,
+          131.0,
+          60.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.442748,
+        "person_overlap": 0.557252,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1158.0,
+          554.0,
+          134.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.41791,
+        "person_overlap": 0.58209,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          554.0,
+          139.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.460432,
+        "person_overlap": 0.539568,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1157.0,
+          552.0,
+          136.0,
+          61.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.419118,
+        "person_overlap": 0.580882,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1155.0,
+          544.0,
+          140.0,
+          69.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.428571,
+        "person_overlap": 0.571429,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1151.0,
+          540.0,
+          142.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.415493,
+        "person_overlap": 0.584507,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          539.0,
+          143.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.475524,
+        "person_overlap": 0.524476,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 418.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1153.0,
+          538.0,
+          143.0,
+          67.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.517483,
+        "person_overlap": 0.482517,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1158.0,
+          538.0,
+          134.0,
+          63.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.5,
+        "person_overlap": 0.5,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          539.0,
+          132.0,
+          63.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.515152,
+        "person_overlap": 0.484848,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1158.0,
+          537.0,
+          135.0,
+          63.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.518519,
+        "person_overlap": 0.481481,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          530.0,
+          137.0,
+          69.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.452555,
+        "person_overlap": 0.547445,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          532.0,
+          130.0,
+          66.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.461538,
+        "person_overlap": 0.538462,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1159.0,
+          528.0,
+          136.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.514706,
+        "person_overlap": 0.485294,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.678,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1159.0,
+          526.0,
+          131.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.40458,
+        "person_overlap": 0.59542,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.778,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          524.0,
+          129.0,
+          69.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.465116,
+        "person_overlap": 0.534884,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          522.0,
+          128.0,
+          68.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.476562,
+        "person_overlap": 0.523438,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 419.978,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1162.0,
+          520.0,
+          127.0,
+          67.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.401575,
+        "person_overlap": 0.598425,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.078,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          520.0,
+          125.0,
+          68.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.424,
+        "person_overlap": 0.576,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.178,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1160.0,
+          516.0,
+          127.0,
+          70.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.409449,
+        "person_overlap": 0.590551,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1163.0,
+          517.0,
+          134.0,
+          71.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.462687,
+        "person_overlap": 0.537313,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.378,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          520.0,
+          123.0,
+          60.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.487805,
+        "person_overlap": 0.512195,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.478,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1161.0,
+          523.0,
+          120.0,
+          62.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.291667,
+        "person_overlap": 0.708333,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.578,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1154.0,
+          474.0,
+          125.0,
+          62.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.232,
+        "person_overlap": 0.768,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.878,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1182.0,
+          445.0,
+          91.0,
+          88.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.274725,
+        "person_overlap": 0.725275,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 420.978,
+        "zone": "source"
+      }
+    ],
+    "9": [
+      {
+        "box_xywh": [
+          1126.0,
+          531.0,
+          119.0,
+          77.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.478992,
+        "person_overlap": 0.521008,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.278,
+        "zone": "source"
+      },
+      {
+        "box_xywh": [
+          1125.0,
+          561.0,
+          147.0,
+          43.0
+        ],
+        "confidence": 1.0,
+        "outside_person_ratio": 0.612245,
+        "person_overlap": 0.387755,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 415.378,
+        "zone": "source"
+      }
+    ]
+  },
+  "video_fps": 29.99918028627526,
+  "video_path": "data/videos/from-pc/factory2.MOV"
+}
