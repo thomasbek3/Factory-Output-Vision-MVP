@@ -159,6 +159,12 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Synthetic approved-chain counts need to survive serialization.** The event ledger must allow `source_token_id = null`, `reason = approved_delivery_chain`, and `count_authority = runtime_inferred_only` so downstream audit tools see the real provenance.
 4. **Schema-backed health snapshots must evolve with the status contract.** Once status gained `runtime_total`, `proof_backed_total`, and `runtime_inferred_only`, the `health_samples` table needed the same columns plus an explicit migration path for older DBs.
 
+## 2026-04-29: Factory2 Final-Two Convergence Lessons
+
+1. **The missing unit was the chain neighborhood, not another proof window.** For the final two unresolved events, the useful evidence is the whole runtime lineage neighborhood: source anchor, nearby source-only context, prior counted delivery, divergent output-only fragment, and trailing output context.
+2. **Runtime-only events can hide extra source context outside the old proof receipts.** The divergent chain review package surfaced previously hidden source-only tracks (`104/105/106` and `143/144/145/147/148/149/150`) that were invisible in the simpler prior-accepted-vs-stub packet view.
+3. **Total-count agreement is not enough.** Even when runtime hits the human total of `23`, the final two still need per-event review because they could be either true missed proof cases or lucky runtime duplicates.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).

@@ -2776,3 +2776,61 @@ Exact next recommended step:
 1. Decide whether the shipped Factory2 product should present both totals to operators as-is, or whether only support/troubleshooting surfaces should expose the split.
 2. If product behavior is acceptable at `runtime 23 / proof 21`, add a small explanatory UI copy block so operators understand what `Runtime-Inferred` means.
 3. If not acceptable, open the next PRD specifically for converting the final two runtime-inferred-only deliveries into fresh proof-backed receipts.
+
+## 2026-04-30 00:21 - Final-Two Divergent Chain Review Package
+
+What was built:
+- Added a new option-2 recovery tool:
+  - `scripts/build_factory2_divergent_chain_review.py`
+  - `tests/test_build_factory2_divergent_chain_review.py`
+- Added the next-phase PRD:
+  - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
+- Generated a real review/training package:
+  - `data/reports/factory2_divergent_chain_review.v1.json`
+  - `data/datasets/factory2_divergent_chain_review_v1/`
+
+What the package does:
+- reads the runtime lineage audit + synthetic lineage report + divergence report
+- reconstructs the full chain neighborhood around each unresolved runtime-only event
+- extracts representative full-frame and crop images
+- writes a `review_labels.csv` with placeholders for:
+  - `crop_label`
+  - `relation_label`
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_build_factory2_divergent_chain_review.py -q`
+- `.venv/bin/python scripts/build_factory2_divergent_chain_review.py --force`
+
+Results:
+- new focused test suite: `2 passed`
+- package generated successfully with:
+  - `event_count: 2`
+  - `item_count: 37`
+
+Important new findings:
+- `305.708s` is not just “prior accepted carry + later stub” anymore in the new package. Its full window now shows:
+  - source-only tracks `104`, `105`, `106`
+  - prior counted source-to-output track `107`
+  - divergent output-only runtime track `108`
+  - trailing output-only track `109`
+- `425.012s` now shows a much richer source context than the old packet view:
+  - source-only tracks `143`, `144`, `145`, `147`, `148`, `149`, `150`
+  - earlier runtime output-only context `146`
+  - prior counted source-to-output track `151`
+  - divergent output-only runtime track `152`
+
+Why this matters:
+- The old proof rescue loop only proved the previous packet shape was insufficient.
+- The new package proves the final-two problem is a chain-neighborhood review/training problem, not just a one-window threshold problem.
+- This is the correct starting artifact for targeted final-two labeling and training.
+
+Next blocker:
+- The blocker is now externalized to per-item review truth, not missing extraction/plumbing.
+- We still do not know whether the final two are:
+  - distinct real deliveries whose source evidence needs better recovery, or
+  - runtime duplicates / static residents that should be removed
+
+Exact next recommended step:
+1. Label `data/datasets/factory2_divergent_chain_review_v1/review_labels.csv`.
+2. Use those labels to build the first final-two rescue dataset.
+3. Only then train or patch proof/runtime logic for the final two.
