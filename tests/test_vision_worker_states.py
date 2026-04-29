@@ -192,7 +192,16 @@ class VisionWorkerStateTests(unittest.TestCase):
 
         fake_counter = Mock()
         fake_counter.process_frame.return_value = RuntimeFrameResult(
-            events=[CountEvent(track_id=1, count=1, reason="stable_in_output", bbox=(65.0, 20.0, 20.0, 20.0))],
+            events=[
+                CountEvent(
+                    track_id=1,
+                    count=1,
+                    reason="approved_delivery_chain",
+                    bbox=(65.0, 20.0, 20.0, 20.0),
+                    provenance_status="synthetic_approved_chain_token",
+                    count_authority="runtime_inferred_only",
+                )
+            ],
             gate_decisions={
                 1: GateDecision(
                     track_id=1,
@@ -220,6 +229,7 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(fake_counter.process_frame.call_args.kwargs["person_boxes"], [(0.0, 0.0, 100.0, 100.0)])
         self.assertEqual(fake_counter.process_frame.call_args.kwargs["detections"], [{"box": (65, 20, 20, 20), "confidence": 1.0}])
         self.assertEqual(artifact["person_boxes"], [{"x": 0, "y": 0, "w": 100, "h": 100}])
+        self.assertEqual(artifact["event_count_authorities"], ["runtime_inferred_only"])
         self.assertEqual(artifact["tracks"][0]["perception_gate"]["reason"], "moving_panel_candidate")
 
     def test_reset_counts_resets_runtime_event_counter(self) -> None:
@@ -238,7 +248,11 @@ class VisionWorkerStateTests(unittest.TestCase):
 
         fake_counter = Mock()
         self.worker._runtime_event_counter = fake_counter
+        self.worker._proof_backed_total = 4
+        self.worker._runtime_inferred_only_total = 2
 
         self.worker.reset_counts()
 
         fake_counter.reset.assert_called_once_with()
+        self.assertEqual(self.worker.get_status()["proof_backed_total"], 0)
+        self.assertEqual(self.worker.get_status()["runtime_inferred_only"], 0)

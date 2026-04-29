@@ -16,7 +16,13 @@ class ApiSmokeTests(unittest.TestCase):
             self.assertIn("calibration_progress_pct", status_payload)
             self.assertIn("calibration_elapsed_sec", status_payload)
             self.assertIn("calibration_target_duration_sec", status_payload)
+            self.assertIn("runtime_total", status_payload)
+            self.assertIn("proof_backed_total", status_payload)
+            self.assertIn("runtime_inferred_only", status_payload)
             self.assertEqual(status_payload["count_source"], "vision")
+            self.assertEqual(status_payload["runtime_total"], 0)
+            self.assertEqual(status_payload["proof_backed_total"], 0)
+            self.assertEqual(status_payload["runtime_inferred_only"], 0)
 
             config = client.get("/api/config")
             self.assertEqual(config.status_code, 200)
@@ -66,11 +72,17 @@ class ApiSmokeTests(unittest.TestCase):
             payload = response.json()
             self.assertEqual(payload["counts_this_minute"], 5)
             self.assertEqual(payload["counts_this_hour"], 5)
+            self.assertEqual(payload["runtime_total"], 5)
+            self.assertEqual(payload["proof_backed_total"], 0)
+            self.assertEqual(payload["runtime_inferred_only"], 0)
 
             response = client.post("/api/control/adjust_count", json={"delta": -2})
             self.assertEqual(response.status_code, 200)
             payload = response.json()
             self.assertEqual(payload["counts_this_hour"], 3)
+            self.assertEqual(payload["runtime_total"], 3)
+            self.assertEqual(payload["proof_backed_total"], 0)
+            self.assertEqual(payload["runtime_inferred_only"], 0)
 
     def test_configured_without_line_in_demo_mode(self) -> None:
         with app_client(demo=True) as (client, _temp_dir):

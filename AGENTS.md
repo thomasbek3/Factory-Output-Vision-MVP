@@ -214,6 +214,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - The corrected source-history-driven rescue searches for `305.708s` and `425.012s` are now exhausted work. Across the focused `5/8/10fps` lineage windows, both events still collapse into `shared_source_lineage_no_distinct_proof_receipt`.
 - Synthetic `approved_delivery_chain` events are operational/runtime counts, not source-token-backed proof authority. Do not mint fake `source_token_id` or `source_bbox` values for them; serialize them as `count_authority = runtime_inferred_only`.
 - The current count-authority ledger is `data/reports/factory2_count_authority_ledger.v1.json`: runtime total `23`, proof total `21`, inherited live source token `11`, synthetic with overlapping proof `10`, synthetic without distinct proof `2`.
+- Product/API surfaces must expose the count-authority split explicitly. For Factory2, do not collapse everything into one opaque total when runtime and proof diverge; surface `runtime_total`, `proof_backed_total`, and `runtime_inferred_only`.
 - Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
 - Demo-mode app verification has a trap: `app/services/frame_reader.py` uses `ffmpeg -stream_loop -1` for demo files. Do not treat a long-running demo `counts_this_hour` total as a one-pass truth count for `factory2.MOV` unless you control the loop boundary or use a no-loop harness.
 - Active PRDs for this phase:

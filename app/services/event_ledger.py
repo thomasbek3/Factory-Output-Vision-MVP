@@ -7,7 +7,8 @@ from typing import Literal
 
 from app.services.calibration import Box
 
-CountReason = Literal["stable_in_output", "disappeared_in_output"]
+CountAuthority = Literal["source_token_authorized", "runtime_inferred_only"]
+CountReason = Literal["stable_in_output", "disappeared_in_output", "approved_delivery_chain"]
 UncertainReason = Literal[
     "token_expired_before_output",
     "missing_gate_crossing",
@@ -49,11 +50,12 @@ class CountEventRecord:
     event_id: str
     frame_index: int
     track_id: int
-    source_token_id: str
+    source_token_id: str | None
     resident_id: str
     reason: CountReason
     bbox: Box
     state_path: list[str]
+    count_authority: CountAuthority = "source_token_authorized"
     evidence_score: float = 1.0
 
 

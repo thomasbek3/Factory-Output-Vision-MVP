@@ -98,6 +98,9 @@ class StatusResponse(BaseModel):
     rolling_rate_per_min: float = 0.0
     counts_this_minute: int = 0
     counts_this_hour: int = 0
+    runtime_total: int = 0
+    proof_backed_total: int = 0
+    runtime_inferred_only: int = 0
     last_frame_age_sec: float | None = None
     reconnect_attempts_total: int = 0
     operator_absent: bool = False

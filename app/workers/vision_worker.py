@@ -107,6 +107,8 @@ class VisionWorker:
         self.last_error_message: str | None = None
         self._latest_debug_artifact: dict[str, Any] | None = None
         self.person_ignore_enabled = is_person_ignore_enabled() and self._counting_mode != "event_based"
+        self._proof_backed_total = 0
+        self._runtime_inferred_only_total = 0
 
         self._current_minute_count = 0
         self._current_minute_key = self._minute_key_now()
@@ -164,6 +166,9 @@ class VisionWorker:
                 "rolling_rate_per_min": round(self.rolling_rate_per_min, 2),
                 "counts_this_minute": self.counter_state.counts_this_minute,
                 "counts_this_hour": self.counter_state.counts_this_hour,
+                "runtime_total": self.counter_state.counts_this_hour,
+                "proof_backed_total": self._proof_backed_total,
+                "runtime_inferred_only": self._runtime_inferred_only_total,
                 "last_frame_age_sec": None if self.last_frame_age_sec is None else round(self.last_frame_age_sec, 2),
                 "reconnect_attempts_total": self.reconnect_attempts_total,
                 "operator_absent": self.operator_absent_active,
@@ -275,6 +280,8 @@ class VisionWorker:
     def reset_counts(self) -> dict[str, object]:
         with self._lock:
             self.counter_state = CounterState()
+            self._proof_backed_total = 0
+            self._runtime_inferred_only_total = 0
             self._current_minute_count = 0
             self._current_minute_key = self._minute_key_now()
             self._minute_history.clear()
@@ -320,7 +327,7 @@ class VisionWorker:
         with self._lock:
             if delta > 0:
                 for _ in range(delta):
-                    self._record_count_event()
+                    self._record_count_event(count_authority=None)
             elif delta < 0:
                 self.counter_state.counts_this_minute = max(0, self.counter_state.counts_this_minute + delta)
                 self.counter_state.counts_this_hour = max(0, self.counter_state.counts_this_hour + delta)
@@ -439,8 +446,13 @@ class VisionWorker:
 
                     if increment > 0:
                         with self._lock:
-                            for _ in range(increment):
-                                self._record_count_event()
+                            event_count_authorities = list(debug_artifact.get("event_count_authorities") or [])
+                            if event_count_authorities:
+                                for authority in event_count_authorities:
+                                    self._record_count_event(count_authority=str(authority))
+                            else:
+                                for _ in range(increment):
+                                    self._record_count_event(count_authority=None)
                     with self._lock:
                         self.counter_state.rollover_if_needed()
                         self._rollover_completed_minute_if_needed()
@@ -517,6 +529,7 @@ class VisionWorker:
             person_boxes=person_boxes,
         )
         counted_track_ids = {event.track_id for event in frame_result.events}
+        event_count_authorities = [event.count_authority for event in frame_result.events]
         return len(frame_result.events), {
             "roi_frame": frame.copy(),
             "mask_frame": cv2.cvtColor(debug_result.foreground_mask, cv2.COLOR_GRAY2BGR),
@@ -540,6 +553,7 @@ class VisionWorker:
                 for track in frame_result.tracks
             ],
             "person_boxes": [self._person_box_payload(item) for item in person_boxes],
+            "event_count_authorities": event_count_authorities,
         }
 
     def _run_person_loop(self) -> None:
@@ -732,9 +746,13 @@ class VisionWorker:
             return has_camera  # ROI optional in event mode
         return has_camera and has_roi
 
-    def _record_count_event(self) -> None:
+    def _record_count_event(self, *, count_authority: str | None = "source_token_authorized") -> None:
         self.counter_state.increment()
         self._current_minute_count += 1
+        if count_authority == "source_token_authorized":
+            self._proof_backed_total += 1
+        elif count_authority == "runtime_inferred_only":
+            self._runtime_inferred_only_total += 1
         record_count_event(timestamp=datetime.now(), count_source="vision", increment=1)
 
     def _start_calibration_window(self) -> None:

@@ -45,6 +45,7 @@ def test_event_ledger_appends_count_and_uncertain_events(tmp_path: Path) -> None
             reason="stable_in_output",
             bbox=(65, 12, 20, 20),
             state_path=["NEW_TRACK", "SOURCE_CONFIRMED", "IN_OUTPUT_UNSETTLED", "COUNTED_OUTPUT_RESIDENT"],
+            count_authority="source_token_authorized",
             evidence_score=0.88,
         ),
         source_token=token,
@@ -67,6 +68,7 @@ def test_event_ledger_appends_count_and_uncertain_events(tmp_path: Path) -> None
 
     assert [event["type"] for event in events] == ["count", "uncertain"]
     assert events[0]["source_token_id"] == "token-1"
+    assert events[0]["count_authority"] == "source_token_authorized"
     assert events[0]["state_path"][-1] == "COUNTED_OUTPUT_RESIDENT"
     assert events[1]["reason"] == "token_expired_before_output"
     assert residents == [
@@ -79,6 +81,43 @@ def test_event_ledger_appends_count_and_uncertain_events(tmp_path: Path) -> None
             "source_token_id": "token-1",
             "matched_track_ids": [7],
             "active": True,
+        }
+    ]
+
+
+def test_event_ledger_records_runtime_inferred_only_count(tmp_path: Path) -> None:
+    ledger = EventLedger(tmp_path)
+
+    ledger.record_count(
+        CountEventRecord(
+            event_id="count-2",
+            frame_index=42,
+            track_id=15,
+            source_token_id=None,
+            resident_id="resident-2",
+            reason="approved_delivery_chain",
+            bbox=(80, 18, 25, 20),
+            state_path=["OBSERVING", "IN_OUTPUT_UNSETTLED", "COUNTED_OUTPUT_RESIDENT"],
+            count_authority="runtime_inferred_only",
+            evidence_score=0.52,
+        )
+    )
+
+    events = read_jsonl(tmp_path / "events.jsonl")
+
+    assert events == [
+        {
+            "type": "count",
+            "event_id": "count-2",
+            "frame_index": 42,
+            "track_id": 15,
+            "source_token_id": None,
+            "resident_id": "resident-2",
+            "reason": "approved_delivery_chain",
+            "bbox": [80, 18, 25, 20],
+            "state_path": ["OBSERVING", "IN_OUTPUT_UNSETTLED", "COUNTED_OUTPUT_RESIDENT"],
+            "count_authority": "runtime_inferred_only",
+            "evidence_score": 0.52,
         }
     ]
 

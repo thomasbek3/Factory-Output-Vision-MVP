@@ -2697,3 +2697,45 @@ Exact next step:
 2. Either:
   - design a brand-new receipt-construction method that can prove distinct fresh source lineage for those two events, or
   - accept the explicit divergence artifact and move the next product investment into new training/data/model work for split deliveries under worker overlap.
+
+## 2026-04-29 23:50 - Product-Surface Count Authority Split
+
+What was built:
+- Threaded count authority through the product-facing runtime path.
+- `app/services/event_ledger.py` now records `count_authority`, allows `source_token_id = null`, and accepts `approved_delivery_chain` count reasons for synthetic runtime-only events.
+- `app/api/schemas.py` and `app/workers/vision_worker.py` now expose:
+  - `runtime_total`
+  - `proof_backed_total`
+  - `runtime_inferred_only`
+- Worker bookkeeping now increments those buckets from runtime event authorities while leaving manual count adjustments out of both proof/runtime-authority subtotals.
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_event_ledger.py tests/test_api_smoke.py -q`
+- `.venv/bin/python -m pytest tests/test_vision_worker_states.py -q`
+- `.venv/bin/python -m pytest tests/test_event_ledger.py tests/test_api_smoke.py tests/test_vision_worker_states.py tests/test_count_state_machine.py tests/test_runtime_event_counter.py tests/test_audit_factory2_runtime_events.py -q`
+
+Results:
+- `9 passed`
+- `8 passed`
+- `49 passed, 15 warnings`
+
+Current state:
+- Product surfaces can now report the honest split instead of one opaque total:
+  - runtime total
+  - proof-backed total
+  - runtime-inferred-only total
+- This does not change the underlying Factory2 truth state:
+  - runtime/app path `23`
+  - proof `21`
+  - unresolved runtime-inferred-only events remain `305.708s` and `425.012s`
+
+Next blocker:
+- The remaining gap is no longer product serialization or status visibility.
+- The real blocker is still proving or explicitly accepting the final `runtime 23 / proof 21` divergence for those two synthetic approved-chain deliveries.
+
+Exact next recommended step:
+1. Thread `count_authority` through any remaining persisted event-history/API consumers that still assume every count is proof-backed.
+2. Add a small UI/status presentation layer that shows `runtime_total`, `proof_backed_total`, and `runtime_inferred_only` distinctly.
+3. Then choose between:
+  - keeping the explicit divergence as the honest shipped state, or
+  - starting a new receipt-construction/model-data effort aimed only at converting the last two runtime-inferred-only events into true proof-backed receipts.

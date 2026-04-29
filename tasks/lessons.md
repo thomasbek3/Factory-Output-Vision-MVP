@@ -152,6 +152,12 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Synthetic approved-chain events must not mint fake source evidence.** If a runtime count is `synthetic_approved_chain_token`, do not fabricate `source_token_id` or `source_bbox` from the output-side box. Mark it as `count_authority = runtime_inferred_only`.
 4. **Do not throw away useful runtime recall just because proof is lower.** Removing synthetic approved-chain count authority from the operational runtime total would likely throw away legitimate recall that already overlaps accepted proof in `10` cases. The safer product move is to separate operational/runtime counts from proof-backed counts.
 
+## 2026-04-29: Factory2 Product-Surface Count Split Lessons
+
+1. **The API cannot blur runtime and proof once authority diverges.** When runtime reaches `23` but proof stays at `21`, the app/backend status must expose separate numbers rather than implying one undifferentiated truth total.
+2. **Manual adjustments are neither proof-backed nor runtime-inferred lineage.** Positive operator corrections should still move `counts_this_hour`, but they must not silently inflate `proof_backed_total` or `runtime_inferred_only`.
+3. **Synthetic approved-chain counts need to survive serialization.** The event ledger must allow `source_token_id = null`, `reason = approved_delivery_chain`, and `count_authority = runtime_inferred_only` so downstream audit tools see the real provenance.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).
