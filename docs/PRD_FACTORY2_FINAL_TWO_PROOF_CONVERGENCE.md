@@ -203,11 +203,37 @@ Current rescue-dataset state:
 
 ### Milestone 4 — Targeted Model / Evidence Pass
 
+Status: **In progress**
+
 Use the rescue dataset to improve one of:
 
 - source-side detector recall in the final-two pattern
 - split-track lineage association
 - second-stage crop classifier for distinguishing true new delivery vs stack-edge resident
+
+Current result:
+
+- the first honest Milestone 4 slice is **chain-level adjudication**, not a single-crop relation classifier
+- a local single-crop baseline was not convincing enough to trust:
+  - tiny dataset
+  - missing class coverage in `val`
+  - weak top-1 behavior even after full draft labeling
+- Oracle’s recommendation was to adjudicate the final two as duplicate/runtime-chain problems first
+
+First bounded Milestone 4 deliverable:
+
+```text
+scripts/build_factory2_final_two_chain_adjudication.py
+data/reports/factory2_final_two_chain_adjudication.v1.json
+data/datasets/factory2_final_two_chain_adjudication_v1/
+tests/test_build_factory2_final_two_chain_adjudication.py
+```
+
+Expected current outcome from that adjudicator:
+
+- `305.708s` -> `duplicate_of_prior_runtime_event` (`303.508s`)
+- `425.012s` -> `duplicate_of_prior_runtime_event` (`422.612s`)
+- `proof_action = do_not_mint` for both
 
 ### Milestone 5 — Honest Proof Rerun
 
@@ -230,5 +256,6 @@ After targeted model/evidence changes:
 Do not stop at the rescue-dataset export. The next honest move is Milestone 4:
 
 1. decide whether the final-two rescue problem is learnable from single crops at all, or whether it needs pairwise/sequence lineage context
-2. build the minimal training/evaluation artifact that matches that answer
-3. feed the resulting evidence back into proof/runtime without reusing already-consumed source authority
+2. keep the chain-level adjudication artifact as the first authority layer for duplicate/static/source-authority suppression
+3. only build a learned model if it operates at the right unit of evidence, not a mislabeled crop-only shortcut
+4. feed the resulting evidence back into proof/runtime without reusing already-consumed source authority

@@ -1,6 +1,6 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-29 12:40:04 EDT
+Updated: 2026-04-29 12:49:27 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
 
@@ -2898,3 +2898,86 @@ Exact next recommended step:
 1. Resolve the architecture question for Milestone 4 before training the wrong model.
 2. Then build the smallest viable final-two classifier/evidence pass that matches that structure.
 3. Only feed the result back into proof/runtime if it does not reuse already-consumed source authority.
+
+## 2026-04-29 12:49 - Final-Two Chain Adjudication
+
+What was built:
+- Added the chain-level adjudicator Oracle recommended:
+  - `scripts/build_factory2_final_two_chain_adjudication.py`
+  - `tests/test_build_factory2_final_two_chain_adjudication.py`
+- Updated doctrine:
+  - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
+  - `AGENTS.md`
+  - `CLAUDE.md`
+  - `tasks/lessons.md`
+
+What changed:
+- Completed the local draft relation pass on `data/datasets/factory2_divergent_chain_review_v1/review_labels.csv`
+  - resolved the remaining `11` `unclear` items
+  - current local draft relation counts are now:
+    - `same_delivery_as_prior: 26`
+    - `distinct_new_delivery: 11`
+- Rebuilt the local rescue dataset:
+  - `data/reports/factory2_final_two_rescue_dataset.v1.json`
+  - `eligible_item_count: 41`
+  - `skipped_unclear_relation_count: 0`
+  - `ready_for_training: true`
+- Added a deterministic chain/source-authority adjudication report that works at the runtime-event level, not the crop level.
+
+Oracle result:
+- slug: `factory2-final-two-architectu`
+- core recommendation:
+  - do **not** train/promote a single-crop relation classifier for the final two
+  - use a chain-level delivery-instance adjudicator instead
+  - treat `305.708s` and `425.012s` as duplicate runtime events unless genuinely fresh source authority appears
+
+Important local verification:
+- Ran a quick diagnostic single-crop baseline anyway on the fully draft-labeled local rescue dataset:
+  - model: `YOLO11n-cls`
+  - test `top1 = 0.625`
+  - the `val` split still lacked one class entirely
+- Result: good enough to reject “crop classifier solves this tonight,” not good enough to trust for proof/runtime promotion.
+
+Real adjudication artifact created:
+- `data/reports/factory2_final_two_chain_adjudication.v1.json`
+- `data/datasets/factory2_final_two_chain_adjudication_v1/adjudication_rows.csv`
+- `data/datasets/factory2_final_two_chain_adjudication_v1/evidence_pairs.csv`
+
+Current adjudication result:
+- `305.708s` / track `108`:
+  - `adjudication = duplicate_of_prior_runtime_event`
+  - `duplicate_of_event_ts = 303.508`
+  - `proof_action = do_not_mint`
+- `425.012s` / track `152`:
+  - `adjudication = duplicate_of_prior_runtime_event`
+  - `duplicate_of_event_ts = 422.612`
+  - `proof_action = do_not_mint`
+- summary:
+  - `duplicate_of_prior_runtime_event: 2`
+  - `proof_mints_allowed: 0`
+  - `source_backed_new_candidates: 0`
+
+What this means:
+- The final two are not the right events to promote from `runtime_inferred_only` into proof.
+- Current local evidence says both are duplicate continuations of nearby prior counted deliveries.
+- So the path to `23/23` is no longer “rescue these two.” It is:
+  - suppress or mark these two as duplicates
+  - then search elsewhere for the real missing human-truth deliveries
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_build_factory2_final_two_chain_adjudication.py -q`
+- `.venv/bin/python -m pytest tests/test_build_factory2_final_two_chain_adjudication.py tests/test_export_factory2_static_resident_reference_crops.py tests/test_build_factory2_final_two_rescue_dataset.py tests/test_build_factory2_divergent_chain_review.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_factory2_synthetic_lineage_report.py tests/test_build_factory2_runtime_event_receipt_packets.py -q`
+- `.venv/bin/python -m py_compile scripts/build_factory2_final_two_chain_adjudication.py scripts/build_factory2_final_two_rescue_dataset.py scripts/export_factory2_static_resident_reference_crops.py`
+- `.venv/bin/python scripts/build_factory2_final_two_chain_adjudication.py --force`
+- local diagnostic baseline:
+  - trained `YOLO11n-cls` on `data/datasets/factory2_final_two_rescue_dataset_v1`
+
+Verification:
+- affected suite: `19 passed`
+- adjudication report generated successfully
+- live adjudication agrees with Oracle’s recommendation
+
+Exact next recommended step:
+1. Do not keep trying to raise proof from `21 -> 23` by promoting `305.708s` or `425.012s`.
+2. Treat those two as duplicate/runtime-chain findings unless new source authority appears.
+3. Pivot the next search outward: identify which other human-truth deliveries are missing once these two duplicates are removed from consideration.

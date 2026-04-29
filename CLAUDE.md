@@ -217,6 +217,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - Product/API surfaces must expose the count-authority split explicitly. For Factory2, do not collapse everything into one opaque total when runtime and proof diverge; surface `runtime_total`, `proof_backed_total`, and `runtime_inferred_only`.
 - The final-two option-2 path now has a divergent-chain review package plus a local rescue dataset. Use `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md` as the active spec for `305.708s` and `425.012s`.
 - Treat `same_delivery_as_prior` as a lineage/relation label, not automatically as a pure visual crop class. Before training or promoting anything, check whether the target is learnable from isolated crops or whether it needs pairwise/sequence context.
+- If a chain-level adjudication marks a divergent runtime event as `duplicate_of_prior_runtime_event` or `source_authority_blocked`, the proof action must remain `do_not_mint`. Do not override that with crop-only confidence.
 - Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
 - Demo-mode app verification has a trap: `app/services/frame_reader.py` uses `ffmpeg -stream_loop -1` for demo files. Do not treat a long-running demo `counts_this_hour` total as a one-pass truth count for `factory2.MOV` unless you control the loop boundary or use a no-loop harness.
 - Active PRDs for this phase:
