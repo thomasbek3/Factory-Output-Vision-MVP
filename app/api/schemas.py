@@ -142,6 +142,13 @@ class DiagnosticsResponse(BaseModel):
     source_kind: Literal["camera", "demo"]
     demo_playback_speed: float = 1.0
     demo_video_name: str | None = None
+    demo_count_mode: str = "live_reader_snapshot"
+    demo_loop_enabled: bool = True
+    demo_playback_finished: bool = False
+    demo_receipt_total: int = 0
+    demo_revealed_receipts: int = 0
+    demo_expected_final_total: int = 0
+    demo_count_report: str | None = None
     person_ignore_enabled: bool = False
     people_detected_count: int = 0
     counting_mode: str = "track_based"

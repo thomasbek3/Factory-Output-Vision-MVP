@@ -6,6 +6,7 @@ import threading
 import time
 from collections import deque
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import cv2
@@ -13,6 +14,7 @@ import cv2
 from app.core.settings import (
     get_calibration_minutes,
     get_count_min_track_frames,
+    get_demo_count_mode,
     get_counting_mode,
     get_drop_minutes,
     get_drop_threshold,
@@ -47,6 +49,7 @@ from app.db.event_repo import log_event
 from app.db.health_repo import insert_health_sample
 from app.services.calibration import Box, box_center
 from app.services.counting import CentroidTracker, CounterState, EventBasedCounter, YoloObjectDetector, apply_roi_mask, count_dead_tracks, count_new_tracks, mark_all_tracks_counted
+from app.services.deterministic_demo_runner import DeterministicDemoRunner
 from app.services.perception_gate import GateDecision
 from app.services.person_detector import PersonDetector, point_in_polygon
 from app.services.runtime_event_counter import RuntimeEventCounter, load_runtime_calibration
@@ -74,9 +77,11 @@ class VisionWorker:
         )
 
         self._counting_mode = get_counting_mode()
+        self._demo_count_mode = get_demo_count_mode()
         self._event_counter: EventBasedCounter | None = None  # kept for reference, no longer used
         self._event_tracker: CentroidTracker | None = None
         self._runtime_calibration_path = get_runtime_calibration_path() if self._counting_mode == "event_based" else None
+        self._deterministic_demo_runner: DeterministicDemoRunner | None = None
         self._runtime_event_counter: RuntimeEventCounter | None = None
         if self._counting_mode == "event_based":
             if self._runtime_calibration_path is not None:
@@ -86,6 +91,8 @@ class VisionWorker:
                     gate=gate,
                     tracker_match_distance=get_event_track_max_match_distance(),
                 )
+                if self._demo_count_mode == "deterministic_file_runner":
+                    self._deterministic_demo_runner = DeterministicDemoRunner()
             else:
                 self._event_tracker = CentroidTracker(
                     max_age_frames=get_event_track_max_age(),
@@ -212,11 +219,34 @@ class VisionWorker:
             return artifact
 
     def start_monitoring(self) -> dict[str, object]:
+        deterministic_demo_error: Exception | None = None
+        should_use_deterministic_demo = self._should_use_deterministic_demo_counting(source_is_demo=self.video_runtime.current_source_kind() == "demo")
+        if should_use_deterministic_demo:
+            try:
+                selection = self.video_runtime.current_source_selection()
+                if self._deterministic_demo_runner is None or self._runtime_calibration_path is None:
+                    raise RuntimeError("Deterministic demo runner is unavailable")
+                self._deterministic_demo_runner.prepare(
+                    video_path=Path(selection.source),
+                    calibration_path=Path(self._runtime_calibration_path),
+                    model_path=Path(get_yolo_model_path()),
+                )
+                self.video_runtime.restart()
+            except Exception as exc:  # noqa: BLE001
+                deterministic_demo_error = exc
+
         with self._lock:
             if not self._is_configured():
                 self._transition("NOT_CONFIGURED", "Missing camera/demo source or output area")
                 return self.get_status()
+            if deterministic_demo_error is not None:
+                self._record_runtime_error("DEMO_COUNT_PREP_ERROR", str(deterministic_demo_error))
+                self._transition("IDLE", "Unable to prepare deterministic demo count")
+                return self.get_status()
             self.monitoring_enabled = True
+            if should_use_deterministic_demo and self._deterministic_demo_runner is not None:
+                self._clear_count_state()
+                self._deterministic_demo_runner.arm(playback_speed=self.video_runtime.current_demo_playback_speed())
             # Warmup: mark existing tracks as counted so objects already in the
             # output zone don't get counted as new output.
             if self._runtime_event_counter is not None:
@@ -234,6 +264,8 @@ class VisionWorker:
             self.monitoring_enabled = False
             self.operator_absent_active = False
             self._operator_absent_emitted = False
+            if self._deterministic_demo_runner is not None:
+                self._deterministic_demo_runner.disarm()
             if self._is_configured():
                 self._transition("IDLE", "Monitoring stopped")
             else:
@@ -279,21 +311,7 @@ class VisionWorker:
 
     def reset_counts(self) -> dict[str, object]:
         with self._lock:
-            self.counter_state = CounterState()
-            self._proof_backed_total = 0
-            self._runtime_inferred_only_total = 0
-            self._current_minute_count = 0
-            self._current_minute_key = self._minute_key_now()
-            self._minute_history.clear()
-            self.rolling_rate_per_min = 0.0
-            if self._runtime_event_counter is not None:
-                self._runtime_event_counter.reset()
-            elif self._event_tracker is not None:
-                self._event_tracker = CentroidTracker(
-                    max_age_frames=get_event_track_max_age(),
-                    max_match_distance=get_event_track_max_match_distance(),
-                )
-            clear_count_history()
+            self._clear_count_state()
             self.last_event = {
                 "type": "COUNTS_RESET",
                 "message": "Counts reset",
@@ -368,11 +386,28 @@ class VisionWorker:
 
                 runtime_status = self.video_runtime.ensure_running()
                 snap = self.video_runtime.reader.snapshot()
+                reader_status = self.video_runtime.reader.status()
                 if snap.last_frame_time > 0:
                     with self._lock:
                         self.last_frame_age_sec = max(0.0, time.time() - snap.last_frame_time)
                         self._clear_error_if_matches("VIDEO_SOURCE_ERROR")
                         self._clear_error_if_matches("VIDEO_STALL")
+
+                deterministic_demo = self._should_use_deterministic_demo_counting(source_is_demo=runtime_status.source.is_demo)
+                if (
+                    runtime_status.source.is_demo
+                    and reader_status.get("demo_finished")
+                    and (
+                        not deterministic_demo
+                        or self._deterministic_demo_runner is None
+                        or self._deterministic_demo_runner.is_finished
+                    )
+                ):
+                    with self._lock:
+                        self._handle_demo_playback_complete()
+                        self._write_health_sample_if_due(source_kind="demo")
+                    self._sleep_remaining(started, delay)
+                    continue
 
                 frame = snap.frame
                 if self._is_video_stalled():
@@ -392,7 +427,22 @@ class VisionWorker:
                     should_process = self.monitoring_enabled or self.calibrating
 
                 if should_process:
-                    if self._counting_mode == "event_based":
+                    if deterministic_demo:
+                        increment, debug_artifact = self._run_deterministic_demo_counting(frame)
+                        if increment > 0:
+                            logger.info(
+                                "DEMO_RECEIPT_COUNT: +%d (total hour: %d)",
+                                increment,
+                                self.counter_state.counts_this_hour + increment,
+                            )
+                        with self._lock:
+                            self._latest_debug_artifact = {
+                                "mode": "runtime",
+                                "updated_at_ts": time.time(),
+                                "source_frame": frame.copy(),
+                                **debug_artifact,
+                            }
+                    elif self._counting_mode == "event_based":
                         increment, debug_artifact = self._run_event_based_counting(frame, roi)
                         if increment > 0:
                             logger.info("EVENT_COUNT: +%d (total hour: %d)", increment, self.counter_state.counts_this_hour + increment)
@@ -554,6 +604,44 @@ class VisionWorker:
             ],
             "person_boxes": [self._person_box_payload(item) for item in person_boxes],
             "event_count_authorities": event_count_authorities,
+        }
+
+    def _run_deterministic_demo_counting(self, frame) -> tuple[int, dict[str, Any]]:
+        if self._deterministic_demo_runner is None:
+            return 0, self._build_deterministic_demo_artifact(frame, [])
+        if not self._deterministic_demo_runner.active:
+            self._deterministic_demo_runner.activate()
+        revealed_events = self._deterministic_demo_runner.drain_due_events()
+        return len(revealed_events), self._build_deterministic_demo_artifact(frame, revealed_events)
+
+    def _build_deterministic_demo_artifact(self, frame, revealed_events: list[dict[str, Any]]) -> dict[str, Any]:
+        mask_frame = frame.copy()
+        mask_frame[:] = 0
+        tracks = []
+        for event in revealed_events:
+            bbox = event.get("bbox") or []
+            bbox_tuple = tuple(float(value) for value in bbox) if len(bbox) == 4 else None
+            tracks.append(
+                {
+                    "track_id": int(event.get("track_id") or 0),
+                    "bbox": bbox_tuple,
+                    "centroid": box_center(bbox_tuple) if bbox_tuple is not None else None,
+                    "counted": True,
+                    "confidence": 1.0,
+                    "perception_gate": event.get("gate_decision"),
+                }
+            )
+        return {
+            "roi_frame": frame.copy(),
+            "mask_frame": mask_frame,
+            "detections": [],
+            "tracks": tracks,
+            "person_boxes": [],
+            "event_count_authorities": [
+                str(event["count_authority"])
+                for event in revealed_events
+                if event.get("count_authority") is not None
+            ],
         }
 
     def _run_person_loop(self) -> None:
@@ -746,6 +834,15 @@ class VisionWorker:
             return has_camera  # ROI optional in event mode
         return has_camera and has_roi
 
+    def _should_use_deterministic_demo_counting(self, *, source_is_demo: bool) -> bool:
+        return bool(
+            source_is_demo
+            and self._counting_mode == "event_based"
+            and self._runtime_calibration_path is not None
+            and self._demo_count_mode == "deterministic_file_runner"
+            and self._deterministic_demo_runner is not None
+        )
+
     def _record_count_event(self, *, count_authority: str | None = "source_token_authorized") -> None:
         self.counter_state.increment()
         self._current_minute_count += 1
@@ -754,6 +851,25 @@ class VisionWorker:
         elif count_authority == "runtime_inferred_only":
             self._runtime_inferred_only_total += 1
         record_count_event(timestamp=datetime.now(), count_source="vision", increment=1)
+
+    def _clear_count_state(self) -> None:
+        self.counter_state = CounterState()
+        self._proof_backed_total = 0
+        self._runtime_inferred_only_total = 0
+        self._current_minute_count = 0
+        self._current_minute_key = self._minute_key_now()
+        self._minute_history.clear()
+        self.rolling_rate_per_min = 0.0
+        if self._runtime_event_counter is not None:
+            self._runtime_event_counter.reset()
+        elif self._event_tracker is not None:
+            self._event_tracker = CentroidTracker(
+                max_age_frames=get_event_track_max_age(),
+                max_match_distance=get_event_track_max_match_distance(),
+            )
+        if self._deterministic_demo_runner is not None:
+            self._deterministic_demo_runner.disarm()
+        clear_count_history()
 
     def _start_calibration_window(self) -> None:
         start_ts = time.time()
@@ -858,6 +974,16 @@ class VisionWorker:
         self._was_reconnecting = False
         self._reconnect_backoff_sec = max(0.1, get_reconnect_backoff_initial_sec())
 
+    def _handle_demo_playback_complete(self) -> None:
+        if not (self.monitoring_enabled or self.calibrating or self.counter_state.counts_this_hour > 0):
+            return
+        self.monitoring_enabled = False
+        self.calibrating = False
+        self.operator_absent_active = False
+        self._operator_absent_emitted = False
+        self.last_frame_age_sec = 0.0
+        self._transition("DEMO_COMPLETE", "Demo playback complete")
+
     def _write_health_sample_if_due(self, *, source_kind: str) -> None:
         now = time.time()
         if (now - self._last_health_sample_ts) < get_health_sample_interval_sec():
@@ -903,6 +1029,15 @@ class VisionWorker:
             "source_kind": self.video_runtime.current_source_kind(),
             "demo_playback_speed": round(self.video_runtime.current_demo_playback_speed(), 2),
             "demo_video_name": self.video_runtime.current_demo_video_name(),
+            "demo_count_mode": self._demo_count_mode,
+            "demo_loop_enabled": self.video_runtime.is_demo_loop_enabled(),
+            "demo_playback_finished": self.video_runtime.is_demo_finished(),
+            "demo_receipt_total": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.receipt_count,
+            "demo_revealed_receipts": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.revealed_count,
+            "demo_expected_final_total": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.expected_final_count,
+            "demo_count_report": None
+            if self._deterministic_demo_runner is None or self._deterministic_demo_runner.report_path is None
+            else str(self._deterministic_demo_runner.report_path),
             "person_ignore_enabled": self.person_ignore_enabled,
             "people_detected_count": len(self._latest_person_boxes),
             "counting_mode": self._counting_mode,

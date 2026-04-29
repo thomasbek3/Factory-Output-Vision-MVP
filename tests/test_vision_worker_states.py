@@ -18,6 +18,7 @@ from app.services.counting import DetectedObject, DetectionDebugResult, Track, c
 from app.services.perception_gate import GateDecision
 from app.services.runtime_event_counter import RuntimeFrameResult
 from app.services.video_runtime import VideoRuntime
+from app.services.video_source import SourceSelection
 from app.workers.vision_worker import VisionWorker
 from tests.helpers import reset_logging_for_tests
 
@@ -30,6 +31,7 @@ class VisionWorkerStateTests(unittest.TestCase):
             "FC_LOG_DIR": os.environ.get("FC_LOG_DIR"),
             "FC_DEMO_MODE": os.environ.get("FC_DEMO_MODE"),
             "FC_DEMO_VIDEO_PATH": os.environ.get("FC_DEMO_VIDEO_PATH"),
+            "FC_DEMO_COUNT_MODE": os.environ.get("FC_DEMO_COUNT_MODE"),
             "FC_PERSON_DETECT_ENABLED": os.environ.get("FC_PERSON_DETECT_ENABLED"),
             "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
@@ -256,3 +258,76 @@ class VisionWorkerStateTests(unittest.TestCase):
         fake_counter.reset.assert_called_once_with()
         self.assertEqual(self.worker.get_status()["proof_backed_total"], 0)
         self.assertEqual(self.worker.get_status()["runtime_inferred_only"], 0)
+
+    def test_demo_playback_completion_freezes_counts_without_reconnect(self) -> None:
+        self.worker.monitoring_enabled = True
+        self.worker.state = "RUNNING_GREEN"
+        self.worker.counter_state.counts_this_hour = 23
+        self.worker.counter_state.counts_this_minute = 1
+        self.worker._proof_backed_total = 21
+        self.worker._runtime_inferred_only_total = 2
+
+        self.worker._handle_demo_playback_complete()
+
+        status = self.worker.get_status()
+        self.assertEqual(status["state"], "DEMO_COMPLETE")
+        self.assertFalse(self.worker.monitoring_enabled)
+        self.assertFalse(self.worker.calibrating)
+        self.assertEqual(status["runtime_total"], 23)
+        self.assertEqual(status["proof_backed_total"], 21)
+        self.assertEqual(status["runtime_inferred_only"], 2)
+
+    def test_deterministic_demo_start_monitoring_restarts_preview_and_arms_runner(self) -> None:
+        self.worker.stop()
+        os.environ["FC_COUNTING_MODE"] = "event_based"
+        calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
+        calibration_path.write_text(
+            '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
+            encoding="utf-8",
+        )
+        os.environ["FC_RUNTIME_CALIBRATION_PATH"] = str(calibration_path)
+        os.environ["FC_DEMO_COUNT_MODE"] = "deterministic_file_runner"
+
+        with patch("app.workers.vision_worker.PersonDetector") as detector_cls:
+            detector_cls.return_value = Mock()
+            self.worker = VisionWorker(VideoRuntime())
+
+        fake_runner = Mock()
+        self.worker._deterministic_demo_runner = fake_runner
+        self.worker.video_runtime.current_source_kind = Mock(return_value="demo")  # type: ignore[method-assign]
+        self.worker.video_runtime.current_source_selection = Mock(  # type: ignore[method-assign]
+            return_value=SourceSelection(is_demo=True, source="/tmp/factory2.MOV", candidates=("/tmp/factory2.MOV",))
+        )
+        self.worker.video_runtime.current_demo_playback_speed = Mock(return_value=8.0)  # type: ignore[method-assign]
+        self.worker.video_runtime.restart = Mock()  # type: ignore[method-assign]
+        self.worker.counter_state.counts_this_hour = 9
+        self.worker._proof_backed_total = 7
+        self.worker._runtime_inferred_only_total = 2
+
+        status = self.worker.start_monitoring()
+
+        self.worker.video_runtime.restart.assert_called_once_with()
+        fake_runner.prepare.assert_called_once()
+        fake_runner.arm.assert_called_once_with(playback_speed=8.0)
+        self.assertEqual(status["state"], "IDLE")
+        self.assertTrue(self.worker.monitoring_enabled)
+        self.assertEqual(status["runtime_total"], 0)
+        self.assertEqual(status["proof_backed_total"], 0)
+        self.assertEqual(status["runtime_inferred_only"], 0)
+
+    def test_deterministic_demo_counting_reveals_due_receipts(self) -> None:
+        fake_runner = Mock()
+        fake_runner.armed = True
+        fake_runner.active = False
+        fake_runner.drain_due_events.return_value = [
+            {"track_id": 11, "count_authority": "source_token_authorized"},
+            {"track_id": 12, "count_authority": "runtime_inferred_only"},
+        ]
+        self.worker._deterministic_demo_runner = fake_runner
+
+        increment, artifact = self.worker._run_deterministic_demo_counting(np.zeros((32, 32, 3), dtype=np.uint8))
+
+        fake_runner.activate.assert_called_once()
+        fake_runner.drain_due_events.assert_called_once()
+        self.assertEqual(increment, 2)
+        self.assertEqual(artifact["event_count_authorities"], ["source_token_authorized", "runtime_inferred_only"])

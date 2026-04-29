@@ -34,6 +34,29 @@ def get_demo_playback_speed() -> float:
     return float(os.getenv("FC_DEMO_PLAYBACK_SPEED", "1.0"))
 
 
+def is_demo_loop_enabled() -> bool:
+    explicit = os.getenv("FC_DEMO_LOOP")
+    if explicit is not None:
+        return explicit == "1"
+    return not (get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None)
+
+
+def get_demo_count_mode() -> str:
+    explicit = os.getenv("FC_DEMO_COUNT_MODE", "").strip()
+    if explicit:
+        return explicit
+    if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
+        return "deterministic_file_runner"
+    return "live_reader_snapshot"
+
+
+def get_demo_count_cache_path() -> Path | None:
+    raw = os.getenv("FC_DEMO_COUNT_CACHE_PATH", "").strip()
+    if not raw:
+        return None
+    return Path(raw).expanduser().resolve()
+
+
 def get_log_dir() -> Path:
     raw = os.getenv("FC_LOG_DIR", "./data/logs")
     return Path(raw).expanduser().resolve()

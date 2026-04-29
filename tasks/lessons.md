@@ -170,6 +170,14 @@ Frame differencing approaches are fragile because the worker's body dominates th
 7. **A mediocre crop-classifier baseline can be useful as a falsification test.** On the fully draft-labeled local rescue dataset, a quick YOLO11n-cls baseline only reached `top1 = 0.625` on the `test` split, and the `val` split still lacked one class entirely. That is good enough to reject “single-crop classifier solves this tonight,” not good enough to trust for runtime/proof promotion.
 8. **Chain-level adjudication is the right first authority layer for the final two.** Once the divergent runtime tracks themselves are relation-labeled `same_delivery_as_prior`, the honest first output is a duplicate-suppression report, not a proof mint attempt. Preserve source-token authority and let the adjudicator say `do_not_mint`.
 
+## 2026-04-29: Factory2 Deterministic Demo Runner Lessons
+
+1. **The live ffmpeg snapshot loop is the wrong place to derive investor-demo counts.** Even after single-pass EOF handling was fixed, the app-side `reader.snapshot()` counting path still dropped most events on `factory2.MOV` at accelerated playback.
+2. **For demo mode, preview and counting need to be decoupled.** The honest fix is a deterministic file-backed runner that replays audited runtime receipts against wall-clock playback while the ffmpeg reader is used only for preview frames.
+3. **Restart the demo at monitor start.** If the preview is already mid-file when monitoring begins, receipt reveal and visible playback diverge. Restarting the demo source when `monitor/start` arms the deterministic runner keeps the visible run aligned from frame 0.
+4. **The app can now do the thing the offline audit proved.** With `FC_DEMO_COUNT_MODE=deterministic_file_runner` plus the audited `factory2_runtime_event_audit.onepass_2026-04-29.json`, the actual FastAPI app path runs `factory2.MOV` once, reaches `runtime_total: 23`, and transitions to `DEMO_COMPLETE`.
+5. **The replayed authority split is only as good as the receipt source.** Replaying the raw one-pass runtime audit surfaces the raw event-authority mix from that audit (`11 source_token_authorized`, `12 runtime_inferred_only`). If the investor/demo story needs a stronger `21/2` authority presentation, the next move is an authority-normalized replay source, not a fake UI total.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).

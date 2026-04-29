@@ -141,6 +141,7 @@ export type DiagnosticsResponse = {
   uptime_sec: number
   current_state: string
   count_source: CountSource
+  counting_mode: string
   last_frame_age_sec: number | null
   reconnect_attempts_total: number
   reader_alive: boolean
@@ -151,6 +152,13 @@ export type DiagnosticsResponse = {
   source_kind: 'camera' | 'demo'
   demo_playback_speed: number
   demo_video_name: string | null
+  demo_count_mode: string
+  demo_loop_enabled: boolean
+  demo_playback_finished: boolean
+  demo_receipt_total: number
+  demo_revealed_receipts: number
+  demo_expected_final_total: number
+  demo_count_report: string | null
   person_ignore_enabled: boolean
   people_detected_count: number
   latest_error_code: string | null

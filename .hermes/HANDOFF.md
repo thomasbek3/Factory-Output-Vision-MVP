@@ -2862,6 +2862,90 @@ Real local artifacts created:
 - `data/reports/factory2_final_two_rescue_dataset.v1.json`
 - `data/datasets/factory2_final_two_rescue_dataset_v1/`
 
+## 2026-04-29 15:55 - Factory2 Deterministic Demo Runner
+
+What was built:
+- Added a demo-only deterministic replay service:
+  - `app/services/deterministic_demo_runner.py`
+- Wired the real app runtime to use it when:
+  - `FC_COUNTING_MODE=event_based`
+  - `FC_RUNTIME_CALIBRATION_PATH` is set
+  - `FC_DEMO_COUNT_MODE=deterministic_file_runner`
+- The app now:
+  - restarts the demo video at `monitor/start`
+  - keeps ffmpeg preview frames for display only
+  - reveals audited runtime count receipts against playback wall-clock time
+  - transitions to `DEMO_COMPLETE` once preview EOF and receipt replay both finish
+- Added focused coverage:
+  - `tests/test_deterministic_demo_runner.py`
+  - new deterministic-demo cases in `tests/test_vision_worker_states.py`
+  - new API demo replay case in `tests/test_demo_mode_flow.py`
+- Extended diagnostics payloads/types with:
+  - `demo_count_mode`
+  - `demo_loop_enabled`
+  - `demo_playback_finished`
+  - `demo_receipt_total`
+  - `demo_revealed_receipts`
+  - `demo_expected_final_total`
+  - `demo_count_report`
+
+Why this exists:
+- The prior “single-pass demo” work fixed EOF/looping, but the live app still counted from the ffmpeg snapshot loop and badly undercounted Factory2 at accelerated playback.
+- Offline one-pass audit already proved the runtime logic could reach `23`; the missing piece was making the app replay that same verified event stream honestly.
+
+Commands run:
+- Focused backend/demo verification:
+  - `.venv/bin/python -m pytest tests/test_deterministic_demo_runner.py tests/test_settings_runtime.py tests/test_frame_reader.py tests/test_vision_worker_states.py tests/test_api_smoke.py tests/test_demo_mode_flow.py tests/test_troubleshooting_contract.py -q`
+- Broader affected runtime/API suite:
+  - `.venv/bin/python -m pytest tests/test_deterministic_demo_runner.py tests/test_settings_runtime.py tests/test_frame_reader.py tests/test_event_ledger.py tests/test_api_smoke.py tests/test_vision_worker_states.py tests/test_count_state_machine.py tests/test_runtime_event_counter.py tests/test_audit_factory2_runtime_events.py tests/test_demo_mode_flow.py tests/test_troubleshooting_contract.py -q`
+- Compile/build:
+  - `.venv/bin/python -m py_compile app/services/deterministic_demo_runner.py app/workers/vision_worker.py app/api/schemas.py`
+  - `cd frontend && npm run build`
+- Real app verification on the actual Factory2 file:
+  - launched uvicorn with:
+    - `FC_DEMO_MODE=1`
+    - `FC_DEMO_VIDEO_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV`
+    - `FC_DEMO_PLAYBACK_SPEED=8`
+    - `FC_DEMO_LOOP=0`
+    - `FC_COUNTING_MODE=event_based`
+    - `FC_RUNTIME_CALIBRATION_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json`
+    - `FC_DEMO_COUNT_MODE=deterministic_file_runner`
+    - `FC_DEMO_COUNT_CACHE_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_audit.onepass_2026-04-29.json`
+    - `FC_YOLO_MODEL_PATH=models/panel_in_transit.pt`
+  - `POST /api/control/monitor/start`
+  - polled `GET /api/status` and `GET /api/diagnostics/sysinfo`
+
+Verification:
+- Focused suite: `27 passed`
+- Broader affected suite: `62 passed`
+- `py_compile` passed
+- frontend build passed
+- Real app result on `factory2.MOV`:
+  - `runtime_total: 23`
+  - final state: `DEMO_COMPLETE`
+  - diagnostics:
+    - `demo_count_mode: deterministic_file_runner`
+    - `demo_receipt_total: 23`
+    - `demo_revealed_receipts: 23`
+    - `demo_expected_final_total: 23`
+    - `demo_playback_finished: true`
+- Real timing from the live app logs:
+  - `monitor/start` restarted the demo at `15:44:18`
+  - the 23rd replayed count landed at `15:45:12`
+  - that is about `54s` wall-clock for the full 8x one-pass demo
+
+Important caveat:
+- The deterministic replay currently mirrors the authority labels in the source audit report.
+- With `factory2_runtime_event_audit.onepass_2026-04-29.json`, the live app totals split as:
+  - `proof_backed_total: 11`
+  - `runtime_inferred_only: 12`
+- That is good enough for the investor-demo bar of “live app visibly counts to 23,” but it is not yet the cleaner `21 / 2` count-authority story from the later lineage/doctrine work.
+
+Exact next recommended step:
+1. If the goal is the investor demo only, use the deterministic demo runner path above; it now works end to end on the real app/runtime path.
+2. If the goal is a cleaner authority presentation in the same UI, build an authority-normalized replay source so the demo surfaces the stronger `proof_backed/runtime_inferred_only` split instead of mirroring the raw one-pass audit file.
+3. Do **not** revert to live ffmpeg snapshot counting for Factory2 demo validation; that was the undercounting path.
+
 Current local review/dataset state:
 - `data/datasets/factory2_divergent_chain_review_v1/review_labels.csv` now has a conservative draft pass
 - current draft relation labels:

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from app.core.settings import get_demo_playback_speed, is_demo_mode
+from app.core.settings import get_demo_playback_speed, is_demo_loop_enabled, is_demo_mode
 from app.services.demo_video_library import get_active_demo_video, set_active_demo_video
 from app.services.camera_probe import ffprobe_stream
 from app.services.frame_reader import FFmpegFrameReader
@@ -26,6 +26,7 @@ class VideoRuntime:
         self.reader = FFmpegFrameReader()
         self._active_source: str | None = None
         self._demo_playback_speed = max(0.25, min(get_demo_playback_speed(), 8.0))
+        self._demo_loop_enabled = is_demo_loop_enabled()
         self._demo_source_override = str(get_active_demo_video()) if get_active_demo_video() is not None else None
 
     def current_source_selection(self) -> SourceSelection:
@@ -65,6 +66,7 @@ class VideoRuntime:
                 width=width,
                 height=height,
                 demo_playback_speed=self._demo_playback_speed if resolved.is_demo else 1.0,
+                demo_loop_enabled=self._demo_loop_enabled if resolved.is_demo else True,
             )
             self._active_source = resolved_source
             return RuntimeStatus(source=resolved, width=width, height=height)
@@ -89,6 +91,12 @@ class VideoRuntime:
 
     def current_demo_playback_speed(self) -> float:
         return self._demo_playback_speed
+
+    def is_demo_finished(self) -> bool:
+        return bool(self.reader.status().get("demo_finished"))
+
+    def is_demo_loop_enabled(self) -> bool:
+        return self._demo_loop_enabled
 
     def set_demo_playback_speed(self, speed: float) -> RuntimeStatus:
         if self.current_source_kind() != "demo":

@@ -34,14 +34,29 @@ class FFmpegFrameReader:
         self._width = 0
         self._height = 0
         self._demo_playback_speed = 1.0
+        self._demo_finished = False
+        self._demo_loop_enabled = True
 
-    def start(self, selection: SourceSelection, width: int, height: int, demo_playback_speed: float = 1.0) -> None:
+    def start(
+        self,
+        selection: SourceSelection,
+        width: int,
+        height: int,
+        demo_playback_speed: float = 1.0,
+        demo_loop_enabled: bool = True,
+    ) -> None:
         with self._lock:
             if (
                 self._source == selection.source
                 and self._thread
                 and self._thread.is_alive()
-                and (not selection.is_demo or abs(self._demo_playback_speed - demo_playback_speed) < 1e-6)
+                and (
+                    not selection.is_demo
+                    or (
+                        abs(self._demo_playback_speed - demo_playback_speed) < 1e-6
+                        and self._demo_loop_enabled == bool(demo_loop_enabled)
+                    )
+                )
             ):
                 return
         self.stop()
@@ -49,6 +64,8 @@ class FFmpegFrameReader:
         self._width = max(int(width), 1)
         self._height = max(int(height), 1)
         self._demo_playback_speed = max(0.25, min(float(demo_playback_speed), 8.0))
+        self._demo_loop_enabled = bool(demo_loop_enabled)
+        self._demo_finished = False
         self._stop_event.clear()
         self._thread = threading.Thread(
             target=self._read_loop,
@@ -87,12 +104,16 @@ class FFmpegFrameReader:
                 "last_frame_time": self._last_frame_time,
                 "last_error": self._last_error,
                 "demo_playback_speed": self._demo_playback_speed,
+                "demo_finished": self._demo_finished,
+                "demo_loop_enabled": self._demo_loop_enabled,
             }
 
     def _build_cmd(self, selection: SourceSelection) -> list[str]:
         base = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         if selection.is_demo:
-            base += ["-stream_loop", "-1", "-readrate", f"{self._demo_playback_speed:g}", "-i", selection.source]
+            if self._demo_loop_enabled:
+                base += ["-stream_loop", "-1"]
+            base += ["-readrate", f"{self._demo_playback_speed:g}", "-i", selection.source]
         else:
             base += ["-rtsp_transport", "tcp", "-i", selection.source]
         reader_fps = max(1.0, get_reader_fps())
@@ -121,6 +142,11 @@ class FFmpegFrameReader:
                         break
                     raw = process.stdout.read(frame_bytes)
                     if len(raw) != frame_bytes:
+                        if self._is_demo_eof(selection, process, raw):
+                            with self._lock:
+                                self._demo_finished = True
+                                self._last_error = None
+                            break
                         self._set_last_error("ffmpeg stream returned incomplete frame")
                         break
                     arr = np.frombuffer(raw, dtype=np.uint8).reshape((self._height, self._width, 3))
@@ -132,12 +158,26 @@ class FFmpegFrameReader:
                     break
             finally:
                 stderr_text = self._cleanup_process(process)
-                if stderr_text:
+                if stderr_text and not self._demo_finished:
                     self._set_last_error(stderr_text[:500])
                     logger.warning("ffmpeg reader stderr: %s", stderr_text[:500])
                 if self._process is process:
                     self._process = None
+            if self._demo_finished:
+                while not self._stop_event.is_set():
+                    time.sleep(0.1)
+                break
             time.sleep(0.5)
+
+    def _is_demo_eof(self, selection: SourceSelection, process: subprocess.Popen[bytes], raw: bytes) -> bool:
+        if not selection.is_demo or self._demo_loop_enabled:
+            return False
+        if raw not in {b"", bytes()} and len(raw) > 0:
+            return False
+        if process.poll() is None:
+            return False
+        with self._lock:
+            return self._frame is not None and self._last_frame_time > 0
 
     def _set_last_error(self, message: str) -> None:
         with self._lock:
