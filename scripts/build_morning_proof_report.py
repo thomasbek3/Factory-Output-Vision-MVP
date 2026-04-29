@@ -69,6 +69,8 @@ def failure_link_for(row: dict[str, Any]) -> str:
         if int(evidence.get("output_frames") or 0) <= 0:
             return "missing_output_settle"
         return "incomplete_source_to_output_path"
+    if reason == "synthetic_runtime_fallback_token" or "synthetic_approved_chain_token" in flags:
+        return "incomplete_source_to_output_path"
     if reason in {"static_stack_edge", "output_only_no_source_token"}:
         return "static_stack_or_resident_output"
     if reason == "insufficient_panel_evidence" or "low_flow_coherence" in flags or "low_track_displacement" in flags:
@@ -172,6 +174,10 @@ def source_lineage_receipt_paths(*, receipt_path: str | None, row: dict[str, Any
 
 
 def source_token_key(*, track_id: int | None, receipt_path: str | None, row: dict[str, Any]) -> str | None:
+    evidence = row.get("evidence") or {}
+    runtime_source_token_id = evidence.get("runtime_source_token_id")
+    if runtime_source_token_id:
+        return f"runtime-source-token:{runtime_source_token_id}"
     diagnostic_id = diagnostic_id_from_receipt_path(receipt_path)
     lineage_track_ids = source_lineage_track_ids(track_id=track_id, row=row)
     if not diagnostic_id or not lineage_track_ids:

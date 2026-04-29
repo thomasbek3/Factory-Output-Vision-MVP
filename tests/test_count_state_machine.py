@@ -265,6 +265,76 @@ class CountStateMachineTests(unittest.TestCase):
         self.assertIsNotNone(second)
         self.assertEqual(counter.total_count, 2)
 
+    def test_approved_delivery_chain_event_carries_source_token_provenance(self) -> None:
+        counter = CountStateMachine(
+            CountConfig(
+                zones=CalibrationZones(
+                    source_polygons=[SOURCE],
+                    output_polygons=[OUTPUT],
+                    ignore_polygons=[],
+                ),
+                source_min_frames=2,
+                output_stable_frames=2,
+                source_overlap_threshold=0.25,
+                output_overlap_threshold=0.25,
+                stable_center_epsilon=3.0,
+                disappear_in_output_frames=1,
+                resident_match_center_distance=10.0,
+                resident_output_overlap_threshold=0.4,
+            )
+        )
+
+        counter.update([det(1, (5, 20, 20, 20))])
+        counter.update([det(1, (10, 20, 20, 20))])
+
+        event = counter.commit_approved_delivery_chain(
+            chain_id="proof-source-track:1",
+            source_track_id=1,
+            output_track_id=3,
+            output_bbox=(60, 20, 40, 20),
+        )
+
+        self.assertIsNotNone(event)
+        assert event is not None
+        self.assertEqual(event.reason, "approved_delivery_chain")
+        self.assertEqual(event.source_track_id, 1)
+        self.assertEqual(event.chain_id, "proof-source-track:1")
+        self.assertEqual(event.source_token_id, "source-token-1")
+        self.assertEqual(event.source_bbox, (10, 20, 20, 20))
+        self.assertEqual(event.provenance_status, "inherited_live_source_token")
+
+    def test_approved_delivery_chain_marks_synthetic_fallback_when_source_token_missing(self) -> None:
+        counter = CountStateMachine(
+            CountConfig(
+                zones=CalibrationZones(
+                    source_polygons=[SOURCE],
+                    output_polygons=[OUTPUT],
+                    ignore_polygons=[],
+                ),
+                source_min_frames=2,
+                output_stable_frames=2,
+                source_overlap_threshold=0.25,
+                output_overlap_threshold=0.25,
+                stable_center_epsilon=3.0,
+                disappear_in_output_frames=1,
+                resident_match_center_distance=10.0,
+                resident_output_overlap_threshold=0.4,
+            )
+        )
+
+        event = counter.commit_approved_delivery_chain(
+            chain_id="proof-source-track:77",
+            source_track_id=77,
+            output_track_id=88,
+            output_bbox=(60, 20, 40, 20),
+        )
+
+        self.assertIsNotNone(event)
+        assert event is not None
+        self.assertEqual(event.source_track_id, 77)
+        self.assertEqual(event.provenance_status, "synthetic_approved_chain_token")
+        self.assertEqual(event.source_bbox, (60, 20, 40, 20))
+
 
 if __name__ == "__main__":
     unittest.main()

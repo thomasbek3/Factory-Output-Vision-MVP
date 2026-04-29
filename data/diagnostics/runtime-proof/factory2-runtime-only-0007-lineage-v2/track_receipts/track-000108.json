@@ -1,0 +1,155 @@
+{
+  "diagnosis": {
+    "decision": "reject",
+    "evidence": {
+      "detections": 1,
+      "first_timestamp": 305.708,
+      "first_zone": "output",
+      "flow_coherence": 0.0,
+      "last_timestamp": 305.708,
+      "max_displacement": 0.0,
+      "max_internal_motion": 0.0,
+      "mean_internal_motion": 0.0,
+      "observations": [
+        {
+          "box_xywh": [
+            659.0,
+            580.0,
+            247.0,
+            42.0
+          ],
+          "confidence": 1.0,
+          "frame_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/frames/frame_009171.jpg",
+          "outside_person_ratio": 0.121457,
+          "person_overlap": 0.878543,
+          "static_stack_overlap_ratio": 0.0,
+          "timestamp": 305.708,
+          "zone": "output"
+        }
+      ],
+      "output_frames": 1,
+      "outside_person_ratio": 0.121457,
+      "person_overlap_ratio": 0.878543,
+      "source_frames": 0,
+      "static_location_ratio": 1.0,
+      "static_stack_overlap_ratio": 0.0,
+      "track_id": 108,
+      "zones_seen": [
+        "output"
+      ]
+    },
+    "flags": [
+      "output_only_no_source_token",
+      "low_internal_motion",
+      "low_track_displacement",
+      "started_in_output"
+    ],
+    "reason": "static_stack_edge",
+    "track_id": 108
+  },
+  "evidence": {
+    "detections": 1,
+    "first_timestamp": 305.708,
+    "first_zone": "output",
+    "flow_coherence": 0.0,
+    "last_timestamp": 305.708,
+    "max_displacement": 0.0,
+    "max_internal_motion": 0.0,
+    "mean_internal_motion": 0.0,
+    "observations": [
+      {
+        "box_xywh": [
+          659.0,
+          580.0,
+          247.0,
+          42.0
+        ],
+        "confidence": 1.0,
+        "frame_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/frames/frame_009171.jpg",
+        "outside_person_ratio": 0.121457,
+        "person_overlap": 0.878543,
+        "static_stack_overlap_ratio": 0.0,
+        "timestamp": 305.708,
+        "zone": "output"
+      }
+    ],
+    "output_frames": 1,
+    "outside_person_ratio": 0.121457,
+    "person_overlap_ratio": 0.878543,
+    "source_frames": 0,
+    "static_location_ratio": 1.0,
+    "static_stack_overlap_ratio": 0.0,
+    "track_id": 108,
+    "zones_seen": [
+      "output"
+    ]
+  },
+  "perception_gate": {
+    "decision": "reject",
+    "evidence": {
+      "detections": 1,
+      "first_timestamp": 305.708,
+      "first_zone": "output",
+      "flow_coherence": 0.0,
+      "last_timestamp": 305.708,
+      "max_displacement": 0.0,
+      "max_internal_motion": 0.0,
+      "mean_internal_motion": 0.0,
+      "merged_predecessor_track_id": 105,
+      "merged_predecessor_track_ids": [
+        105
+      ],
+      "observations": [
+        {
+          "box_xywh": [
+            659.0,
+            580.0,
+            247.0,
+            42.0
+          ],
+          "confidence": 1.0,
+          "frame_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/frames/frame_009171.jpg",
+          "outside_person_ratio": 0.121457,
+          "person_overlap": 0.878543,
+          "static_stack_overlap_ratio": 0.0,
+          "timestamp": 305.708,
+          "zone": "output"
+        }
+      ],
+      "output_frames": 1,
+      "outside_person_ratio": 0.121457,
+      "person_overlap_ratio": 0.878543,
+      "runtime_chain_id": "proof-source-track:105",
+      "runtime_provenance_status": "synthetic_approved_chain_token",
+      "runtime_source_token_id": "source-token-65",
+      "runtime_source_track_id": 105,
+      "source_frames": 0,
+      "static_location_ratio": 1.0,
+      "static_stack_overlap_ratio": 0.0,
+      "track_id": 108,
+      "zones_seen": [
+        "output"
+      ]
+    },
+    "flags": [
+      "runtime_lineage_not_proof_eligible",
+      "synthetic_approved_chain_token"
+    ],
+    "reason": "synthetic_runtime_fallback_token",
+    "track_id": 108
+  },
+  "review_assets": {
+    "overlay_sheet_path": "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/overlay_sheet.jpg",
+    "overlay_video_path": "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/overlay_video.mp4",
+    "raw_crop_paths": [
+      "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/track_receipts/track-000108-crops/crop-01-output.jpg"
+    ],
+    "track_sheet_path": "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/track_receipts/track-000108-sheet.jpg"
+  },
+  "schema_version": "factory-track-receipt-v1",
+  "timestamps": {
+    "first": 305.708,
+    "last": 305.708
+  },
+  "track_id": 108
+}

@@ -1,0 +1,90 @@
+{
+  "conclusion": "Both remaining runtime-only events are synthetic approved-chain tokens, so runtime stays 23 and honest proof stays 21.",
+  "divergent_event_count": 2,
+  "divergent_events": [
+    {
+      "event_ts": 305.708,
+      "proof_blocker": "synthetic_approved_chain_token",
+      "proof_eligibility": "not_proof_eligible",
+      "runtime_event": {
+        "bbox": [
+          659.0,
+          580.0,
+          247.0,
+          42.0
+        ],
+        "chain_id": "proof-source-track:105",
+        "count_total": 16,
+        "event_ts": 305.708,
+        "gate_decision": {
+          "decision": "allow_source_token",
+          "flags": [
+            "high_person_overlap",
+            "not_enough_object_outside_person",
+            "strong_person_panel_separation",
+            "strong_person_panel_crop_classifier",
+            "source_token_allowed_by_person_panel_separation",
+            "source_token_allowed_by_crop_classifier"
+          ],
+          "reason": "moving_panel_candidate"
+        },
+        "provenance_status": "synthetic_approved_chain_token",
+        "reason": "approved_delivery_chain",
+        "source_bbox": [
+          659.0,
+          580.0,
+          247.0,
+          42.0
+        ],
+        "source_token_id": "source-token-65",
+        "source_track_id": 105,
+        "track_id": 108
+      }
+    },
+    {
+      "event_ts": 425.012,
+      "proof_blocker": "synthetic_approved_chain_token",
+      "proof_eligibility": "not_proof_eligible",
+      "runtime_event": {
+        "bbox": [
+          627.0,
+          533.0,
+          265.0,
+          34.0
+        ],
+        "chain_id": "proof-source-track:145",
+        "count_total": 23,
+        "event_ts": 425.012,
+        "gate_decision": {
+          "decision": "allow_source_token",
+          "flags": [
+            "high_person_overlap",
+            "not_enough_object_outside_person",
+            "strong_person_panel_separation",
+            "strong_person_panel_crop_classifier",
+            "source_token_allowed_by_person_panel_separation",
+            "source_token_allowed_by_crop_classifier"
+          ],
+          "reason": "moving_panel_candidate"
+        },
+        "provenance_status": "synthetic_approved_chain_token",
+        "reason": "approved_delivery_chain",
+        "source_bbox": [
+          627.0,
+          533.0,
+          265.0,
+          34.0
+        ],
+        "source_token_id": "source-token-97",
+        "source_track_id": 145,
+        "track_id": 152
+      }
+    }
+  ],
+  "previous_divergence_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_proof_runtime_divergence.final_two_v1.json",
+  "proof_honest_ceiling": 21,
+  "proof_report_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json",
+  "runtime_count": 23,
+  "runtime_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json",
+  "schema_version": "factory2-proof-runtime-divergence-v2"
+}

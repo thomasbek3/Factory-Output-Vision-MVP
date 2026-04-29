@@ -22,6 +22,9 @@ class RuntimeFrameResult:
     events: list[CountEvent]
     gate_decisions: dict[int, GateDecision]
     tracks: list[TrackDetection]
+    track_metadata: dict[int, dict[str, Any]] = field(default_factory=dict)
+    track_zones: dict[int, str] = field(default_factory=dict)
+    event_provenance: dict[int, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -353,7 +356,7 @@ class RuntimeEventCounter:
 
         gate_decisions: dict[int, GateDecision] = {}
         approved_track_ids: set[int] = set()
-        approved_delivery_chains: list[tuple[str, int, int, Box]] = []
+        approved_delivery_chains: list[tuple[str, int, int, Box, list[int]]] = []
         for track_id, accumulator in self._gate_accumulators.items():
             separation = self._separation_summaries.get(track_id)
             predecessor_ids = self._select_gate_predecessor_chain(track_id, accumulator)
@@ -385,11 +388,13 @@ class RuntimeEventCounter:
                             source_track_id,
                             track_id,
                             tracked_item.bbox,
+                            list(predecessor_ids),
                         )
                     )
 
         events = self._state_machine.update(tracked, approved_track_ids=approved_track_ids)
-        for chain_id, source_track_id, output_track_id, output_bbox in approved_delivery_chains:
+        event_provenance: dict[int, dict[str, Any]] = {}
+        for chain_id, source_track_id, output_track_id, output_bbox, predecessor_ids in approved_delivery_chains:
             event = self._state_machine.commit_approved_delivery_chain(
                 chain_id=chain_id,
                 source_track_id=source_track_id,
@@ -397,9 +402,29 @@ class RuntimeEventCounter:
                 output_bbox=output_bbox,
             )
             if event is not None:
+                event_provenance[output_track_id] = {
+                    "chain_id": chain_id,
+                    "source_track_id": source_track_id,
+                    "source_token_id": event.source_token_id,
+                    "predecessor_chain_track_ids": list(predecessor_ids),
+                    "source_bbox": list(event.source_bbox) if event.source_bbox is not None else None,
+                }
                 events.append(event)
         self._frame_index += 1
-        return RuntimeFrameResult(events=events, gate_decisions=gate_decisions, tracks=tracked)
+        track_metadata = {track_id: dict(metadata) for track_id, metadata in self._tracker.last_metadata_by_track_id.items()}
+        track_zones = {
+            track_id: accumulator.last_zone
+            for track_id, accumulator in self._gate_accumulators.items()
+            if accumulator.detections > 0
+        }
+        return RuntimeFrameResult(
+            events=events,
+            gate_decisions=gate_decisions,
+            tracks=tracked,
+            track_metadata=track_metadata,
+            track_zones=track_zones,
+            event_provenance=event_provenance,
+        )
 
     def _reset_state(self) -> None:
         self._tracker = SimpleBoxTracker(

@@ -5,11 +5,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 from typing import Any, Iterator
 
 import cv2
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from app.core.settings import get_event_track_max_match_distance, get_person_conf_threshold
 from app.services.count_state_machine import CountEvent
@@ -54,6 +59,11 @@ def serialize_event(
         "reason": event.reason,
         "count_total": int(count_total),
         "bbox": [round(float(value), 3) for value in event.bbox],
+        "source_track_id": int(event.source_track_id) if event.source_track_id is not None else None,
+        "source_token_id": event.source_token_id,
+        "chain_id": event.chain_id,
+        "source_bbox": [round(float(value), 3) for value in event.source_bbox] if event.source_bbox is not None else None,
+        "provenance_status": event.provenance_status,
         "gate_decision": None
         if gate_decision is None
         else {
@@ -61,6 +71,30 @@ def serialize_event(
             "reason": gate_decision.reason,
             "flags": list(gate_decision.flags),
         },
+    }
+
+
+def serialize_track_observation(
+    *,
+    event_ts: float,
+    track_id: int,
+    bbox: tuple[float, float, float, float],
+    confidence: float,
+    zone: str,
+    metadata: dict[str, Any] | None,
+) -> dict[str, Any]:
+    metadata = metadata or {}
+    return {
+        "timestamp": round(float(event_ts), 3),
+        "box_xywh": [round(float(value), 3) for value in bbox],
+        "confidence": round(float(confidence), 6),
+        "zone": str(zone or "unknown"),
+        "person_overlap": round(float(metadata.get("person_overlap_ratio", 0.0)), 6),
+        "outside_person_ratio": round(float(metadata.get("outside_person_ratio", 1.0)), 6),
+        "static_stack_overlap_ratio": round(
+            float(metadata.get("static_stack_overlap_ratio", metadata.get("static_overlap_ratio", 0.0))),
+            6,
+        ),
     }
 
 
@@ -73,6 +107,7 @@ def audit_runtime_events(
     start_seconds: float,
     end_seconds: float | None,
     processing_fps: float,
+    include_track_histories: bool,
     force: bool,
 ) -> dict[str, Any]:
     if output_path.exists() and not force:
@@ -109,6 +144,7 @@ def audit_runtime_events(
     started = time.time()
     last_index = -1
     events: list[dict[str, Any]] = []
+    track_histories: dict[str, list[dict[str, Any]]] = {}
     for index in frame_indices:
         if last_index < 0 or index != last_index + 1:
             capture.set(cv2.CAP_PROP_POS_FRAMES, index)
@@ -121,6 +157,18 @@ def audit_runtime_events(
         detections = [{"box": item.bbox, "confidence": 1.0} for item in detection_result.detections]
         person_boxes = [(item.x, item.y, item.w, item.h) for item in person.detect_people(frame)]
         frame_result = counter.process_frame(frame=frame, detections=detections, person_boxes=person_boxes)
+        if include_track_histories:
+            for track in frame_result.tracks:
+                track_histories.setdefault(str(track.track_id), []).append(
+                    serialize_track_observation(
+                        event_ts=timestamp,
+                        track_id=track.track_id,
+                        bbox=track.bbox,
+                        confidence=track.confidence,
+                        zone=frame_result.track_zones.get(track.track_id, "unknown"),
+                        metadata=frame_result.track_metadata.get(track.track_id),
+                    )
+                )
         for event in frame_result.events:
             events.append(
                 serialize_event(
@@ -145,6 +193,7 @@ def audit_runtime_events(
         "final_count": counter.total_count,
         "elapsed_sec": round(time.time() - started, 3),
         "events": events,
+        "track_histories": track_histories if include_track_histories else {},
     }
     write_json(output_path, payload)
     return payload
@@ -159,6 +208,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start-seconds", type=float, default=0.0)
     parser.add_argument("--end-seconds", type=float, default=None)
     parser.add_argument("--processing-fps", type=float, default=10.0)
+    parser.add_argument("--include-track-histories", action="store_true")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -173,6 +223,7 @@ def main() -> None:
         start_seconds=args.start_seconds,
         end_seconds=args.end_seconds,
         processing_fps=args.processing_fps,
+        include_track_histories=args.include_track_histories,
         force=args.force,
     )
     print(json.dumps({"final_count": payload["final_count"], "output": str(args.output)}))

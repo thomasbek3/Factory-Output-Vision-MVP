@@ -1,8 +1,118 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-28 21:06:00 EDT
+Updated: 2026-04-29 02:44:09 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+## 2026-04-29: Factory2 Runtime Lineage Audit Closed The Final Two
+
+Implemented the runtime-lineage audit path Oracle asked for and used it to settle the two remaining proof/runtime gaps:
+
+```text
+app/services/count_state_machine.py
+app/services/runtime_event_counter.py
+scripts/audit_factory2_runtime_events.py
+scripts/build_factory2_runtime_lineage_diagnostic.py
+scripts/build_morning_proof_report.py
+tests/test_count_state_machine.py
+tests/test_audit_factory2_runtime_events.py
+tests/test_build_factory2_runtime_lineage_diagnostic.py
+tests/test_build_morning_proof_report.py
+AGENTS.md
+CLAUDE.md
+tasks/lessons.md
+```
+
+What changed:
+
+```text
+- Added explicit runtime source-token provenance to `CountEvent`.
+- `approved_delivery_chain` events now distinguish `inherited_live_source_token` from `synthetic_approved_chain_token`.
+- Extended the runtime audit script to emit source-token provenance and full per-track histories.
+- Added a runtime-lineage diagnostic builder that can turn audited runtime events into proof-style receipts.
+- Guarded the runtime-lineage proof builder so synthetic approved-chain fallback events are rejected instead of being promoted into proof.
+```
+
+Real artifacts created:
+
+```text
+Runtime provenance audits:
+- data/reports/factory2_runtime_event_audit.lineage_0_308.json
+- data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json
+
+Runtime-lineage diagnostics:
+- data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/diagnostic.json
+- data/diagnostics/runtime-proof/factory2-runtime-only-0008-lineage-v1/diagnostic.json
+
+Proof artifacts:
+- data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json
+- data/reports/factory2_proof_runtime_divergence.final_two_v2.json
+```
+
+Final result from the lineage audit:
+
+```text
+Runtime/app path:
+- still reaches 23 on the patched from-start audit
+
+Proof path:
+- remains at accepted_count = 21
+
+Why proof stays at 21:
+- `305.708s` -> provenance_status = synthetic_approved_chain_token
+- `425.012s` -> provenance_status = synthetic_approved_chain_token
+
+Conclusion:
+- both remaining runtime-only events are runtime-discovered counts,
+- but they are not honest proof receipts,
+- so the correct repo state is runtime 23 / proof 21.
+```
+
+Oracle result:
+
+```text
+Oracle confirmed the right move was from-start runtime provenance, not more proof-window threshold/fps tweaks.
+It also specifically warned that synthetic approved-chain fallback tokens are not proof-eligible.
+That warning held up against the real patched lineage artifact.
+```
+
+Commands run:
+
+```bash
+.venv/bin/python -m pytest tests/test_count_state_machine.py tests/test_audit_factory2_runtime_events.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_morning_proof_report.py -q
+.venv/bin/python scripts/audit_factory2_runtime_events.py --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --output data/reports/factory2_runtime_event_audit.lineage_0_308.json --start-seconds 0 --end-seconds 308 --processing-fps 10 --include-track-histories --force
+.venv/bin/python scripts/audit_factory2_runtime_events.py --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --output data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json --start-seconds 0 --end-seconds 430 --processing-fps 10 --include-track-histories --force
+.venv/bin/python - <<'PY'
+# built runtime-lineage diagnostics for 305.708s and 425.012s from the 0-430 audit
+PY
+.venv/bin/python - <<'PY'
+# rebuilt proof report with both runtime-lineage diagnostics included
+PY
+/opt/homebrew/bin/oracle --slug factory2-lineage-path ...
+```
+
+Verification:
+
+```text
+28 tests passed on the touched suites.
+Patched runtime-lineage audit to 430s finished at final_count = 23.
+Both runtime-lineage diagnostics now reject synthetic fallback counts.
+Rebuilt proof report stayed at accepted_count = 21.
+```
+
+Next blocker:
+
+```text
+There is no remaining proof-window tuning blocker. The remaining blocker is product semantics:
+- either accept runtime 23 / proof 21 as the honest state,
+- or change the runtime approved-delivery-chain policy so synthetic fallback tokens no longer create runtime-only count authority.
+```
+
+Exact next recommended step:
+
+```text
+Do not spend more time on narrower proof windows. If the product needs proof and runtime to converge, refactor `commit_approved_delivery_chain` so `synthetic_approved_chain_token` is either disallowed for counting or separated into an explicit runtime-only category with different product semantics.
+```
 
 
 ## Factory2 crop review package + training interface — 2026-04-28 21:06 EDT

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.services.count_state_machine import CountEvent
-from scripts.audit_factory2_runtime_events import sampled_frame_indices, serialize_event
+from scripts.audit_factory2_runtime_events import sampled_frame_indices, serialize_event, serialize_track_observation
 
 
 def test_sampled_frame_indices_respects_window_and_processing_rate() -> None:
@@ -26,7 +26,17 @@ def test_serialize_event_includes_gate_context() -> None:
 
     payload = serialize_event(
         event_ts=422.6123,
-        event=CountEvent(track_id=151, count=1, reason="approved_delivery_chain", bbox=(1.2, 3.4, 5.6, 7.8)),
+        event=CountEvent(
+            track_id=151,
+            count=1,
+            reason="approved_delivery_chain",
+            bbox=(1.2, 3.4, 5.6, 7.8),
+            source_track_id=144,
+            source_token_id="source-token-77",
+            chain_id="proof-source-track:144",
+            source_bbox=(8.0, 9.0, 10.0, 11.0),
+            provenance_status="inherited_live_source_token",
+        ),
         gate_decision=GateDecision(),
         count_total=17,
     )
@@ -35,3 +45,33 @@ def test_serialize_event_includes_gate_context() -> None:
     assert payload["track_id"] == 151
     assert payload["count_total"] == 17
     assert payload["gate_decision"]["flags"] == ["strong_person_panel_crop_classifier"]
+    assert payload["source_track_id"] == 144
+    assert payload["source_token_id"] == "source-token-77"
+    assert payload["chain_id"] == "proof-source-track:144"
+    assert payload["source_bbox"] == [8.0, 9.0, 10.0, 11.0]
+    assert payload["provenance_status"] == "inherited_live_source_token"
+
+
+def test_serialize_track_observation_preserves_zone_and_overlap_metadata() -> None:
+    payload = serialize_track_observation(
+        event_ts=305.708,
+        track_id=108,
+        bbox=(659.0, 580.0, 247.0, 42.0),
+        confidence=0.91,
+        zone="output",
+        metadata={
+            "person_overlap_ratio": 0.98,
+            "outside_person_ratio": 0.02,
+            "static_stack_overlap_ratio": 0.1,
+        },
+    )
+
+    assert payload == {
+        "timestamp": 305.708,
+        "box_xywh": [659.0, 580.0, 247.0, 42.0],
+        "confidence": 0.91,
+        "zone": "output",
+        "person_overlap": 0.98,
+        "outside_person_ratio": 0.02,
+        "static_stack_overlap_ratio": 0.1,
+    }

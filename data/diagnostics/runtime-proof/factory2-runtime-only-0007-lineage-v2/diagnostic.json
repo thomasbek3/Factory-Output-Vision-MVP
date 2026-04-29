@@ -1,0 +1,152 @@
+{
+  "calibration_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json",
+  "diagnosis": [
+    {
+      "decision": "reject",
+      "evidence": {
+        "detections": 1,
+        "first_timestamp": 305.708,
+        "first_zone": "output",
+        "flow_coherence": 0.0,
+        "last_timestamp": 305.708,
+        "max_displacement": 0.0,
+        "max_internal_motion": 0.0,
+        "mean_internal_motion": 0.0,
+        "observations": [
+          {
+            "box_xywh": [
+              659.0,
+              580.0,
+              247.0,
+              42.0
+            ],
+            "confidence": 1.0,
+            "frame_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/frames/frame_009171.jpg",
+            "outside_person_ratio": 0.121457,
+            "person_overlap": 0.878543,
+            "static_stack_overlap_ratio": 0.0,
+            "timestamp": 305.708,
+            "zone": "output"
+          }
+        ],
+        "output_frames": 1,
+        "outside_person_ratio": 0.121457,
+        "person_overlap_ratio": 0.878543,
+        "source_frames": 0,
+        "static_location_ratio": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "track_id": 108,
+        "zones_seen": [
+          "output"
+        ]
+      },
+      "flags": [
+        "output_only_no_source_token",
+        "low_internal_motion",
+        "low_track_displacement",
+        "started_in_output"
+      ],
+      "reason": "static_stack_edge",
+      "track_id": 108
+    }
+  ],
+  "end_timestamp": 0.0,
+  "fps": 1.0,
+  "frame_count": 0,
+  "model_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/models/panel_in_transit.pt",
+  "overlay_sheet_path": "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/overlay_sheet.jpg",
+  "overlay_video_path": "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/overlay_video.mp4",
+  "perception_gate": [
+    {
+      "decision": "reject",
+      "evidence": {
+        "detections": 1,
+        "first_timestamp": 305.708,
+        "first_zone": "output",
+        "flow_coherence": 0.0,
+        "last_timestamp": 305.708,
+        "max_displacement": 0.0,
+        "max_internal_motion": 0.0,
+        "mean_internal_motion": 0.0,
+        "merged_predecessor_track_id": 105,
+        "merged_predecessor_track_ids": [
+          105
+        ],
+        "observations": [
+          {
+            "box_xywh": [
+              659.0,
+              580.0,
+              247.0,
+              42.0
+            ],
+            "confidence": 1.0,
+            "frame_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/frames/frame_009171.jpg",
+            "outside_person_ratio": 0.121457,
+            "person_overlap": 0.878543,
+            "static_stack_overlap_ratio": 0.0,
+            "timestamp": 305.708,
+            "zone": "output"
+          }
+        ],
+        "output_frames": 1,
+        "outside_person_ratio": 0.121457,
+        "person_overlap_ratio": 0.878543,
+        "runtime_chain_id": "proof-source-track:105",
+        "runtime_provenance_status": "synthetic_approved_chain_token",
+        "runtime_source_token_id": "source-token-65",
+        "runtime_source_track_id": 105,
+        "source_frames": 0,
+        "static_location_ratio": 1.0,
+        "static_stack_overlap_ratio": 0.0,
+        "track_id": 108,
+        "zones_seen": [
+          "output"
+        ]
+      },
+      "flags": [
+        "runtime_lineage_not_proof_eligible",
+        "synthetic_approved_chain_token"
+      ],
+      "reason": "synthetic_runtime_fallback_token",
+      "track_id": 108
+    }
+  ],
+  "perception_gate_summary": {
+    "allowed_source_token_tracks": [],
+    "decision_counts": {
+      "allow_source_token": 0,
+      "reject": 1,
+      "uncertain": 0
+    },
+    "reason_counts": {
+      "synthetic_runtime_fallback_token": 1
+    },
+    "track_count": 1
+  },
+  "person_model_path": null,
+  "runtime_event_id": "",
+  "runtime_lineage_schema_version": "factory2-runtime-lineage-diagnostic-v1",
+  "runtime_source_token_id": "source-token-65",
+  "schema_version": "factory-event-diagnostic-v1",
+  "start_timestamp": 0.0,
+  "summary": {
+    "decision_counts": {
+      "candidate": 0,
+      "reject": 1,
+      "uncertain": 0
+    },
+    "has_source_to_output_candidate": false,
+    "reason_counts": {
+      "static_stack_edge": 1
+    },
+    "track_count": 1
+  },
+  "track_receipt_cards": [
+    "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/track_receipts/track-000108-sheet.jpg"
+  ],
+  "track_receipts": [
+    "data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v2/track_receipts/track-000108.json"
+  ],
+  "video_path": "/Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV"
+}

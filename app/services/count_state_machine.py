@@ -55,6 +55,11 @@ class CountEvent:
     count: int
     reason: Literal["stable_in_output", "disappeared_in_output", "approved_delivery_chain"]
     bbox: Box
+    source_track_id: int | None = None
+    source_token_id: str | None = None
+    chain_id: str | None = None
+    source_bbox: Box | None = None
+    provenance_status: str | None = None
 
 
 @dataclass
@@ -206,15 +211,23 @@ class CountStateMachine:
         track.set_state("IN_OUTPUT_UNSETTLED")
 
         source_track = self._tracks.get(source_track_id) if source_track_id is not None else None
+        provenance_status = "synthetic_approved_chain_token"
         if source_track is not None and source_track.source_token is not None and not source_track.source_token.consumed:
             track.source_token = source_track.source_token
             track.source_token.track_id = output_track_id
             track.source_token.last_frame = self._frame_index
+            provenance_status = "inherited_live_source_token"
         elif track.source_token is None:
             track.source_token = self._create_source_token(track, output_bbox)
 
         self._committed_delivery_chains.add(chain_id)
-        return self._commit_count(track, "approved_delivery_chain")
+        return self._commit_count(
+            track,
+            "approved_delivery_chain",
+            chain_id=chain_id,
+            source_track_id=source_track_id,
+            provenance_status=provenance_status,
+        )
 
     def _update_track(self, track: _TrackMemory, detection: TrackDetection) -> CountEvent | None:
         membership = zone_membership(detection.bbox, self.config.zones)
@@ -302,8 +315,13 @@ class CountStateMachine:
         self,
         track: _TrackMemory,
         reason: Literal["stable_in_output", "disappeared_in_output", "approved_delivery_chain"],
+        chain_id: str | None = None,
+        source_track_id: int | None = None,
+        provenance_status: str | None = None,
     ) -> CountEvent:
         track.counted = True
+        source_token_id = track.source_token.token_id if track.source_token is not None else None
+        source_bbox = track.source_token.source_bbox if track.source_token is not None else None
         if track.source_token is not None:
             track.source_token.consumed = True
         track.set_state("COUNTED_OUTPUT_RESIDENT")
@@ -324,6 +342,11 @@ class CountStateMachine:
             count=1,
             reason=reason,
             bbox=track.last_bbox,
+            source_track_id=source_track_id,
+            source_token_id=source_token_id,
+            chain_id=chain_id,
+            source_bbox=source_bbox,
+            provenance_status=provenance_status or ("source_zone_token" if source_token_id is not None else None),
         )
 
     def _create_source_token(self, track: _TrackMemory, bbox: Box) -> _SourceToken:

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.build_morning_proof_report import build_report, main, render_markdown
+from scripts.build_morning_proof_report import build_report, main, render_markdown, source_token_key
 
 
 def write_json(path: Path, payload: str) -> Path:
@@ -589,6 +589,21 @@ def test_render_markdown_includes_receipt_paths(tmp_path: Path):
     assert "worker_overlap_details" in markdown
     assert "receipts/track-1.json" in markdown
     assert "overlay.jpg" in markdown
+
+
+def test_source_token_key_prefers_runtime_source_token_id() -> None:
+    key = source_token_key(
+        track_id=7,
+        receipt_path="data/diagnostics/runtime-proof/final-two/track_receipts/track-000007.json",
+        row={
+            "evidence": {
+                "runtime_source_token_id": "source-token-42",
+                "merged_predecessor_track_ids": [3],
+            }
+        },
+    )
+
+    assert key == "runtime-source-token:source-token-42"
 
 
 def test_main_writes_json_and_markdown(tmp_path: Path):

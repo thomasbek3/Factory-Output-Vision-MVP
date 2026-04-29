@@ -209,6 +209,8 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - When merging narrow diagnostics into one proof artifact, freeze or copy the finalized diagnostic directories first. Do not build merged proof results from mutable diagnostics that are still being regenerated.
 - Merged proof `accepted_count` must be a distinct-delivery count, not a raw accepted-receipt count. If overlapping windows produce two accepted receipts for the same physical carry, dedupe them at the report layer and keep both receipts only as audit evidence.
 - If recall stalls on worker-overlap cases, the next product move is not threshold loosening. Export blocked receipt crops and build a panel-vs-worker separation dataset.
+- Runtime-only `approved_delivery_chain` events are not automatically proof-eligible. If runtime lineage shows `synthetic_approved_chain_token`, do not promote that event into proof receipts or use it to raise `accepted_count`.
+- Current honest state after runtime-lineage audit: runtime/app path reaches `23`, but proof stays at `21` because the remaining `305.708s` and `425.012s` events are synthetic approved-chain tokens rather than fresh source-backed proof receipts.
 - Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
 - Demo-mode app verification has a trap: `app/services/frame_reader.py` uses `ffmpeg -stream_loop -1` for demo files. Do not treat a long-running demo `counts_this_hour` total as a one-pass truth count for `factory2.MOV` unless you control the loop boundary or use a no-loop harness.
 - Active PRDs for this phase:

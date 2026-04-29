@@ -137,6 +137,14 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Both 8fps and 10fps sweeps converged on the same answer.** For both divergent events (`305.708s`, `425.012s`), all `12/12` focused windows at `8fps` and all `12/12` focused windows at `10fps` collapsed into earlier accepted lineage plus later stub. That makes the current divergence materially stronger than a single-window anecdote.
 4. **Once focused sweeps stabilize, stop spending time on more threshold/fps/window nudges.** After two bounded confirmation bands returned the same `24/24` outcome, the next real lever is a new receipt-construction method or new training/data/model work, not more minor search-parameter churn.
 
+## 2026-04-29: Factory2 Runtime Lineage Lessons
+
+1. **`source_track_id` is not enough.** For runtime/proof alignment, you need explicit lineage provenance, not just the track id or chain id. The decisive field is whether the runtime count consumed a live source token or minted a synthetic fallback token at output.
+2. **Both final runtime-only events are synthetic fallback counts.** The from-start runtime-lineage audit showed `305.708s` and `425.012s` as `synthetic_approved_chain_token`, so neither is honest proof authority. Runtime remains `23`; honest proof remains `21`.
+3. **Local replays can lie by resetting state.** Short replay windows around `305.708s` restated the earlier `303.508s` count and missed the true runtime-only event. Source-token TTL, resident dedupe, and committed delivery-chain state make these events inherently from-start problems.
+4. **Do not promote runtime-only delivery chains into proof by default.** A runtime-backed receipt must reject `synthetic_approved_chain_token` and treat it as `incomplete_source_to_output_path` until a genuinely fresh source-backed lineage exists.
+5. **Oracle’s recommendation was correct.** The right escalation path was from-start runtime provenance, not more proof-window searching. Once provenance still showed synthetic fallback, the honest action was to preserve the explicit `runtime 23 / proof 21` divergence.
+
 ### Model Performance & Recall Requirements
 
 4. **53% recall is insufficient for real-time event counting.** Sparse detections don't form reliable temporal clusters. Need 80%+ recall, which requires 150+ labeled training images (currently at 47).
