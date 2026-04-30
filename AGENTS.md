@@ -178,6 +178,18 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - Zero context switching required from the user
 - Go fix failing CI tests without being told how
 
+### 6A. Continue By Default
+- For this project, default behavior is to keep executing the next obvious step until the stated definition of done is met.
+- Do not stop after each subtask to summarize progress or ask the user what to do next if the next step is already implied by the PRD, handoff, current failures, latest verification result, or the active blocker.
+- After finishing one step, immediately execute the next highest-leverage step.
+- Only stop and ask the user when:
+  - a genuinely risky product or technical decision must be made
+  - a required dependency, artifact, or data source is missing
+  - a destructive action needs explicit approval
+  - the project goal is actually complete
+- If the user asks a rhetorical "what's next?" style question while the path is obvious, treat it as a request to continue the work, not as a request to pause for planning.
+- If you are truly stuck, use the Oracle escalation rule before interrupting the user.
+
 ### 7. Oracle Escalation Rule
 - If you are truly stuck and are about to ask the user what to do next, ask Oracle first.
 - "Stuck" means you have already inspected the relevant code/artifacts, tried the obvious local verification/debugging steps, and still do not have a credible next move.

@@ -6,6 +6,7 @@
 2. **Do not stop at diagnostics or receipts.** Diagnostics exist to unlock counting, not to replace it.
 3. **For Factory2, verify the real product path.** Run the actual `VisionWorker`/FastAPI monitoring flow on `factory2.MOV`, not just unit tests or proof scripts.
 4. **If stuck on the next move, escalate to Oracle before asking the user for direction.**
+5. **Default to continuing, not summarizing.** If the next step is already implied by the PRD, latest failure, or verification result, keep going instead of pausing to ask what to do next. Stop only for a real blocker, a risky decision, required approval, or actual completion.
 
 ## 2026-04-28: Factory2 Recall Recovery
 
