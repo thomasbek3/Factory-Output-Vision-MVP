@@ -40,6 +40,10 @@ class ApiSmokeTests(unittest.TestCase):
             self.assertEqual(diagnostics_payload["current_state"], "NOT_CONFIGURED")
             self.assertIn("db_path", diagnostics_payload)
             self.assertIn("log_directory", diagnostics_payload)
+            self.assertIn("reader_last_sequence_index", diagnostics_payload)
+            self.assertIn("reader_last_source_timestamp_sec", diagnostics_payload)
+            self.assertIn("recent_count_events", diagnostics_payload)
+            self.assertEqual(diagnostics_payload["recent_count_events"], [])
 
             restart = client.post("/api/control/restart_video")
             self.assertEqual(restart.status_code, 503)

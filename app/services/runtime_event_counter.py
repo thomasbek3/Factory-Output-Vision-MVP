@@ -426,6 +426,21 @@ class RuntimeEventCounter:
             event_provenance=event_provenance,
         )
 
+    def flush_end_of_stream(self, *, iterations: int = 1) -> RuntimeFrameResult:
+        flush_events: list[CountEvent] = []
+        flush_iterations = max(1, int(iterations))
+        for _ in range(flush_iterations):
+            flush_events.extend(self._state_machine.update([], approved_track_ids=set()))
+            self._frame_index += 1
+        return RuntimeFrameResult(
+            events=flush_events,
+            gate_decisions={},
+            tracks=[],
+            track_metadata={},
+            track_zones={},
+            event_provenance={},
+        )
+
     def _reset_state(self) -> None:
         self._tracker = SimpleBoxTracker(
             max_match_distance=self._tracker_match_distance,

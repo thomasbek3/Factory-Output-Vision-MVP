@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.core.settings import get_event_track_max_match_distance, get_person_conf_threshold
+from app.core.settings import get_event_track_max_match_distance, get_person_conf_threshold, get_yolo_conf_threshold
 from app.services.count_state_machine import CountEvent
 from app.services.counting import YoloObjectDetector
 from app.services.person_detector import PersonDetector
@@ -131,7 +131,7 @@ def audit_runtime_events(
         gate=gate,
         tracker_match_distance=get_event_track_max_match_distance(),
     )
-    detector = YoloObjectDetector(model_path=str(model_path), conf_threshold=0.25, excluded_classes=[])
+    detector = YoloObjectDetector(model_path=str(model_path), conf_threshold=get_yolo_conf_threshold(), excluded_classes=[])
     person = PersonDetector(get_person_conf_threshold())
 
     capture = cv2.VideoCapture(str(video_path))

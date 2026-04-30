@@ -170,7 +170,7 @@ def get_yolo_conf_threshold() -> float:
     if explicit is not None:
         return float(explicit)
     if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
-        return 0.15
+        return 0.25
     if get_counting_mode() == "event_based":
         return 0.40
     return 0.3

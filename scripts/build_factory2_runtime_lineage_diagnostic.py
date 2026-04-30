@@ -18,7 +18,7 @@ if str(REPO_ROOT) not in sys.path:
 
 import cv2
 
-from app.core.settings import get_event_track_max_match_distance, get_person_conf_threshold
+from app.core.settings import get_event_track_max_match_distance, get_person_conf_threshold, get_yolo_conf_threshold
 from app.services.counting import YoloObjectDetector
 from app.services.person_detector import PersonDetector
 from app.services.perception_gate import GateConfig, GateDecision, evaluate_track, summarize_gate_decisions
@@ -449,7 +449,7 @@ def capture_runtime_lineage_window(
         gate=gate,
         tracker_match_distance=get_event_track_max_match_distance(),
     )
-    detector = YoloObjectDetector(model_path=str(model_path), conf_threshold=0.25, excluded_classes=[])
+    detector = YoloObjectDetector(model_path=str(model_path), conf_threshold=get_yolo_conf_threshold(), excluded_classes=[])
     person_detector = PersonDetector(get_person_conf_threshold())
 
     track_histories: dict[str, list[dict[str, Any]]] = {}

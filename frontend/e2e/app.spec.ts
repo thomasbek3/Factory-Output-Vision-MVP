@@ -76,14 +76,6 @@ async function expectSnapshotSrc(page: Page, fragment: string): Promise<void> {
     .toContain(fragment)
 }
 
-async function expectVideoSrc(page: Page, fragment: string): Promise<void> {
-  const video = page.locator('.live-snapshot-frame video').first()
-  await expect(video).toBeVisible()
-  await expect
-    .poll(async () => video.getAttribute('src'))
-    .toContain(fragment)
-}
-
 async function expectNotice(page: Page, message: RegExp): Promise<void> {
   await expect(page.locator('.notice-banner').filter({ hasText: message }).first()).toBeVisible()
 }
@@ -256,8 +248,8 @@ test('troubleshooting switches between live and debug snapshot views', async ({ 
   await expectSnapshotSrc(page, 'view=roi')
 
   await page.getByRole('button', { name: 'Live view' }).click()
-  await expect(page.getByText(/Browser preview plays the active demo file directly/i)).toBeVisible()
-  await expectVideoSrc(page, '/api/control/demo/videos/active/content')
+  await expect(page.getByText(/Live view now shows the backend demo frame stream itself/i)).toBeVisible()
+  await expectSnapshotSrc(page, '/api/stream.mjpg')
   await expect(page.locator('.live-snapshot-frame svg.live-overlay-svg')).toBeVisible()
   await expect(page.locator('.live-snapshot-frame svg.live-overlay-svg polygon')).toHaveCount(1)
   await expect(page.locator('.live-snapshot-frame svg.live-overlay-svg line')).toHaveCount(1)

@@ -106,19 +106,11 @@ export function TroubleshootingShellPage() {
         })
       : []
   const liveMedia =
-    snapshotView === 'live' && diagnostics?.source_kind === 'demo'
+    snapshotView === 'live'
       ? {
-          kind: 'video' as const,
-          fallbackImageSrc: apiClient.liveStreamUrl(videoTick),
-          src: apiClient.activeDemoVideoUrl(videoTick),
-          playbackRate: diagnostics.demo_playback_speed,
-          showNativeControls: geometryEditMode == null,
+          kind: 'image' as const,
+          src: apiClient.liveStreamUrl(videoTick),
         }
-      : snapshotView === 'live'
-        ? {
-            kind: 'image' as const,
-            src: apiClient.liveStreamUrl(videoTick),
-          }
       : {
           kind: 'image' as const,
           src: apiClient.debugSnapshotUrl(snapshotTick, snapshotView),
@@ -441,10 +433,10 @@ export function TroubleshootingShellPage() {
             media={liveMedia}
             onRefresh={refreshSnapshot}
             overlays={liveOverlays}
-            refreshLabel={liveMedia.kind === 'video' ? 'Reload preview' : snapshotView === 'live' ? 'Reload stream' : 'Refresh snapshot'}
+            refreshLabel={snapshotView === 'live' ? 'Reload stream' : 'Refresh snapshot'}
             subtitle={
-              liveMedia.kind === 'video'
-                ? 'Browser preview plays the active demo file directly so you can scrub and inspect real motion. Debug views still come from the backend worker.'
+              diagnostics?.source_kind === 'demo' && snapshotView === 'live'
+                ? 'Live view now shows the backend demo frame stream itself, so geometry overlays and count timing line up with the frames being processed.'
                 : snapshotView === 'live'
                   ? 'Camera live view now streams as MJPEG for true motion. ROI, mask, tracks, and people remain backend debug snapshots.'
                   : snapshotViewCopy[snapshotView].subtitle

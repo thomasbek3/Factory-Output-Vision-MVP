@@ -19,7 +19,7 @@ class RuntimeSettingsTests(unittest.TestCase):
             os.environ["FC_RUNTIME_CALIBRATION_PATH"] = "/tmp/factory2-runtime-calibration.json"
             os.environ.pop("FC_YOLO_CONF_THRESHOLD", None)
 
-            self.assertEqual(settings.get_yolo_conf_threshold(), 0.15)
+            self.assertEqual(settings.get_yolo_conf_threshold(), 0.25)
         finally:
             for key, value in previous.items():
                 if value is None:

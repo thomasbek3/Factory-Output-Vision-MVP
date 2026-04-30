@@ -149,6 +149,8 @@ class DiagnosticsResponse(BaseModel):
     demo_playback_finished: bool = False
     demo_elapsed_sec: float = 0.0
     demo_playback_active: bool = False
+    reader_last_sequence_index: int = 0
+    reader_last_source_timestamp_sec: float | None = None
     demo_receipt_total: int = 0
     demo_revealed_receipts: int = 0
     demo_expected_final_total: int = 0
@@ -158,3 +160,4 @@ class DiagnosticsResponse(BaseModel):
     counting_mode: str = "track_based"
     latest_error_code: str | None = None
     latest_error_message: str | None = None
+    recent_count_events: list[dict[str, Any]] = Field(default_factory=list)

@@ -186,6 +186,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 6. **Wire mesh panel model (v1): 98% precision, 91% recall, mAP50 94.6% with 71 images.** Great detection, but useless for counting — detects static stacks.
 7. **Panel in transit model (v2): 94% precision, 53% recall with 47 images.** Promising but needs 3x more training data.
 
+## 2026-04-30: Factory2 Live App Truth Validation
+
+1. **Partial truth diffs need coverage metadata.** A partial app capture without source-video coverage will fake a “missing event” at the first uncovered truth timestamp. Capture and compare reports need `reader_last_source_timestamp_sec` / `observed_coverage_end_sec` so incomplete runs are marked as `incomplete_coverage`, not false misses.
+2. **The verified Factory2 app path is real sequential counting, not replay.** A one-pass `live_reader_snapshot` app run on `factory2.MOV` with `event_based` counting and `factory2_ai_only_v1.json` matched the human truth ledger `23/23` with `0` missing and `0` unexpected events.
+3. **Launch mode matters as much as code.** A clean app instance launched in `track_based` mode will look broken even if the verified `event_based` path is correct. The investor/demo launch needs a fixed command or wrapper script, not memory.
+4. **The investor demo recipe is now explicit.** Use `scripts/start_factory2_demo_app.py` so the app always starts with `FC_DEMO_LOOP=0`, `FC_COUNTING_MODE=event_based`, `FC_RUNTIME_CALIBRATION_PATH=data/calibration/factory2_ai_only_v1.json`, and `10 FPS` processing/reader settings.
+
 ### Training & Deployment Lessons
 
 8. **ONNX export provides no speedup on i7-12700F.** PyTorch already runs at ~60ms/frame. ONNX overhead (model loading, conversion) wasn't worth it for this CPU. Don't bother unless moving to ARM/edge devices.

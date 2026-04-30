@@ -15,6 +15,7 @@ from app.db.config_repo import update_roi_polygon
 from app.db.database import init_db
 from app.services.count_state_machine import CountEvent, TrackDetection
 from app.services.counting import DetectedObject, DetectionDebugResult, Track, count_new_tracks, mark_all_tracks_counted
+from app.services.frame_reader import ReaderSnapshot
 from app.services.perception_gate import GateDecision
 from app.services.runtime_event_counter import RuntimeFrameResult
 from app.services.video_runtime import VideoRuntime
@@ -137,6 +138,39 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(discard_calls, ["discard"])
         self.assertEqual(status["state"], "IDLE")
 
+    def test_demo_reader_frame_selection_uses_synchronous_pump_when_available(self) -> None:
+        expected = ReaderSnapshot(
+            frame=np.zeros((2, 2, 3), dtype=np.uint8),
+            last_frame_time=1.0,
+            source="demo",
+            sequence_index=7,
+        )
+        fake_reader = Mock()
+        fake_reader.is_synchronous_demo_mode.return_value = True
+        fake_reader.pump_next_demo_frame.return_value = expected
+        fake_reader.consume_next_frame.return_value = None
+        self.worker.video_runtime.reader = fake_reader  # type: ignore[assignment]
+
+        snapshot = self.worker._next_reader_frame(source_is_demo=True)
+
+        self.assertIs(snapshot, expected)
+        fake_reader.pump_next_demo_frame.assert_called_once_with()
+        fake_reader.consume_next_frame.assert_not_called()
+
+    def test_idle_synchronous_demo_reader_does_not_trigger_stall_recovery(self) -> None:
+        fake_reader = Mock()
+        fake_reader.is_synchronous_demo_mode.return_value = True
+        self.worker.video_runtime.reader = fake_reader  # type: ignore[assignment]
+        self.worker.monitoring_enabled = False
+        self.worker.calibrating = False
+
+        should_handle = self.worker._should_handle_video_stall(
+            source_is_demo=True,
+            reader_status={"demo_finished": False},
+        )
+
+        self.assertFalse(should_handle)
+
     def test_count_new_tracks_requires_min_frames(self) -> None:
         """Tracks below min_track_frames should not be counted."""
         young_track = Track(
@@ -251,7 +285,113 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(fake_counter.process_frame.call_args.kwargs["detections"], [{"box": (65, 20, 20, 20), "confidence": 1.0}])
         self.assertEqual(artifact["person_boxes"], [{"x": 0, "y": 0, "w": 100, "h": 100}])
         self.assertEqual(artifact["event_count_authorities"], ["runtime_inferred_only"])
+        self.assertEqual(artifact["count_events"][0]["chain_id"], None)
+        self.assertEqual(artifact["count_events"][0]["provenance_status"], "synthetic_approved_chain_token")
         self.assertEqual(artifact["tracks"][0]["perception_gate"]["reason"], "moving_panel_candidate")
+
+    def test_diagnostics_include_recent_runtime_count_trace(self) -> None:
+        self.worker.state = "RUNNING_GREEN"
+        self.worker._record_count_events(
+            [
+                {
+                    "event_ts": 305.708,
+                    "track_id": 108,
+                    "count": 1,
+                    "reason": "approved_delivery_chain",
+                    "bbox": [65.0, 20.0, 20.0, 20.0],
+                    "source_track_id": 107,
+                    "source_token_id": None,
+                    "chain_id": "proof-source-track:107",
+                    "source_bbox": None,
+                    "provenance_status": "synthetic_approved_chain_token",
+                    "count_authority": "runtime_inferred_only",
+                    "track_zone": "output",
+                    "person_overlap_ratio": 0.0,
+                    "outside_person_ratio": 1.0,
+                    "predecessor_chain_track_ids": [104, 105, 106],
+                }
+            ],
+            reader_sequence_index=4207,
+            reader_frame_time=123.456789,
+            source_timestamp_sec=305.708,
+            source_kind="demo",
+        )
+
+        diagnostics = self.worker.get_diagnostics(
+            uptime_sec=12.3,
+            db_path=os.path.join(self.temp_dir, "worker.db"),
+            log_directory=os.path.join(self.temp_dir, "logs"),
+        )
+
+        self.assertEqual(diagnostics["recent_count_events"][0]["track_id"], 108)
+        self.assertEqual(diagnostics["recent_count_events"][0]["count_authority"], "runtime_inferred_only")
+        self.assertEqual(diagnostics["recent_count_events"][0]["reader_frame_sequence_index"], 4207)
+        self.assertEqual(diagnostics["recent_count_events"][0]["event_ts"], 305.708)
+        self.assertEqual(diagnostics["recent_count_events"][0]["runtime_total_after_event"], 1)
+        self.assertEqual(diagnostics["recent_count_events"][0]["runtime_inferred_only_after_event"], 1)
+        self.assertEqual(diagnostics["recent_count_events"][0]["worker_state"], "RUNNING_GREEN")
+
+    def test_demo_eof_flush_records_runtime_events_once(self) -> None:
+        self.worker.state = "RUNNING_GREEN"
+        fake_counter = Mock()
+        fake_counter.flush_end_of_stream.return_value = RuntimeFrameResult(
+            events=[
+                CountEvent(
+                    track_id=152,
+                    count=1,
+                    reason="approved_delivery_chain",
+                    bbox=(627.0, 533.0, 265.0, 34.0),
+                    source_track_id=145,
+                    provenance_status="synthetic_approved_chain_token",
+                    count_authority="runtime_inferred_only",
+                )
+            ],
+            gate_decisions={},
+            tracks=[],
+        )
+        self.worker._runtime_event_counter = fake_counter
+
+        flushed = self.worker._flush_demo_end_of_stream_events(
+            reader_sequence_index=4250,
+            reader_frame_time=123.45,
+        )
+        flushed_again = self.worker._flush_demo_end_of_stream_events(
+            reader_sequence_index=4250,
+            reader_frame_time=123.45,
+        )
+
+        self.assertEqual(flushed, 1)
+        self.assertEqual(flushed_again, 0)
+        self.assertEqual(self.worker.get_status()["runtime_total"], 1)
+        self.assertEqual(self.worker.get_status()["runtime_inferred_only"], 1)
+        fake_counter.flush_end_of_stream.assert_called_once_with(iterations=2)
+
+    def test_runtime_person_boxes_refresh_every_processed_frame(self) -> None:
+        self.worker.stop()
+        os.environ["FC_COUNTING_MODE"] = "event_based"
+        os.environ["FC_PERSON_DETECT_ENABLED"] = "1"
+        calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
+        calibration_path.write_text(
+            '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
+            encoding="utf-8",
+        )
+        os.environ["FC_RUNTIME_CALIBRATION_PATH"] = str(calibration_path)
+
+        first_detection = Mock(x=1, y=2, w=3, h=4, confidence=0.9)
+        second_detection = Mock(x=10, y=20, w=30, h=40, confidence=0.8)
+        detector = Mock()
+        detector.detect_people.side_effect = [[first_detection], [second_detection]]
+
+        with patch("app.workers.vision_worker.PersonDetector", return_value=detector):
+            self.worker = VisionWorker(VideoRuntime())
+
+        frame = np.zeros((64, 64, 3), dtype=np.uint8)
+        first_boxes = self.worker._refresh_runtime_person_boxes(frame)
+        second_boxes = self.worker._refresh_runtime_person_boxes(frame)
+
+        self.assertEqual(detector.detect_people.call_count, 2)
+        self.assertEqual(first_boxes, [(1.0, 2.0, 3.0, 4.0)])
+        self.assertEqual(second_boxes, [(10.0, 20.0, 30.0, 40.0)])
 
     def test_reset_counts_resets_runtime_event_counter(self) -> None:
         self.worker.stop()
@@ -296,6 +436,36 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(status["runtime_total"], 23)
         self.assertEqual(status["proof_backed_total"], 21)
         self.assertEqual(status["runtime_inferred_only"], 2)
+
+    def test_demo_completion_waits_for_pending_frame_queue_to_drain(self) -> None:
+        self.assertFalse(
+            self.worker._should_finalize_demo_playback(
+                source_is_demo=True,
+                reader_status={"demo_finished": True, "pending_frames": 2},
+                deterministic_demo=False,
+            )
+        )
+        self.assertTrue(
+            self.worker._should_finalize_demo_playback(
+                source_is_demo=True,
+                reader_status={"demo_finished": True, "pending_frames": 0},
+                deterministic_demo=False,
+            )
+        )
+
+    def test_demo_eof_is_not_treated_as_video_stall_while_queue_drains(self) -> None:
+        self.assertFalse(
+            self.worker._should_handle_video_stall(
+                source_is_demo=True,
+                reader_status={"demo_finished": True, "pending_frames": 2},
+            )
+        )
+        self.assertTrue(
+            self.worker._should_handle_video_stall(
+                source_is_demo=False,
+                reader_status={"demo_finished": False, "pending_frames": 0},
+            )
+        )
 
     def test_deterministic_demo_start_monitoring_restarts_preview_and_arms_runner(self) -> None:
         self.worker.stop()

@@ -3131,3 +3131,64 @@ Exact next recommended step:
 1. Use the `8091` app instance for the prerecorded demo proof, not the old deterministic replay setup.
 2. If investors need “placement and count visibly sync,” demonstrate in the real `1x` mode.
 3. Next engineering step after demo validation: run the same ordered-frame path against an actual RTSP/Reolink stream and measure whether it preserves this behavior live.
+## 2026-04-30: Factory2 App Truth Match
+
+What changed:
+- Added source-coverage diagnostics for live app truth comparison:
+  - `app/api/schemas.py`
+  - `app/services/frame_reader.py`
+  - `app/workers/vision_worker.py`
+- Added/extended live app truth-comparison tooling:
+  - `scripts/build_factory2_human_truth_ledger.py`
+  - `scripts/capture_factory2_app_run_events.py`
+  - `scripts/compare_factory2_app_run_to_truth_ledger.py`
+- Added one-command investor demo launcher:
+  - `scripts/start_factory2_demo_app.py`
+
+Key artifacts:
+- Human truth ledger:
+  - `data/reports/factory2_human_truth_ledger.v1.json`
+- Verified full app run on the real live path:
+  - `data/reports/factory2_app_observed_events.run8095.event_based_final_v1.json`
+  - `data/reports/factory2_app_vs_truth.run8095.event_based_final_v1.json`
+- Partial coverage-aware comparison examples:
+  - `data/reports/factory2_app_vs_truth.partial8094.coverage_v3.json`
+  - `data/reports/factory2_app_vs_truth.run8095.event_based_v1.json`
+
+Verified result:
+- Real one-pass app run on `factory2.MOV`, using the actual app/runtime path, matched the human truth ledger exactly:
+  - `matched_count: 23`
+  - `missing_truth_count: 0`
+  - `pending_truth_count: 0`
+  - `unexpected_observed_count: 0`
+  - `first_divergence: null`
+- Final app totals on the verified run:
+  - `runtime_total: 23`
+  - `proof_backed_total: 11`
+  - `runtime_inferred_only: 12`
+  - `current_state: DEMO_COMPLETE`
+
+Commands run:
+- Focused verification:
+  - `.venv/bin/python -m pytest tests/test_capture_factory2_app_run_events.py tests/test_compare_factory2_app_run_to_truth_ledger.py tests/test_frame_reader.py tests/test_api_smoke.py -q`
+  - `.venv/bin/python -m pytest tests/test_start_factory2_demo_app.py tests/test_capture_factory2_app_run_events.py tests/test_compare_factory2_app_run_to_truth_ledger.py tests/test_frame_reader.py tests/test_api_smoke.py -q`
+  - `.venv/bin/python -m py_compile scripts/start_factory2_demo_app.py scripts/capture_factory2_app_run_events.py scripts/compare_factory2_app_run_to_truth_ledger.py app/services/frame_reader.py app/workers/vision_worker.py app/api/schemas.py`
+- Verified app launch:
+  - `FC_DEMO_MODE=1 FC_DEMO_VIDEO_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV FC_DEMO_LOOP=0 FC_DEMO_PLAYBACK_SPEED=1.0 FC_DEMO_COUNT_MODE=live_reader_snapshot FC_COUNTING_MODE=event_based FC_RUNTIME_CALIBRATION_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json FC_PROCESSING_FPS=10 FC_READER_FPS=10 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8095`
+- Full truth capture + compare:
+  - `.venv/bin/python scripts/capture_factory2_app_run_events.py --base-url http://127.0.0.1:8095 --output data/reports/factory2_app_observed_events.run8095.event_based_final_v1.json --poll-interval-sec 5 --max-wait-sec 1200 --force`
+  - `.venv/bin/python scripts/compare_factory2_app_run_to_truth_ledger.py --truth-ledger data/reports/factory2_human_truth_ledger.v1.json --observed-events data/reports/factory2_app_observed_events.run8095.event_based_final_v1.json --output data/reports/factory2_app_vs_truth.run8095.event_based_final_v1.json --force`
+
+Current investor-facing state:
+- Port `8091` is now running the verified Factory2 demo configuration via the same real one-pass path:
+  - `FC_DEMO_COUNT_MODE=live_reader_snapshot`
+  - `FC_COUNTING_MODE=event_based`
+  - `FC_RUNTIME_CALIBRATION_PATH=data/calibration/factory2_ai_only_v1.json`
+  - `FC_DEMO_LOOP=0`
+  - `FC_PROCESSING_FPS=10`
+  - `FC_READER_FPS=10`
+
+Exact next recommended step:
+1. Use `scripts/start_factory2_demo_app.py` for the investor demo launch instead of hand-setting env vars.
+2. Validate the visible browser flow once more on `8091` from `Runtime Total = 0` to `23`.
+3. After Factory2 demo lock-in, move to a real RTSP/Reolink source on the same `event_based` path.

@@ -113,6 +113,8 @@ class VisionWorker:
         self.last_error_code: str | None = None
         self.last_error_message: str | None = None
         self._latest_debug_artifact: dict[str, Any] | None = None
+        self._recent_count_events: deque[dict[str, Any]] = deque(maxlen=256)
+        self._demo_eof_flush_applied = False
         self.person_ignore_enabled = is_person_ignore_enabled() and self._counting_mode != "event_based"
         self._runtime_total = 0
         self._proof_backed_total = 0
@@ -256,6 +258,7 @@ class VisionWorker:
                 self._transition("IDLE", "Unable to prepare deterministic demo count")
                 return self.get_status()
             self.monitoring_enabled = True
+            self._demo_eof_flush_applied = False
             self.video_runtime.reader.discard_pending_frames()
             if should_use_deterministic_demo and self._deterministic_demo_runner is not None:
                 self._clear_count_state()
@@ -409,27 +412,35 @@ class VisionWorker:
                         self._clear_error_if_matches("VIDEO_STALL")
 
                 deterministic_demo = self._should_use_deterministic_demo_counting(source_is_demo=runtime_status.source.is_demo)
-                if (
-                    runtime_status.source.is_demo
-                    and reader_status.get("demo_finished")
-                    and (
-                        not deterministic_demo
-                        or self._deterministic_demo_runner is None
-                        or self._deterministic_demo_runner.is_finished
-                    )
+                if self._should_finalize_demo_playback(
+                    source_is_demo=runtime_status.source.is_demo,
+                    reader_status=reader_status,
+                    deterministic_demo=deterministic_demo,
                 ):
                     with self._lock:
+                        if not deterministic_demo:
+                            flushed = self._flush_demo_end_of_stream_events(
+                                reader_sequence_index=int(reader_status.get("last_sequence_index") or 0),
+                                reader_frame_time=float(reader_status.get("last_frame_time") or 0.0),
+                            )
+                            if flushed > 0:
+                                self._write_health_sample_if_due(source_kind="demo")
+                                self._sleep_remaining(started, delay)
+                                continue
                         self._handle_demo_playback_complete()
                         self._write_health_sample_if_due(source_kind="demo")
                     self._sleep_remaining(started, delay)
                     continue
 
-                if self._is_video_stalled():
+                if self._is_video_stalled() and self._should_handle_video_stall(
+                    source_is_demo=runtime_status.source.is_demo,
+                    reader_status=reader_status,
+                ):
                     self._handle_video_stall()
                     self._sleep_remaining(started, delay)
                     continue
 
-                frame_snapshot = self.video_runtime.reader.consume_next_frame()
+                frame_snapshot = self._next_reader_frame(source_is_demo=runtime_status.source.is_demo)
                 frame = None if frame_snapshot is None else frame_snapshot.frame
                 if frame is None:
                     with self._lock:
@@ -512,8 +523,17 @@ class VisionWorker:
 
                     if increment > 0:
                         with self._lock:
+                            count_events = list(debug_artifact.get("count_events") or [])
                             event_count_authorities = list(debug_artifact.get("event_count_authorities") or [])
-                            if event_count_authorities:
+                            if count_events:
+                                self._record_count_events(
+                                    count_events,
+                                    reader_sequence_index=frame_snapshot.sequence_index,
+                                    reader_frame_time=frame_snapshot.last_frame_time,
+                                    source_timestamp_sec=frame_snapshot.source_timestamp_sec,
+                                    source_kind="demo" if runtime_status.source.is_demo else "camera",
+                                )
+                            elif event_count_authorities:
                                 for authority in event_count_authorities:
                                     self._record_count_event(count_authority=str(authority))
                             else:
@@ -623,7 +643,14 @@ class VisionWorker:
             ],
             "person_boxes": [self._person_box_payload(item) for item in person_boxes],
             "event_count_authorities": event_count_authorities,
+            "count_events": self._runtime_count_event_payloads(frame_result),
         }
+
+    def _next_reader_frame(self, *, source_is_demo: bool):
+        reader = self.video_runtime.reader
+        if source_is_demo and reader.is_synchronous_demo_mode():
+            return reader.pump_next_demo_frame()
+        return reader.consume_next_frame()
 
     def _run_deterministic_demo_counting(self, frame) -> tuple[int, dict[str, Any]]:
         if self._deterministic_demo_runner is None:
@@ -872,6 +899,73 @@ class VisionWorker:
             self._runtime_inferred_only_total += 1
         record_count_event(timestamp=datetime.now(), count_source="vision", increment=1)
 
+    def _record_count_events(
+        self,
+        count_events: list[dict[str, Any]],
+        *,
+        reader_sequence_index: int,
+        reader_frame_time: float,
+        source_timestamp_sec: float | None,
+        source_kind: str,
+    ) -> None:
+        for count_event in count_events:
+            authority = count_event.get("count_authority")
+            self._record_count_event(count_authority=None if authority is None else str(authority))
+            traced_event = dict(count_event)
+            traced_event["event_ts"] = round(float(source_timestamp_sec), 3) if source_timestamp_sec is not None else None
+            traced_event["runtime_total_after_event"] = self._runtime_total
+            traced_event["proof_backed_total_after_event"] = self._proof_backed_total
+            traced_event["runtime_inferred_only_after_event"] = self._runtime_inferred_only_total
+            traced_event["reader_frame_sequence_index"] = reader_sequence_index
+            traced_event["reader_frame_time"] = round(reader_frame_time, 6) if reader_frame_time > 0 else 0.0
+            traced_event["source_kind"] = source_kind
+            traced_event["worker_state"] = self.state
+            self._recent_count_events.append(traced_event)
+
+    def _runtime_count_event_payloads(self, frame_result) -> list[dict[str, Any]]:
+        return [
+            {
+                "track_id": event.track_id,
+                "count": event.count,
+                "reason": event.reason,
+                "bbox": list(event.bbox),
+                "source_track_id": event.source_track_id,
+                "source_token_id": event.source_token_id,
+                "chain_id": event.chain_id,
+                "source_bbox": None if event.source_bbox is None else list(event.source_bbox),
+                "provenance_status": event.provenance_status,
+                "count_authority": event.count_authority,
+                "track_zone": frame_result.track_zones.get(event.track_id),
+                "person_overlap_ratio": float(frame_result.track_metadata.get(event.track_id, {}).get("person_overlap_ratio", 0.0)),
+                "outside_person_ratio": float(frame_result.track_metadata.get(event.track_id, {}).get("outside_person_ratio", 1.0)),
+                "predecessor_chain_track_ids": list(frame_result.event_provenance.get(event.track_id, {}).get("predecessor_chain_track_ids", [])),
+            }
+            for event in frame_result.events
+        ]
+
+    def _flush_demo_end_of_stream_events(
+        self,
+        *,
+        reader_sequence_index: int,
+        reader_frame_time: float,
+    ) -> int:
+        if self._demo_eof_flush_applied or self._runtime_event_counter is None:
+            self._demo_eof_flush_applied = True
+            return 0
+        self._demo_eof_flush_applied = True
+        frame_result = self._runtime_event_counter.flush_end_of_stream(iterations=2)
+        count_events = self._runtime_count_event_payloads(frame_result)
+        if not count_events:
+            return 0
+        self._record_count_events(
+            count_events,
+            reader_sequence_index=reader_sequence_index,
+            reader_frame_time=reader_frame_time,
+            source_timestamp_sec=None,
+            source_kind="demo",
+        )
+        return len(count_events)
+
     def _clear_count_state(self) -> None:
         self.counter_state = CounterState()
         self._runtime_total = 0
@@ -880,6 +974,8 @@ class VisionWorker:
         self._current_minute_count = 0
         self._current_minute_key = self._minute_key_now()
         self._minute_history.clear()
+        self._recent_count_events.clear()
+        self._demo_eof_flush_applied = False
         self.rolling_rate_per_min = 0.0
         if self._runtime_event_counter is not None:
             self._runtime_event_counter.reset()
@@ -1007,6 +1103,31 @@ class VisionWorker:
         self.last_frame_age_sec = 0.0
         self._transition("DEMO_COMPLETE", "Demo playback complete")
 
+    def _should_finalize_demo_playback(
+        self,
+        *,
+        source_is_demo: bool,
+        reader_status: dict[str, object],
+        deterministic_demo: bool,
+    ) -> bool:
+        if not source_is_demo or not reader_status.get("demo_finished"):
+            return False
+        if int(reader_status.get("pending_frames") or 0) > 0:
+            return False
+        if not deterministic_demo or self._deterministic_demo_runner is None:
+            return True
+        return self._deterministic_demo_runner.is_finished
+
+    def _should_handle_video_stall(
+        self,
+        *,
+        source_is_demo: bool,
+        reader_status: dict[str, object],
+    ) -> bool:
+        if source_is_demo and self.video_runtime.reader.is_synchronous_demo_mode():
+            return bool(self.monitoring_enabled or self.calibrating)
+        return not (source_is_demo and bool(reader_status.get("demo_finished")))
+
     def _write_health_sample_if_due(self, *, source_kind: str) -> None:
         now = time.time()
         if (now - self._last_health_sample_ts) < get_health_sample_interval_sec():
@@ -1060,6 +1181,12 @@ class VisionWorker:
             "demo_playback_finished": self.video_runtime.is_demo_finished(),
             "demo_elapsed_sec": demo_elapsed,
             "demo_playback_active": demo_active,
+            "reader_last_sequence_index": int(reader_status.get("last_sequence_index") or 0),
+            "reader_last_source_timestamp_sec": (
+                None
+                if reader_status.get("last_source_timestamp_sec") is None
+                else round(float(reader_status.get("last_source_timestamp_sec")), 3)
+            ),
             "demo_receipt_total": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.receipt_count,
             "demo_revealed_receipts": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.revealed_count,
             "demo_expected_final_total": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.expected_final_count,
@@ -1071,6 +1198,7 @@ class VisionWorker:
             "counting_mode": self._counting_mode,
             "latest_error_code": self.last_error_code,
             "latest_error_message": latest_error_message,
+            "recent_count_events": [dict(item) for item in self._recent_count_events],
         }
 
     def _ensure_person_detector(self) -> PersonDetector | None:
@@ -1106,20 +1234,6 @@ class VisionWorker:
         return [dict(item) for item in boxes]
 
     def _refresh_runtime_person_boxes(self, frame) -> list[Box]:
-        interval = 1.0 / max(0.1, get_person_detect_fps())
-        now = time.time()
-        with self._lock:
-            if (now - self._last_runtime_person_detect_ts) < interval and self._latest_person_boxes:
-                return [
-                    (
-                        float(item.get("x", 0)),
-                        float(item.get("y", 0)),
-                        float(item.get("w", 0)),
-                        float(item.get("h", 0)),
-                    )
-                    for item in self._latest_person_boxes
-                ]
-
         detector = self._ensure_person_detector()
         if detector is None:
             return []
@@ -1137,7 +1251,7 @@ class VisionWorker:
         ]
         with self._lock:
             self._latest_person_boxes = payload
-            self._last_runtime_person_detect_ts = now
+            self._last_runtime_person_detect_ts = time.time()
         return [
             (
                 float(item["x"]),

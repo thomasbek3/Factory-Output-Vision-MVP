@@ -29,18 +29,10 @@ export function DashboardPage() {
   const deferredEvents = useDeferredValue(events)
   const countingHints = countingGuidance(config, status, diagnostics)
   const liveOverlays = diagnostics?.source_kind === 'demo' ? buildSavedGeometryOverlays(config) : []
-  const liveMedia =
-    diagnostics?.source_kind === 'demo'
-      ? {
-          kind: 'video' as const,
-          fallbackImageSrc: apiClient.liveStreamUrl(videoTick),
-          src: apiClient.activeDemoVideoUrl(videoTick),
-          playbackRate: diagnostics.demo_playback_speed,
-        }
-      : {
-          kind: 'image' as const,
-          src: apiClient.liveStreamUrl(videoTick),
-        }
+  const liveMedia = {
+    kind: 'image' as const,
+    src: apiClient.liveStreamUrl(videoTick),
+  }
 
   return (
     <>
@@ -142,10 +134,10 @@ export function DashboardPage() {
           media={liveMedia}
           onRefresh={refreshSnapshot}
           overlays={liveOverlays}
-          refreshLabel={diagnostics?.source_kind === 'demo' ? 'Reload preview' : 'Reload stream'}
+          refreshLabel="Reload stream"
           subtitle={
             diagnostics?.source_kind === 'demo'
-              ? 'Browser preview plays the active demo video directly for smoother review. Counting state still comes from FastAPI.'
+              ? 'Demo preview now shows the backend frame stream being counted, so visible motion and Runtime Total stay on the same clock.'
               : 'Camera live view now streams as MJPEG for true motion while counts and diagnostics still come from FastAPI.'
           }
           title="Live View"
