@@ -2,6 +2,7 @@ import logging
 import subprocess
 import threading
 import time
+from collections import deque
 from dataclasses import dataclass
 from typing import Optional
 
@@ -36,6 +37,9 @@ class FFmpegFrameReader:
         self._demo_playback_speed = 1.0
         self._demo_finished = False
         self._demo_loop_enabled = True
+        self._pending_frames: deque[ReaderSnapshot] = deque()
+        self._max_pending_frames = 240
+        self._dropped_frame_count = 0
 
     def start(
         self,
@@ -66,6 +70,9 @@ class FFmpegFrameReader:
         self._demo_playback_speed = max(0.25, min(float(demo_playback_speed), 8.0))
         self._demo_loop_enabled = bool(demo_loop_enabled)
         self._demo_finished = False
+        with self._lock:
+            self._pending_frames.clear()
+            self._dropped_frame_count = 0
         self._stop_event.clear()
         self._thread = threading.Thread(
             target=self._read_loop,
@@ -86,6 +93,10 @@ class FFmpegFrameReader:
             self._cleanup_process(process, include_stderr=False)
         self._thread = None
         self._process = None
+        with self._lock:
+            self._frame = None
+            self._last_frame_time = 0.0
+            self._pending_frames.clear()
 
     def restart(self) -> None:
         self.stop()
@@ -94,6 +105,16 @@ class FFmpegFrameReader:
         with self._lock:
             frame = None if self._frame is None else self._frame.copy()
             return ReaderSnapshot(frame=frame, last_frame_time=self._last_frame_time, source=self._source)
+
+    def consume_next_frame(self) -> Optional[ReaderSnapshot]:
+        with self._lock:
+            if not self._pending_frames:
+                return None
+            return self._pending_frames.popleft()
+
+    def discard_pending_frames(self) -> None:
+        with self._lock:
+            self._pending_frames.clear()
 
     def status(self) -> dict[str, object]:
         with self._lock:
@@ -106,6 +127,8 @@ class FFmpegFrameReader:
                 "demo_playback_speed": self._demo_playback_speed,
                 "demo_finished": self._demo_finished,
                 "demo_loop_enabled": self._demo_loop_enabled,
+                "pending_frames": len(self._pending_frames),
+                "dropped_frames": self._dropped_frame_count,
             }
 
     def _build_cmd(self, selection: SourceSelection) -> list[str]:
@@ -150,10 +173,17 @@ class FFmpegFrameReader:
                         self._set_last_error("ffmpeg stream returned incomplete frame")
                         break
                     arr = np.frombuffer(raw, dtype=np.uint8).reshape((self._height, self._width, 3))
+                    frame_time = time.time()
                     with self._lock:
                         self._frame = arr
-                        self._last_frame_time = time.time()
+                        self._last_frame_time = frame_time
                         self._last_error = None
+                        self._pending_frames.append(
+                            ReaderSnapshot(frame=arr, last_frame_time=frame_time, source=self._source)
+                        )
+                        while len(self._pending_frames) > self._max_pending_frames:
+                            self._pending_frames.popleft()
+                            self._dropped_frame_count += 1
                 if self._stop_event.is_set():
                     break
             finally:

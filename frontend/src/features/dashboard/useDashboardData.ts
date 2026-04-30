@@ -54,6 +54,8 @@ function statusFromMetricsPayload(payload: MetricsPayload): StatusResponse {
     last_frame_age_sec: payload.last_frame_age_sec,
     reconnect_attempts_total: payload.reconnect_attempts_total,
     operator_absent: payload.operator_absent,
+    demo_elapsed_sec: payload.demo_elapsed_sec,
+    demo_playback_active: payload.demo_playback_active,
   }
 }
 

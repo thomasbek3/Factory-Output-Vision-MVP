@@ -114,6 +114,7 @@ class VisionWorker:
         self.last_error_message: str | None = None
         self._latest_debug_artifact: dict[str, Any] | None = None
         self.person_ignore_enabled = is_person_ignore_enabled() and self._counting_mode != "event_based"
+        self._runtime_total = 0
         self._proof_backed_total = 0
         self._runtime_inferred_only_total = 0
 
@@ -163,6 +164,9 @@ class VisionWorker:
         with self._lock:
             self.counter_state.rollover_if_needed()
             self._rollover_completed_minute_if_needed()
+            source_kind = self.video_runtime.current_source_kind()
+            demo_active = bool(source_kind == "demo" and (self.monitoring_enabled or self.calibrating) and not self.video_runtime.is_demo_finished())
+            demo_elapsed = 0.0 if self._deterministic_demo_runner is None else round(self._deterministic_demo_runner.current_elapsed_sec(), 2)
             return {
                 "state": self.state,
                 "count_source": "vision",
@@ -173,12 +177,14 @@ class VisionWorker:
                 "rolling_rate_per_min": round(self.rolling_rate_per_min, 2),
                 "counts_this_minute": self.counter_state.counts_this_minute,
                 "counts_this_hour": self.counter_state.counts_this_hour,
-                "runtime_total": self.counter_state.counts_this_hour,
+                "runtime_total": self._runtime_total,
                 "proof_backed_total": self._proof_backed_total,
                 "runtime_inferred_only": self._runtime_inferred_only_total,
                 "last_frame_age_sec": None if self.last_frame_age_sec is None else round(self.last_frame_age_sec, 2),
                 "reconnect_attempts_total": self.reconnect_attempts_total,
                 "operator_absent": self.operator_absent_active,
+                "demo_elapsed_sec": demo_elapsed,
+                "demo_playback_active": demo_active,
             }
 
     def get_metrics_payload(self) -> dict[str, Any]:
@@ -219,8 +225,9 @@ class VisionWorker:
             return artifact
 
     def start_monitoring(self) -> dict[str, object]:
-        deterministic_demo_error: Exception | None = None
-        should_use_deterministic_demo = self._should_use_deterministic_demo_counting(source_is_demo=self.video_runtime.current_source_kind() == "demo")
+        monitoring_prepare_error: Exception | None = None
+        source_is_demo = self.video_runtime.current_source_kind() == "demo"
+        should_use_deterministic_demo = self._should_use_deterministic_demo_counting(source_is_demo=source_is_demo)
         if should_use_deterministic_demo:
             try:
                 selection = self.video_runtime.current_source_selection()
@@ -233,17 +240,23 @@ class VisionWorker:
                 )
                 self.video_runtime.restart()
             except Exception as exc:  # noqa: BLE001
-                deterministic_demo_error = exc
+                monitoring_prepare_error = exc
+        elif source_is_demo:
+            try:
+                self.video_runtime.restart()
+            except Exception as exc:  # noqa: BLE001
+                monitoring_prepare_error = exc
 
         with self._lock:
             if not self._is_configured():
                 self._transition("NOT_CONFIGURED", "Missing camera/demo source or output area")
                 return self.get_status()
-            if deterministic_demo_error is not None:
-                self._record_runtime_error("DEMO_COUNT_PREP_ERROR", str(deterministic_demo_error))
+            if monitoring_prepare_error is not None:
+                self._record_runtime_error("DEMO_COUNT_PREP_ERROR", str(monitoring_prepare_error))
                 self._transition("IDLE", "Unable to prepare deterministic demo count")
                 return self.get_status()
             self.monitoring_enabled = True
+            self.video_runtime.reader.discard_pending_frames()
             if should_use_deterministic_demo and self._deterministic_demo_runner is not None:
                 self._clear_count_state()
                 self._deterministic_demo_runner.arm(playback_speed=self.video_runtime.current_demo_playback_speed())
@@ -349,6 +362,7 @@ class VisionWorker:
             elif delta < 0:
                 self.counter_state.counts_this_minute = max(0, self.counter_state.counts_this_minute + delta)
                 self.counter_state.counts_this_hour = max(0, self.counter_state.counts_this_hour + delta)
+                self._runtime_total = max(0, self._runtime_total + delta)
                 self._current_minute_count = max(0, self._current_minute_count + delta)
             self.last_event = {
                 "type": "MANUAL_ADJUST",
@@ -370,6 +384,7 @@ class VisionWorker:
 
         while not self._stop_event.is_set():
             started = time.time()
+            next_delay = delay
             self._last_loop_tick_ts = started
             try:
                 with self._lock:
@@ -409,12 +424,13 @@ class VisionWorker:
                     self._sleep_remaining(started, delay)
                     continue
 
-                frame = snap.frame
                 if self._is_video_stalled():
                     self._handle_video_stall()
                     self._sleep_remaining(started, delay)
                     continue
 
+                frame_snapshot = self.video_runtime.reader.consume_next_frame()
+                frame = None if frame_snapshot is None else frame_snapshot.frame
                 if frame is None:
                     with self._lock:
                         self._write_health_sample_if_due(source_kind="demo" if runtime_status.source.is_demo else "camera")
@@ -517,12 +533,15 @@ class VisionWorker:
                             self._transition("IDLE", "Waiting for monitoring")
                         self._handle_recovered_from_reconnect_if_needed()
                         self._write_health_sample_if_due(source_kind="demo" if runtime_status.source.is_demo else "camera")
+                pending_frames = int(self.video_runtime.reader.status().get("pending_frames") or 0)
+                if pending_frames > 0:
+                    next_delay = 0.0
             except Exception as exc:  # noqa: BLE001
                 logger.exception("Vision loop error")
                 with self._lock:
                     self._record_runtime_error("VISION_LOOP_ERROR", str(exc))
 
-            self._sleep_remaining(started, delay)
+            self._sleep_remaining(started, next_delay)
 
     def _run_event_based_counting(
         self,
@@ -845,6 +864,7 @@ class VisionWorker:
 
     def _record_count_event(self, *, count_authority: str | None = "source_token_authorized") -> None:
         self.counter_state.increment()
+        self._runtime_total += 1
         self._current_minute_count += 1
         if count_authority == "source_token_authorized":
             self._proof_backed_total += 1
@@ -854,6 +874,7 @@ class VisionWorker:
 
     def _clear_count_state(self) -> None:
         self.counter_state = CounterState()
+        self._runtime_total = 0
         self._proof_backed_total = 0
         self._runtime_inferred_only_total = 0
         self._current_minute_count = 0
@@ -975,8 +996,10 @@ class VisionWorker:
         self._reconnect_backoff_sec = max(0.1, get_reconnect_backoff_initial_sec())
 
     def _handle_demo_playback_complete(self) -> None:
-        if not (self.monitoring_enabled or self.calibrating or self.counter_state.counts_this_hour > 0):
+        if not (self.monitoring_enabled or self.calibrating or self._runtime_total > 0):
             return
+        if self._deterministic_demo_runner is not None:
+            self._deterministic_demo_runner.freeze()
         self.monitoring_enabled = False
         self.calibrating = False
         self.operator_absent_active = False
@@ -1003,7 +1026,7 @@ class VisionWorker:
                 "baseline_rate_per_min": self.baseline_rate_per_min,
                 "counts_this_minute": self.counter_state.counts_this_minute,
                 "counts_this_hour": self.counter_state.counts_this_hour,
-                "runtime_total": self.counter_state.counts_this_hour,
+                "runtime_total": self._runtime_total,
                 "proof_backed_total": self._proof_backed_total,
                 "runtime_inferred_only": self._runtime_inferred_only_total,
                 "last_error_code": self.last_error_code,
@@ -1014,6 +1037,9 @@ class VisionWorker:
     def get_diagnostics(self, *, uptime_sec: float, db_path: str, log_directory: str) -> dict[str, object]:
         reader_status = self.video_runtime.reader.status()
         latest_error_message = self.last_error_message or reader_status.get("last_error")
+        source_kind = self.video_runtime.current_source_kind()
+        demo_active = bool(source_kind == "demo" and (self.monitoring_enabled or self.calibrating) and not self.video_runtime.is_demo_finished())
+        demo_elapsed = 0.0 if self._deterministic_demo_runner is None else round(self._deterministic_demo_runner.current_elapsed_sec(), 2)
         return {
             "app_version": "0.1.0",
             "uptime_sec": round(uptime_sec, 2),
@@ -1026,12 +1052,14 @@ class VisionWorker:
             "person_detect_loop_alive": bool(self._person_thread and self._person_thread.is_alive()),
             "db_path": db_path,
             "log_directory": log_directory,
-            "source_kind": self.video_runtime.current_source_kind(),
+            "source_kind": source_kind,
             "demo_playback_speed": round(self.video_runtime.current_demo_playback_speed(), 2),
             "demo_video_name": self.video_runtime.current_demo_video_name(),
             "demo_count_mode": self._demo_count_mode,
             "demo_loop_enabled": self.video_runtime.is_demo_loop_enabled(),
             "demo_playback_finished": self.video_runtime.is_demo_finished(),
+            "demo_elapsed_sec": demo_elapsed,
+            "demo_playback_active": demo_active,
             "demo_receipt_total": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.receipt_count,
             "demo_revealed_receipts": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.revealed_count,
             "demo_expected_final_total": 0 if self._deterministic_demo_runner is None else self._deterministic_demo_runner.expected_final_count,

@@ -33,6 +33,7 @@ class DeterministicDemoRunner:
         self._cursor = 0
         self._playback_speed = 1.0
         self._started_monotonic: float | None = None
+        self._frozen_elapsed_sec: float | None = None
 
     @property
     def report_path(self) -> Path | None:
@@ -100,23 +101,37 @@ class DeterministicDemoRunner:
         self._playback_speed = max(0.25, float(playback_speed))
         self._cursor = 0
         self._started_monotonic = None
+        self._frozen_elapsed_sec = None
 
     def disarm(self) -> None:
         self._cursor = 0
         self._started_monotonic = None
+        self._frozen_elapsed_sec = None
 
     def activate(self, *, start_monotonic: float | None = None) -> None:
         if self._payload is None:
             raise RuntimeError("Deterministic demo runner is not prepared")
         if self._started_monotonic is None:
             self._started_monotonic = float(start_monotonic if start_monotonic is not None else time.monotonic())
+            self._frozen_elapsed_sec = None
+
+    def freeze(self, *, now_monotonic: float | None = None) -> None:
+        if self._payload is None or self._started_monotonic is None:
+            return
+        self._frozen_elapsed_sec = self.current_elapsed_sec(now_monotonic=now_monotonic)
+
+    def current_elapsed_sec(self, *, now_monotonic: float | None = None) -> float:
+        if self._frozen_elapsed_sec is not None:
+            return self._frozen_elapsed_sec
+        if self._started_monotonic is None:
+            return 0.0
+        now = float(now_monotonic if now_monotonic is not None else time.monotonic())
+        return max(0.0, now - self._started_monotonic) * self._playback_speed
 
     def drain_due_events(self, *, now_monotonic: float | None = None) -> list[dict[str, Any]]:
         if self._payload is None or self._started_monotonic is None:
             return []
-
-        now = float(now_monotonic if now_monotonic is not None else time.monotonic())
-        revealed_video_seconds = max(0.0, now - self._started_monotonic) * self._playback_speed
+        revealed_video_seconds = self.current_elapsed_sec(now_monotonic=now_monotonic)
         due: list[dict[str, Any]] = []
         while self._cursor < len(self._receipts) and self._receipts[self._cursor].event_ts <= revealed_video_seconds + 1e-9:
             due.append(dict(self._receipts[self._cursor].payload))

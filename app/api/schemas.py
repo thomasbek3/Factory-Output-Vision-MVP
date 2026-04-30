@@ -104,6 +104,8 @@ class StatusResponse(BaseModel):
     last_frame_age_sec: float | None = None
     reconnect_attempts_total: int = 0
     operator_absent: bool = False
+    demo_elapsed_sec: float = 0.0
+    demo_playback_active: bool = False
 
 
 class EventResponse(BaseModel):
@@ -145,6 +147,8 @@ class DiagnosticsResponse(BaseModel):
     demo_count_mode: str = "live_reader_snapshot"
     demo_loop_enabled: bool = True
     demo_playback_finished: bool = False
+    demo_elapsed_sec: float = 0.0
+    demo_playback_active: bool = False
     demo_receipt_total: int = 0
     demo_revealed_receipts: int = 0
     demo_expected_final_total: int = 0

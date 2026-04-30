@@ -118,6 +118,25 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertFalse(self.worker._was_reconnecting)
         self.assertEqual(self.worker.last_event["type"], "RECONNECTED")
 
+    def test_start_monitoring_restarts_demo_source_and_clears_pending_frames(self) -> None:
+        restart_calls: list[str] = []
+        discard_calls: list[str] = []
+
+        def fake_restart() -> None:
+            restart_calls.append("restart")
+
+        def fake_discard() -> None:
+            discard_calls.append("discard")
+
+        self.worker.video_runtime.restart = fake_restart  # type: ignore[method-assign]
+        self.worker.video_runtime.reader.discard_pending_frames = fake_discard  # type: ignore[method-assign]
+
+        status = self.worker.start_monitoring()
+
+        self.assertEqual(restart_calls, ["restart"])
+        self.assertEqual(discard_calls, ["discard"])
+        self.assertEqual(status["state"], "IDLE")
+
     def test_count_new_tracks_requires_min_frames(self) -> None:
         """Tracks below min_track_frames should not be counted."""
         young_track = Track(
@@ -264,6 +283,7 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.worker.state = "RUNNING_GREEN"
         self.worker.counter_state.counts_this_hour = 23
         self.worker.counter_state.counts_this_minute = 1
+        self.worker._runtime_total = 23
         self.worker._proof_backed_total = 21
         self.worker._runtime_inferred_only_total = 2
 
@@ -293,6 +313,7 @@ class VisionWorkerStateTests(unittest.TestCase):
             self.worker = VisionWorker(VideoRuntime())
 
         fake_runner = Mock()
+        fake_runner.current_elapsed_sec.return_value = 0.0
         self.worker._deterministic_demo_runner = fake_runner
         self.worker.video_runtime.current_source_kind = Mock(return_value="demo")  # type: ignore[method-assign]
         self.worker.video_runtime.current_source_selection = Mock(  # type: ignore[method-assign]

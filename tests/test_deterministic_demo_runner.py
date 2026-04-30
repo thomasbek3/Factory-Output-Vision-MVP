@@ -136,3 +136,27 @@ def test_runner_finds_latest_matching_full_video_report_in_report_dir(tmp_path: 
 
     assert runner.report_path == matching_report.resolve()
     assert runner.expected_final_count == 2
+
+
+def test_runner_reports_shared_demo_elapsed_seconds_and_resets_on_disarm(tmp_path: Path) -> None:
+    video_path = tmp_path / "factory2.MOV"
+    calibration_path = tmp_path / "factory2.json"
+    model_path = tmp_path / "panel.pt"
+    report_path = tmp_path / "factory2_runtime_event_audit.json"
+    for path in (video_path, calibration_path, model_path):
+        path.write_text("x", encoding="utf-8")
+    _write_report(report_path, video_path=video_path, calibration_path=calibration_path, model_path=model_path)
+
+    runner = DeterministicDemoRunner(cache_path=report_path)
+    runner.prepare(video_path=video_path, calibration_path=calibration_path, model_path=model_path)
+
+    assert runner.current_elapsed_sec(now_monotonic=20.0) == 0.0
+
+    runner.arm(playback_speed=4.0)
+    assert runner.current_elapsed_sec(now_monotonic=20.0) == 0.0
+
+    runner.activate(start_monotonic=20.0)
+    assert runner.current_elapsed_sec(now_monotonic=20.5) == 2.0
+
+    runner.disarm()
+    assert runner.current_elapsed_sec(now_monotonic=21.0) == 0.0

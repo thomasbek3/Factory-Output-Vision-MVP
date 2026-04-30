@@ -43,6 +43,8 @@ export type StatusResponse = {
   last_frame_age_sec: number | null
   reconnect_attempts_total: number
   operator_absent: boolean
+  demo_elapsed_sec: number
+  demo_playback_active: boolean
 }
 
 export type ConfigResponse = {
@@ -155,6 +157,8 @@ export type DiagnosticsResponse = {
   demo_count_mode: string
   demo_loop_enabled: boolean
   demo_playback_finished: boolean
+  demo_elapsed_sec: number
+  demo_playback_active: boolean
   demo_receipt_total: number
   demo_revealed_receipts: number
   demo_expected_final_total: number

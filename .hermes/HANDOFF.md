@@ -3065,3 +3065,69 @@ Exact next recommended step:
 1. Do not keep trying to raise proof from `21 -> 23` by promoting `305.708s` or `425.012s`.
 2. Treat those two as duplicate/runtime-chain findings unless new source authority appears.
 3. Pivot the next search outward: identify which other human-truth deliveries are missing once these two duplicates are removed from consideration.
+
+---
+
+Update: live non-replay app path now counts `factory2.MOV` to `23`
+
+What was built:
+- Replaced latest-snapshot-only processing with ordered frame consumption in:
+  - `app/services/frame_reader.py`
+  - `app/workers/vision_worker.py`
+- Added demo-start restart/queue reset behavior so prerecorded demo runs begin from frame `0` when monitoring starts.
+- Split session-level `runtime_total` from the hourly bucket so the visible total does not reset mid-demo.
+- Added backend status/diagnostic fields for demo playback activity and elapsed demo timing.
+
+What changed:
+- `FFmpegFrameReader` now keeps a FIFO queue of pending frames for the worker instead of exposing only the latest overwritten frame.
+- `VisionWorker` now consumes frames sequentially from that queue and skips artificial sleeping when backlog exists.
+- Starting monitoring on a demo source now restarts the demo file and clears stale queued frames before counting begins.
+- `runtime_total` is now a true session total in the app path, independent of `counts_this_hour`.
+
+Real app verification:
+- True live app path was rerun with:
+  - `FC_DEMO_COUNT_MODE=live_reader_snapshot`
+  - `FC_DEMO_PLAYBACK_SPEED=1`
+  - `FC_COUNTING_MODE=event_based`
+  - `FC_RUNTIME_CALIBRATION_PATH=data/calibration/factory2_ai_only_v1.json`
+- Final result on the real app path:
+  - `state: DEMO_COMPLETE`
+  - `runtime_total: 23`
+  - `proof_backed_total: 18`
+  - `runtime_inferred_only: 5`
+- This was **not** deterministic receipt replay.
+- This was the actual app processing the prerecorded file frame-by-frame from the live reader path.
+
+Important clarification:
+- `8x` prerecorded demo playback is still not the trustworthy investor mode for “real counting from real frames.”
+- The validated truthful mode is currently `1x` live-reader processing.
+- That is also the correct approximation of a real RTSP security camera stream.
+
+Current investor-facing app state:
+- Port `8091` is now running the real non-replay mode:
+  - `FC_DEMO_COUNT_MODE=live_reader_snapshot`
+  - `FC_DEMO_PLAYBACK_SPEED=1`
+  - `FC_DEMO_LOOP=0`
+- It is parked clean at:
+  - `state: IDLE`
+  - `runtime_total: 0`
+- The next click on `Start monitoring` begins a true start-from-zero run.
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_frame_reader.py tests/test_vision_worker_states.py tests/test_deterministic_demo_runner.py tests/test_demo_mode_flow.py tests/test_dashboard_contract.py -q`
+- `.venv/bin/python -m pytest tests/test_api_smoke.py tests/test_health_repo.py tests/test_dashboard_contract.py tests/test_demo_mode_flow.py tests/test_deterministic_demo_runner.py tests/test_frame_reader.py tests/test_vision_worker_states.py -q`
+- `cd frontend && npm run build`
+- Real app verification runs:
+  - temporary ports `8092` / `8093` / `8094` / `8095`
+  - final investor-facing instance on `8091`
+
+Verification:
+- targeted Python slice: `22 passed`
+- broader Python slice: `29 passed`
+- frontend build: passed
+- real app non-replay `1x` run: `23`
+
+Exact next recommended step:
+1. Use the `8091` app instance for the prerecorded demo proof, not the old deterministic replay setup.
+2. If investors need “placement and count visibly sync,” demonstrate in the real `1x` mode.
+3. Next engineering step after demo validation: run the same ordered-frame path against an actual RTSP/Reolink stream and measure whether it preserves this behavior live.

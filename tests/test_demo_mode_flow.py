@@ -101,12 +101,16 @@ class DemoModeFlowTests(unittest.TestCase):
                 self.assertEqual(final_status["runtime_total"], 2)
                 self.assertEqual(final_status["proof_backed_total"], 1)
                 self.assertEqual(final_status["runtime_inferred_only"], 1)
+                self.assertGreater(final_status["demo_elapsed_sec"], 0.0)
+                self.assertTrue(final_status["demo_playback_active"])
 
                 diagnostics = client.get("/api/diagnostics/sysinfo")
                 self.assertEqual(diagnostics.status_code, 200)
                 self.assertEqual(diagnostics.json()["demo_count_mode"], "deterministic_file_runner")
                 self.assertEqual(diagnostics.json()["demo_receipt_total"], 2)
                 self.assertEqual(diagnostics.json()["demo_revealed_receipts"], 2)
+                self.assertGreater(diagnostics.json()["demo_elapsed_sec"], 0.0)
+                self.assertTrue(diagnostics.json()["demo_playback_active"])
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 

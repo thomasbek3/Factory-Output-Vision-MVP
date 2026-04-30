@@ -24,6 +24,8 @@ class DashboardContractTests(unittest.TestCase):
                 self.assertIn("counts_this_minute", payload)
                 self.assertIn("rolling_rate_per_min", payload)
                 self.assertEqual(payload["count_source"], "vision")
+                self.assertIn("demo_elapsed_sec", payload)
+                self.assertIn("demo_playback_active", payload)
 
             start_monitor = client.post("/api/control/monitor/start")
             self.assertEqual(start_monitor.status_code, 200)
