@@ -75,6 +75,7 @@ def test_single_pass_demo_reader_pumps_processing_fps_frames_synchronously() -> 
         def __init__(self) -> None:
             self.current_index = 0
             self.set_calls: list[int] = []
+            self.grab_calls: list[int] = []
 
         def isOpened(self) -> bool:  # noqa: N802
             return True
@@ -92,8 +93,14 @@ def test_single_pass_demo_reader_pumps_processing_fps_frames_synchronously() -> 
                 self.set_calls.append(int(value))
             return True
 
+        def grab(self) -> bool:
+            self.grab_calls.append(self.current_index)
+            self.current_index += 1
+            return True
+
         def read(self) -> tuple[bool, np.ndarray]:
             frame = np.full((2, 2, 3), self.current_index, dtype=np.uint8)
+            self.current_index += 1
             return True, frame
 
         def release(self) -> None:
@@ -132,7 +139,8 @@ def test_single_pass_demo_reader_pumps_processing_fps_frames_synchronously() -> 
     assert second.source_timestamp_sec == 0.1
     assert int(second.frame[0, 0, 0]) == 3
     assert exhausted is None
-    assert capture.set_calls == [0, 0, 3]
+    assert capture.set_calls == [0]
+    assert capture.grab_calls == [1, 2]
     status = reader.status()
     assert status["demo_finished"] is True
     assert status["last_source_timestamp_sec"] == 0.1

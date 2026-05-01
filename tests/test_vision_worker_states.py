@@ -34,6 +34,7 @@ class VisionWorkerStateTests(unittest.TestCase):
             "FC_DEMO_VIDEO_PATH": os.environ.get("FC_DEMO_VIDEO_PATH"),
             "FC_DEMO_COUNT_MODE": os.environ.get("FC_DEMO_COUNT_MODE"),
             "FC_PERSON_DETECT_ENABLED": os.environ.get("FC_PERSON_DETECT_ENABLED"),
+            "FC_PERSON_DETECT_FPS": os.environ.get("FC_PERSON_DETECT_FPS"),
             "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
         }
@@ -366,10 +367,11 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(self.worker.get_status()["runtime_inferred_only"], 1)
         fake_counter.flush_end_of_stream.assert_called_once_with(iterations=2)
 
-    def test_runtime_person_boxes_refresh_every_processed_frame(self) -> None:
+    def test_runtime_person_boxes_reuse_cached_detections_within_detect_interval(self) -> None:
         self.worker.stop()
         os.environ["FC_COUNTING_MODE"] = "event_based"
         os.environ["FC_PERSON_DETECT_ENABLED"] = "1"
+        os.environ["FC_PERSON_DETECT_FPS"] = "2"
         calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
         calibration_path.write_text(
             '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
@@ -386,12 +388,15 @@ class VisionWorkerStateTests(unittest.TestCase):
             self.worker = VisionWorker(VideoRuntime())
 
         frame = np.zeros((64, 64, 3), dtype=np.uint8)
-        first_boxes = self.worker._refresh_runtime_person_boxes(frame)
-        second_boxes = self.worker._refresh_runtime_person_boxes(frame)
+        with patch("app.workers.vision_worker.time.time", side_effect=[100.0, 100.2, 100.8]):
+            first_boxes = self.worker._refresh_runtime_person_boxes(frame)
+            second_boxes = self.worker._refresh_runtime_person_boxes(frame)
+            third_boxes = self.worker._refresh_runtime_person_boxes(frame)
 
         self.assertEqual(detector.detect_people.call_count, 2)
         self.assertEqual(first_boxes, [(1.0, 2.0, 3.0, 4.0)])
-        self.assertEqual(second_boxes, [(10.0, 20.0, 30.0, 40.0)])
+        self.assertEqual(second_boxes, [(1.0, 2.0, 3.0, 4.0)])
+        self.assertEqual(third_boxes, [(10.0, 20.0, 30.0, 40.0)])
 
     def test_reset_counts_resets_runtime_event_counter(self) -> None:
         self.worker.stop()

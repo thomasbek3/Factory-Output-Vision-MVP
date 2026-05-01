@@ -193,6 +193,14 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Launch mode matters as much as code.** A clean app instance launched in `track_based` mode will look broken even if the verified `event_based` path is correct. The investor/demo launch needs a fixed command or wrapper script, not memory.
 4. **The investor demo recipe is now explicit.** Use `scripts/start_factory2_demo_app.py` so the app always starts with `FC_DEMO_LOOP=0`, `FC_COUNTING_MODE=event_based`, `FC_RUNTIME_CALIBRATION_PATH=data/calibration/factory2_ai_only_v1.json`, and `10 FPS` processing/reader settings.
 
+## 2026-04-30: Factory2 Live Demo Speed Lessons
+
+1. **The single biggest demo-reader bug was random seeking every sampled frame.** In synchronous single-pass demo mode, calling `capture.set(CAP_PROP_POS_FRAMES, frame_index)` on every processed frame destroyed throughput. Advancing sequentially through sampled indices and reusing the primed first frame removed that seek tax.
+2. **Live person/panel analysis should only run in the worker-overlap danger zone.** The expensive silhouette/crop path is only needed when track overlap actually enters the gate’s reject corridor. Running it on clear non-overlap tracks wastes time without improving decisions.
+3. **Adjacent-frame reuse is safe when the track/person geometry barely changes.** Reusing live separation/crop results across nearby same-zone frames preserved the `23/23` truth match while cutting hot-burst per-frame cost materially.
+4. **Runtime person detection should respect its own FPS setting.** Re-running the separate person detector on every processed frame was unnecessary. Caching the last person boxes inside the configured detect interval reduced live-path cost without changing the verified outcome.
+5. **A speed change is not real until the app-truth diff still says `23/23`.** The optimized `8094` app run still matched the human ledger exactly, so this slice is a real live-app speedup, not just a microbench win.
+
 ### Training & Deployment Lessons
 
 8. **ONNX export provides no speedup on i7-12700F.** PyTorch already runs at ~60ms/frame. ONNX overhead (model loading, conversion) wasn't worth it for this CPU. Don't bother unless moving to ARM/edge devices.

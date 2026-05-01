@@ -50,6 +50,9 @@ class FFmpegFrameReader:
         self._sync_demo_frame_indices: list[int] = []
         self._sync_demo_cursor = 0
         self._sync_demo_video_fps = 0.0
+        self._sync_demo_last_frame_index = -1
+        self._sync_demo_buffered_frame: Optional[np.ndarray] = None
+        self._sync_demo_buffered_frame_index = -1
 
     def start(
         self,
@@ -115,6 +118,9 @@ class FFmpegFrameReader:
             self._sync_demo_frame_indices = []
             self._sync_demo_cursor = 0
             self._sync_demo_video_fps = 0.0
+            self._sync_demo_last_frame_index = -1
+            self._sync_demo_buffered_frame = None
+            self._sync_demo_buffered_frame_index = -1
         self._thread = None
         self._process = None
         if sync_demo_capture is not None:
@@ -154,7 +160,15 @@ class FFmpegFrameReader:
                 self._demo_finished = True
                 return None
             frame_index = self._sync_demo_frame_indices[self._sync_demo_cursor]
-            frame = self._read_demo_frame(capture, frame_index)
+            if (
+                self._sync_demo_buffered_frame is not None
+                and frame_index == self._sync_demo_buffered_frame_index
+            ):
+                frame = self._sync_demo_buffered_frame
+                self._sync_demo_buffered_frame = None
+                self._sync_demo_buffered_frame_index = -1
+            else:
+                frame = self._read_demo_frame(capture, frame_index)
             if frame is None:
                 self._demo_finished = True
                 return None
@@ -222,6 +236,9 @@ class FFmpegFrameReader:
             self._sync_demo_frame_indices = frame_indices
             self._sync_demo_cursor = 0
             self._sync_demo_video_fps = max(float(video_fps), 1.0)
+            self._sync_demo_last_frame_index = frame_indices[0] if preview is not None and frame_indices else -1
+            self._sync_demo_buffered_frame = preview
+            self._sync_demo_buffered_frame_index = frame_indices[0] if preview is not None and frame_indices else -1
             self._demo_finished = len(frame_indices) == 0
             self._last_source_timestamp_sec = None
             if preview is not None:
@@ -230,10 +247,17 @@ class FFmpegFrameReader:
                 self._last_error = None
 
     def _read_demo_frame(self, capture: cv2.VideoCapture, frame_index: int) -> Optional[np.ndarray]:
-        capture.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        if self._sync_demo_last_frame_index < 0 or frame_index <= self._sync_demo_last_frame_index:
+            capture.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        else:
+            frames_to_skip = frame_index - self._sync_demo_last_frame_index - 1
+            for _ in range(max(frames_to_skip, 0)):
+                if not capture.grab():
+                    return None
         ok, frame = capture.read()
         if not ok:
             return None
+        self._sync_demo_last_frame_index = frame_index
         if frame.shape[1] != self._width or frame.shape[0] != self._height:
             frame = cv2.resize(frame, (self._width, self._height), interpolation=cv2.INTER_LINEAR)
         return frame

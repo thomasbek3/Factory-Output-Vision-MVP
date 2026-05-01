@@ -209,6 +209,16 @@ class _LiveSeparationSummary:
         return "insufficient_visibility"
 
 
+@dataclass(frozen=True)
+class _LiveFrameAnalysisCache:
+    frame_index: int
+    zone: str
+    panel_box: Box
+    person_box: Box
+    frame_result: dict[str, Any]
+    crop_summary: dict[str, Any] | None
+
+
 class SimpleBoxTracker:
     def __init__(self, *, max_match_distance: float = 30.0, max_missing_frames: int = 1) -> None:
         self.max_match_distance = max_match_distance
@@ -296,6 +306,9 @@ class RuntimeEventCounter:
         self._gate_config = gate_config or GateConfig()
         self._separation_analyzer = separation_analyzer
         self._crop_classifier = crop_classifier
+        self._live_analysis_cache_max_gap_frames = 2
+        self._live_analysis_panel_center_epsilon = 8.0
+        self._live_analysis_person_center_epsilon = 16.0
         self._count_config = CountConfig(
             zones=zones,
             gate=gate,
@@ -338,19 +351,15 @@ class RuntimeEventCounter:
             selected_person_box = _select_person_box(item.bbox, person_boxes)
             if selected_person_box is None:
                 continue
-            frame_result = self._separation_analyzer(
-                image=frame,
-                panel_box_xywh=item.bbox,
-                person_box_xywh=selected_person_box,
+            if not self._should_run_live_separation(accumulator):
+                continue
+            frame_result, crop_summary = self._get_live_separation_sample(
+                track_id=item.track_id,
+                frame=frame,
+                panel_box=item.bbox,
+                person_box=selected_person_box,
                 zone=accumulator.last_zone,
             )
-            crop_summary = None
-            if self._crop_classifier is not None and str(frame_result.get("separation_decision") or "") != "separable_panel_candidate":
-                crop_summary = self._crop_classifier(
-                    image=frame,
-                    panel_box_xywh=item.bbox,
-                    zone=accumulator.last_zone,
-                )
             summary = self._separation_summaries.setdefault(item.track_id, _LiveSeparationSummary())
             summary.update(frame_result, crop_summary)
 
@@ -448,6 +457,7 @@ class RuntimeEventCounter:
         )
         self._gate_accumulators: dict[int, _TrackGateAccumulator] = {}
         self._separation_summaries: dict[int, _LiveSeparationSummary] = {}
+        self._live_analysis_cache_by_track_id: dict[int, _LiveFrameAnalysisCache] = {}
         self._state_machine = CountStateMachine(self._count_config)
         self._frame_index = 0
 
@@ -509,6 +519,66 @@ class RuntimeEventCounter:
             current_accumulator = self._gate_accumulators[predecessor_id]
         predecessor_ids.reverse()
         return predecessor_ids
+
+    def _should_run_live_separation(self, accumulator: _TrackGateAccumulator) -> bool:
+        return (
+            accumulator.person_overlap_ratio > self._gate_config.max_person_overlap
+            or accumulator.outside_person_ratio < self._gate_config.min_outside_person_ratio
+        )
+
+    def _get_live_separation_sample(
+        self,
+        *,
+        track_id: int,
+        frame: np.ndarray,
+        panel_box: Box,
+        person_box: Box,
+        zone: str,
+    ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        cached = self._live_analysis_cache_by_track_id.get(track_id)
+        if self._can_reuse_live_analysis(cached, panel_box=panel_box, person_box=person_box, zone=zone):
+            return cached.frame_result, cached.crop_summary
+
+        frame_result = self._separation_analyzer(
+            image=frame,
+            panel_box_xywh=panel_box,
+            person_box_xywh=person_box,
+            zone=zone,
+        )
+        crop_summary = None
+        if self._crop_classifier is not None and str(frame_result.get("separation_decision") or "") != "separable_panel_candidate":
+            crop_summary = self._crop_classifier(
+                image=frame,
+                panel_box_xywh=panel_box,
+                zone=zone,
+            )
+        self._live_analysis_cache_by_track_id[track_id] = _LiveFrameAnalysisCache(
+            frame_index=self._frame_index,
+            zone=zone,
+            panel_box=panel_box,
+            person_box=person_box,
+            frame_result=frame_result,
+            crop_summary=crop_summary,
+        )
+        return frame_result, crop_summary
+
+    def _can_reuse_live_analysis(
+        self,
+        cached: _LiveFrameAnalysisCache | None,
+        *,
+        panel_box: Box,
+        person_box: Box,
+        zone: str,
+    ) -> bool:
+        if cached is None or cached.zone != zone:
+            return False
+        if (self._frame_index - cached.frame_index) > self._live_analysis_cache_max_gap_frames:
+            return False
+        if _distance(box_center(panel_box), box_center(cached.panel_box)) > self._live_analysis_panel_center_epsilon:
+            return False
+        if _distance(box_center(person_box), box_center(cached.person_box)) > self._live_analysis_person_center_epsilon:
+            return False
+        return True
 
 
 def load_runtime_calibration(path: Path) -> tuple[CalibrationZones, Gate | None]:

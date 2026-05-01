@@ -1238,6 +1238,22 @@ class VisionWorker:
         if detector is None:
             return []
 
+        interval = 1.0 / max(0.1, get_person_detect_fps())
+        now = time.time()
+        with self._lock:
+            cached_payload = [dict(item) for item in self._latest_person_boxes]
+            last_detect_ts = self._last_runtime_person_detect_ts
+        if last_detect_ts > 0.0 and (now - last_detect_ts) < interval:
+            return [
+                (
+                    float(item["x"]),
+                    float(item["y"]),
+                    float(item["w"]),
+                    float(item["h"]),
+                )
+                for item in cached_payload
+            ]
+
         detections = detector.detect_people(frame)
         payload = [
             {
@@ -1251,7 +1267,7 @@ class VisionWorker:
         ]
         with self._lock:
             self._latest_person_boxes = payload
-            self._last_runtime_person_detect_ts = time.time()
+            self._last_runtime_person_detect_ts = now
         return [
             (
                 float(item["x"]),

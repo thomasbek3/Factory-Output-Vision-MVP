@@ -50,6 +50,79 @@ def test_runtime_event_counter_counts_worker_overlap_track_only_after_live_separ
     assert "source" in calls[:2]
 
 
+def test_runtime_event_counter_reuses_nearby_live_separation_samples() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+    separation_calls: list[tuple[str, tuple[float, float, float, float]]] = []
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        separation_calls.append((zone, panel_box_xywh))
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate",
+            "visible_nonperson_ratio": 0.42,
+            "estimated_visible_nonperson_region_signal": 0.08,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=1,
+        tracker_match_distance=100.0,
+        separation_analyzer=fake_separation_analyzer,
+        crop_classifier=None,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (8, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert separation_calls == [
+        ("source", (5.0, 20.0, 20.0, 20.0)),
+        ("output", (65.0, 20.0, 20.0, 20.0)),
+    ]
+
+
+def test_runtime_event_counter_skips_live_separation_for_clear_nonoverlap_tracks() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+
+    def fail_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        raise AssertionError("live separation should not run for a clear non-overlap track")
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=1,
+        tracker_match_distance=100.0,
+        separation_analyzer=fail_separation_analyzer,
+        crop_classifier=None,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    far_person_boxes = [(80.0, 0.0, 20.0, 20.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=far_person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (10, 20, 20, 20), "confidence": 0.9}], person_boxes=far_person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=far_person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert result.gate_decisions[1].decision == "allow_source_token"
+
+
 def test_runtime_event_counter_counts_approved_delivery_chain_without_extra_output_settle() -> None:
     zones = CalibrationZones(
         source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
@@ -173,6 +246,58 @@ def test_runtime_event_counter_counts_worker_overlap_track_with_crop_classifier(
     assert len(result.events) == 1
     assert result.gate_decisions[1].decision == "allow_source_token"
     assert "source_token_allowed_by_crop_classifier" in result.gate_decisions[1].flags
+
+
+def test_runtime_event_counter_reuses_nearby_crop_classifier_samples() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+    crop_calls: list[tuple[str, tuple[float, float, float, float]]] = []
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        return {
+            "zone": zone,
+            "separation_decision": "worker_body_overlap",
+            "visible_nonperson_ratio": 0.01,
+            "estimated_visible_nonperson_region_signal": 0.001,
+            "reason_strings": ["candidate stays swallowed by person silhouette"],
+        }
+
+    def fake_crop_classifier(*, image, panel_box_xywh, zone):
+        crop_calls.append((zone, panel_box_xywh))
+        return {
+            "recommendation": "carried_panel",
+            "prediction_count": 1,
+            "carried_panel_count": 1,
+            "worker_only_count": 0,
+            "carried_panel_ratio": 1.0,
+            "carried_panel_max_confidence": 0.999,
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=1,
+        tracker_match_distance=100.0,
+        separation_analyzer=fake_separation_analyzer,
+        crop_classifier=fake_crop_classifier,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    counter.process_frame(frame=frame, detections=[{"box": (8, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert crop_calls == [
+        ("source", (5.0, 20.0, 20.0, 20.0)),
+        ("output", (65.0, 20.0, 20.0, 20.0)),
+    ]
 
 
 def test_runtime_event_counter_keeps_worker_overlap_track_blocked_when_crop_classifier_is_worker_only() -> None:

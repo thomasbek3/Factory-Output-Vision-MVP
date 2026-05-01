@@ -3192,3 +3192,70 @@ Exact next recommended step:
 1. Use `scripts/start_factory2_demo_app.py` for the investor demo launch instead of hand-setting env vars.
 2. Validate the visible browser flow once more on `8091` from `Runtime Total = 0` to `23`.
 3. After Factory2 demo lock-in, move to a real RTSP/Reolink source on the same `event_based` path.
+
+## 2026-04-30: Factory2 Live Demo Speedup
+
+What changed:
+- Reduced the heaviest runtime hot paths without changing the verified Factory2 `event_based` count logic:
+  - `app/services/runtime_event_counter.py`
+  - `app/services/frame_reader.py`
+  - `app/workers/vision_worker.py`
+- Added TDD coverage for the new fast paths:
+  - `tests/test_runtime_event_counter.py`
+  - `tests/test_frame_reader.py`
+  - `tests/test_vision_worker_states.py`
+- New behavior:
+  - live person/panel separation + crop classification are reused across nearby adjacent frames
+  - live person/panel separation is skipped entirely for tracks that are clearly outside the worker-overlap danger zone
+  - runtime person detection now reuses cached boxes within the configured detect interval instead of re-running every processed frame
+  - synchronous single-pass demo reading now advances sequentially through sampled frames instead of seeking with `CAP_PROP_POS_FRAMES` on every frame
+  - the primed first demo frame is reused instead of being decoded twice
+
+Measured impact:
+- `FFmpegFrameReader.pump_next_demo_frame()` microbench on `factory2.MOV`:
+  - `avg_sec: 0.0193`
+  - `max_sec: 0.0826`
+- Active-burst app-path microbench on consecutive Factory2 frames after the overlap-gated analyzer change:
+  - `_run_runtime_event_counting()` `avg_sec: 0.119`
+  - warm frames mostly landed in the `0.04–0.08s` range
+- Real app throughput check on the fresh `8094` build:
+  - early source-clock slope improved to about `22.801s` of source video over `30.021s` wall time on the true app path
+  - that is materially faster than the prior seek-heavy path while staying on the same live app counting route
+
+Real app verification:
+- Fresh optimized app run on `8094` completed and still matched truth exactly:
+  - observed events: `data/reports/factory2_app_observed_events.run8094.speedopt_v3.json`
+  - truth diff: `data/reports/factory2_app_vs_truth.run8094.speedopt_v3.json`
+  - result:
+    - `matched_count: 23`
+    - `missing_truth_count: 0`
+    - `unexpected_observed_count: 0`
+    - `first_divergence: null`
+- Final app totals on the optimized `10 FPS` run:
+  - `runtime_total: 23`
+  - `proof_backed_total: 11`
+  - `runtime_inferred_only: 12`
+  - `state: DEMO_COMPLETE`
+
+Commands run:
+- `.venv/bin/python -m pytest tests/test_runtime_event_counter.py tests/test_vision_worker_states.py -q`
+- `.venv/bin/python -m pytest tests/test_frame_reader.py tests/test_demo_mode_flow.py tests/test_api_smoke.py tests/test_vision_worker_states.py tests/test_runtime_event_counter.py -q`
+- `.venv/bin/python -m pytest tests/test_api_smoke.py tests/test_demo_mode_flow.py tests/test_frame_reader.py tests/test_settings_runtime.py -q`
+- App-truth verification on optimized build:
+  - `PATH="/Users/thomas/Projects/Factory-Output-Vision-MVP/.venv/bin:$PATH" python scripts/start_factory2_demo_app.py --port 8094`
+  - `.venv/bin/python scripts/capture_factory2_app_run_events.py --base-url http://127.0.0.1:8094 --output data/reports/factory2_app_observed_events.run8094.speedopt_v3.json --poll-interval-sec 5 --max-wait-sec 1800 --auto-start --force`
+  - `.venv/bin/python scripts/compare_factory2_app_run_to_truth_ledger.py --truth-ledger data/reports/factory2_human_truth_ledger.v1.json --observed-events data/reports/factory2_app_observed_events.run8094.speedopt_v3.json --output data/reports/factory2_app_vs_truth.run8094.speedopt_v3.json --force`
+
+Current state:
+- Verified ship-ready path:
+  - `10 FPS` reader + processing
+  - real app path
+  - `23/23` truth match still holds after the speed work
+- Exploratory next run in progress outside this verified slice:
+  - `8095` at `7.5 FPS` reader + processing
+  - goal is to test whether slightly lower sample density can cross into true real-time wall-clock on this machine without losing the `23/23`
+
+Exact next recommended step:
+1. Finish the `7.5 FPS` truth run on `8095`.
+2. If `7.5 FPS` still lands `23/23`, test `6 FPS` because the measured processed-frame rate suggests that should reach true real-time wall-clock on this hardware.
+3. Promote the lowest-FPS configuration that still matches truth into `scripts/start_factory2_demo_app.py` defaults for the investor demo.
