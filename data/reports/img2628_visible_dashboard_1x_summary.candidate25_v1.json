@@ -1,0 +1,116 @@
+{
+  "schema_version": "factory-vision-visible-dashboard-run-summary-v1",
+  "case_id": "img2628",
+  "video_path": "data/videos/from-pc/IMG_2628.MOV",
+  "video_name": "IMG_2628.MOV",
+  "human_reference_total": 25,
+  "run_boundary": {
+    "real_app_path": true,
+    "dashboard_started_by_click": true,
+    "demo_count_mode": "live_reader_snapshot",
+    "counting_mode": "event_based",
+    "demo_playback_speed": 1.0,
+    "deterministic_replay_used": false,
+    "timestamp_reveal_used": false,
+    "hardcoded_video_events_used": false
+  },
+  "runtime_configuration": {
+    "model": "models/img2628_worksheet_accept_event_diag_v1.pt",
+    "runtime_calibration": null,
+    "yolo_confidence": 0.76,
+    "processing_fps": 5,
+    "reader_fps": 5,
+    "event_track_max_age": 20,
+    "event_track_min_frames": 10,
+    "event_track_min_travel_px": 0,
+    "event_count_debounce_sec": 30,
+    "event_track_max_match_distance": 260,
+    "event_detection_cluster_distance": 250
+  },
+  "dashboard_evidence": {
+    "start_before_click_screenshot": "data/reports/screenshots/img2628_visible_dashboard_1x_start_before_click.png",
+    "started_runtime0_screenshot": "data/reports/screenshots/img2628_visible_dashboard_1x_started_runtime0.png",
+    "first_count_screenshot": "data/reports/screenshots/img2628_visible_dashboard_1x_first_count.png",
+    "midpoint_screenshots": [
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total5.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total8.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total10.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total12_recovered.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total15.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total20.png"
+    ],
+    "completion_screenshot": "data/reports/screenshots/img2628_visible_dashboard_1x_complete_total25.png",
+    "dashboard_completion_state": "Demo complete",
+    "dashboard_runtime_total": 25
+  },
+  "observed_events": {
+    "path": "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "run_complete": true,
+    "current_state": "DEMO_COMPLETE",
+    "observed_event_count": 25,
+    "observed_coverage_end_sec": 1668.01,
+    "event_timestamps_sec": [
+      55.601,
+      110.003,
+      228.206,
+      330.409,
+      384.21,
+      435.211,
+      486.613,
+      593.415,
+      644.783,
+      696.385,
+      777.787,
+      940.591,
+      993.992,
+      1050.194,
+      1100.395,
+      1161.197,
+      1218.598,
+      1278.4,
+      1333.401,
+      1387.403,
+      1441.204,
+      1493.405,
+      1549.007,
+      1601.008,
+      1654.41
+    ]
+  },
+  "human_total_comparison": {
+    "path": "data/reports/img2628_app_vs_human_total.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "expected_human_total": 25,
+    "observed_event_count": 25,
+    "total_matches": true
+  },
+  "draft_timestamp_ledger_comparison": {
+    "path": "data/reports/img2628_app_vs_codex_visual_draft.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "truth_ledger_path": "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+    "truth_ledger_status": "codex_visual_draft_not_validation_truth",
+    "matched_count": 22,
+    "missing_truth_count": 3,
+    "unexpected_observed_count": 3,
+    "first_divergence": {
+      "type": "unexpected_observed",
+      "event_ts": 110.003,
+      "track_id": 2,
+      "runtime_total_after_event": 2
+    }
+  },
+  "pacing": {
+    "event_count": 25,
+    "first_event_ts": 55.601,
+    "last_event_ts": 1654.41,
+    "wall_delta_sec": 1598.810033082962,
+    "source_delta_sec": 1598.8090000000002,
+    "wall_per_source": 1.0000006461578348
+  },
+  "result": {
+    "visible_dashboard_total_reached_25": true,
+    "human_total_match": true,
+    "wall_source_pacing_near_1x": true,
+    "event_level_promotion_clean": false,
+    "registry_promotion_allowed": false,
+    "notes": "Visible operational dashboard count reached the human total at 1.0x. Do not promote IMG_2628 yet because reviewed timestamp truth is still missing and the current draft-ledger comparison is not event-clean."
+  }
+}

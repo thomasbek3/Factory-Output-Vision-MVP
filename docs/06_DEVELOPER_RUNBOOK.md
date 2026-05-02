@@ -36,13 +36,48 @@ Expected result: Runtime Total reaches `23`; comparison artifact is `data/report
 
 ## New Video Candidate
 
-1. Copy the source video into `demo/` or another repo-local video path.
-2. Create or update a manifest under `validation/test_cases/`.
-3. Run `scripts/validate_video.py --case-id <case-id> --dry-run`.
-4. Generate or review the human truth CSV and ledger.
-5. Run the visible dashboard path at `1.0x`.
-6. Capture app events and compare to truth.
-7. Register the manifest with `scripts/register_test_case.py`.
+The next candidate should get faster because the first pass is now scripted.
+
+```bash
+.venv/bin/python scripts/bootstrap_video_candidate.py \
+  --case-id new_candidate \
+  --video data/videos/from-pc/NEW_VIDEO.MOV \
+  --expected-total 25 \
+  --baseline-case-id img2628_candidate \
+  --preview \
+  --force
+```
+
+This writes the fingerprint, provisional human-total artifact, timestamp template, and candidate manifest. The total is only a target for diagnostics; it is not proof.
+
+Fast-path gates:
+
+1. Run detector transfer screening before a long app run. If sampled recall is near zero, stop tuning old settings and build a small video-specific detector.
+2. Run accelerated real-app diagnostics first. Do not spend 30 minutes on visible `1.0x` until the accelerated path is plausible.
+3. If the total matches but event timing does not, build a focused dispute packet around mismatches instead of broad manual review.
+4. Run the visible dashboard path at `1.0x` only after the diagnostic path is plausible.
+5. Register the manifest only after reviewed timestamp truth and app-vs-truth are clean.
+
+Detector transfer screen:
+
+```bash
+.venv/bin/python scripts/screen_detector_transfer.py \
+  --video data/videos/from-pc/NEW_VIDEO.MOV \
+  --model models/img2628_worksheet_accept_event_diag_v1.pt \
+  --model models/img3254_active_panel_v4_yolov8n.pt \
+  --model models/img3262_active_panel_v2.pt \
+  --sample-count 80 \
+  --confidence 0.25 \
+  --output data/reports/new_candidate_detector_transfer_screen.v1.json \
+  --force
+```
+
+Validation commands still use the manifest:
+
+```bash
+.venv/bin/python scripts/validate_video.py --case-id <case-id> --dry-run
+.venv/bin/python scripts/register_test_case.py --manifest validation/test_cases/<case-id>.json --force
+```
 
 ## Guardrails
 

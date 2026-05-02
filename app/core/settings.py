@@ -251,6 +251,20 @@ def get_event_track_min_frames() -> int:
     return int(os.getenv("FC_EVENT_TRACK_MIN_FRAMES", "8"))
 
 
+def get_event_track_min_travel_px() -> float:
+    """Minimum first-to-last centroid travel before an event track can count.
+    Default 0 preserves existing Factory2 behavior. Raising this is useful for
+    static-stack videos where repeated stationary detections should not count."""
+    return float(os.getenv("FC_EVENT_TRACK_MIN_TRAVEL_PX", "0"))
+
+
+def get_event_count_debounce_sec() -> float:
+    """Minimum source-time gap between event_based dead-track counts.
+    Default 0 preserves existing behavior. Use this to absorb detector flicker
+    that briefly kills and recreates a track inside one physical carry event."""
+    return float(os.getenv("FC_EVENT_COUNT_DEBOUNCE_SEC", "0"))
+
+
 def get_event_track_max_match_distance() -> float:
     """Max pixel distance for centroid matching in event_based mode.
     Generous default (200) since usually only 1 panel in transit at a time."""

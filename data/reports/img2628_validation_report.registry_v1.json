@@ -1,0 +1,136 @@
+{
+  "case_id": "img2628_candidate",
+  "commands": {
+    "capture": [
+      "/Users/thomas/Projects/Factory-Output-Vision-MVP/.venv/bin/python",
+      "scripts/capture_factory2_app_run_events.py",
+      "--base-url",
+      "http://127.0.0.1:8092",
+      "--output",
+      "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+      "--poll-interval-sec",
+      "5",
+      "--max-wait-sec",
+      "1848.21",
+      "--force"
+    ],
+    "compare": [
+      "/Users/thomas/Projects/Factory-Output-Vision-MVP/.venv/bin/python",
+      "scripts/compare_factory2_app_run_to_truth_ledger.py",
+      "--truth-ledger",
+      "data/reports/img2628_human_truth_ledger.reviewed_v1.json",
+      "--observed-events",
+      "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+      "--output",
+      "data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json",
+      "--tolerance-sec",
+      "2.0",
+      "--force"
+    ],
+    "launch": [
+      "/Users/thomas/Projects/Factory-Output-Vision-MVP/.venv/bin/python",
+      "scripts/start_factory2_demo_stack.py",
+      "--backend-port",
+      "8092",
+      "--frontend-port",
+      "5174",
+      "--video",
+      "data/videos/from-pc/IMG_2628.MOV",
+      "--playback-speed",
+      "1",
+      "--processing-fps",
+      "5",
+      "--reader-fps",
+      "5",
+      "--no-runtime-calibration",
+      "--model",
+      "models/img2628_worksheet_accept_event_diag_v1.pt",
+      "--yolo-confidence",
+      "0.76",
+      "--event-track-max-age",
+      "20",
+      "--event-track-min-frames",
+      "10",
+      "--event-track-min-travel-px",
+      "0",
+      "--event-count-debounce-sec",
+      "30",
+      "--event-track-max-match-distance",
+      "260",
+      "--event-detection-cluster-distance",
+      "250"
+    ],
+    "preview": [
+      "/Users/thomas/Projects/Factory-Output-Vision-MVP/.venv/bin/python",
+      "scripts/preview_video_frames.py",
+      "data/videos/from-pc/IMG_2628.MOV",
+      "--out-dir",
+      "data/videos/preview_sheets/img2628_candidate",
+      "--force"
+    ]
+  },
+  "created_at": 1777742754.955,
+  "proof_artifacts": {
+    "comparison_report": "data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json",
+    "observed_events": "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "pacing_report": "data/reports/img2628_wall_source_pacing.run8092.visible_dashboard_1x_reviewed_v1.json",
+    "screenshots": [
+      "data/reports/screenshots/img2628_visible_dashboard_1x_start_before_click.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_started_runtime0.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_first_count.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total5.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total10.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total15.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_total20.png",
+      "data/reports/screenshots/img2628_visible_dashboard_1x_complete_total25.png"
+    ],
+    "validation_report": "data/reports/img2628_validation_report.registry_v1.json"
+  },
+  "proof_summary": {
+    "first_divergence": null,
+    "matched_count": 25,
+    "missing_truth_count": 0,
+    "observed_event_count": 25,
+    "unexpected_observed_count": 0,
+    "wall_per_source": 1.0000006461578348
+  },
+  "runtime": {
+    "counting_mode": "event_based",
+    "demo_count_mode": "live_reader_snapshot",
+    "event_count_debounce_sec": 30.0,
+    "event_detection_cluster_distance": 250.0,
+    "event_track_max_age": 20,
+    "event_track_max_match_distance": 260.0,
+    "event_track_min_frames": 10,
+    "event_track_min_travel_px": 0.0,
+    "model_path": "models/img2628_worksheet_accept_event_diag_v1.pt",
+    "playback_speed": 1.0,
+    "processing_fps": 5.0,
+    "reader_fps": 5.0,
+    "runtime_calibration_path": null,
+    "yolo_confidence": 0.76
+  },
+  "schema_version": "factory-vision-validation-report-v1",
+  "status": "verified_candidate",
+  "truth": {
+    "count_rule": "Count one completed placement when the worker finishes putting the finished wire product in the output/resting area.",
+    "expected_total": 25,
+    "human_total_path": "data/reports/img2628_human_truth_total.v1.json",
+    "notes": [
+      "Human reference total was provided as 25.",
+      "Timestamp ledger was reconciled by Codex visual review from the full CV-motion worksheet plus focused dispute frames.",
+      "Moondream labels were not used as validation truth or training data.",
+      "Verified as a clean real-app candidate, not promoted to a numbered test case."
+    ],
+    "rule_id": "completed_placement_25_reconciled_reviewed",
+    "truth_ledger_path": "data/reports/img2628_human_truth_ledger.reviewed_v1.json"
+  },
+  "video": {
+    "codec": "hevc",
+    "duration_sec": 1668.21,
+    "height": 1080,
+    "path": "data/videos/from-pc/IMG_2628.MOV",
+    "sha256": "b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139",
+    "width": 1920
+  }
+}

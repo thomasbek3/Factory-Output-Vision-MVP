@@ -1,0 +1,244 @@
+{
+  "case_id": "img2628_candidate",
+  "claim_boundary": "Draft timestamps may be used to continue diagnostics and model work. They must not be used as validation truth or promotion evidence until human/reconciled review promotes them.",
+  "counting_rule": "Count one completed placement when the worker finishes putting the finished product in the output/resting area.",
+  "event_count": 25,
+  "events": [
+    {
+      "count_total": 1,
+      "event_ts": 53.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-02",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_02_t00051.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0001"
+    },
+    {
+      "count_total": 2,
+      "event_ts": 224.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-05",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_05_t00222.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0002"
+    },
+    {
+      "count_total": 3,
+      "event_ts": 329.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-07",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_07_t00327.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0003"
+    },
+    {
+      "count_total": 4,
+      "event_ts": 382.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-08",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_08_t00378.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0004"
+    },
+    {
+      "count_total": 5,
+      "event_ts": 433.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-09",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_09_t00431.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0005"
+    },
+    {
+      "count_total": 6,
+      "event_ts": 484.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-10",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_10_t00482.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0006"
+    },
+    {
+      "count_total": 7,
+      "event_ts": 534.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-11",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_11_t00532.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0007"
+    },
+    {
+      "count_total": 8,
+      "event_ts": 590.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-12",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_12_t00588.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0008"
+    },
+    {
+      "count_total": 9,
+      "event_ts": 642.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-13",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_13_t00640.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0009"
+    },
+    {
+      "count_total": 10,
+      "event_ts": 695.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-14",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_14_t00693.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0010"
+    },
+    {
+      "count_total": 11,
+      "event_ts": 752.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-15",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_15_t00748.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0011"
+    },
+    {
+      "count_total": 12,
+      "event_ts": 883.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-18",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_18_t00881.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0012"
+    },
+    {
+      "count_total": 13,
+      "event_ts": 937.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-19",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_19_t00935.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0013"
+    },
+    {
+      "count_total": 14,
+      "event_ts": 992.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-20",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_20_t00990.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0014"
+    },
+    {
+      "count_total": 15,
+      "event_ts": 1048.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-22",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_22_t01046.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0015"
+    },
+    {
+      "count_total": 16,
+      "event_ts": 1099.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-23",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_23_t01097.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0016"
+    },
+    {
+      "count_total": 17,
+      "event_ts": 1160.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-25",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_25_t01158.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0017"
+    },
+    {
+      "count_total": 18,
+      "event_ts": 1216.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-27",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_27_t01214.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0018"
+    },
+    {
+      "count_total": 19,
+      "event_ts": 1277.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-29",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_29_t01275.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0019"
+    },
+    {
+      "count_total": 20,
+      "event_ts": 1332.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-30",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_30_t01330.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0020"
+    },
+    {
+      "count_total": 21,
+      "event_ts": 1386.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-31",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_31_t01384.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0021"
+    },
+    {
+      "count_total": 22,
+      "event_ts": 1440.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-32",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_32_t01438.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0022"
+    },
+    {
+      "count_total": 23,
+      "event_ts": 1490.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-33",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_33_t01488.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0023"
+    },
+    {
+      "count_total": 24,
+      "event_ts": 1599.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-35",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_35_t01597.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0024"
+    },
+    {
+      "count_total": 25,
+      "event_ts": 1652.0,
+      "notes": "Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.",
+      "reviewer": "codex_visual_review",
+      "source_candidate_id": "img2628-cv-motion-candidate-36",
+      "source_contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_36_t01650.0s.jpg",
+      "truth_event_id": "img2628-codex-draft-0025"
+    }
+  ],
+  "expected_human_total": 25,
+  "promotion_eligible": false,
+  "rejected_candidate_count": 11,
+  "review_authority": "codex_visual_review_provisional",
+  "schema_version": "factory-vision-codex-visual-truth-ledger-draft-v1",
+  "source_candidate_windows": "data/reports/img2628_candidate_truth_windows.cv_motion_draft_v1.json",
+  "source_montages": "data/videos/review_frames/img2628_cv_motion_candidate_montages_v1/",
+  "source_worksheet": "data/reports/img2628_codex_visual_review_worksheet.draft_v1.csv",
+  "training_eligible": false,
+  "validation_truth_eligible": false,
+  "video_path": "data/videos/from-pc/IMG_2628.MOV"
+}

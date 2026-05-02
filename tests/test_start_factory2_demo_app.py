@@ -37,6 +37,8 @@ def test_build_demo_env_allows_overrides() -> None:
         yolo_confidence=0.2,
         event_track_max_age=5,
         event_track_min_frames=4,
+        event_track_min_travel_px=75.5,
+        event_count_debounce_sec=30.0,
         event_track_max_match_distance=150.5,
         event_detection_cluster_distance=125.0,
         playback_speed=2.0,
@@ -51,6 +53,8 @@ def test_build_demo_env_allows_overrides() -> None:
     assert env["FC_YOLO_EXCLUDED_CLASSES"] == ""
     assert env["FC_EVENT_TRACK_MAX_AGE"] == "5"
     assert env["FC_EVENT_TRACK_MIN_FRAMES"] == "4"
+    assert env["FC_EVENT_TRACK_MIN_TRAVEL_PX"] == "75.5"
+    assert env["FC_EVENT_COUNT_DEBOUNCE_SEC"] == "30"
     assert env["FC_EVENT_TRACK_MAX_MATCH_DISTANCE"] == "150.5"
     assert env["FC_EVENT_DETECTION_CLUSTER_DISTANCE"] == "125"
     assert env["FC_DEMO_PLAYBACK_SPEED"] == "2"
@@ -100,6 +104,8 @@ def test_stack_backend_command_passes_demo_overrides() -> None:
         yolo_confidence=0.2,
         event_track_max_age=5,
         event_track_min_frames=4,
+        event_track_min_travel_px=75.5,
+        event_count_debounce_sec=30.0,
         event_track_max_match_distance=150.5,
         event_detection_cluster_distance=125.0,
         playback_speed=1.0,
@@ -115,6 +121,8 @@ def test_stack_backend_command_passes_demo_overrides() -> None:
     assert command[command.index("--yolo-confidence") + 1] == "0.2"
     assert command[command.index("--event-track-max-age") + 1] == "5"
     assert command[command.index("--event-track-min-frames") + 1] == "4"
+    assert command[command.index("--event-track-min-travel-px") + 1] == "75.5"
+    assert command[command.index("--event-count-debounce-sec") + 1] == "30"
     assert command[command.index("--event-track-max-match-distance") + 1] == "150.5"
     assert command[command.index("--event-detection-cluster-distance") + 1] == "125"
     assert command[command.index("--playback-speed") + 1] == "1"
@@ -131,6 +139,8 @@ def test_stack_backend_command_can_disable_runtime_calibration() -> None:
         yolo_confidence=None,
         event_track_max_age=None,
         event_track_min_frames=None,
+        event_track_min_travel_px=None,
+        event_count_debounce_sec=None,
         event_track_max_match_distance=None,
         event_detection_cluster_distance=None,
         playback_speed=1.0,

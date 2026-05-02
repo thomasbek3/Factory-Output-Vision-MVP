@@ -1,0 +1,195 @@
+{
+  "first_divergence": null,
+  "matched": [
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 55.601,
+      "observed_track_id": 1,
+      "truth_event_id": "img2628-reviewed-0001",
+      "truth_event_ts": 55.601
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 110.003,
+      "observed_track_id": 2,
+      "truth_event_id": "img2628-reviewed-0002",
+      "truth_event_ts": 110.003
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 228.206,
+      "observed_track_id": 5,
+      "truth_event_id": "img2628-reviewed-0003",
+      "truth_event_ts": 228.206
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 330.409,
+      "observed_track_id": 8,
+      "truth_event_id": "img2628-reviewed-0004",
+      "truth_event_ts": 330.409
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 384.21,
+      "observed_track_id": 9,
+      "truth_event_id": "img2628-reviewed-0005",
+      "truth_event_ts": 384.21
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 435.211,
+      "observed_track_id": 10,
+      "truth_event_id": "img2628-reviewed-0006",
+      "truth_event_ts": 435.211
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 486.613,
+      "observed_track_id": 11,
+      "truth_event_id": "img2628-reviewed-0007",
+      "truth_event_ts": 486.613
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 593.415,
+      "observed_track_id": 13,
+      "truth_event_id": "img2628-reviewed-0008",
+      "truth_event_ts": 593.415
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 644.783,
+      "observed_track_id": 14,
+      "truth_event_id": "img2628-reviewed-0009",
+      "truth_event_ts": 644.783
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 696.385,
+      "observed_track_id": 15,
+      "truth_event_id": "img2628-reviewed-0010",
+      "truth_event_ts": 696.385
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 777.787,
+      "observed_track_id": 17,
+      "truth_event_id": "img2628-reviewed-0011",
+      "truth_event_ts": 777.787
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 940.591,
+      "observed_track_id": 19,
+      "truth_event_id": "img2628-reviewed-0012",
+      "truth_event_ts": 940.591
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 993.992,
+      "observed_track_id": 20,
+      "truth_event_id": "img2628-reviewed-0013",
+      "truth_event_ts": 993.992
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1050.194,
+      "observed_track_id": 21,
+      "truth_event_id": "img2628-reviewed-0014",
+      "truth_event_ts": 1050.194
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1100.395,
+      "observed_track_id": 22,
+      "truth_event_id": "img2628-reviewed-0015",
+      "truth_event_ts": 1100.395
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1161.197,
+      "observed_track_id": 23,
+      "truth_event_id": "img2628-reviewed-0016",
+      "truth_event_ts": 1161.197
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1218.598,
+      "observed_track_id": 24,
+      "truth_event_id": "img2628-reviewed-0017",
+      "truth_event_ts": 1218.598
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1278.4,
+      "observed_track_id": 25,
+      "truth_event_id": "img2628-reviewed-0018",
+      "truth_event_ts": 1278.4
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1333.401,
+      "observed_track_id": 26,
+      "truth_event_id": "img2628-reviewed-0019",
+      "truth_event_ts": 1333.401
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1387.403,
+      "observed_track_id": 28,
+      "truth_event_id": "img2628-reviewed-0020",
+      "truth_event_ts": 1387.403
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1441.204,
+      "observed_track_id": 29,
+      "truth_event_id": "img2628-reviewed-0021",
+      "truth_event_ts": 1441.204
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1493.405,
+      "observed_track_id": 30,
+      "truth_event_id": "img2628-reviewed-0022",
+      "truth_event_ts": 1493.405
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1549.007,
+      "observed_track_id": 31,
+      "truth_event_id": "img2628-reviewed-0023",
+      "truth_event_ts": 1549.007
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1601.008,
+      "observed_track_id": 32,
+      "truth_event_id": "img2628-reviewed-0024",
+      "truth_event_ts": 1601.008
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 1654.41,
+      "observed_track_id": 33,
+      "truth_event_id": "img2628-reviewed-0025",
+      "truth_event_ts": 1654.41
+    }
+  ],
+  "matched_count": 25,
+  "missing_truth": [],
+  "missing_truth_count": 0,
+  "observed_coverage_end_sec": 1668.01,
+  "observed_event_count": 25,
+  "observed_events_path": "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+  "observed_run_complete": true,
+  "pending_truth": [],
+  "pending_truth_count": 0,
+  "schema_version": "factory2-app-run-vs-truth-comparison-v1",
+  "tolerance_sec": 0.5,
+  "truth_event_count": 25,
+  "truth_ledger_path": "data/reports/img2628_human_truth_ledger.reviewed_v1.json",
+  "unexpected_observed": [],
+  "unexpected_observed_count": 0
+}

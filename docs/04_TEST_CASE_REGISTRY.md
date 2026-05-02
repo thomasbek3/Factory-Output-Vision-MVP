@@ -16,6 +16,7 @@ The machine-readable registry is `validation/registry.json`.
 | `factory2_test_case_1` | `verified_test_case` | 23 | `validation/test_cases/factory2.json` |
 | `img3262_candidate` | `verified_candidate` | 21 | `validation/test_cases/img3262.json` |
 | `img3254_clean22_candidate` | `verified_candidate` | 22 | `validation/test_cases/img3254_clean22.json` |
+| `img2628_candidate` | `verified_candidate` | 25 | `validation/test_cases/img2628.json` |
 
 ## Required Manifest Evidence
 

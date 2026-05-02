@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IMG_2628 Interactive Truth Review</title>
+  <style>
+    :root {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f4;
+      color: #1d2420;
+    }
+    body { margin: 0; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #fff;
+      border-bottom: 1px solid #d8ddd5;
+      padding: 16px 22px;
+    }
+    h1 { font-size: 22px; margin: 0 0 8px; letter-spacing: 0; }
+    .meta { color: #526057; font-size: 13px; line-height: 1.45; max-width: 1180px; }
+    .warning { color: #823700; font-weight: 700; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+    button {
+      appearance: none;
+      border: 1px solid #1f5e44;
+      background: #1f5e44;
+      color: white;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .status { font-size: 13px; color: #38433d; }
+    main { display: grid; gap: 14px; padding: 16px; }
+    .card { background: #fff; border: 1px solid #d8ddd5; border-radius: 8px; overflow: hidden; }
+    .card-head { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #e5e8e2; font-size: 14px; }
+    .card-head span, .score { color: #59645c; font-size: 12px; }
+    img { width: 100%; display: block; background: #111; }
+    .fields { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 10px; padding: 12px 14px 14px; }
+    label { display: grid; gap: 5px; font-size: 12px; color: #4e5a52; }
+    input, select, textarea { width: 100%; box-sizing: border-box; border: 1px solid #cbd2ca; border-radius: 6px; padding: 8px; font: inherit; background: #fff; color: #1d2420; }
+    textarea { min-height: 38px; resize: vertical; }
+    .wide { grid-column: span 2; }
+    @media (max-width: 840px) { .fields { grid-template-columns: 1fr; } .wide { grid-column: auto; } .card-head { display: block; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>IMG_2628 Interactive Truth Review</h1>
+    <div class="meta">Case: img2628_candidate · Candidate rows: 36 · Expected accepted placements: 25</div>
+    <div class="meta">Worksheet source: data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.csv</div>
+    <div class="meta warning">Human review aid only. Exported CSV is not validation truth until a reviewer fills decisions/timestamps and the ledger builder accepts exactly 25 events.</div>
+    <div class="toolbar">
+      <button type="button" id="exportCsv">Export worksheet CSV</button>
+      <span class="status" id="statusText"></span>
+    </div>
+  </header>
+  <main>
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-01">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-01</strong>
+          <span>0.000s - 13.000s</span>
+        </div>
+        <div class="score">draft center 5.000s · motion 11.879017</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_01_t00005.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_01_t00005.0s.jpg" alt="img2628-cv-motion-candidate-01 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-02">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-02</strong>
+          <span>43.000s - 59.000s</span>
+        </div>
+        <div class="score">draft center 51.000s · motion 31.781719</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_02_t00051.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_02_t00051.0s.jpg" alt="img2628-cv-motion-candidate-02 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-03">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-03</strong>
+          <span>98.000s - 114.000s</span>
+        </div>
+        <div class="score">draft center 106.000s · motion 29.246677</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_03_t00106.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_03_t00106.0s.jpg" alt="img2628-cv-motion-candidate-03 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-04">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-04</strong>
+          <span>149.000s - 165.000s</span>
+        </div>
+        <div class="score">draft center 157.000s · motion 27.946798</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_04_t00157.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_04_t00157.0s.jpg" alt="img2628-cv-motion-candidate-04 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-05">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-05</strong>
+          <span>214.000s - 230.000s</span>
+        </div>
+        <div class="score">draft center 222.000s · motion 75.334679</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_05_t00222.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_05_t00222.0s.jpg" alt="img2628-cv-motion-candidate-05 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-06">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-06</strong>
+          <span>264.000s - 280.000s</span>
+        </div>
+        <div class="score">draft center 272.000s · motion 29.967167</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_06_t00272.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_06_t00272.0s.jpg" alt="img2628-cv-motion-candidate-06 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-07">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-07</strong>
+          <span>319.000s - 335.000s</span>
+        </div>
+        <div class="score">draft center 327.000s · motion 31.663256</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_07_t00327.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_07_t00327.0s.jpg" alt="img2628-cv-motion-candidate-07 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-08">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-08</strong>
+          <span>370.000s - 386.000s</span>
+        </div>
+        <div class="score">draft center 378.000s · motion 29.691027</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_08_t00378.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_08_t00378.0s.jpg" alt="img2628-cv-motion-candidate-08 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-09">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-09</strong>
+          <span>423.000s - 439.000s</span>
+        </div>
+        <div class="score">draft center 431.000s · motion 35.829987</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_09_t00431.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_09_t00431.0s.jpg" alt="img2628-cv-motion-candidate-09 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-10">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-10</strong>
+          <span>474.000s - 490.000s</span>
+        </div>
+        <div class="score">draft center 482.000s · motion 39.081753</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_10_t00482.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_10_t00482.0s.jpg" alt="img2628-cv-motion-candidate-10 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-11">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-11</strong>
+          <span>524.000s - 540.000s</span>
+        </div>
+        <div class="score">draft center 532.000s · motion 38.171501</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_11_t00532.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_11_t00532.0s.jpg" alt="img2628-cv-motion-candidate-11 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-12">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-12</strong>
+          <span>580.000s - 596.000s</span>
+        </div>
+        <div class="score">draft center 588.000s · motion 34.420528</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_12_t00588.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_12_t00588.0s.jpg" alt="img2628-cv-motion-candidate-12 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-13">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-13</strong>
+          <span>632.000s - 648.000s</span>
+        </div>
+        <div class="score">draft center 640.000s · motion 32.792870</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_13_t00640.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_13_t00640.0s.jpg" alt="img2628-cv-motion-candidate-13 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-14">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-14</strong>
+          <span>685.000s - 701.000s</span>
+        </div>
+        <div class="score">draft center 693.000s · motion 42.716099</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_14_t00693.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_14_t00693.0s.jpg" alt="img2628-cv-motion-candidate-14 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-15">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-15</strong>
+          <span>740.000s - 756.000s</span>
+        </div>
+        <div class="score">draft center 748.000s · motion 58.101498</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_15_t00748.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_15_t00748.0s.jpg" alt="img2628-cv-motion-candidate-15 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-16">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-16</strong>
+          <span>768.000s - 784.000s</span>
+        </div>
+        <div class="score">draft center 776.000s · motion 63.014900</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_16_t00776.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_16_t00776.0s.jpg" alt="img2628-cv-motion-candidate-16 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-17">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-17</strong>
+          <span>817.000s - 833.000s</span>
+        </div>
+        <div class="score">draft center 825.000s · motion 24.812834</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_17_t00825.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_17_t00825.0s.jpg" alt="img2628-cv-motion-candidate-17 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-18">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-18</strong>
+          <span>873.000s - 889.000s</span>
+        </div>
+        <div class="score">draft center 881.000s · motion 32.909256</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_18_t00881.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_18_t00881.0s.jpg" alt="img2628-cv-motion-candidate-18 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-19">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-19</strong>
+          <span>927.000s - 943.000s</span>
+        </div>
+        <div class="score">draft center 935.000s · motion 31.069717</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_19_t00935.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_19_t00935.0s.jpg" alt="img2628-cv-motion-candidate-19 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-20">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-20</strong>
+          <span>982.000s - 998.000s</span>
+        </div>
+        <div class="score">draft center 990.000s · motion 31.003628</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_20_t00990.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_20_t00990.0s.jpg" alt="img2628-cv-motion-candidate-20 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-21">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-21</strong>
+          <span>1010.000s - 1026.000s</span>
+        </div>
+        <div class="score">draft center 1018.000s · motion 10.420409</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_21_t01018.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_21_t01018.0s.jpg" alt="img2628-cv-motion-candidate-21 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-22">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-22</strong>
+          <span>1038.000s - 1054.000s</span>
+        </div>
+        <div class="score">draft center 1046.000s · motion 41.074547</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_22_t01046.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_22_t01046.0s.jpg" alt="img2628-cv-motion-candidate-22 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-23">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-23</strong>
+          <span>1089.000s - 1105.000s</span>
+        </div>
+        <div class="score">draft center 1097.000s · motion 34.865784</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_23_t01097.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_23_t01097.0s.jpg" alt="img2628-cv-motion-candidate-23 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-24">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-24</strong>
+          <span>1117.000s - 1133.000s</span>
+        </div>
+        <div class="score">draft center 1125.000s · motion 12.192455</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_24_t01125.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_24_t01125.0s.jpg" alt="img2628-cv-motion-candidate-24 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-25">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-25</strong>
+          <span>1150.000s - 1166.000s</span>
+        </div>
+        <div class="score">draft center 1158.000s · motion 43.267124</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_25_t01158.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_25_t01158.0s.jpg" alt="img2628-cv-motion-candidate-25 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-26">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-26</strong>
+          <span>1178.000s - 1194.000s</span>
+        </div>
+        <div class="score">draft center 1186.000s · motion 8.541321</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_26_t01186.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_26_t01186.0s.jpg" alt="img2628-cv-motion-candidate-26 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-27">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-27</strong>
+          <span>1206.000s - 1222.000s</span>
+        </div>
+        <div class="score">draft center 1214.000s · motion 41.246147</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_27_t01214.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_27_t01214.0s.jpg" alt="img2628-cv-motion-candidate-27 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-28">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-28</strong>
+          <span>1236.000s - 1252.000s</span>
+        </div>
+        <div class="score">draft center 1244.000s · motion 9.018753</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_28_t01244.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_28_t01244.0s.jpg" alt="img2628-cv-motion-candidate-28 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-29">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-29</strong>
+          <span>1267.000s - 1283.000s</span>
+        </div>
+        <div class="score">draft center 1275.000s · motion 45.543411</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_29_t01275.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_29_t01275.0s.jpg" alt="img2628-cv-motion-candidate-29 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-30">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-30</strong>
+          <span>1322.000s - 1338.000s</span>
+        </div>
+        <div class="score">draft center 1330.000s · motion 40.945564</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_30_t01330.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_30_t01330.0s.jpg" alt="img2628-cv-motion-candidate-30 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-31">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-31</strong>
+          <span>1376.000s - 1392.000s</span>
+        </div>
+        <div class="score">draft center 1384.000s · motion 55.686737</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_31_t01384.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_31_t01384.0s.jpg" alt="img2628-cv-motion-candidate-31 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-32">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-32</strong>
+          <span>1430.000s - 1446.000s</span>
+        </div>
+        <div class="score">draft center 1438.000s · motion 34.291889</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_32_t01438.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_32_t01438.0s.jpg" alt="img2628-cv-motion-candidate-32 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-33">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-33</strong>
+          <span>1480.000s - 1496.000s</span>
+        </div>
+        <div class="score">draft center 1488.000s · motion 32.081371</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_33_t01488.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_33_t01488.0s.jpg" alt="img2628-cv-motion-candidate-33 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-34">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-34</strong>
+          <span>1537.000s - 1553.000s</span>
+        </div>
+        <div class="score">draft center 1545.000s · motion 30.376177</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_34_t01545.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_34_t01545.0s.jpg" alt="img2628-cv-motion-candidate-34 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-35">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-35</strong>
+          <span>1589.000s - 1605.000s</span>
+        </div>
+        <div class="score">draft center 1597.000s · motion 36.111042</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_35_t01597.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_35_t01597.0s.jpg" alt="img2628-cv-motion-candidate-35 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+
+    <article class="card" data-candidate-id="img2628-cv-motion-candidate-36">
+      <div class="card-head">
+        <div>
+          <strong>img2628-cv-motion-candidate-36</strong>
+          <span>1642.000s - 1658.000s</span>
+        </div>
+        <div class="score">draft center 1650.000s · motion 32.829533</div>
+      </div>
+      <a href="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_36_t01650.0s.jpg"><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_36_t01650.0s.jpg" alt="img2628-cv-motion-candidate-36 contact strip" loading="lazy"></a>
+      <div class="fields">
+        <label>Decision <select data-field="human_decision_accept_countable"><option value="" selected>Pending</option>
+<option value="yes">Accept countable</option>
+<option value="no">Reject</option></select></label>
+        <label>Exact timestamp <input data-field="exact_event_ts" type="text" value="" placeholder="seconds or MM:SS.s"></label>
+        <label>Truth event id <input data-field="truth_event_id_if_accepted" type="text" value="" placeholder="optional"></label>
+        <label>Count # <input data-field="count_total_if_accepted" type="number" value="" placeholder="optional"></label>
+        <label>Reviewer <input data-field="reviewer" type="text" value="" placeholder="name"></label>
+        <label class="wide">Notes <textarea data-field="review_notes" placeholder="review notes"></textarea></label>
+      </div>
+    </article>
+
+  </main>
+  <script>
+    const exportColumns = ["candidate_id", "draft_center_ts_sec", "window_start_sec", "window_end_sec", "motion_score", "contact_strip_path", "human_decision_accept_countable", "exact_event_ts", "truth_event_id_if_accepted", "count_total_if_accepted", "reviewer", "review_notes"];
+    const baseRows = [{"candidate_id": "img2628-cv-motion-candidate-01", "draft_center_ts_sec": "5.000", "window_start_sec": "0.000", "window_end_sec": "13.000", "motion_score": "11.879017", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_01_t00005.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-02", "draft_center_ts_sec": "51.000", "window_start_sec": "43.000", "window_end_sec": "59.000", "motion_score": "31.781719", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_02_t00051.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-03", "draft_center_ts_sec": "106.000", "window_start_sec": "98.000", "window_end_sec": "114.000", "motion_score": "29.246677", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_03_t00106.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-04", "draft_center_ts_sec": "157.000", "window_start_sec": "149.000", "window_end_sec": "165.000", "motion_score": "27.946798", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_04_t00157.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-05", "draft_center_ts_sec": "222.000", "window_start_sec": "214.000", "window_end_sec": "230.000", "motion_score": "75.334679", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_05_t00222.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-06", "draft_center_ts_sec": "272.000", "window_start_sec": "264.000", "window_end_sec": "280.000", "motion_score": "29.967167", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_06_t00272.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-07", "draft_center_ts_sec": "327.000", "window_start_sec": "319.000", "window_end_sec": "335.000", "motion_score": "31.663256", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_07_t00327.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-08", "draft_center_ts_sec": "378.000", "window_start_sec": "370.000", "window_end_sec": "386.000", "motion_score": "29.691027", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_08_t00378.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-09", "draft_center_ts_sec": "431.000", "window_start_sec": "423.000", "window_end_sec": "439.000", "motion_score": "35.829987", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_09_t00431.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-10", "draft_center_ts_sec": "482.000", "window_start_sec": "474.000", "window_end_sec": "490.000", "motion_score": "39.081753", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_10_t00482.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-11", "draft_center_ts_sec": "532.000", "window_start_sec": "524.000", "window_end_sec": "540.000", "motion_score": "38.171501", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_11_t00532.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-12", "draft_center_ts_sec": "588.000", "window_start_sec": "580.000", "window_end_sec": "596.000", "motion_score": "34.420528", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_12_t00588.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-13", "draft_center_ts_sec": "640.000", "window_start_sec": "632.000", "window_end_sec": "648.000", "motion_score": "32.792870", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_13_t00640.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-14", "draft_center_ts_sec": "693.000", "window_start_sec": "685.000", "window_end_sec": "701.000", "motion_score": "42.716099", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_14_t00693.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-15", "draft_center_ts_sec": "748.000", "window_start_sec": "740.000", "window_end_sec": "756.000", "motion_score": "58.101498", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_15_t00748.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-16", "draft_center_ts_sec": "776.000", "window_start_sec": "768.000", "window_end_sec": "784.000", "motion_score": "63.014900", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_16_t00776.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-17", "draft_center_ts_sec": "825.000", "window_start_sec": "817.000", "window_end_sec": "833.000", "motion_score": "24.812834", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_17_t00825.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-18", "draft_center_ts_sec": "881.000", "window_start_sec": "873.000", "window_end_sec": "889.000", "motion_score": "32.909256", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_18_t00881.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-19", "draft_center_ts_sec": "935.000", "window_start_sec": "927.000", "window_end_sec": "943.000", "motion_score": "31.069717", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_19_t00935.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-20", "draft_center_ts_sec": "990.000", "window_start_sec": "982.000", "window_end_sec": "998.000", "motion_score": "31.003628", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_20_t00990.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-21", "draft_center_ts_sec": "1018.000", "window_start_sec": "1010.000", "window_end_sec": "1026.000", "motion_score": "10.420409", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_21_t01018.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-22", "draft_center_ts_sec": "1046.000", "window_start_sec": "1038.000", "window_end_sec": "1054.000", "motion_score": "41.074547", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_22_t01046.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-23", "draft_center_ts_sec": "1097.000", "window_start_sec": "1089.000", "window_end_sec": "1105.000", "motion_score": "34.865784", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_23_t01097.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-24", "draft_center_ts_sec": "1125.000", "window_start_sec": "1117.000", "window_end_sec": "1133.000", "motion_score": "12.192455", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_24_t01125.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-25", "draft_center_ts_sec": "1158.000", "window_start_sec": "1150.000", "window_end_sec": "1166.000", "motion_score": "43.267124", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_25_t01158.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-26", "draft_center_ts_sec": "1186.000", "window_start_sec": "1178.000", "window_end_sec": "1194.000", "motion_score": "8.541321", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_26_t01186.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-27", "draft_center_ts_sec": "1214.000", "window_start_sec": "1206.000", "window_end_sec": "1222.000", "motion_score": "41.246147", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_27_t01214.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-28", "draft_center_ts_sec": "1244.000", "window_start_sec": "1236.000", "window_end_sec": "1252.000", "motion_score": "9.018753", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_28_t01244.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-29", "draft_center_ts_sec": "1275.000", "window_start_sec": "1267.000", "window_end_sec": "1283.000", "motion_score": "45.543411", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_29_t01275.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-30", "draft_center_ts_sec": "1330.000", "window_start_sec": "1322.000", "window_end_sec": "1338.000", "motion_score": "40.945564", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_30_t01330.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-31", "draft_center_ts_sec": "1384.000", "window_start_sec": "1376.000", "window_end_sec": "1392.000", "motion_score": "55.686737", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_31_t01384.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-32", "draft_center_ts_sec": "1438.000", "window_start_sec": "1430.000", "window_end_sec": "1446.000", "motion_score": "34.291889", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_32_t01438.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-33", "draft_center_ts_sec": "1488.000", "window_start_sec": "1480.000", "window_end_sec": "1496.000", "motion_score": "32.081371", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_33_t01488.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-34", "draft_center_ts_sec": "1545.000", "window_start_sec": "1537.000", "window_end_sec": "1553.000", "motion_score": "30.376177", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_34_t01545.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-35", "draft_center_ts_sec": "1597.000", "window_start_sec": "1589.000", "window_end_sec": "1605.000", "motion_score": "36.111042", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_35_t01597.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}, {"candidate_id": "img2628-cv-motion-candidate-36", "draft_center_ts_sec": "1650.000", "window_start_sec": "1642.000", "window_end_sec": "1658.000", "motion_score": "32.829533", "contact_strip_path": "data/videos/review_frames/img2628_cv_motion_candidates_v1/candidate_36_t01650.0s.jpg", "human_decision_accept_countable": "", "exact_event_ts": "", "truth_event_id_if_accepted": "", "count_total_if_accepted": "", "reviewer": "", "review_notes": ""}];
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      if (/[",\n\r]/.test(text)) {
+        return '"' + text.replaceAll('"', '""') + '"';
+      }
+      return text;
+    }
+    function collectRows() {
+      return [...document.querySelectorAll(".card")].map((card, index) => {
+        const row = {...baseRows[index]};
+        card.querySelectorAll("[data-field]").forEach((field) => {
+          row[field.dataset.field] = field.value;
+        });
+        return row;
+      });
+    }
+    function updateStatus() {
+      const rows = collectRows();
+      const accepted = rows.filter((row) => row.human_decision_accept_countable === "yes").length;
+      const rejected = rows.filter((row) => row.human_decision_accept_countable === "no").length;
+      const pending = rows.length - accepted - rejected;
+      const acceptedWithTs = rows.filter((row) => row.human_decision_accept_countable === "yes" && row.exact_event_ts.trim()).length;
+      document.getElementById("statusText").textContent = `accepted ${accepted} / rejected ${rejected} / pending ${pending} / accepted timestamps ${acceptedWithTs}`;
+    }
+    function exportCsv() {
+      const rows = collectRows();
+      const csv = [exportColumns.join(",")]
+        .concat(rows.map((row) => exportColumns.map((column) => csvEscape(row[column])).join(",")))
+        .join("\n") + "\n";
+      const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "img2628_human_truth_review_worksheet.cv_motion_draft_v1.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+    document.getElementById("exportCsv").addEventListener("click", exportCsv);
+    document.querySelectorAll("[data-field]").forEach((field) => field.addEventListener("input", updateStatus));
+    updateStatus();
+  </script>
+</body>
+</html>

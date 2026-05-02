@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IMG_2628 Event-Level Dispute Review</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 24px; color: #14202b; background: #f6f8fb; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    p { margin: 0 0 18px; max-width: 980px; line-height: 1.45; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #d9e0e7; padding: 10px; vertical-align: top; text-align: left; }
+    th { background: #eef3f7; font-size: 13px; }
+    td { font-size: 13px; }
+    img { display: block; max-width: 360px; height: auto; border: 1px solid #c8d1da; background: #fff; }
+    .issue { font-weight: 700; white-space: nowrap; }
+    .meta { color: #516170; }
+    .question { font-weight: 650; }
+  </style>
+</head>
+<body>
+  <h1>IMG_2628 Event-Level Dispute Review</h1>
+  <p>
+    The visible dashboard run counted 25, but the available draft ledger comparison has 3 missing truth events and 3 unexpected observed events.
+    This page narrows the remaining reviewed-truth work to the exact disputed windows.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Issue</th>
+        <th>Current Evidence</th>
+        <th>Review Question</th>
+        <th>Contact Strip</th>
+        <th>Single Frame</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="issue">001<br><span class="meta">unexpected observed</span></td>
+        <td>App event 110.003s, estimated first seen 108.203s, runtime total 2. Draft candidate 03 is rejected.</td>
+        <td class="question">Should the handling/placement around 108-110s count as a completed product placement in the output/resting area?</td>
+        <td><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_03_t00106.0s.jpg" alt="candidate 03 contact strip"></td>
+        <td><img src="../videos/review_frames/img2628_visible_run_mismatch_review_v1/frame_t0110.jpg" alt="frame at 110s"></td>
+      </tr>
+      <tr>
+        <td class="issue">002<br><span class="meta">missing truth</span></td>
+        <td>Draft truth 534.000s, truth id img2628-codex-draft-0007. No app event matched within the draft comparison tolerance.</td>
+        <td class="question">Should the visible action around 532-534s remain a countable completed placement?</td>
+        <td><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_11_t00532.0s.jpg" alt="candidate 11 contact strip"></td>
+        <td><img src="../videos/review_frames/img2628_visible_run_mismatch_review_v1/frame_t0534.jpg" alt="frame at 534s"></td>
+      </tr>
+      <tr>
+        <td class="issue">003<br><span class="meta">missing truth with late app track</span></td>
+        <td>Draft truth 752.000s, truth id img2628-codex-draft-0011. App event finalized at 777.787s; estimated first seen 756.387s.</td>
+        <td class="question">Is the app event whose track starts around 756s and finalizes at 777.787s the same physical placement as the draft truth at 752s?</td>
+        <td><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_15_t00748.0s.jpg" alt="candidate 15 contact strip"></td>
+        <td><img src="../videos/review_frames/img2628_visible_run_mismatch_review_v1/frame_t0752.jpg" alt="frame at 752s"></td>
+      </tr>
+      <tr>
+        <td class="issue">004<br><span class="meta">unexpected observed near truth window</span></td>
+        <td>App event 777.787s, estimated first seen 756.387s, runtime total 11. Draft candidate 16 is rejected as continuation/exit motion.</td>
+        <td class="question">Should the event finalized at 777.787s be treated as the same placement as the 752s draft event or as a separate non-countable continuation?</td>
+        <td><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_16_t00776.0s.jpg" alt="candidate 16 contact strip"></td>
+        <td><img src="../videos/review_frames/img2628_visible_run_mismatch_review_v1/frame_t0778.jpg" alt="frame at 778s"></td>
+      </tr>
+      <tr>
+        <td class="issue">005<br><span class="meta">missing truth</span></td>
+        <td>Draft truth 883.000s, truth id img2628-codex-draft-0012. No app event matched within the draft comparison tolerance.</td>
+        <td class="question">Should the visible action around 881-883s remain a countable completed placement?</td>
+        <td><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_18_t00881.0s.jpg" alt="candidate 18 contact strip"></td>
+        <td><img src="../videos/review_frames/img2628_visible_run_mismatch_review_v1/frame_t0883.jpg" alt="frame at 883s"></td>
+      </tr>
+      <tr>
+        <td class="issue">006<br><span class="meta">unexpected observed</span></td>
+        <td>App event 1549.007s, estimated first seen 1547.207s, runtime total 23. Draft candidate 34 is rejected.</td>
+        <td class="question">Should the handling/placement around 1547-1549s count as a completed product placement in the output/resting area?</td>
+        <td><img src="../videos/review_frames/img2628_cv_motion_candidates_v1/candidate_34_t01545.0s.jpg" alt="candidate 34 contact strip"></td>
+        <td><img src="../videos/review_frames/img2628_visible_run_mismatch_review_v1/frame_t1549.jpg" alt="frame at 1549s"></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

@@ -322,6 +322,7 @@ def count_dead_tracks(
     dead_tracks: list[Track],
     *,
     min_track_frames: int = 8,
+    min_travel_px: float = 0.0,
 ) -> int:
     """Count dead tracks that lived long enough to be real objects.
 
@@ -337,18 +338,23 @@ def count_dead_tracks(
     """
     count = 0
     for track in dead_tracks:
-        if track.frames_seen >= min_track_frames:
+        travel_px = track_travel_px(track)
+        if track.frames_seen >= min_track_frames and travel_px >= min_travel_px:
             count += 1
             logger.info(
-                "EVENT_TRACK_DIED: track_id=%d, frames_seen=%d → +1 count",
-                track.track_id, track.frames_seen,
+                "EVENT_TRACK_DIED: track_id=%d, frames_seen=%d, travel_px=%.1f -> +1 count",
+                track.track_id, track.frames_seen, travel_px,
             )
         else:
             logger.debug(
-                "EVENT_TRACK_DIED_SHORT: track_id=%d, frames_seen=%d (min=%d) → filtered",
-                track.track_id, track.frames_seen, min_track_frames,
+                "EVENT_TRACK_DIED_FILTERED: track_id=%d, frames_seen=%d (min=%d), travel_px=%.1f (min=%.1f) -> filtered",
+                track.track_id, track.frames_seen, min_track_frames, travel_px, min_travel_px,
             )
     return count
+
+
+def track_travel_px(track: Track) -> float:
+    return float(np.linalg.norm(np.array(track.centroid) - np.array(track.first_centroid)))
 
 
 def mark_all_tracks_counted(tracks: dict[int, Track]) -> None:

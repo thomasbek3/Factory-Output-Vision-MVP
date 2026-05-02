@@ -1,0 +1,219 @@
+{
+  "schema_version": "factory-vision-completion-audit-v2",
+  "case_id": "img2628_candidate",
+  "audited_at": "2026-05-02",
+  "objective": "Validate IMG_2628.MOV to the project definition of done: human truth artifacts, reviewed timestamp ledger, real visible 1.0x app/dashboard run, clean app-vs-truth comparison to 25 events, measured pacing, and updated documentation without using Moondream as validation truth.",
+  "audit_result": "not_complete_visible_total_clean_event_truth_blocked",
+  "may_mark_goal_complete": false,
+  "success_criteria": [
+    {
+      "requirement": "Read and follow the real-app test case definition of done.",
+      "evidence": [
+        "docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md"
+      ],
+      "coverage": "Directly inspected. It requires human final total, reviewed timestamp truth ledger, visible dashboard evidence, live backend event capture, clean app-vs-truth, pacing near 1.0, and regression checks.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Human final total for IMG_2628 is recorded as 25.",
+      "evidence": [
+        "data/reports/img2628_human_truth_total.v1.json"
+      ],
+      "coverage": "Artifact records expected_human_total=25 with verification_status=provisional_total_only.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Reviewed timestamp truth ledger exists for all 25 countable placements.",
+      "evidence": [
+        "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+        "data/reports/img2628_human_truth_event_times.template.csv",
+        "data/reports/img2628_human_truth_review_form.cv_motion_draft_v1.html",
+        "data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv",
+        "data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.html",
+        "data/reports/img2628_event_level_dispute_decisions.template_v1.csv",
+        "data/reports/img2628_event_level_dispute_decisions.README.md",
+        "scripts/apply_img2628_event_dispute_decisions.py"
+      ],
+      "missing_artifacts": [
+        "data/reports/img2628_human_truth_event_times.reviewed_v1.csv",
+        "data/reports/img2628_human_truth_ledger.reviewed_v1.json"
+      ],
+      "coverage": "Review aids and a Codex visual draft exist. The draft ledger is explicitly validation_truth_eligible=false, training_eligible=false, and promotion_eligible=false. A reviewed human/reconciled timestamp ledger still does not exist.",
+      "status": "missing"
+    },
+    {
+      "requirement": "Moondream 2, if used, remains advisory/offline only and not validation truth or training data.",
+      "evidence": [
+        "data/reports/active_learning/img2628_moondream_audit.local_wire_mesh_cluster350_diag_v1.json",
+        "data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.json",
+        "data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.html"
+      ],
+      "coverage": "Moondream artifacts are bronze/pending advisory labels only with validation_truth_eligible=false and training_eligible=false.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Real app path is used: live_reader_snapshot, event_based, playback speed 1.0, no replay/timestamp/fake UI/hardcoded events.",
+      "evidence": [
+        "data/reports/img2628_visible_dashboard_1x_summary.candidate25_v1.json",
+        "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+        "data/reports/img2628_validation_status.visible_total_clean_not_promoted_v1.json"
+      ],
+      "coverage": "Visible run summary records real_app_path=true, dashboard_started_by_click=true, demo_count_mode=live_reader_snapshot, counting_mode=event_based, demo_playback_speed=1.0, and no deterministic replay/timestamp reveal/hardcoded video events.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Visible dashboard proof starts Runtime Total at 0, shows IMG_2628.MOV, increments from real ordered processed frames, and ends at 25.",
+      "evidence": [
+        "data/reports/screenshots/img2628_visible_dashboard_1x_started_runtime0.png",
+        "data/reports/screenshots/img2628_visible_dashboard_1x_first_count.png",
+        "data/reports/screenshots/img2628_visible_dashboard_1x_total10.png",
+        "data/reports/screenshots/img2628_visible_dashboard_1x_total20.png",
+        "data/reports/screenshots/img2628_visible_dashboard_1x_complete_total25.png",
+        "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json"
+      ],
+      "coverage": "Chrome dashboard showed IMG_2628.MOV, Runtime Total 0 after clicking Start monitoring, then Demo complete / Runtime Total 25. Backend capture ended current_state=DEMO_COMPLETE with observed_event_count=25 and coverage 1668.01s.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Human total comparison for the visible run is clean.",
+      "evidence": [
+        "data/reports/img2628_app_vs_human_total.run8092.visible_dashboard_1x_candidate25_v1.json"
+      ],
+      "coverage": "Comparison result: expected_human_total=25, observed_event_count=25, total_matches=true.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "App-vs-reviewed-truth comparison is clean: matched_count=25, missing_truth_count=0, unexpected_observed_count=0, first_divergence=null.",
+      "evidence": [
+        "data/reports/img2628_app_vs_codex_visual_draft.run8092.visible_dashboard_1x_candidate25_v1.json"
+      ],
+      "missing_artifacts": [
+        "data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_candidate25_v1.json"
+      ],
+      "coverage": "No reviewed truth ledger exists, so the required comparison cannot exist. The available draft-ledger comparison is not clean: matched_count=22, missing_truth_count=3, unexpected_observed_count=3, first_divergence=unexpected_observed@110.003s.",
+      "status": "missing"
+    },
+    {
+      "requirement": "Wall/source pacing is measured and near 1.0 for the visible run.",
+      "evidence": [
+        "data/reports/img2628_visible_dashboard_1x_summary.candidate25_v1.json"
+      ],
+      "coverage": "Measured wall_per_source=1.0000006461578348 using captured event reader_frame_time and event_ts deltas.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Documentation and artifacts are updated under data/reports with img2628 naming.",
+      "evidence": [
+        "tasks/todo.md",
+        ".hermes/HANDOFF.md",
+        "tasks/lessons.md",
+        "data/reports/img2628_visible_dashboard_1x_summary.candidate25_v1.json",
+        "data/reports/img2628_validation_status.visible_total_clean_not_promoted_v1.json",
+        "data/reports/img2628_completion_audit.visible_total_clean_not_promoted_v2.json"
+      ],
+      "coverage": "Todo, handoff, lessons, summary/status/audit artifacts record the total-clean visible run and the remaining event-level blocker.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Registry/manifests are updated only if candidate satisfies the real app proof boundary.",
+      "evidence": [
+        "validation/registry.json"
+      ],
+      "coverage": "No IMG_2628 registry promotion was made because event-level proof is not clean.",
+      "status": "satisfied"
+    },
+    {
+      "requirement": "Relevant regression checks pass.",
+      "evidence": [
+        ".venv/bin/python -m py_compile app/core/settings.py app/services/counting.py app/workers/vision_worker.py scripts/start_factory2_demo_app.py scripts/start_factory2_demo_stack.py scripts/validate_video.py scripts/build_img2628_motion_score_event_dataset.py scripts/build_img2628_placement_action_dataset.py scripts/build_img2628_placement_action_multiclass_dataset.py",
+        ".venv/bin/python -m pytest tests/test_start_factory2_demo_app.py tests/test_vision_worker_states.py::VisionWorkerStateTests::test_count_dead_tracks_can_require_travel -q"
+      ],
+      "coverage": "py_compile passed; pytest result was 10 passed with warnings only.",
+      "status": "satisfied"
+    }
+  ],
+  "blocking_gap": {
+    "summary": "The app visibly counts to the human total, but the project promotion definition still requires a reviewed timestamp ledger and clean app-vs-truth comparison. The available draft-ledger comparison shows 3 event swaps.",
+    "draft_missing_truth": [
+      {
+        "truth_event_id": "img2628-codex-draft-0007",
+        "event_ts": 534.0
+      },
+      {
+        "truth_event_id": "img2628-codex-draft-0011",
+        "event_ts": 752.0
+      },
+      {
+        "truth_event_id": "img2628-codex-draft-0012",
+        "event_ts": 883.0
+      }
+    ],
+    "draft_unexpected_observed": [
+      {
+        "event_ts": 110.003,
+        "runtime_total_after_event": 2,
+        "track_id": 2
+      },
+      {
+        "event_ts": 777.787,
+        "runtime_total_after_event": 11,
+        "track_id": 17
+      },
+      {
+        "event_ts": 1549.007,
+        "runtime_total_after_event": 23,
+        "track_id": 31
+      }
+    ]
+  },
+  "threshold_search_evidence": [
+    {
+      "artifact": "data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min6_debounce60_speed16_diag_v1.json",
+      "comparison_artifact": "data/reports/img2628_app_vs_codex_visual_draft.run8093.worksheet_conf076_fps5_age20_min6_debounce60_speed16_diag_v1.json",
+      "settings": {
+        "event_track_min_frames": 6,
+        "event_count_debounce_sec": 60,
+        "event_track_max_age": 20,
+        "event_track_max_match_distance": 260,
+        "event_detection_cluster_distance": 250,
+        "yolo_confidence": 0.76
+      },
+      "result": {
+        "observed_event_count": 16,
+        "matched_count": 14,
+        "missing_truth_count": 11,
+        "unexpected_observed_count": 2,
+        "first_divergence": "unexpected_observed@162.004s"
+      },
+      "conclusion": "Lowering min frames and increasing debounce suppresses the 110s event but undercounts badly and admits a different early false event."
+    },
+    {
+      "artifact": "data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min8_debounce30_speed16_diag_v1.json",
+      "comparison_artifact": "data/reports/img2628_app_vs_codex_visual_draft.run8093.worksheet_conf076_fps5_age20_min8_debounce30_speed16_diag_v1.json",
+      "settings": {
+        "event_track_min_frames": 8,
+        "event_count_debounce_sec": 30,
+        "event_track_max_age": 20,
+        "event_track_max_match_distance": 260,
+        "event_detection_cluster_distance": 250,
+        "yolo_confidence": 0.76
+      },
+      "result": {
+        "observed_event_count": 26,
+        "matched_count": 23,
+        "missing_truth_count": 2,
+        "unexpected_observed_count": 3,
+        "first_divergence": "unexpected_observed@110.003s"
+      },
+      "conclusion": "Raising min frames includes the 883s short event but still keeps the 110s/1549s false-positive pattern and misses draft truth."
+    }
+  ],
+  "next_required_work": [
+    "Adjudicate the six event-level disputes in data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv or data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.html.",
+    "Fill data/reports/img2628_event_level_dispute_decisions.template_v1.csv with decision, reviewer, and review_notes for every dispute row.",
+    "Run scripts/apply_img2628_event_dispute_decisions.py to build data/reports/img2628_human_truth_event_times.reviewed_v1.csv; the script intentionally fails closed while decisions are blank.",
+    "Build data/reports/img2628_human_truth_event_times.reviewed_v1.csv and data/reports/img2628_human_truth_ledger.reviewed_v1.json from the reviewed decisions.",
+    "Re-run app-vs-reviewed-truth comparison against the visible observed events or rerun the visible 1.0x path if the reviewed truth changes the required runtime behavior.",
+    "Only promote IMG_2628 if matched_count=25, missing_truth_count=0, unexpected_observed_count=0, and first_divergence=null against reviewed truth."
+  ]
+}

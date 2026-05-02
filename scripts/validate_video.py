@@ -14,6 +14,10 @@ from typing import Any
 
 REPORT_SCHEMA_VERSION = "factory-vision-validation-report-v1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.validation_truth_guard import validate_truth_file
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -94,6 +98,17 @@ def build_launch_command(
         command.extend(["--event-track-max-age", str(int(runtime["event_track_max_age"]))])
     if runtime.get("event_track_min_frames") is not None:
         command.extend(["--event-track-min-frames", str(int(runtime["event_track_min_frames"]))])
+    if runtime.get("event_track_min_travel_px") is not None:
+        command.extend(["--event-track-min-travel-px", f"{float(runtime['event_track_min_travel_px']):g}"])
+    if runtime.get("event_count_debounce_sec") is not None:
+        command.extend(["--event-count-debounce-sec", f"{float(runtime['event_count_debounce_sec']):g}"])
+    if runtime.get("event_track_max_match_distance") is not None:
+        command.extend(
+            [
+                "--event-track-max-match-distance",
+                f"{float(runtime['event_track_max_match_distance']):g}",
+            ]
+        )
     if runtime.get("event_detection_cluster_distance") is not None:
         command.extend(
             [
@@ -243,6 +258,7 @@ def run_validation(
     force: bool,
 ) -> dict[str, Any]:
     manifest = _read_json(manifest_path)
+    validate_truth_file(Path(manifest["truth"]["truth_ledger_path"]), repo_root=REPO_ROOT)
     paths = default_output_paths(manifest)
     if use_existing_artifacts:
         artifacts = manifest.get("proof_artifacts") or {}

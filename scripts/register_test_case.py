@@ -5,11 +5,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 
 REGISTRY_SCHEMA_VERSION = "factory-vision-validation-registry-v1"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.validation_truth_guard import validate_truth_file
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -77,6 +83,7 @@ def register_manifest(
     dry_run: bool,
 ) -> dict[str, Any]:
     manifest = _read_json(manifest_path)
+    validate_truth_file(Path(manifest["truth"]["truth_ledger_path"]), repo_root=repo_root)
     if registry_path.exists():
         registry = _read_json(registry_path)
     else:

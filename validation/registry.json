@@ -1,42 +1,54 @@
 {
-  "schema_version": "factory-vision-validation-registry-v1",
-  "updated_at": "2026-05-01",
   "cases": [
     {
       "case_id": "factory2_test_case_1",
-      "display_name": "Factory2 / Test Case 1",
-      "status": "verified_test_case",
-      "promotion_status": "promoted_test_case_1",
-      "expected_total": 23,
-      "truth_rule_id": "factory2_operational_23",
-      "video_sha256": "f9cd9dcc71cc9e02c0f5a5ba65094510f5ac4cfbe3a39a4eb1e9cae32e69c3d8",
-      "manifest_path": "validation/test_cases/factory2.json",
       "comparison_report_path": "data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json",
-      "last_verified_at": "2026-05-01"
+      "display_name": "Factory2 / Test Case 1",
+      "expected_total": 23,
+      "last_verified_at": "2026-05-01",
+      "manifest_path": "validation/test_cases/factory2.json",
+      "promotion_status": "promoted_test_case_1",
+      "status": "verified_test_case",
+      "truth_rule_id": "factory2_operational_23",
+      "video_sha256": "f9cd9dcc71cc9e02c0f5a5ba65094510f5ac4cfbe3a39a4eb1e9cae32e69c3d8"
     },
     {
-      "case_id": "img3262_candidate",
-      "display_name": "IMG_3262 verified candidate",
-      "status": "verified_candidate",
+      "case_id": "img2628_candidate",
+      "comparison_report_path": "data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json",
+      "display_name": "IMG_2628 verified candidate",
+      "expected_total": 25,
+      "last_verified_at": "2026-05-02",
+      "manifest_path": "validation/test_cases/img2628.json",
       "promotion_status": "not_promoted",
-      "expected_total": 21,
-      "truth_rule_id": "completed_placement_21",
-      "video_sha256": "4cb1d274cd2a53ca792bd3b7b217b84bf7734c780a7e43a1b7cc77557a32bf6e",
-      "manifest_path": "validation/test_cases/img3262.json",
-      "comparison_report_path": "data/reports/img3262_app_vs_truth.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3_ledger_v2.json",
-      "last_verified_at": "2026-05-01"
+      "status": "verified_candidate",
+      "truth_rule_id": "completed_placement_25_reconciled_reviewed",
+      "video_sha256": "b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139"
     },
     {
       "case_id": "img3254_clean22_candidate",
-      "display_name": "IMG_3254 clean-cycle verified candidate",
-      "status": "verified_candidate",
-      "promotion_status": "not_promoted",
-      "expected_total": 22,
-      "truth_rule_id": "clean_cycle_22",
-      "video_sha256": "f9b72e2a48e96f1f008a0b750504fde13c8ea43ab62f562bacd715c5b19b19cd",
-      "manifest_path": "validation/test_cases/img3254_clean22.json",
       "comparison_report_path": "data/reports/img3254_app_vs_truth.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json",
-      "last_verified_at": "2026-05-01"
+      "display_name": "IMG_3254 clean-cycle verified candidate",
+      "expected_total": 22,
+      "last_verified_at": "2026-05-01",
+      "manifest_path": "validation/test_cases/img3254_clean22.json",
+      "promotion_status": "not_promoted",
+      "status": "verified_candidate",
+      "truth_rule_id": "clean_cycle_22",
+      "video_sha256": "f9b72e2a48e96f1f008a0b750504fde13c8ea43ab62f562bacd715c5b19b19cd"
+    },
+    {
+      "case_id": "img3262_candidate",
+      "comparison_report_path": "data/reports/img3262_app_vs_truth.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3_ledger_v2.json",
+      "display_name": "IMG_3262 verified candidate",
+      "expected_total": 21,
+      "last_verified_at": "2026-05-01",
+      "manifest_path": "validation/test_cases/img3262.json",
+      "promotion_status": "not_promoted",
+      "status": "verified_candidate",
+      "truth_rule_id": "completed_placement_21",
+      "video_sha256": "4cb1d274cd2a53ca792bd3b7b217b84bf7734c780a7e43a1b7cc77557a32bf6e"
     }
-  ]
+  ],
+  "schema_version": "factory-vision-validation-registry-v1",
+  "updated_at": "2026-05-02"
 }

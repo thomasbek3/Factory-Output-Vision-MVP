@@ -1,0 +1,49 @@
+{
+  "schema_version": "factory-vision-validation-status-v1",
+  "case_id": "img2628",
+  "video_path": "data/videos/from-pc/IMG_2628.MOV",
+  "human_reference_total": 25,
+  "status": "visible_total_clean_not_promoted",
+  "status_summary": "The real visible dashboard path counted IMG_2628.MOV from 0 to 25 at 1.0x and matched the human total. The candidate is not registry/promoted because reviewed timestamp truth is missing and the available draft-ledger comparison is not clean.",
+  "real_app_visible_run": {
+    "completed": true,
+    "dashboard_started_by_click": true,
+    "dashboard_final_state": "Demo complete",
+    "runtime_total_started_at": 0,
+    "runtime_total_finished_at": 25,
+    "demo_count_mode": "live_reader_snapshot",
+    "counting_mode": "event_based",
+    "demo_playback_speed": 1.0,
+    "observed_events_path": "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "summary_path": "data/reports/img2628_visible_dashboard_1x_summary.candidate25_v1.json"
+  },
+  "human_total_comparison": {
+    "path": "data/reports/img2628_app_vs_human_total.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "total_matches": true,
+    "expected_human_total": 25,
+    "observed_event_count": 25
+  },
+  "timestamp_truth": {
+    "reviewed_human_timestamp_ledger_exists": false,
+    "draft_ledger_path": "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+    "draft_ledger_validation_truth_eligible": false,
+    "draft_ledger_comparison_path": "data/reports/img2628_app_vs_codex_visual_draft.run8092.visible_dashboard_1x_candidate25_v1.json",
+    "draft_ledger_matched_count": 22,
+    "draft_ledger_missing_truth_count": 3,
+    "draft_ledger_unexpected_observed_count": 3,
+    "draft_ledger_first_divergence": {
+      "type": "unexpected_observed",
+      "event_ts": 110.003,
+      "track_id": 2,
+      "runtime_total_after_event": 2
+    }
+  },
+  "pacing": {
+    "wall_per_source": 1.0000006461578348,
+    "near_1x": true
+  },
+  "promotion": {
+    "registry_update_allowed": false,
+    "reason": "Total-clean visible operation is proven, but reviewed timestamp truth and clean event-level comparison are still required for promotion."
+  }
+}

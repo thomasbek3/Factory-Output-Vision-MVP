@@ -1,0 +1,57 @@
+{
+  "schema_version": "factory-vision-candidate-validation-status-v1",
+  "case_id": "img2628_candidate",
+  "video_path": "data/videos/from-pc/IMG_2628.MOV",
+  "video_sha256": "b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139",
+  "human_reference_total": 25,
+  "status": "blocked_not_verified",
+  "created_at": "2026-05-02",
+  "definition_of_done_result": {
+    "human_total_recorded": true,
+    "reviewed_timestamp_truth_ledger_exists": false,
+    "real_app_1x_visible_run_exists": false,
+    "clean_app_vs_truth_comparison_exists": false,
+    "wall_source_pacing_measured_for_promotion_run": false,
+    "registry_promotion_allowed": false
+  },
+  "blockers": [
+    "Only a total-only human reference exists. The 25 event timestamps have not been reviewed into a truth ledger.",
+    "Existing active-panel detectors have near-zero recall on IMG_2628 sampled frames at normal confidence.",
+    "The static wire_mesh_panel detector detects every sampled frame and app diagnostics either overcount resident/static fragmentation or undercount after aggressive grouping.",
+    "No real visible dashboard run at 1.0x has cleanly reached 25 and compared against reviewed truth."
+  ],
+  "diagnostic_artifacts": {
+    "fingerprint": "data/reports/img2628_video_fingerprint.v1.json",
+    "human_total": "data/reports/img2628_human_truth_total.v1.json",
+    "truth_template": "data/reports/img2628_human_truth_event_times.template.csv",
+    "preview_sheet": "data/videos/preview_sheets/img2628/IMG_2628.jpg",
+    "timestamped_truth_review_manifest": "data/videos/review_frames/img2628_truth_review_5s/manifest.json",
+    "timestamped_truth_review_readme": "data/videos/review_frames/img2628_truth_review_5s/README.md",
+    "selected_frame_manifest": "data/videos/selected_frames/img2628_uniform_80/manifest.json",
+    "detector_sample_screen": "data/reports/img2628_detector_sample_screen.uniform80_v1.json",
+    "wire_mesh_fast_overcount": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster90_age10_min4_speed8_short_diag_v1.json",
+    "wire_mesh_age52_overcount": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_speed8_diag_v1.json",
+    "wire_mesh_age100_partial": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster350_age100_min30_speed8_diag_v1.json",
+    "wire_mesh_age200_undercount": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster500_age200_min50_speed8_diag_v1.json"
+  },
+  "advisory_review_artifacts": {
+    "event_evidence": "data/reports/active_learning/img2628_event_evidence.wire_mesh_cluster350_diag_v1.json",
+    "moondream_audit": "data/reports/active_learning/img2628_moondream_audit.local_wire_mesh_cluster350_diag_v1.json",
+    "review_queue": "data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.json",
+    "review_queue_html": "data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.html",
+    "moondream_boundary": {
+      "validation_truth_eligible": false,
+      "training_eligible": false,
+      "label_authority_tier": "bronze",
+      "review_status": "pending"
+    }
+  },
+  "next_honest_command": ".venv/bin/python scripts/build_human_truth_ledger_from_csv.py --csv data/reports/img2628_human_truth_event_times.reviewed_v1.csv --output data/reports/img2628_human_truth_ledger.reviewed_v1.json --video data/videos/from-pc/IMG_2628.MOV --expected-total 25 --video-sha256 b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139 --count-rule \"Count one completed placement when the worker finishes putting the finished product in the output/resting area.\" --force",
+  "next_honest_work": [
+    "Review the full video/contact sheets and create data/reports/img2628_human_truth_event_times.reviewed_v1.csv with 25 event timestamps.",
+    "Create an IMG_2628-specific active-panel detector from reviewed labels or another reviewed model/data path.",
+    "Rerun fast diagnostics only after detector recall exists.",
+    "Run the visible 1.0x dashboard proof only after diagnostics show plausible total and timing.",
+    "Do not add IMG_2628 to validation/registry.json until app-vs-truth is clean."
+  ]
+}

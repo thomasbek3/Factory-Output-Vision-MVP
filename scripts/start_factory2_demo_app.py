@@ -26,6 +26,8 @@ def build_demo_env(
     yolo_confidence: float | None = None,
     event_track_max_age: int | None = None,
     event_track_min_frames: int | None = None,
+    event_track_min_travel_px: float | None = None,
+    event_count_debounce_sec: float | None = None,
     event_track_max_match_distance: float | None = None,
     event_detection_cluster_distance: float | None = None,
     playback_speed: float = 1.0,
@@ -55,6 +57,10 @@ def build_demo_env(
         env["FC_EVENT_TRACK_MAX_AGE"] = str(event_track_max_age)
     if event_track_min_frames is not None:
         env["FC_EVENT_TRACK_MIN_FRAMES"] = str(event_track_min_frames)
+    if event_track_min_travel_px is not None:
+        env["FC_EVENT_TRACK_MIN_TRAVEL_PX"] = _stringify_number(event_track_min_travel_px)
+    if event_count_debounce_sec is not None:
+        env["FC_EVENT_COUNT_DEBOUNCE_SEC"] = _stringify_number(event_count_debounce_sec)
     if event_track_max_match_distance is not None:
         env["FC_EVENT_TRACK_MAX_MATCH_DISTANCE"] = _stringify_number(event_track_max_match_distance)
     if event_detection_cluster_distance is not None:
@@ -86,6 +92,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--yolo-confidence", type=float, default=None)
     parser.add_argument("--event-track-max-age", type=int, default=None)
     parser.add_argument("--event-track-min-frames", type=int, default=None)
+    parser.add_argument("--event-track-min-travel-px", type=float, default=None)
+    parser.add_argument("--event-count-debounce-sec", type=float, default=None)
     parser.add_argument("--event-track-max-match-distance", type=float, default=None)
     parser.add_argument("--event-detection-cluster-distance", type=float, default=None)
     parser.add_argument("--playback-speed", type=float, default=1.0)
@@ -103,6 +111,8 @@ def main() -> None:
         yolo_confidence=args.yolo_confidence,
         event_track_max_age=args.event_track_max_age,
         event_track_min_frames=args.event_track_min_frames,
+        event_track_min_travel_px=args.event_track_min_travel_px,
+        event_count_debounce_sec=args.event_count_debounce_sec,
         event_track_max_match_distance=args.event_track_max_match_distance,
         event_detection_cluster_distance=args.event_detection_cluster_distance,
         playback_speed=args.playback_speed,

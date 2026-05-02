@@ -235,10 +235,29 @@ Frame differencing approaches are fragile because the worker's body dominates th
 3. **Do not move research scripts until imports/tests move with them.** The repo needs a cleaner script tree, but mechanically relocating top-level Factory2 scripts without shims would break existing tests. Mark the product path first, then move research scripts in a separate import-safe pass.
 4. **Known limitations increase credibility.** Explicitly documenting that file-backed live validation is not yet live RTSP/Reolink validation makes the repo more trustworthy, not weaker.
 
+## 2026-05-02: AI-Only Active Learning Boundary
+
+1. **Active learning must not blur runtime authority.** Evidence windows, teacher labels, Moondream, Lens, and human/VA review are offline helpers; Runtime Total must still come from the YOLO/event app path without waiting for humans or VLMs.
+2. **Teacher labels are poisoned truth until promoted.** Raw frontier/VLM suggestions start as `bronze` and `pending`. Validation tooling should reject them as truth rather than relying on filenames or reviewer memory.
+3. **Dataset safety belongs in tooling, not policy text alone.** Train/test leakage and unreviewed gold labels need executable checks before any future active-learning dataset feeds model promotion.
+
+## 2026-05-02: IMG_2628 Candidate Lessons
+
+1. **Total-only truth is still a blocker, even when the total is trusted.** IMG_2628 starts with a human reference total of `25`, but without reviewed timestamps it can only support diagnostics and review packets, not promotion.
+2. **Detector transfer can fail silently across visually similar press-brake videos.** IMG_3254/IMG_3262 active-panel models had near-zero sampled-frame recall on IMG_2628, so do a sampled detector screen before spending time on full app runs.
+3. **A static detector cannot be tuned into proof by final-total pressure.** `wire_mesh_panel.pt` saw every sampled IMG_2628 frame; short lifetimes overcounted static fragmentation, while aggressive clustering/lifetimes undercounted. That is evidence for a new reviewed active-panel detector, not permission to keep nudging until the final number happens to be `25`.
+4. **Moondream review queues are useful even when validation blocks.** Local MD2 generated an advisory review queue for the least-bad diagnostic windows, but all labels remained `bronze`/`pending`, `validation_truth_eligible=false`, and `training_eligible=false`.
+5. **For long HEVC review scans, avoid random seek per timestamp.** A 1 fps CV-motion draft pass that used OpenCV `CAP_PROP_POS_MSEC` for every sampled second burned minutes on `IMG_2628`; the same advisory scan should use sequential ffmpeg decoding and reserve random seeks only for a small number of candidate contact strips.
+6. **Separate operator frustration from proof boundaries.** When the user asks why Moondream or human review is slowing things down, explain the split plainly: runtime counting can and should keep moving without Moondream, while promotion truth still needs reviewed event evidence.
+7. **A total-clean diagnostic can still hide event swaps.** The IMG_2628 worksheet detector reached `25/25` total, but draft-ledger comparison showed missing and unexpected events. Treat that as a candidate for visible operational review, not as event-level validation.
+8. **When a user gives a trusted total, do the timestamp reconciliation work instead of bouncing it back by default.** For IMG_2628, the right move after the visible app hit `25` was focused dispute review against frames/contact sheets, then an auditable reviewed ledger. Keep Moondream out of truth, but do not make the user manually fill timestamps when local evidence can settle the disagreement.
+9. **Manifest launch reconstruction must include every runtime knob.** IMG_2628 needed `event_track_max_match_distance=260`; the validation orchestrator initially omitted it from reconstructed launch commands. Add tests for any new manifest runtime setting that affects reproducibility.
+10. **A lesson is not learned until it changes the next-video command path.** Notes alone did not make IMG_2628 faster. Reusable learning now needs either a script, manifest default, test, or runbook gate. `scripts/bootstrap_video_candidate.py` and `scripts/screen_detector_transfer.py` are the first explicit fast-path hooks for that rule.
+
 ### Training & Deployment Lessons
 
-8. **ONNX export provides no speedup on i7-12700F.** PyTorch already runs at ~60ms/frame. ONNX overhead (model loading, conversion) wasn't worth it for this CPU. Don't bother unless moving to ARM/edge devices.
-9. **Roboflow auto-label works for common shapes but NOT wire mesh.** Grounding DINO + SAM struggles with niche industrial objects. Manual labeling is required. Budget time accordingly.
-10. **Camera angle matters critically.** Overhead/high angle reduces occlusion from worker's body. Side angle causes worker to block the panel during transit, killing recall.
-11. **Kenneth at RMFG: shipped with 60 images, iterated.** Deploy imperfect, improve with production data. Don't wait for perfect model — correction buttons cover the gap.
-12. **Training is fast on CPU.** YOLOv8n fine-tuning: ~20 min for 25 epochs on i7-12700F. No GPU needed for small datasets.
+11. **ONNX export provides no speedup on i7-12700F.** PyTorch already runs at ~60ms/frame. ONNX overhead (model loading, conversion) wasn't worth it for this CPU. Don't bother unless moving to ARM/edge devices.
+12. **Roboflow auto-label works for common shapes but NOT wire mesh.** Grounding DINO + SAM struggles with niche industrial objects. Manual labeling is required. Budget time accordingly.
+13. **Camera angle matters critically.** Overhead/high angle reduces occlusion from worker's body. Side angle causes worker to block the panel during transit, killing recall.
+14. **Kenneth at RMFG: shipped with 60 images, iterated.** Deploy imperfect, improve with production data. Don't wait for perfect model — correction buttons cover the gap.
+15. **Training is fast on CPU.** YOLOv8n fine-tuning: ~20 min for 25 epochs on i7-12700F. No GPU needed for small datasets.

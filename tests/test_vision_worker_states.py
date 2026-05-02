@@ -14,7 +14,7 @@ import numpy as np
 from app.db.config_repo import update_roi_polygon
 from app.db.database import init_db
 from app.services.count_state_machine import CountEvent, TrackDetection
-from app.services.counting import DetectedObject, DetectionDebugResult, Track, count_new_tracks, mark_all_tracks_counted
+from app.services.counting import DetectedObject, DetectionDebugResult, Track, count_dead_tracks, count_new_tracks, mark_all_tracks_counted
 from app.services.frame_reader import ReaderSnapshot
 from app.services.perception_gate import GateDecision
 from app.services.runtime_event_counter import RuntimeFrameResult
@@ -272,6 +272,32 @@ class VisionWorkerStateTests(unittest.TestCase):
         )
         count = count_new_tracks({1: track}, min_track_frames=5)
         self.assertEqual(count, 0)
+
+    def test_count_dead_tracks_can_require_travel(self) -> None:
+        """Event-based tracks can filter stationary detection flicker."""
+        stationary_track = Track(
+            track_id=1,
+            centroid=(104, 100),
+            first_centroid=(100, 100),
+            previous_centroid=(103, 100),
+            age=10,
+            frames_seen=20,
+            last_side=None,
+            counted=False,
+        )
+        moving_track = Track(
+            track_id=2,
+            centroid=(260, 100),
+            first_centroid=(100, 100),
+            previous_centroid=(240, 100),
+            age=10,
+            frames_seen=20,
+            last_side=None,
+            counted=False,
+        )
+
+        count = count_dead_tracks([stationary_track, moving_track], min_track_frames=5, min_travel_px=75)
+        self.assertEqual(count, 1)
 
     def test_mark_all_tracks_counted_warmup(self) -> None:
         """mark_all_tracks_counted should prevent existing tracks from counting."""

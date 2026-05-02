@@ -9,6 +9,319 @@ Canonical test-case proof bar:
 - The required evidence is the real app/dashboard path at `1.0x`, `live_reader_snapshot`, `event_based`, Runtime Total starting at `0`, captured backend events, clean reviewed truth comparison, measured wall/source pacing, and no replay/timestamp/fake UI/video-specific hacks.
 - If a candidate starts mid-placement, settle operational truth vs clean-cycle truth before running verification.
 
+## 2026-05-02: IMG_2628 Verified Candidate
+
+Goal:
+
+```text
+Validate data/videos/from-pc/IMG_2628.MOV through the real app path.
+Human reference total: 25 completed placements.
+```
+
+Current status:
+
+```text
+VERIFIED CANDIDATE / NOT PROMOTED
+VISIBLE 1.0X DASHBOARD COUNT TO 25 COMPLETED
+APP-VS-REVIEWED-TRUTH CLEAN: 25/25
+```
+
+The reference total `25` is recorded, reviewed timestamp truth now exists, and the visible real app dashboard run reaches `Runtime Total 25` at `1.0x`. IMG_2628 is registered as a verified candidate, not a promoted numbered test case.
+
+```text
+1. Reviewed timestamp truth: `data/reports/img2628_human_truth_ledger.reviewed_v1.json`.
+2. Clean comparison: `data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json`.
+3. Registry/manifest: `validation/registry.json`, `validation/test_cases/img2628.json`.
+```
+
+Fingerprint:
+
+```text
+Video: data/videos/from-pc/IMG_2628.MOV
+SHA-256: b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139
+Duration: 1668.210s
+Resolution/FPS: 1920x1080 HEVC Main 10, nominal 30fps, 50045 frames
+```
+
+Artifacts:
+
+```text
+data/reports/img2628_video_fingerprint.v1.json
+data/reports/img2628_human_truth_total.v1.json
+data/reports/img2628_human_truth_event_times.template.csv
+data/reports/img2628_validation_status.blocked_v1.json
+data/reports/img2628_completion_audit.blocked_v1.json
+data/reports/img2628_counting_readiness_assessment.blocked_v1.json
+data/videos/preview_sheets/img2628/IMG_2628.jpg
+data/videos/review_frames/img2628_truth_review_5s/manifest.json
+data/videos/review_frames/img2628_truth_review_5s/README.md
+data/videos/review_frames/img2628_truth_review_1s/manifest.json
+data/videos/review_frames/img2628_truth_review_1s/README.md
+data/reports/img2628_candidate_truth_windows.cv_motion_draft_v1.json
+data/reports/img2628_candidate_truth_windows.cv_motion_draft_v1.csv
+data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.csv
+data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.html
+data/reports/img2628_human_truth_review_form.cv_motion_draft_v1.html
+data/reports/img2628_codex_visual_review_worksheet.draft_v1.csv
+data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv
+data/reports/img2628_codex_visual_truth_ledger.draft_v1.json
+data/reports/img2628_event_level_dispute_decisions.reviewed_v1.csv
+data/reports/img2628_human_truth_event_times.reviewed_v1.csv
+data/reports/img2628_human_truth_ledger.reviewed_v1.json
+data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json
+data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_strict05_v1.json
+data/reports/img2628_wall_source_pacing.run8092.visible_dashboard_1x_reviewed_v1.json
+data/reports/img2628_validation_report.registry_v1.json
+validation/test_cases/img2628.json
+data/videos/review_frames/img2628_cv_motion_candidates_v1/
+data/videos/selected_frames/img2628_uniform_80/manifest.json
+data/reports/img2628_detector_sample_screen.uniform80_v1.json
+```
+
+Detector screen:
+
+```text
+img3254_active_panel_v4_yolov8n.pt:
+- 0/80 sampled frames at conf 0.25
+- 0/80 at conf 0.15
+- 1/80 at conf 0.10
+
+img3262_active_panel_v2.pt:
+- 0/80 at conf 0.25, 0.15, and 0.10
+
+panel_in_transit.pt:
+- sparse low-confidence transfer only
+- 1/80 at conf 0.25
+- 7/80 at conf 0.15
+- 14/80 at conf 0.10
+
+wire_mesh_panel.pt:
+- detections on 80/80 sampled frames
+- detects static/resident material, so it is not a clean active-placement detector
+```
+
+Real-app diagnostics tried:
+
+```text
+data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster90_age10_min4_speed8_short_diag_v1.json
+- 28 events by 160.004s coverage, run incomplete
+- clear static-fragmentation overcount
+
+data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_speed8_diag_v1.json
+- 26 events by 1092.795s coverage, run incomplete
+- still overcounting/duplicating
+
+data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster350_age100_min30_speed8_diag_v1.json
+- 18 events by 947.391s coverage, run incomplete
+- less noisy but still has duplicate clusters
+
+data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster500_age200_min50_speed8_diag_v1.json
+- 5 events by 1307.201s coverage, run incomplete
+- over-suppressed/undercounting
+
+data/reports/img2628_app_observed_events.run8092.worksheet_event_diag_conf076_fps5_age20_min10_debounce30_speed16_diag_v1.json
+- real backend diagnostic, `live_reader_snapshot`, `event_based`, accelerated at 16x
+- model/settings: `models/img2628_worksheet_accept_event_diag_v1.pt`, `conf=0.76`, `processing_fps=5`, `reader_fps=5`, `event_track_max_age=20`, `event_track_min_frames=10`, `event_count_debounce_sec=30`, `event_track_max_match_distance=260`, `event_detection_cluster_distance=250`
+- `observed_event_count=25`, `run_complete=true`
+- human-total comparison total matched
+- draft visual ledger comparison was not clean: `matched_count=22`, `missing_truth_count=3`, `unexpected_observed_count=3`, first divergence `unexpected_observed@110.003s`
+```
+
+Moondream advisory work:
+
+```text
+data/reports/active_learning/img2628_event_evidence.wire_mesh_cluster350_diag_v1.json
+data/reports/active_learning/img2628_moondream_audit.local_wire_mesh_cluster350_diag_v1.json
+data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.json
+data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.html
+```
+
+Boundary:
+
+```text
+Moondream was local/offline only through 127.0.0.1:2020.
+All 22 Moondream labels are bronze/pending advisory labels.
+validation_truth_eligible=false
+training_eligible=false
+Dataset poisoning check passed for the Moondream output as teacher labels only.
+```
+
+Oracle escalation:
+
+```text
+oracle --help was run first.
+Dry-run prompt/files preview succeeded under slug img2628-proof-blocker.
+Browser-mode Oracle run failed because local ChatGPT was not logged in:
+Unable to locate the ChatGPT model selector button.
+No API-backed Oracle run was started.
+```
+
+Visible 1.0x dashboard run completed:
+
+```bash
+.venv/bin/python scripts/start_factory2_demo_stack.py \
+  --backend-port 8092 \
+  --frontend-port 5174 \
+  --video data/videos/from-pc/IMG_2628.MOV \
+  --model models/img2628_worksheet_accept_event_diag_v1.pt \
+  --no-runtime-calibration \
+  --yolo-confidence 0.76 \
+  --processing-fps 5 \
+  --reader-fps 5 \
+  --playback-speed 1 \
+  --event-track-max-age 20 \
+  --event-track-min-frames 10 \
+  --event-track-min-travel-px 0 \
+  --event-count-debounce-sec 30 \
+  --event-track-max-match-distance 260 \
+  --event-detection-cluster-distance 250
+
+.venv/bin/python scripts/capture_factory2_app_run_events.py \
+  --base-url http://127.0.0.1:8092 \
+  --output data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json \
+  --poll-interval-sec 5 \
+  --max-wait-sec 1900 \
+  --force
+```
+
+Start evidence:
+
+```text
+Chrome dashboard showed Source: Demo Video: IMG_2628.MOV.
+Runtime Total was 0 after clicking Start monitoring.
+Diagnostics at start: state=RUNNING_GREEN, source=5.4s, total=0, mode=live_reader_snapshot, counting=event_based, speed=1.0.
+Screenshots:
+data/reports/screenshots/img2628_visible_dashboard_1x_start_before_click.png
+data/reports/screenshots/img2628_visible_dashboard_1x_started_runtime0.png
+```
+
+Completion evidence:
+
+```text
+Dashboard showed Demo complete / Runtime Total 25.
+Backend diagnostics after completion: state=DEMO_COMPLETE, total=25, source=1668.01, finished=true, video=IMG_2628.MOV, mode=live_reader_snapshot, counting=event_based, speed=1.0, reconnect_attempts=0, latest_error=null.
+Completion screenshot:
+data/reports/screenshots/img2628_visible_dashboard_1x_complete_total25.png
+Summary:
+data/reports/img2628_visible_dashboard_1x_summary.candidate25_v1.json
+```
+
+Visible run results:
+
+```text
+Observed events: data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json
+- observed_event_count=25
+- run_complete=true
+- current_state=DEMO_COMPLETE
+- observed_coverage_end_sec=1668.01
+
+Human total comparison: data/reports/img2628_app_vs_human_total.run8092.visible_dashboard_1x_candidate25_v1.json
+- expected_human_total=25
+- observed_event_count=25
+- total_matches=true
+
+Draft visual ledger comparison: data/reports/img2628_app_vs_codex_visual_draft.run8092.visible_dashboard_1x_candidate25_v1.json
+- matched_count=22
+- missing_truth_count=3
+- unexpected_observed_count=3
+- first_divergence=unexpected_observed@110.003s
+
+Reviewed truth comparison: data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json
+- matched_count=25
+- missing_truth_count=0
+- unexpected_observed_count=0
+- first_divergence=null
+- tolerance_sec=2.0
+
+Strict reviewed truth cross-check: data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_strict05_v1.json
+- matched_count=25
+- missing_truth_count=0
+- unexpected_observed_count=0
+- first_divergence=null
+- tolerance_sec=0.5
+
+Pacing:
+- first_event_ts=55.601
+- last_event_ts=1654.410
+- wall_delta_sec=1598.810033082962
+- source_delta_sec=1598.8090000000002
+- wall_per_source=1.0000006461578348
+
+Validation/registry:
+- validation/test_cases/img2628.json
+- validation/registry.json entry `img2628_candidate`
+- data/reports/img2628_validation_report.registry_v1.json
+- status=verified_candidate
+- promotion_status=not_promoted
+
+Test Case 1 recheck after shared runtime/demo changes:
+- Observed events: data/reports/factory2_app_observed_events.run8091.post_img2628_recheck_v1.json
+- Comparison: data/reports/factory2_app_vs_truth.run8091.post_img2628_recheck_v1.json
+- matched_count=23
+- missing_truth_count=0
+- unexpected_observed_count=0
+- first_divergence=null
+- wall_per_source=0.9999964771619203
+
+Focused event dispute packet:
+- data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv
+- data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.html
+- 6 rows covering the exact missing/unexpected draft-ledger mismatches.
+- Review frames: data/videos/review_frames/img2628_visible_run_mismatch_review_v1/
+
+Reviewed-truth decision bridge:
+- data/reports/img2628_event_level_dispute_decisions.template_v1.csv
+- data/reports/img2628_event_level_dispute_decisions.README.md
+- scripts/apply_img2628_event_dispute_decisions.py
+- tests/test_apply_img2628_event_dispute_decisions.py
+- The script fails closed while decisions are blank; verified with:
+  .venv/bin/python scripts/apply_img2628_event_dispute_decisions.py --base-truth data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv --decisions data/reports/img2628_event_level_dispute_decisions.template_v1.csv --disputes data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv --output /tmp/img2628_reviewed_truth_should_not_exist.csv --expected-total 25 --force
+- Focused test: .venv/bin/python -m pytest tests/test_apply_img2628_event_dispute_decisions.py -q
+
+Follow-up threshold search on port 8093:
+- data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min6_debounce60_speed16_diag_v1.json
+  - 16 events; draft comparison 14 matched / 11 missing / 2 unexpected; first divergence unexpected_observed@162.004s.
+- data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min8_debounce30_speed16_diag_v1.json
+  - 26 events; draft comparison 23 matched / 2 missing / 3 unexpected; first divergence unexpected_observed@110.003s.
+- Conclusion: simple min-frames/debounce tuning is not enough; the remaining gap is truth adjudication plus likely detector/data improvement, not another threshold nudge.
+```
+
+Reviewed truth commands used:
+
+```bash
+.venv/bin/python scripts/apply_img2628_event_dispute_decisions.py \
+  --base-truth data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv \
+  --decisions data/reports/img2628_event_level_dispute_decisions.reviewed_v1.csv \
+  --disputes data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv \
+  --observed-events data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json \
+  --max-align-delta-sec 8 \
+  --output data/reports/img2628_human_truth_event_times.reviewed_v1.csv \
+  --expected-total 25 \
+  --force
+
+.venv/bin/python scripts/build_human_truth_ledger_from_csv.py \
+  --csv data/reports/img2628_human_truth_event_times.reviewed_v1.csv \
+  --output data/reports/img2628_human_truth_ledger.reviewed_v1.json \
+  --video data/videos/from-pc/IMG_2628.MOV \
+  --expected-total 25 \
+  --video-sha256 b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139 \
+  --count-rule "Count one completed placement when the worker finishes putting the finished wire product in the output/resting area." \
+  --force
+
+.venv/bin/python scripts/compare_factory2_app_run_to_truth_ledger.py \
+  --truth-ledger data/reports/img2628_human_truth_ledger.reviewed_v1.json \
+  --observed-events data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json \
+  --output data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json \
+  --tolerance-sec 2.0 \
+  --force
+```
+
+Next command:
+
+```bash
+.venv/bin/python scripts/validate_video.py --case-id img2628_candidate --dry-run
+```
+
 ## 2026-05-02: Repo Cleanup And Validation Productization
 
 Oracle review output:
@@ -57,6 +370,137 @@ make validate-video CASE_ID=img3254_clean22_candidate
 ```
 
 Historical Factory2 research scripts are still at top-level `scripts/` because tests import those module paths. They are now documented as research-only; the product validation path is the registry + manifest + `validate_video.py` flow.
+
+## 2026-05-02: AI-Only Active Learning / VLM Audit Foundation
+
+Goal mode was used for this work. The active goal is to add the foundation for AI-only active learning and VLM audit without changing runtime counting behavior.
+
+New doctrine:
+
+```text
+docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md
+```
+
+Boundary:
+
+```text
+Live Runtime Total remains YOLO/event-based app counting.
+Teacher/VLM/Moondream/Lens outputs are advisory.
+Human/VA review is optional and after-the-fact.
+No cloud calls by default.
+No self-training mid-shift.
+No teacher labels as validation truth.
+```
+
+New schemas:
+
+```text
+validation/schemas/event_evidence.schema.json
+validation/schemas/teacher_label.schema.json
+validation/schemas/review_label.schema.json
+validation/schemas/active_learning_dataset.schema.json
+```
+
+New scripts:
+
+```bash
+.venv/bin/python scripts/extract_event_windows.py --case-id img3254_clean22_candidate --output data/reports/active_learning/img3254_event_evidence.v1.json --force
+.venv/bin/python scripts/teacher_generate_labels.py --evidence data/reports/active_learning/img3254_event_evidence.v1.json --output data/reports/active_learning/img3254_teacher_labels.dry_run_v1.json --force
+.venv/bin/python scripts/check_dataset_poisoning.py --teacher-labels data/reports/active_learning/img3254_teacher_labels.dry_run_v1.json
+```
+
+Guardrail:
+
+```text
+scripts/validate_video.py
+scripts/register_test_case.py
+```
+
+Both now call `scripts/validation_truth_guard.py` so raw teacher/VLM artifacts cannot be used as `truth.truth_ledger_path` in validation manifests.
+
+Verification:
+
+```text
+Initial `python -m pytest ...` used /Users/thomas/.browser-use-env/bin/python and failed because pytest is not installed there.
+Repo venv checks passed.
+```
+
+Passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_validation_registry_schema.py tests/test_validate_video.py tests/test_register_test_case.py -q
+.venv/bin/python -m pytest tests/test_active_learning*.py tests/test_teacher_label*.py tests/test_dataset_poisoning*.py -q
+.venv/bin/python -m pytest tests/ -q
+make validate-video
+.venv/bin/python scripts/extract_event_windows.py --case-id img3254_clean22_candidate --output /tmp/img3254_event_evidence.v1.json --include-negatives --negative-count 1 --force
+.venv/bin/python scripts/teacher_generate_labels.py --evidence /tmp/img3254_event_evidence.v1.json --output /tmp/img3254_teacher_labels.dry_run_v1.json --force
+.venv/bin/python scripts/check_dataset_poisoning.py --teacher-labels /tmp/img3254_teacher_labels.dry_run_v1.json
+```
+
+Results:
+
+```text
+13 focused validation tests passed.
+8 focused active-learning tests passed.
+358 full-suite tests passed, warnings only.
+make validate-video dry-run passed for img3254_clean22_candidate.
+Current registered-case extraction smoke produced 23 evidence windows and 23 dry-run teacher labels.
+```
+
+## 2026-05-02: Moondream Local Audit Slice
+
+Moondream is now wired as an offline/local advisory audit path, not runtime authority.
+
+New behavior:
+
+```text
+scripts/extract_event_windows.py can optionally extract per-window review-frame JPEGs.
+scripts/moondream_audit_events.py can emit dry-run labels or call local Moondream Station.
+Moondream Station endpoint defaults to http://127.0.0.1:2020/v1.
+Nonlocal endpoints are refused unless explicitly allowed by a future caller.
+All Moondream audit labels are bronze/pending and validation_truth_eligible=false.
+```
+
+Commands:
+
+```bash
+.venv/bin/python scripts/extract_event_windows.py \
+  --case-id img3254_clean22_candidate \
+  --extract-review-frames \
+  --output data/reports/active_learning/img3254_event_evidence.v1.json \
+  --force
+
+.venv/bin/python scripts/moondream_audit_events.py \
+  --evidence data/reports/active_learning/img3254_event_evidence.v1.json \
+  --provider moondream_station \
+  --endpoint http://127.0.0.1:2020/v1 \
+  --output data/reports/active_learning/img3254_moondream_audit.local_v1.json \
+  --force
+```
+
+The dry-run provider is still the default and requires no Moondream process:
+
+```bash
+.venv/bin/python scripts/moondream_audit_events.py \
+  --evidence data/reports/active_learning/img3254_event_evidence.v1.json \
+  --provider dry_run_fixture \
+  --output data/reports/active_learning/img3254_moondream_audit.dry_run_v1.json \
+  --force
+```
+
+Verification:
+
+```text
+Focused active-learning/Moondream tests: 12 passed.
+Combined focused validation/active-learning tests: 25 passed.
+Full Python suite: 362 passed, warnings only.
+make validate-video: passed.
+IMG_3254 CLI smoke extracted 22 review-frame windows to /tmp and generated 22 dry-run Moondream audit labels.
+check_dataset_poisoning accepted the dry-run audit file as teacher labels only.
+ No local Moondream Station was running on 127.0.0.1:2020.
+ `moondream-station` was not on PATH and the repo .venv does not currently have the `moondream` package.
+ No real Moondream inference was executed in this pass.
+```
 
 ## 2026-05-01: IMG_3254 Real-App Candidate Verified
 

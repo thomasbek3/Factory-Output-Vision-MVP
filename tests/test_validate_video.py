@@ -47,6 +47,14 @@ def test_build_launch_command_uses_manifest_runtime_settings() -> None:
     assert "--no-runtime-calibration" in command
 
 
+def test_build_launch_command_includes_event_match_distance_when_present() -> None:
+    manifest = _manifest("img2628.json")
+
+    command = build_launch_command(manifest, backend_port=8192, frontend_port=5274)
+
+    assert command[command.index("--event-track-max-match-distance") + 1] == "260"
+
+
 def test_build_capture_and_compare_commands() -> None:
     manifest = _manifest("img3262.json")
 

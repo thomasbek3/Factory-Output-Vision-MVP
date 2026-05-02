@@ -1,0 +1,181 @@
+{
+  "first_divergence": null,
+  "matched": [
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 5.5,
+      "observed_track_id": 1,
+      "truth_event_id": "factory2-truth-0001",
+      "truth_event_ts": 5.5
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 23.601,
+      "observed_track_id": 2,
+      "truth_event_id": "factory2-truth-0002",
+      "truth_event_ts": 23.601
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 42.701,
+      "observed_track_id": 11,
+      "truth_event_id": "factory2-truth-0003",
+      "truth_event_ts": 42.701
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 60.502,
+      "observed_track_id": 16,
+      "truth_event_id": "factory2-truth-0004",
+      "truth_event_ts": 60.502
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 78.602,
+      "observed_track_id": 24,
+      "truth_event_id": "factory2-truth-0005",
+      "truth_event_ts": 78.602
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 110.903,
+      "observed_track_id": 31,
+      "truth_event_id": "factory2-truth-0006",
+      "truth_event_ts": 110.903
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 129.904,
+      "observed_track_id": 39,
+      "truth_event_id": "factory2-truth-0007",
+      "truth_event_ts": 129.904
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 147.004,
+      "observed_track_id": 44,
+      "truth_event_id": "factory2-truth-0008",
+      "truth_event_ts": 147.004
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 184.205,
+      "observed_track_id": 61,
+      "truth_event_id": "factory2-truth-0009",
+      "truth_event_ts": 184.205
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 210.406,
+      "observed_track_id": 70,
+      "truth_event_id": "factory2-truth-0010",
+      "truth_event_ts": 210.406
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 233.006,
+      "observed_track_id": 79,
+      "truth_event_id": "factory2-truth-0011",
+      "truth_event_ts": 233.006
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 252.007,
+      "observed_track_id": 87,
+      "truth_event_id": "factory2-truth-0012",
+      "truth_event_ts": 252.007
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 268.907,
+      "observed_track_id": 96,
+      "truth_event_id": "factory2-truth-0013",
+      "truth_event_ts": 268.907
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 286.408,
+      "observed_track_id": 102,
+      "truth_event_id": "factory2-truth-0014",
+      "truth_event_ts": 286.408
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 303.508,
+      "observed_track_id": 107,
+      "truth_event_id": "factory2-truth-0015",
+      "truth_event_ts": 303.508
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 305.708,
+      "observed_track_id": 108,
+      "truth_event_id": "factory2-truth-0016",
+      "truth_event_ts": 305.708
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 326.109,
+      "observed_track_id": 118,
+      "truth_event_id": "factory2-truth-0017",
+      "truth_event_ts": 326.109
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 347.109,
+      "observed_track_id": 123,
+      "truth_event_id": "factory2-truth-0018",
+      "truth_event_ts": 347.109
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 367.21,
+      "observed_track_id": 132,
+      "truth_event_id": "factory2-truth-0019",
+      "truth_event_ts": 367.21
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 384.311,
+      "observed_track_id": 138,
+      "truth_event_id": "factory2-truth-0020",
+      "truth_event_ts": 384.311
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 401.711,
+      "observed_track_id": 146,
+      "truth_event_id": "factory2-truth-0021",
+      "truth_event_ts": 401.711
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 422.612,
+      "observed_track_id": 151,
+      "truth_event_id": "factory2-truth-0022",
+      "truth_event_ts": 422.612
+    },
+    {
+      "delta_sec": 0.0,
+      "observed_event_ts": 425.012,
+      "observed_track_id": 152,
+      "truth_event_id": "factory2-truth-0023",
+      "truth_event_ts": 425.012
+    }
+  ],
+  "matched_count": 23,
+  "missing_truth": [],
+  "missing_truth_count": 0,
+  "observed_coverage_end_sec": 426.912,
+  "observed_event_count": 23,
+  "observed_events_path": "data/reports/factory2_app_observed_events.run8091.post_img2628_recheck_v1.json",
+  "observed_run_complete": true,
+  "pending_truth": [],
+  "pending_truth_count": 0,
+  "schema_version": "factory2-app-run-vs-truth-comparison-v1",
+  "tolerance_sec": 0.5,
+  "truth_event_count": 23,
+  "truth_ledger_path": "data/reports/factory2_human_truth_ledger.v1.json",
+  "unexpected_observed": [],
+  "unexpected_observed_count": 0
+}

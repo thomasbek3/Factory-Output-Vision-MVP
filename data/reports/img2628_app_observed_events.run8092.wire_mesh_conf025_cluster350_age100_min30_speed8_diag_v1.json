@@ -1,0 +1,378 @@
+{
+  "captured_at": 1777697334.155,
+  "current_state": "RUNNING_GREEN",
+  "events": [
+    {
+      "bbox": null,
+      "centroid": [
+        711,
+        444
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 69.902,
+      "frames_seen": 599,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 700,
+      "reader_frame_time": 1777697093.06433,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 1,
+      "runtime_total_after_event": 1,
+      "source_kind": "demo",
+      "track_id": 1,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1391,
+        780
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 191.105,
+      "frames_seen": 50,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1912,
+      "reader_frame_time": 1777697126.099847,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 2,
+      "runtime_total_after_event": 2,
+      "source_kind": "demo",
+      "track_id": 12,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        698,
+        531
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 218.706,
+      "frames_seen": 1488,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 2188,
+      "reader_frame_time": 1777697133.755942,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 3,
+      "runtime_total_after_event": 3,
+      "source_kind": "demo",
+      "track_id": 7,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1490,
+        598
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 228.906,
+      "frames_seen": 1434,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 2290,
+      "reader_frame_time": 1777697136.517827,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 4,
+      "runtime_total_after_event": 4,
+      "source_kind": "demo",
+      "track_id": 3,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        672,
+        381
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 339.609,
+      "frames_seen": 1196,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 3397,
+      "reader_frame_time": 1777697166.991796,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 5,
+      "runtime_total_after_event": 5,
+      "source_kind": "demo",
+      "track_id": 17,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1280,
+        435
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 422.211,
+      "frames_seen": 48,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 4223,
+      "reader_frame_time": 1777697189.986221,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 6,
+      "runtime_total_after_event": 6,
+      "source_kind": "demo",
+      "track_id": 33,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1385,
+        779
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 463.412,
+      "frames_seen": 364,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 4635,
+      "reader_frame_time": 1777697201.232863,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 7,
+      "runtime_total_after_event": 7,
+      "source_kind": "demo",
+      "track_id": 28,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        473,
+        723
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 537.314,
+      "frames_seen": 71,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 5374,
+      "reader_frame_time": 1777697221.408039,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 8,
+      "runtime_total_after_event": 8,
+      "source_kind": "demo",
+      "track_id": 44,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1388,
+        773
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 592.615,
+      "frames_seen": 160,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 5927,
+      "reader_frame_time": 1777697236.504613,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 9,
+      "runtime_total_after_event": 9,
+      "source_kind": "demo",
+      "track_id": 48,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        702,
+        442
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 608.216,
+      "frames_seen": 32,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 6083,
+      "reader_frame_time": 1777697240.756046,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 10,
+      "runtime_total_after_event": 10,
+      "source_kind": "demo",
+      "track_id": 51,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1303,
+        434
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 623.016,
+      "frames_seen": 1192,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 6231,
+      "reader_frame_time": 1777697244.831251,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 11,
+      "runtime_total_after_event": 11,
+      "source_kind": "demo",
+      "track_id": 37,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1409,
+        773
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 647.483,
+      "frames_seen": 176,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 6476,
+      "reader_frame_time": 1777697251.491754,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 12,
+      "runtime_total_after_event": 12,
+      "source_kind": "demo",
+      "track_id": 54,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1329,
+        574
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 700.285,
+      "frames_seen": 548,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 7004,
+      "reader_frame_time": 1777697265.876094,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 13,
+      "runtime_total_after_event": 13,
+      "source_kind": "demo",
+      "track_id": 56,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        474,
+        708
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 723.085,
+      "frames_seen": 48,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 7232,
+      "reader_frame_time": 1777697272.23166,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 14,
+      "runtime_total_after_event": 14,
+      "source_kind": "demo",
+      "track_id": 66,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1417,
+        603
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 760.186,
+      "frames_seen": 589,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 7603,
+      "reader_frame_time": 1777697282.59862,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 15,
+      "runtime_total_after_event": 15,
+      "source_kind": "demo",
+      "track_id": 64,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1518,
+        485
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 760.686,
+      "frames_seen": 4919,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 7608,
+      "reader_frame_time": 1777697282.740319,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 16,
+      "runtime_total_after_event": 16,
+      "source_kind": "demo",
+      "track_id": 19,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        657,
+        380
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 838.888,
+      "frames_seen": 4852,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 8390,
+      "reader_frame_time": 1777697304.354105,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 17,
+      "runtime_total_after_event": 17,
+      "source_kind": "demo",
+      "track_id": 25,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        474,
+        707
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 843.889,
+      "frames_seen": 53,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 8440,
+      "reader_frame_time": 1777697305.753143,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 18,
+      "runtime_total_after_event": 18,
+      "source_kind": "demo",
+      "track_id": 74,
+      "worker_state": "RUNNING_GREEN"
+    }
+  ],
+  "metadata": {
+    "auto_start": true,
+    "base_url": "http://127.0.0.1:8092",
+    "max_wait_sec": 260.0,
+    "poll_interval_sec": 2.0
+  },
+  "observed_coverage_end_sec": 947.391,
+  "observed_event_count": 18,
+  "reader_last_sequence_index": 9475,
+  "reader_last_source_timestamp_sec": 947.391,
+  "run_complete": false,
+  "schema_version": "factory2-app-observed-events-v1"
+}

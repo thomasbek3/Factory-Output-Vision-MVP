@@ -53,6 +53,30 @@ Demo completes at the chosen truth total
 
 ## Command Entry Points
 
+Bootstrap a new candidate so the first pass reuses the prior validated path instead of starting from scratch:
+
+```bash
+.venv/bin/python scripts/bootstrap_video_candidate.py \
+  --case-id new_candidate \
+  --video data/videos/from-pc/NEW_VIDEO.MOV \
+  --expected-total 25 \
+  --baseline-case-id img2628_candidate \
+  --preview \
+  --force
+```
+
+Screen detector transfer before running a full real-time proof:
+
+```bash
+.venv/bin/python scripts/screen_detector_transfer.py \
+  --video data/videos/from-pc/NEW_VIDEO.MOV \
+  --model models/img2628_worksheet_accept_event_diag_v1.pt \
+  --model models/img3254_active_panel_v4_yolov8n.pt \
+  --model models/img3262_active_panel_v2.pt \
+  --output data/reports/new_candidate_detector_transfer_screen.v1.json \
+  --force
+```
+
 Plan or execute from a manifest:
 
 ```bash
@@ -91,4 +115,28 @@ first_divergence == null
 wall_per_source near 1.0
 ```
 
-Factory2 is promoted as Test Case 1. IMG_3262 and IMG_3254 are verified candidates, not numbered test cases.
+Factory2 is promoted as Test Case 1. IMG_3262, IMG_3254, and IMG_2628 are verified candidates, not numbered test cases.
+
+## Active Learning And Teacher Labels
+
+The validation path must not accept teacher/VLM labels as truth. Active-learning evidence and teacher outputs may help build review packets, train future models, and audit failures, but they do not replace the real app proof path.
+
+Allowed advisory artifacts:
+
+```text
+validation/schemas/event_evidence.schema.json
+validation/schemas/teacher_label.schema.json
+validation/schemas/review_label.schema.json
+validation/schemas/active_learning_dataset.schema.json
+```
+
+Current active-learning entry points:
+
+```bash
+.venv/bin/python scripts/extract_event_windows.py --case-id img3254_clean22_candidate --extract-review-frames --output data/reports/active_learning/img3254_event_evidence.v1.json --force
+.venv/bin/python scripts/moondream_audit_events.py --evidence data/reports/active_learning/img3254_event_evidence.v1.json --provider dry_run_fixture --output data/reports/active_learning/img3254_moondream_audit.dry_run_v1.json --force
+.venv/bin/python scripts/teacher_generate_labels.py --evidence data/reports/active_learning/img3254_event_evidence.v1.json --output data/reports/active_learning/img3254_teacher_labels.dry_run_v1.json --force
+.venv/bin/python scripts/check_dataset_poisoning.py --teacher-labels data/reports/active_learning/img3254_teacher_labels.dry_run_v1.json
+```
+
+`scripts/validate_video.py` and `scripts/register_test_case.py` reject teacher/VLM artifacts if a manifest tries to use them as `truth.truth_ledger_path`.

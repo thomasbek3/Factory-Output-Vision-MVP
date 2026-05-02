@@ -1,0 +1,14 @@
+{
+  "schema_version": "human-truth-total-v1",
+  "video_path": "data/videos/from-pc/IMG_2628.MOV",
+  "video_sha256": "b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139",
+  "duration_sec": 1668.21,
+  "human_counter": "Thomas",
+  "expected_human_total": 25,
+  "truth_rule_id": "completed_placement_25_total_only_v1",
+  "count_rule": "Count one completed placement when the worker finishes putting the finished product in the output/resting area.",
+  "verification_status": "provisional_total_only",
+  "validation_note": "This total is a starting human reference for diagnostics. IMG_2628 cannot be promoted or called verified until a reviewed timestamp truth ledger exists and the real app observed events compare cleanly against it.",
+  "timestamp_truth_status": "not_reviewed_yet",
+  "created_at": "2026-05-02"
+}

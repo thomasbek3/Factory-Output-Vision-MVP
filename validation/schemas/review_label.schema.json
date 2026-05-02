@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-review-label.schema.json",
+  "title": "Factory Vision Review Labels",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "source_evidence_path",
+    "privacy_mode",
+    "reviewer",
+    "labels"
+  ],
+  "properties": {
+    "schema_version": { "const": "factory-vision-review-labels-v1" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "number" },
+    "source_evidence_path": { "type": "string" },
+    "teacher_labels_path": { "type": ["string", "null"] },
+    "privacy_mode": {
+      "type": "string",
+      "enum": ["offline_local", "cloud_assisted_setup", "cloud_assisted_audit"]
+    },
+    "reviewer": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "type": "string", "enum": ["human", "va", "reconciled", "ai_only"] },
+        "id": { "type": "string" },
+        "reviewed_at": { "type": ["string", "null"] }
+      }
+    },
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label_id",
+          "window_id",
+          "review_status",
+          "approved_status",
+          "label_authority_tier",
+          "validation_truth_eligible",
+          "training_eligible"
+        ],
+        "properties": {
+          "label_id": { "type": "string" },
+          "window_id": { "type": "string" },
+          "review_status": { "type": "string", "enum": ["pending", "approved", "rejected", "edited", "unclear"] },
+          "approved_status": {
+            "type": ["string", "null"],
+            "enum": ["countable", "completed", "in_transit", "static_stack", "worker_only", "unclear", null]
+          },
+          "approved_event_ts_sec": { "type": ["number", "null"] },
+          "label_authority_tier": { "type": "string", "enum": ["gold", "silver", "bronze"] },
+          "validation_truth_eligible": { "type": "boolean" },
+          "training_eligible": { "type": "boolean" },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

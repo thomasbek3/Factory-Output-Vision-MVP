@@ -1,5 +1,115 @@
 # Factory2 Real-Time Demo Counting
 
+# IMG_2628 Candidate Test Case
+
+## Goal
+
+Validate `data/videos/from-pc/IMG_2628.MOV` through the real Factory Vision app path as the next unused factory video candidate, using human total `25` as the starting reference and Moondream 2 only as an offline advisory review accelerator.
+
+## Checklist
+
+- [x] Use `task-kickoff` and the `factory-video-testcase-validation` skill
+- [x] Read active project context, current validation docs, active-learning docs, definition of done, handoff, lessons, todo, and registry
+- [x] Check dirty worktree and preserve unrelated existing changes
+- [x] Fingerprint/probe `data/videos/from-pc/IMG_2628.MOV` and confirm SHA-256, duration, codec, resolution, and FPS
+- [x] Check candidate ports/processes without disturbing Test Case 1 on `8091`/`5173`
+- [x] Create `data/reports/img2628_human_truth_total.v1.json` with `expected_total=25`
+- [x] Build or obtain reviewed timestamp truth for all `25` countable placements; if only total exists, document that promotion is blocked
+- [x] Generate preview/contact-sheet or event-window review evidence for human truth review
+- [x] Use Moondream 2 / Station only for offline local advisory labels; keep labels `bronze`/`pending`, `validation_truth_eligible=false`, and `training_eligible=false`
+- [x] Run fast real-app diagnostics before any full `1.0x` proof
+- [x] Select model/settings only from diagnostic evidence; avoid video-specific timestamp hacks or threshold-forced final totals
+- [x] Run visible dashboard path at `1.0x` with `FC_DEMO_COUNT_MODE=live_reader_snapshot`, `FC_COUNTING_MODE=event_based`, and `FC_DEMO_PLAYBACK_SPEED=1.0`
+- [x] Confirm dashboard shows `IMG_2628.MOV`, starts Runtime Total at `0`, and increments from real ordered processed frames
+- [x] Capture observed app events from the live backend path
+- [x] Compare app events to human total and reviewed timestamp truth ledger
+- [x] Measure wall/source pacing near `1.0`
+- [x] Preserve screenshots and reports under `data/reports` using `img2628` naming
+- [x] Run relevant tests for touched code/scripts
+- [x] Update `.hermes/HANDOFF.md` with current status and next command
+- [x] Update registry/manifests only after real app proof is clean
+- [x] Update `tasks/lessons.md` if a correction, trap, or reusable lesson appears
+
+## Review
+
+- Started 2026-05-02. `IMG_2628` is not in the registry and has no existing app-vs-truth report.
+- Human reference total is `25`, but this is not proof. Promotion requires reviewed event-level truth, a visible `1.0x` real app run, clean app-vs-truth comparison, and measured wall/source pacing.
+- Moondream output, if generated, remains advisory review acceleration only and cannot be validation truth or training data without later human/reconciled promotion.
+- Fingerprint confirmed: SHA-256 `b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139`; duration `1668.210s`; `1920x1080` HEVC Main 10; nominal `30fps`; `50045` video frames. Summary artifact: `data/reports/img2628_video_fingerprint.v1.json`.
+- Candidate ports `8092`/`5174` and Test Case 1 ports `8091`/`5173` were clear at kickoff.
+- Human total artifact created: `data/reports/img2628_human_truth_total.v1.json` with `expected_human_total=25` and `verification_status=provisional_total_only`.
+- Preview/review artifacts:
+  - `data/videos/preview_sheets/img2628/IMG_2628.jpg`
+  - `data/videos/review_frames/img2628_truth_review_5s/manifest.json` with 6 timestamped 5-second sheets covering the full video.
+  - `data/videos/review_frames/img2628_truth_review_1s/manifest.json` with 28 timestamped 1-second sheets and 1,669 samples covering the full video; review aid only, not truth.
+  - `data/reports/img2628_candidate_truth_windows.cv_motion_draft_v1.json` with 36 CV-motion candidate windows and contact strips under `data/videos/review_frames/img2628_cv_motion_candidates_v1/`; draft review aid only, not truth.
+  - `data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.csv` with 36 pending human-review rows seeded from the CV-motion draft.
+  - `data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.html` with the same 36 pending rows as a static contact-strip review page.
+  - `data/reports/img2628_human_truth_review_form.cv_motion_draft_v1.html` with the same 36 pending rows as an interactive local form that exports the worksheet CSV.
+  - `data/videos/selected_frames/img2628_uniform_80/manifest.json`
+  - `data/reports/img2628_human_truth_event_times.template.csv`
+- Worksheet conversion bridge added: `scripts/convert_truth_review_worksheet_to_csv.py`; interactive form exporter added: `scripts/export_truth_review_form_html.py`. Focused checks passed with `.venv/bin/python -m pytest tests/test_export_truth_review_form_html.py tests/test_convert_truth_review_worksheet_to_csv.py tests/test_build_human_truth_ledger_from_csv.py -q` (`10 passed`). Running the converter on the current worksheet correctly fails with `worksheet still has 36 pending row(s)`.
+- Codex visual review now exists to keep diagnostics moving without Moondream or immediate Thomas input:
+  - `data/reports/img2628_codex_visual_review_worksheet.draft_v1.csv`
+  - `data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv`
+  - `data/reports/img2628_codex_visual_truth_ledger.draft_v1.json`
+  - These are `validation_truth_eligible=false`, `training_eligible=false`, and `promotion_eligible=false`; they are diagnostic scaffolding, not final truth.
+- Sampled detector screen: `data/reports/img2628_detector_sample_screen.uniform80_v1.json`.
+  - `models/img3254_active_panel_v4_yolov8n.pt`: `0/80` images with detections at `conf=0.25`; only `1/80` at `conf=0.10`.
+  - `models/img3262_active_panel_v2.pt`: `0/80` images with detections at `conf=0.25`, `0.15`, and `0.10`.
+  - `models/panel_in_transit.pt`: sparse, low-confidence hits (`1/80` at `0.25`, `7/80` at `0.15`, `14/80` at `0.10`).
+  - `models/wire_mesh_panel.pt`: detects every sampled frame and therefore sees static/resident material, not just completed placements.
+- Fast real-app diagnostics:
+  - `img3254_active_panel_v4` with IMG_3254 settings produced `0` events by about `341s` source and stopped red; detector recall is not viable for IMG_2628.
+  - `wire_mesh_panel`, `cluster=90`, `max_age=10`, `min_frames=4`: `28` events by `160.004s` coverage, clear static-fragmentation overcount.
+  - `wire_mesh_panel`, `cluster=250`, `max_age=52`, `min_frames=12`: `26` events by `1092.795s` coverage with run incomplete, still overcounting/duplicating.
+  - `wire_mesh_panel`, `cluster=350`, `max_age=100`, `min_frames=30`: `18` events by `947.391s` coverage with close duplicate clusters still present.
+  - `wire_mesh_panel`, `cluster=500`, `max_age=200`, `min_frames=50`: `5` events by `1307.201s` coverage, undercount after over-suppression.
+- Draft-ledger comparisons against wire-mesh diagnostics confirm current counting is not ready:
+  - `cluster=250`: `5` matched, `11` missing, `9` pending, `21` unexpected against the Codex visual draft.
+  - `cluster=350`: `5` matched, `8` missing, `12` pending, `13` unexpected against the Codex visual draft.
+- Local Moondream advisory pass completed on the least-bad diagnostic windows:
+  - Evidence: `data/reports/active_learning/img2628_event_evidence.wire_mesh_cluster350_diag_v1.json` (`22` windows, `66` extracted frames).
+  - Labels: `data/reports/active_learning/img2628_moondream_audit.local_wire_mesh_cluster350_diag_v1.json` (`22` labels, all `teacher_output_status=unclear`, `bronze`/`pending`, `validation_truth_eligible=false`, `training_eligible=false`).
+  - Review queue: `data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.json` and `.html` (`22` `needs_human_review` entries).
+  - Dataset poisoning check passed for the Moondream artifact as teacher labels only.
+- Current status artifact: `data/reports/img2628_validation_status.blocked_v1.json`.
+- Completion audit artifact: `data/reports/img2628_completion_audit.blocked_v1.json`; result `not_complete_blocked`.
+- Counting readiness artifact: `data/reports/img2628_counting_readiness_assessment.blocked_v1.json`; result `blocked_not_ready_for_promotion_proof`, `can_count_like_verified_candidates=false`.
+- Honest proof state: IMG_2628 is not verified. The blocker is real: total-only truth plus no viable detector/settings path. Do not run or claim a visible `1.0x` proof until reviewed timestamp truth and an IMG_2628-capable detector/settings candidate exist.
+- 2026-05-02 continuation: an IMG_2628-specific diagnostic runtime path now reaches the human total through the real backend path, using `models/img2628_worksheet_accept_event_diag_v1.pt`, `conf=0.76`, `processing_fps=5`, `reader_fps=5`, `event_track_max_age=20`, `event_track_min_frames=10`, `event_count_debounce_sec=30`, `event_track_max_match_distance=260`, and `event_detection_cluster_distance=250`.
+  - Accelerated diagnostic artifact: `data/reports/img2628_app_observed_events.run8092.worksheet_event_diag_conf076_fps5_age20_min10_debounce30_speed16_diag_v1.json`; result `observed_event_count=25`, `run_complete=true`.
+  - Human-total comparison: `data/reports/img2628_app_vs_human_total.run8092.worksheet_event_diag_conf076_fps5_age20_min10_debounce30_speed16_diag_v1.json`; result `total_matches=true`.
+  - Draft-ledger comparison is not clean: `data/reports/img2628_app_vs_codex_visual_draft.run8092.worksheet_event_diag_conf076_fps5_age20_min10_debounce30_speed16_diag_v1.json`; result `matched_count=22`, `missing_truth_count=3`, `unexpected_observed_count=3`, `first_divergence=unexpected_observed@110.003s`. The draft ledger is not promotion truth, but this prevents claiming event-level verification.
+  - Visible dashboard `1.0x` candidate run completed on `8092`/`5174`: dashboard showed `Demo complete`, `IMG_2628.MOV`, and `Runtime Total 25`.
+  - Visible run capture: `data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json`; result `observed_event_count=25`, `run_complete=true`, `current_state=DEMO_COMPLETE`, `observed_coverage_end_sec=1668.01`.
+  - Visible run total comparison: `data/reports/img2628_app_vs_human_total.run8092.visible_dashboard_1x_candidate25_v1.json`; result `expected_human_total=25`, `observed_event_count=25`, `total_matches=true`.
+  - Visible run draft-ledger comparison: `data/reports/img2628_app_vs_codex_visual_draft.run8092.visible_dashboard_1x_candidate25_v1.json`; result `matched_count=22`, `missing_truth_count=3`, `unexpected_observed_count=3`, `first_divergence=unexpected_observed@110.003s`.
+  - Pacing from visible run events: `wall_per_source=1.0000006461578348`.
+  - Summary artifact: `data/reports/img2628_visible_dashboard_1x_summary.candidate25_v1.json`.
+  - Screenshots include start, first count, midpoint, and completion evidence under `data/reports/screenshots/img2628_visible_dashboard_1x_*.png`, including `img2628_visible_dashboard_1x_complete_total25.png`.
+  - Operational visible count is now successful to the human total, but registry promotion remains blocked because reviewed timestamp truth is missing and the available draft-ledger comparison is not event-clean.
+  - Completion audit artifact: `data/reports/img2628_completion_audit.visible_total_clean_not_promoted_v2.json`; result `not_complete_visible_total_clean_event_truth_blocked`, `may_mark_goal_complete=false`.
+  - Focused event dispute packet: `data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv` and `.html` with 6 rows covering the exact missing/unexpected draft-ledger mismatches and review-frame paths under `data/videos/review_frames/img2628_visible_run_mismatch_review_v1/`.
+  - Reviewed-truth decision bridge added:
+    - `data/reports/img2628_event_level_dispute_decisions.template_v1.csv`
+    - `data/reports/img2628_event_level_dispute_decisions.README.md`
+    - `scripts/apply_img2628_event_dispute_decisions.py`
+    - Guard verified: blank template fails closed instead of producing a reviewed ledger; focused tests passed with `.venv/bin/python -m pytest tests/test_apply_img2628_event_dispute_decisions.py -q` (`3 passed`).
+  - Follow-up threshold search on separate backend port `8093` preserved the visible dashboard stack and confirmed a simple event-lifetime/debounce tweak is not enough:
+    - `data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min6_debounce60_speed16_diag_v1.json`: `16` events, draft comparison `14` matched / `11` missing / `2` unexpected.
+    - `data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min8_debounce30_speed16_diag_v1.json`: `26` events, draft comparison `23` matched / `2` missing / `3` unexpected.
+- Final 2026-05-02 review:
+  - Focused dispute decisions were recorded in `data/reports/img2628_event_level_dispute_decisions.reviewed_v1.csv`.
+  - Reviewed timestamp truth was built at `data/reports/img2628_human_truth_event_times.reviewed_v1.csv` and `data/reports/img2628_human_truth_ledger.reviewed_v1.json`; human reference total remains `25`, and Moondream was not used as validation truth.
+  - Clean app-vs-truth comparison: `data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_v1.json` with `matched_count=25`, `missing_truth_count=0`, `unexpected_observed_count=0`, and `first_divergence=null`.
+  - Strict timing cross-check also passed: `data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_reviewed_strict05_v1.json`.
+  - Pacing artifact: `data/reports/img2628_wall_source_pacing.run8092.visible_dashboard_1x_reviewed_v1.json` with `wall_per_source=1.0000006461578348`.
+  - Manifest and registry entry added: `validation/test_cases/img2628.json` and `validation/registry.json`; status is `verified_candidate`, `promotion_status=not_promoted`.
+  - Validation report: `data/reports/img2628_validation_report.registry_v1.json`.
+  - Test Case 1 recheck after shared runtime/demo changes: `data/reports/factory2_app_vs_truth.run8091.post_img2628_recheck_v1.json` with `matched_count=23`, `missing_truth_count=0`, `unexpected_observed_count=0`, `first_divergence=null`, and `wall_per_source=0.9999964771619203`.
+  - IMG_2628 is now a verified real-app candidate. It is not promoted to a numbered test case.
+
 ## Goal
 
 Make the verified Factory2 app path count `factory2.MOV` at true real-time (`1.0x`) speed from real processed frames, with the visible runtime count climbing when the worker places each panel and finishing at the human truth total of `23`.
@@ -181,3 +291,127 @@ Turn Oracle's repo cleanup review into a concrete productized validation spine: 
   - `data/reports/img3262_validation_report.registry_v1.json`
   - `data/reports/img3254_clean22_validation_report.registry_v1.json`
 - I did not physically move the historical Factory2 research scripts yet because the current tests import those top-level paths. The product path is now documented and tested; a later mechanical move can add compatibility shims or update imports in one focused change.
+
+# AI-Only Active Learning / VLM Audit Foundation
+
+## Goal
+
+Add the foundation for an AI-only live-counting active learning loop where YOLO/event-based runtime counting remains authoritative, while VLM/teacher tools only create offline evidence, label suggestions, audit packets, and review queues.
+
+## Checklist
+
+- [x] Use goal mode, `task-kickoff`, and the `factory-video-testcase-validation` skill
+- [x] Read the current handoff, lessons, todo, validation docs, registry, manifests, Oracle Moondream/teacher reports, and validation tests
+- [x] Check the dirty worktree and preserve unrelated existing changes
+- [x] Add `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`
+- [x] Add active-learning JSON schemas for event evidence, teacher labels, review labels, and datasets
+- [x] Add deterministic event-window evidence extraction without touching runtime counting
+- [x] Add teacher-label dry-run/provider interface with no default network calls
+- [x] Add dataset poisoning checks for teacher labels, gold labels, validation truth, and train/test leakage
+- [x] Add validation/registry guardrails so teacher/VLM outputs cannot be accepted as proof truth
+- [x] Add focused pytest coverage for schemas, extraction, teacher dry-run labels, poisoning checks, and validation truth rejection
+- [x] Run requested validation tests and focused active-learning tests
+- [x] Update docs/handoff/current limitations as needed
+
+## Review
+
+- In progress as of 2026-05-02.
+- Added `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md` to lock the AI-only runtime rule, evidence packet concept, uncertain event capture, AI adjudicator role, optional overnight review, gold/silver/bronze tiers, privacy modes, model promotion gate, and non-goals.
+- Added active-learning schemas under `validation/schemas/`.
+- Added `scripts/extract_event_windows.py`, `scripts/teacher_generate_labels.py`, `scripts/check_dataset_poisoning.py`, and shared `scripts/validation_truth_guard.py`.
+- Updated `scripts/validate_video.py` and `scripts/register_test_case.py` so raw teacher/VLM artifacts cannot be used as validation truth.
+- Requested focused validation tests passed: `.venv/bin/python -m pytest tests/test_validation_registry_schema.py tests/test_validate_video.py tests/test_register_test_case.py -q` (`13 passed`).
+- Requested focused active-learning tests passed: `.venv/bin/python -m pytest tests/test_active_learning*.py tests/test_teacher_label*.py tests/test_dataset_poisoning*.py -q` (`8 passed`).
+- Full Python suite passed: `.venv/bin/python -m pytest tests/ -q` (`358 passed`, warnings only).
+- `make validate-video` passed after fixing direct-script import path setup for the new shared guard.
+- New CLI smoke on `img3254_clean22_candidate` wrote `/tmp/img3254_event_evidence.v1.json` with `23` windows, then `/tmp/img3254_teacher_labels.dry_run_v1.json` with `23` bronze/pending labels; poisoning check passed when treated as teacher labels only.
+
+## Moondream Audit Slice
+
+### Goal
+
+Use Moondream as an offline/local audit assistant by extracting actual review frames and adding a localhost-gated Moondream Station provider, while preserving the existing live-count and validation-truth boundaries.
+
+### Checklist
+
+- [x] Confirm the official Moondream Station/local API shape
+- [x] Add optional review-frame extraction to `scripts/extract_event_windows.py`
+- [x] Add `scripts/moondream_audit_events.py` with dry-run and local Station providers
+- [x] Keep Moondream output `bronze`, `pending`, `validation_truth_eligible=false`, and `training_eligible=false`
+- [x] Gate Moondream Station to localhost by default and avoid cloud calls by default
+- [x] Add focused tests for frame extraction and Moondream audit behavior
+- [x] Run focused tests, full tests, `make validate-video`, and CLI smoke
+
+### Review
+
+- Added optional per-window JPEG extraction to `scripts/extract_event_windows.py` via `--extract-review-frames`.
+- Added `scripts/moondream_audit_events.py` with a dry-run provider and a localhost-gated Moondream Station provider targeting `http://127.0.0.1:2020/v1/query`.
+- Moondream audit labels remain advisory: `bronze`, `pending`, `validation_truth_eligible=false`, and `training_eligible=false`.
+- Focused Moondream/active-learning tests passed: `.venv/bin/python -m pytest tests/test_active_learning_schemas.py tests/test_moondream_audit_events.py tests/test_teacher_label_generation.py tests/test_dataset_poisoning.py tests/test_active_learning_validation_guard.py -q` (`12 passed`).
+- Combined focused validation/active-learning tests passed: `.venv/bin/python -m pytest tests/test_validation_registry_schema.py tests/test_validate_video.py tests/test_register_test_case.py tests/test_active_learning*.py tests/test_teacher_label*.py tests/test_dataset_poisoning*.py tests/test_moondream_audit_events.py -q` (`25 passed`).
+- Full Python suite passed: `.venv/bin/python -m pytest tests/ -q` (`362 passed`, warnings only).
+- `make validate-video` passed.
+- CLI smoke on `img3254_clean22_candidate` extracted review-frame evidence to `/tmp/img3254_event_evidence.frames_v1.json` with `22` windows, generated `/tmp/img3254_moondream_audit.dry_run_v1.json` with `22` dry-run labels, and passed `check_dataset_poisoning` when treated as teacher labels.
+- No local Moondream Station was running on `127.0.0.1:2020`; `moondream-station` was not on PATH and the repo `.venv` does not currently have the `moondream` package, so no real model call was made.
+
+## Local Moondream Station Repair
+
+### Goal
+
+Get the locally installed Moondream Station service to return usable audit responses from `127.0.0.1:2020` after MD3 auth/cache setup exposed bad local generation output.
+
+### Checklist
+
+- [x] Reproduce raw Station MD3 `caption` and `query` failures outside repo code
+- [x] Confirm HF token/cache and `inference_timeout=180.0`
+- [x] Check hardware/runtime constraints for the local Station backend
+- [x] Pin Station backend dependencies to the Moondream-supported Transformers 4 line
+- [x] Patch local Station PyTorch backend compatibility for older Moondream model code
+- [x] Patch local Station PyTorch backend to pass HTTP text/object settings through
+- [x] Verify a clean local Station response through `/v1/query`
+- [x] Verify `scripts/moondream_audit_events.py --provider moondream_station` reaches Station and emits an advisory label
+
+### Review
+
+- Confirmed `moondream-station` is installed at `~/.local/bin/moondream-station` and starts on `http://127.0.0.1:2020/v1`.
+- Confirmed MD3 local model is `moondream-3-preview-mlx-quantized`; auth/cache are working, but raw MD3 `caption`/`query` still return repeated junk text on this base M4 Mac mini.
+- Machine constraints: Apple M4 Mac mini, 10-core GPU, 16 GB unified memory. Current free disk is too low for the non-quantized MD3 Station model, and current Moondream docs recommend more memory for modern local MD3/Photon paths.
+- Repaired the local Station backend environment by pinning `/Users/thomas/.moondream-station/venv` to `transformers==4.51.1`, `huggingface-hub==0.36.2`, and `tokenizers==0.21.4`.
+- Patched `/Users/thomas/.moondream-station/models/backends/moondream_backend/backend.py` so older Moondream model code loads under the installed backend and so HTTP `max_tokens`, `temperature`, `top_p`, and object settings are passed through.
+- Clean Moondream 2 Station smoke now works: `/v1/query` returned `A man working in a factory, surrounded by machinery and equipment.` in about `8-10s`.
+- Repo smoke against `scripts/moondream_audit_events.py --provider moondream_station` wrote `/tmp/moondream_station_smoke_labels.json` and returned a bronze/pending advisory `worker_only` label. This remains audit-only, not validation truth.
+- Tightened the repo Moondream prompt/parser after the first real MD2 smoke: constrained all enum fields, made Station calls deterministic with `temperature=0`/`max_tokens=192`, normalized common MD2 aliases, and degraded contradictory "cannot determine" rationales to `unclear`/`low`.
+- Focused Moondream tests passed: `.venv/bin/python -m pytest tests/test_moondream_audit_events.py -q` (`7 passed`).
+- Real local audit on `img3254_clean22_candidate` completed: extracted `22` review-frame windows to `data/reports/active_learning/img3254_event_evidence.frames_v2.json` and wrote `22` Station labels to `data/reports/active_learning/img3254_moondream_audit.local_v2.json`.
+- Local audit label distribution was conservative: `18` `unclear`/`low` and `4` `worker_only`/`high`; all labels remain `validation_truth_eligible=false` and `training_eligible=false`.
+- Dataset poisoning check passed for the local Moondream audit artifact: `.venv/bin/python scripts/check_dataset_poisoning.py --teacher-labels data/reports/active_learning/img3254_moondream_audit.local_v2.json`.
+
+## Active Learning Review Queue
+
+### Goal
+
+Convert event evidence plus advisory MD2/Moondream teacher labels into a reviewer-ready queue that prioritizes uncertain, high-risk, and negative-training frames without promoting anything to validation truth.
+
+### Checklist
+
+- [x] Add a review-queue builder script for evidence + teacher labels
+- [x] Keep queue entries advisory and non-truth/non-training by default
+- [x] Rank uncertain/high-risk windows before easy accepted labels
+- [x] Add focused tests for ranking, frame asset carry-through, and safety flags
+- [x] Run the builder on IMG_3254 local MD2 audit output
+- [x] Add a static HTML contact-sheet exporter for reviewer triage
+- [x] Document the resulting artifact and reviewer workflow
+
+### Review
+
+- Added `scripts/build_review_queue.py`, which joins evidence windows to advisory teacher labels and emits a sorted `factory-vision-review-queue-v1` artifact.
+- Added `scripts/export_review_queue_html.py`, which renders the review queue as an offline static contact sheet with relative frame links and an in-page advisory-only warning.
+- Queue entries carry primary/all frame assets, time/frame windows, teacher status/risk/rationale, candidate use, review reasons, and count-event evidence while staying `bronze`, `pending`, `validation_truth_eligible=false`, and `training_eligible=false`.
+- Added `tests/test_review_queue_generation.py` for queue ranking, hard-negative candidate handling, frame asset carry-through, and safety flags.
+- Added `tests/test_review_queue_html_export.py` for the contact-sheet safety boundary and relative image paths.
+- Focused active-learning checks passed: `.venv/bin/python -m pytest tests/test_moondream_audit_events.py tests/test_review_queue_generation.py tests/test_teacher_label_generation.py tests/test_dataset_poisoning.py tests/test_active_learning_validation_guard.py -q` (`15 passed`).
+- Focused review-queue HTML checks passed: `.venv/bin/python -m pytest tests/test_review_queue_html_export.py tests/test_review_queue_generation.py tests/test_moondream_audit_events.py tests/test_teacher_label_generation.py tests/test_dataset_poisoning.py tests/test_active_learning_validation_guard.py -q` (`17 passed`).
+- Built `data/reports/active_learning/img3254_review_queue.local_v1.json` from `img3254_event_evidence.frames_v2.json` and `img3254_moondream_audit.local_v2.json`.
+- Exported `data/reports/active_learning/img3254_review_queue.local_v1.html` for local reviewer triage.
+- IMG_3254 queue result: `22` entries total, `21` `review_first`, `1` `hard_negative_review`; candidate uses were `18` `needs_human_review` and `4` `hard_negative_review`.
+- Documented the queue and HTML export commands plus safety boundaries in `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`.
