@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-comparison-report.schema.json",
+  "title": "Factory Vision App vs Truth Comparison",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "truth_ledger_path",
+    "observed_events_path",
+    "truth_event_count",
+    "observed_event_count",
+    "matched_count",
+    "missing_truth_count",
+    "unexpected_observed_count",
+    "first_divergence"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "truth_ledger_path": { "type": "string" },
+    "observed_events_path": { "type": "string" },
+    "truth_event_count": { "type": "integer" },
+    "observed_event_count": { "type": "integer" },
+    "matched_count": { "type": "integer" },
+    "missing_truth_count": { "type": "integer" },
+    "unexpected_observed_count": { "type": "integer" },
+    "first_divergence": { "type": ["object", "null"] }
+  }
+}

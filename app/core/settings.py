@@ -157,6 +157,10 @@ def get_person_conf_threshold() -> float:
     return float(os.getenv("FC_PERSON_CONF_THRESHOLD", "0.5"))
 
 
+def get_live_analysis_cache_max_gap_frames() -> int:
+    return int(os.getenv("FC_LIVE_ANALYSIS_CACHE_MAX_GAP_FRAMES", "8"))
+
+
 def is_person_ignore_enabled() -> bool:
     return os.getenv("FC_PERSON_IGNORE_ENABLED", "1") == "1"
 
@@ -251,3 +255,10 @@ def get_event_track_max_match_distance() -> float:
     """Max pixel distance for centroid matching in event_based mode.
     Generous default (200) since usually only 1 panel in transit at a time."""
     return float(os.getenv("FC_EVENT_TRACK_MAX_MATCH_DISTANCE", "200"))
+
+
+def get_event_detection_cluster_distance() -> float:
+    """Optional same-frame detection clustering distance for event_based mode.
+    A value <= 0 disables clustering. This is useful when one large part is
+    detected as several nearby boxes in the same frame."""
+    return float(os.getenv("FC_EVENT_DETECTION_CLUSTER_DISTANCE", "0"))

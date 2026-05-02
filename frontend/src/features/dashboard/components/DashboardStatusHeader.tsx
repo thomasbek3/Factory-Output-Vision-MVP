@@ -1,6 +1,6 @@
 import type { DiagnosticsResponse, StatusResponse } from '../../../shared/api/types.ts'
 import { StatusPill } from '../../../shared/components/StatusPill.tsx'
-import { countSourceLabel, statusGuidance, statusLabel, statusTone } from '../../../shared/status.ts'
+import { countSourceLabel, displayStateForContext, statusGuidance, statusLabel, statusTone } from '../../../shared/status.ts'
 
 type DashboardStatusHeaderProps = {
   busyAction: string | null
@@ -22,9 +22,14 @@ export function DashboardStatusHeader({
   onStopMonitoring,
 }: DashboardStatusHeaderProps) {
   const state = status?.state ?? diagnostics?.current_state ?? 'UNKNOWN'
-  const tone = statusTone(state)
+  const displayState = displayStateForContext(state, diagnostics)
+  const tone = statusTone(displayState)
   const canRecalibrate = Boolean(status)
   const recalibrateLabel = status?.baseline_rate_per_min == null ? 'Start calibration' : 'Recalibrate'
+  const sourceLabel =
+    diagnostics?.source_kind === 'demo'
+      ? `Demo Video${diagnostics.demo_video_name ? `: ${diagnostics.demo_video_name}` : ''}`
+      : 'Camera'
 
   return (
     <section className="hero-panel">
@@ -33,11 +38,11 @@ export function DashboardStatusHeader({
           <div className={`status-beacon ${tone}`} />
           <div className="status-strip">
             <div className="eyebrow">Phase 5 Dashboard</div>
-            <h1 className="hero-title">{statusLabel(state)}</h1>
-            <p className="hero-copy">{statusGuidance(state)}</p>
+            <h1 className="hero-title">{statusLabel(displayState)}</h1>
+            <p className="hero-copy">{statusGuidance(displayState)}</p>
             <div className="tag-row">
               <span className="tag">Counting: {countSourceLabel(status?.count_source ?? 'vision')}</span>
-              <span className="tag">Source: {diagnostics?.source_kind === 'demo' ? 'Demo Video' : 'Camera'}</span>
+              <span className="tag">Source: {sourceLabel}</span>
               <span className="tag">Live feed: {websocketConnected ? 'Connected' : 'Reconnecting'}</span>
               {status?.operator_absent ? <span className="tag">Operator absent</span> : null}
             </div>
@@ -70,7 +75,7 @@ export function DashboardStatusHeader({
           <div className="detail-list">
             <div className="detail-row">
               <span className="detail-label">Current state</span>
-              <span className="detail-value">{status ? <StatusPill state={status.state} /> : '...'}</span>
+              <span className="detail-value">{status ? <StatusPill state={displayState} /> : '...'}</span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Reconnect attempts</span>

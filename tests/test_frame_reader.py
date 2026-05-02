@@ -70,6 +70,12 @@ def test_sampled_frame_indices_match_audit_stride() -> None:
     assert indices == [0, 3, 6, 9]
 
 
+def test_sampled_frame_indices_support_fractional_output_fps() -> None:
+    indices = _sampled_frame_indices(video_fps=30.0, frame_count=30, output_fps=9.5)
+
+    assert indices == [0, 3, 6, 9, 13, 16, 19, 22, 25, 28]
+
+
 def test_single_pass_demo_reader_pumps_processing_fps_frames_synchronously() -> None:
     class FakeCapture:
         def __init__(self) -> None:
@@ -126,9 +132,13 @@ def test_single_pass_demo_reader_pumps_processing_fps_frames_synchronously() -> 
     assert int(primed.frame[0, 0, 0]) == 0
     assert reader.is_synchronous_demo_mode() is True
 
-    first = reader.pump_next_demo_frame()
-    second = reader.pump_next_demo_frame()
-    exhausted = reader.pump_next_demo_frame()
+    with patch("app.services.frame_reader.time.time", side_effect=[100.0, 100.0, 100.1]), patch.object(
+        reader,
+        "_sleep_until",
+    ) as sleep_until:
+        first = reader.pump_next_demo_frame()
+        second = reader.pump_next_demo_frame()
+        exhausted = reader.pump_next_demo_frame()
 
     assert first is not None
     assert first.sequence_index == 1
@@ -139,6 +149,7 @@ def test_single_pass_demo_reader_pumps_processing_fps_frames_synchronously() -> 
     assert second.source_timestamp_sec == 0.1
     assert int(second.frame[0, 0, 0]) == 3
     assert exhausted is None
+    assert [call.args[0] for call in sleep_until.call_args_list] == [100.0, 100.1]
     assert capture.set_calls == [0]
     assert capture.grab_calls == [1, 2]
     status = reader.status()

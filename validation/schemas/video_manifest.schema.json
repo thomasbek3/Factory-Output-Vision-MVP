@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-video-manifest.schema.json",
+  "title": "Factory Vision Video Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "status",
+    "promotion_status",
+    "video",
+    "truth",
+    "runtime",
+    "proof_artifacts",
+    "proof_summary"
+  ],
+  "properties": {
+    "schema_version": { "const": "factory-vision-video-manifest-v1" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "display_name": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["candidate", "verified_candidate", "verified_test_case", "archived"]
+    },
+    "promotion_status": { "type": "string" },
+    "verified_at": { "type": ["string", "null"] },
+    "video": {
+      "type": "object",
+      "required": ["path", "sha256", "duration_sec", "width", "height", "codec"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string" },
+        "duration_sec": { "type": "number" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" },
+        "codec": { "type": "string" }
+      }
+    },
+    "truth": {
+      "type": "object",
+      "required": ["rule_id", "expected_total", "count_rule", "truth_ledger_path"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "expected_total": { "type": "integer" },
+        "count_rule": { "type": "string" },
+        "truth_ledger_path": { "type": "string" },
+        "human_total_path": { "type": ["string", "null"] },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "demo_count_mode",
+        "counting_mode",
+        "playback_speed",
+        "processing_fps",
+        "reader_fps",
+        "runtime_calibration_path",
+        "model_path"
+      ],
+      "properties": {
+        "demo_count_mode": { "const": "live_reader_snapshot" },
+        "counting_mode": { "const": "event_based" },
+        "playback_speed": { "type": "number" },
+        "processing_fps": { "type": "number" },
+        "reader_fps": { "type": "number" },
+        "runtime_calibration_path": { "type": ["string", "null"] },
+        "model_path": { "type": ["string", "null"] },
+        "yolo_confidence": { "type": ["number", "null"] },
+        "event_track_max_age": { "type": ["integer", "null"] },
+        "event_track_min_frames": { "type": ["integer", "null"] },
+        "event_detection_cluster_distance": { "type": ["number", "null"] }
+      }
+    },
+    "proof_artifacts": { "type": "object" },
+    "proof_summary": { "type": "object" }
+  }
+}

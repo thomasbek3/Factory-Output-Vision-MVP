@@ -1,5 +1,16 @@
 # Lessons Learned
 
+## 2026-05-01: Factory2 Real-Time Bar
+
+1. **“Near real-time” is not the target.** For Factory2 demo work, the bar is sustained true `1.0x` real-time behavior on the actual app path, not “close enough” wall-clock speed.
+2. **Do not redefine the success metric during planning.** If the user says real time, keep the task framed as real time in `tasks/todo.md`, implementation notes, and verification.
+3. **Correctness still constrains speed.** Real-time only counts if it preserves real processed-frame semantics, placement-timed increments, and the final `23/23` truth match.
+4. **Synchronous demo pacing must follow the source clock.** A fixed post-frame sleep carries lag forever after expensive frames. For one-pass file-backed live demos, pace against each processed frame's source timestamp and skip sleep only when the worker is behind that clock.
+5. **Non-divisor FPS values need fractional sampling.** Rounded integer strides make settings like `9.5 FPS` lie about the requested cadence. Sampling by source timestamps keeps frame selection honest, even if a specific FPS still fails the truth diff.
+6. **The dev dashboard should proxy API calls through Vite.** Direct cross-origin fetches can execute backend actions while the browser reports `Failed to fetch`, leaving diagnostics stale. Same-origin proxying keeps the visible UI honest.
+7. **A new video is a new proof problem.** Do not assume Factory2 calibration, truth count, or event timing transfers to `real_factory.MOV`, `IMG_2628.MOV`, or `IMG_3262.MOV`. Build or load a human truth ledger, run the actual app path, then compare.
+8. **Reolink remains an unvalidated claim.** The architecture should transfer to RTSP, but a real camera can introduce codec, network, exposure, reconnect, and angle problems. Do not say Reolink works until a real stream is validated.
+
 ## 2026-04-28: Factory2 Definition Of Done
 
 1. **Proof-only success is not done.** If Factory2 counts in `scripts/run_factory2_morning_proof.py` but the actual worker/app runtime path still shows `counts_this_hour: 0`, the task is still in progress.
@@ -173,6 +184,8 @@ Frame differencing approaches are fragile because the worker's body dominates th
 
 ## 2026-04-29: Factory2 Deterministic Demo Runner Lessons
 
+> Superseded for investor evidence as of 2026-05-01. Deterministic replay was an intermediate debugging/demo bridge. The accepted proof point is now the `live_reader_snapshot` app path that processes ordered frames at `1.0x` and matches truth `23/23`.
+
 1. **The live ffmpeg snapshot loop is the wrong place to derive investor-demo counts.** Even after single-pass EOF handling was fixed, the app-side `reader.snapshot()` counting path still dropped most events on `factory2.MOV` at accelerated playback.
 2. **For demo mode, preview and counting need to be decoupled.** The honest fix is a deterministic file-backed runner that replays audited runtime receipts against wall-clock playback while the ffmpeg reader is used only for preview frames.
 3. **Restart the demo at monitor start.** If the preview is already mid-file when monitoring begins, receipt reveal and visible playback diverge. Restarting the demo source when `monitor/start` arms the deterministic runner keeps the visible run aligned from frame 0.
@@ -196,10 +209,31 @@ Frame differencing approaches are fragile because the worker's body dominates th
 ## 2026-04-30: Factory2 Live Demo Speed Lessons
 
 1. **The single biggest demo-reader bug was random seeking every sampled frame.** In synchronous single-pass demo mode, calling `capture.set(CAP_PROP_POS_FRAMES, frame_index)` on every processed frame destroyed throughput. Advancing sequentially through sampled indices and reusing the primed first frame removed that seek tax.
-2. **Live person/panel analysis should only run in the worker-overlap danger zone.** The expensive silhouette/crop path is only needed when track overlap actually enters the gate’s reject corridor. Running it on clear non-overlap tracks wastes time without improving decisions.
+2. **Live person/panel analysis should only run in the worker-overlap danger zone.** The expensive silhouette/crop path is only needed when track overlap actually enters the gate's reject corridor. Running it on clear non-overlap tracks wastes time without improving decisions.
 3. **Adjacent-frame reuse is safe when the track/person geometry barely changes.** Reusing live separation/crop results across nearby same-zone frames preserved the `23/23` truth match while cutting hot-burst per-frame cost materially.
 4. **Runtime person detection should respect its own FPS setting.** Re-running the separate person detector on every processed frame was unnecessary. Caching the last person boxes inside the configured detect interval reduced live-path cost without changing the verified outcome.
 5. **A speed change is not real until the app-truth diff still says `23/23`.** The optimized `8094` app run still matched the human ledger exactly, so this slice is a real live-app speedup, not just a microbench win.
+
+## 2026-05-01: IMG_3262 Real-App Validation Lessons
+
+1. **Do not trust `FC_DEMO_PLAYBACK_SPEED=1.0` without measuring wall/source time.** IMG_3262 initially looked configured correctly while source timestamps advanced too fast. A valid real-time claim needs a recorded wall/source ratio from the real app run.
+2. **Synchronous demo pacing belongs at the frame-pump boundary.** Worker-level pacing can be bypassed by pending-frame draining or double-subtracted by loop sleep accounting. Pacing `pump_next_demo_frame()` against source timestamps keeps preview, counting, and diagnostics on the same clock.
+3. **EOF flush is required for final-second placements.** If a carried/placed object is still an active event track when a one-pass demo reaches EOF, the runtime must flush that active track once with source timestamp authority; otherwise the last legitimate placement is silently missed.
+4. **A rough timestamp ledger can create false timing failures.** The IMG_3262 v1 ledger had a `629s` rough marker after the worker had already moved on. Keep the app comparison honest by preserving the failed rough-ledger comparison and creating a reviewed v2 ledger rather than loosening runtime thresholds.
+
+## 2026-05-01: IMG_3254 Candidate Lessons
+
+1. **A detector that improves selected-frame precision can still worsen runtime counting.** IMG_3254 v5/v6/v7 refinements looked plausible on sampled frames but either broadened detections, overfragmented, or undercounted in the app path. Runtime event artifacts must be the authority for candidate settings.
+2. **Tune tracker lifetime from measured split gaps, not from final totals.** v4 `max_age=180` hit the clean-cycle total but delayed counts too much to trust. Inspecting the actual duplicate windows showed gaps of about `4.5-5.3s`, which made `max_age=52` a much tighter candidate.
+3. **High-confidence false/split detections rule out simple threshold fixes.** The bad approach fragment around `464.19s` was high-confidence while some likely true placements were lower-confidence, so confidence tightening would trade false positives for missed truth.
+4. **A mid-placement opener must stay a product decision, not a model accident.** IMG_3254 can be treated as clean-cycle `22` or operational `23`; lock that rule before final proof rather than letting whichever setting happens to count the opener define truth.
+
+## 2026-05-02: Validation Productization Lessons
+
+1. **The registry should carry the current proof map.** If a future developer has to reconstruct case status from `.hermes`, `tasks/todo.md`, or a pile of report filenames, the validation process is still too ad hoc.
+2. **Manifests are the right place for video-specific settings.** Model path, truth rule, launch command, event parameters, proof artifacts, and promotion status belong in `validation/test_cases/*.json`, not in memory or one-off command history.
+3. **Do not move research scripts until imports/tests move with them.** The repo needs a cleaner script tree, but mechanically relocating top-level Factory2 scripts without shims would break existing tests. Mark the product path first, then move research scripts in a separate import-safe pass.
+4. **Known limitations increase credibility.** Explicitly documenting that file-backed live validation is not yet live RTSP/Reolink validation makes the repo more trustworthy, not weaker.
 
 ### Training & Deployment Lessons
 

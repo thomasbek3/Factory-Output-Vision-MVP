@@ -39,6 +39,12 @@ type Dimensions = {
   height: number
 }
 
+type VideoState = {
+  fallbackActive: boolean
+  mediaKey: string
+  ready: boolean
+}
+
 function pointToPercent(point: { x: number; y: number }): string {
   return `${point.x * 100},${point.y * 100}`
 }
@@ -81,16 +87,20 @@ export function LiveSnapshotPanel({
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [containerSize, setContainerSize] = useState<Dimensions>({ width: 0, height: 0 })
   const [mediaSize, setMediaSize] = useState<Dimensions>({ width: 0, height: 0 })
-  const [videoReady, setVideoReady] = useState(false)
-  const [videoFallbackActive, setVideoFallbackActive] = useState(false)
+  const mediaKey = `${media.kind}:${media.src}`
+  const [videoState, setVideoState] = useState<VideoState>({ fallbackActive: false, mediaKey, ready: false })
   const videoPlaybackRate = media.kind === 'video' ? media.playbackRate : undefined
   const fallbackImageSrc = media.kind === 'video' ? media.fallbackImageSrc : undefined
+  const videoReady = videoState.mediaKey === mediaKey && videoState.ready
+  const videoFallbackActive = videoState.mediaKey === mediaKey && videoState.fallbackActive
   const showFallbackImage = media.kind === 'video' && videoFallbackActive && Boolean(fallbackImageSrc)
 
-  useEffect(() => {
-    setVideoReady(false)
-    setVideoFallbackActive(false)
-  }, [media.kind, media.src])
+  function updateVideoState(nextState: Partial<Omit<VideoState, 'mediaKey'>>): void {
+    setVideoState((current) => {
+      const currentForMedia = current.mediaKey === mediaKey ? current : { fallbackActive: false, mediaKey, ready: false }
+      return { ...currentForMedia, ...nextState }
+    })
+  }
 
   useEffect(() => {
     if (media.kind !== 'video' || !videoRef.current) {
@@ -117,13 +127,19 @@ export function LiveSnapshotPanel({
     }
 
     const timeout = window.setTimeout(() => {
-      setVideoFallbackActive(true)
+      setVideoState((current) => {
+        const currentForMedia = current.mediaKey === mediaKey ? current : { fallbackActive: false, mediaKey, ready: false }
+        if (currentForMedia.ready) {
+          return currentForMedia
+        }
+        return { ...currentForMedia, fallbackActive: true }
+      })
     }, 2500)
 
     return () => {
       window.clearTimeout(timeout)
     }
-  }, [fallbackImageSrc, media.kind, videoFallbackActive, videoReady])
+  }, [fallbackImageSrc, media.kind, mediaKey, videoFallbackActive, videoReady])
 
   useEffect(() => {
     const frame = frameRef.current
@@ -241,15 +257,15 @@ export function LiveSnapshotPanel({
             loop
             muted
             onCanPlay={() => {
-              setVideoReady(true)
+              updateVideoState({ ready: true })
             }}
             onError={() => {
               if (fallbackImageSrc) {
-                setVideoFallbackActive(true)
+                updateVideoState({ fallbackActive: true })
               }
             }}
             onLoadedData={() => {
-              setVideoReady(true)
+              updateVideoState({ ready: true })
             }}
             onLoadedMetadata={(event) => {
               const element = event.currentTarget
@@ -259,7 +275,7 @@ export function LiveSnapshotPanel({
               })
             }}
             onPlaying={() => {
-              setVideoReady(true)
+              updateVideoState({ ready: true })
             }}
             playsInline
             preload="auto"

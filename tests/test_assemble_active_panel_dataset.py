@@ -90,6 +90,42 @@ def test_assemble_dataset_writes_positive_and_empty_negative_labels(tmp_path: Pa
     assert (out_dir / "data.yaml").read_text(encoding="utf-8").startswith("path: .\ntrain: images/train")
 
 
+def test_assemble_dataset_honors_positive_split_metadata(tmp_path: Path) -> None:
+    image = tmp_path / "positive-val.jpg"
+    image.write_text("positive-val-image", encoding="utf-8")
+    reviewed = tmp_path / "reviewed-val.json"
+    reviewed.write_text(
+        json.dumps(
+            {
+                "schema_version": "label-quality-reviewed-v1",
+                "trainable_labels": [
+                    {
+                        "label_id": "good-panel-val",
+                        "frame_id": "frame-val",
+                        "image_width": 100,
+                        "image_height": 50,
+                        "class_name": "active_panel",
+                        "box": [10, 5, 50, 25],
+                        "metadata": {"frame_path": str(image), "split": "val"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    manifest_path = assembler.assemble_dataset(
+        out_dir=tmp_path / "dataset",
+        reviewed_label_manifest=reviewed,
+        hard_negative_export=None,
+    )
+
+    positive = json.loads(manifest_path.read_text(encoding="utf-8"))["items"][0]
+    assert positive["split"] == "val"
+    assert "/images/val/" in positive["image_path"]
+    assert "/labels/val/" in positive["label_path"]
+
+
 def test_refuses_negative_only_dataset_unless_explicit(tmp_path: Path) -> None:
     negatives = _write_hard_negative_export(tmp_path)
 

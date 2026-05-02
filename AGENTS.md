@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current Source Of Truth
+
+Start with the concise current docs before relying on older task logs or research notes:
+
+- `docs/00_CURRENT_STATE.md`
+- `docs/01_PRODUCT_SPEC.md`
+- `docs/02_ARCHITECTURE.md`
+- `docs/03_VALIDATION_PIPELINE.md`
+- `docs/04_TEST_CASE_REGISTRY.md`
+- `docs/06_DEVELOPER_RUNBOOK.md`
+- `docs/KNOWN_LIMITATIONS.md`
+- `validation/registry.json`
+
 ## What This Is
 
 Factory Vision Output Counter — a plug-and-play factory appliance that counts parts in an output zone using a Reolink camera + YOLO object detection on an Ubuntu edge PC. Runs fully offline on LAN. No cloud, no Docker, no YAML. Setup must complete in <15 minutes via a web wizard.
@@ -32,6 +45,39 @@ The counting pipeline uses **YOLOv8 object detection** exclusively. Previous app
 
 **Continuous improvement loop** (planned): Use Roboflow API to auto-collect more training images during production, retrain periodically to improve accuracy over time.
 
+## Factory2 Real-Time App Validation (2026-05-01)
+
+Canonical proof bar:
+
+- For any candidate video test case, read and follow `docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md`.
+- That doc defines the end goal, valid/invalid evidence, count rule, real-time app path, and promotion rule.
+- If a candidate video begins with a placement already in progress, settle and document whether the run uses operational truth or clean-cycle truth before verification.
+
+Alias:
+
+- `Test Case 1` means the verified Factory2 investor demo. If Thomas says `run test case 1`, launch `.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173` and open `http://127.0.0.1:5173/dashboard`.
+
+The current trusted Factory2 result is the real app path, not offline proof or timestamp replay:
+
+- `factory2.MOV` was verified through the actual FastAPI/VisionWorker/React dashboard flow.
+- Chrome dashboard flow was: open dashboard, click `Start monitoring`, see backend demo stream, watch Runtime Total climb, finish at `Demo complete` / `Runtime Total 23`.
+- Primary artifact: `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json`.
+- Expected artifact result: `matched_count: 23`, `missing_truth_count: 0`, `unexpected_observed_count: 0`, `first_divergence: null`.
+- Real-time timing: `wall_per_source = 1.0` on the visible dashboard run.
+
+Non-negotiable claim boundary:
+
+- This proves real app counting at `1.0x` from a file-backed live source.
+- It does **not** prove Reolink/RTSP field operation yet. Do not claim Reolink works until the same path is validated on an actual live stream.
+- Do not use deterministic/timestamp/replay demo modes as investor evidence.
+
+Key implementation lessons:
+
+- Source-clock pacing is required for synchronous file-backed live demos; fixed sleeps carry lag forever after expensive frames.
+- Browser preview and Runtime Total must stay tied to the same backend-counted frame stream.
+- Vite dev dashboard must proxy API calls to the backend; direct cross-origin calls can leave diagnostics stale.
+- Non-divisor FPS values require timestamp/fractional sampling, but every FPS change still needs a truth diff.
+
 ## Commands
 
 ### Backend (Python / FastAPI)
@@ -45,6 +91,12 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
 
 # Run in demo mode (uses demo/demo.mp4 or demo/demo_counter.mp4)
 FC_DEMO_MODE=1 FC_DEMO_VIDEO_PATH=demo/demo_counter.mp4 python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
+
+# Run the verified Factory2 real-time demo backend
+.venv/bin/python scripts/start_factory2_demo_app.py --port 8091
+
+# Run verified Factory2 backend + frontend dev stack
+.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173
 
 # Run backend tests (pytest, from repo root)
 python -m pytest tests/
@@ -204,6 +256,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - Always pass both a prompt and the minimum necessary file set. Reattach to existing Oracle sessions instead of spawning duplicates unless a fresh run is clearly needed.
 
 ### 8. Definition Of Done Rule
+- For any real app-counting test case candidate, `docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md` is the canonical definition of done and promotion standard.
 - For Factory2 carried-panel work, "done" does not mean the proof report or diagnostics improved.
 - Do not stop at proof-only success.
 - The task is only done when the actual counting/runtime path works end to end on `factory2.MOV` and produces the defensible count behavior the proof established.
@@ -227,6 +280,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - Synthetic `approved_delivery_chain` events are operational/runtime counts, not source-token-backed proof authority. Do not mint fake `source_token_id` or `source_bbox` values for them; serialize them as `count_authority = runtime_inferred_only`.
 - The current count-authority ledger is `data/reports/factory2_count_authority_ledger.v1.json`: runtime total `23`, proof total `21`, inherited live source token `11`, synthetic with overlapping proof `10`, synthetic without distinct proof `2`.
 - Product/API surfaces must expose the count-authority split explicitly. For Factory2, do not collapse everything into one opaque total when runtime and proof diverge; surface `runtime_total`, `proof_backed_total`, and `runtime_inferred_only`.
+- The 2026-05-01 visible app run is the current investor-demo proof point: `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json` matched `23/23` at `wall_per_source = 1.0`.
 - For investor/demo validation on `factory2.MOV`, use the real one-pass app path, not replayed receipts. The verified demo configuration is:
   - `FC_DEMO_COUNT_MODE=live_reader_snapshot`
   - `FC_COUNTING_MODE=event_based`
@@ -235,6 +289,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
   - `FC_PROCESSING_FPS=10`
   - `FC_READER_FPS=10`
 - Use `scripts/start_factory2_demo_app.py` for the investor demo launch instead of hand-assembling env vars.
+- Use `scripts/start_factory2_demo_stack.py` when the browser dashboard also needs to be launched and verified.
 - The final-two option-2 path now has a divergent-chain review package plus a local rescue dataset. Use `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md` as the active spec for `305.708s` and `425.012s`.
 - Treat `same_delivery_as_prior` as a lineage/relation label, not automatically as a pure visual crop class. Before training or promoting anything, check whether the target is learnable from isolated crops or whether it needs pairwise/sequence context.
 - If a chain-level adjudication marks a divergent runtime event as `duplicate_of_prior_runtime_event` or `source_authority_blocked`, the proof action must remain `do_not_mint`. Do not override that with crop-only confidence.

@@ -37,6 +37,7 @@ class VisionWorkerStateTests(unittest.TestCase):
             "FC_PERSON_DETECT_FPS": os.environ.get("FC_PERSON_DETECT_FPS"),
             "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
+            "FC_EVENT_DETECTION_CLUSTER_DISTANCE": os.environ.get("FC_EVENT_DETECTION_CLUSTER_DISTANCE"),
         }
         os.environ["FC_DB_PATH"] = os.path.join(self.temp_dir, "worker.db")
         os.environ["FC_LOG_DIR"] = os.path.join(self.temp_dir, "logs")
@@ -157,6 +158,61 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertIs(snapshot, expected)
         fake_reader.pump_next_demo_frame.assert_called_once_with()
         fake_reader.consume_next_frame.assert_not_called()
+
+    def test_synchronous_demo_pacing_uses_source_clock(self) -> None:
+        fake_reader = Mock()
+        fake_reader.is_synchronous_demo_mode.return_value = True
+        self.worker.video_runtime.reader = fake_reader  # type: ignore[assignment]
+        self.worker.video_runtime.current_demo_playback_speed = Mock(return_value=1.0)  # type: ignore[method-assign]
+        self.worker._demo_live_started_at_ts = 100.0
+        snapshot = ReaderSnapshot(
+            frame=np.zeros((2, 2, 3), dtype=np.uint8),
+            last_frame_time=101.0,
+            source="demo",
+            source_timestamp_sec=1.0,
+        )
+
+        with patch("app.workers.vision_worker.time.time", return_value=100.96):
+            delay = self.worker._next_frame_pacing_delay(
+                default_delay=0.1,
+                loop_started_ts=100.0,
+                source_is_demo=True,
+                frame_snapshot=snapshot,
+            )
+
+        self.assertEqual(delay, 0.0)
+
+        with patch("app.workers.vision_worker.time.time", return_value=100.50):
+            source_clock_delay = self.worker._next_frame_pacing_delay(
+                default_delay=0.1,
+                loop_started_ts=100.0,
+                source_is_demo=True,
+                frame_snapshot=snapshot,
+            )
+
+        self.assertEqual(source_clock_delay, 0.0)
+
+        with patch("app.workers.vision_worker.time.time", return_value=101.20):
+            catchup_delay = self.worker._next_frame_pacing_delay(
+                default_delay=0.1,
+                loop_started_ts=101.2,
+                source_is_demo=True,
+                frame_snapshot=snapshot,
+            )
+
+        self.assertEqual(catchup_delay, 0.0)
+
+    def test_synchronous_demo_pending_frames_do_not_bypass_source_clock_pacing(self) -> None:
+        fake_reader = Mock()
+        fake_reader.is_synchronous_demo_mode.return_value = True
+        self.worker.video_runtime.reader = fake_reader  # type: ignore[assignment]
+
+        self.assertFalse(self.worker._should_drain_pending_frames_without_delay(source_is_demo=True, pending_frames=3))
+
+        fake_reader.is_synchronous_demo_mode.return_value = False
+        self.assertTrue(self.worker._should_drain_pending_frames_without_delay(source_is_demo=True, pending_frames=3))
+        self.assertTrue(self.worker._should_drain_pending_frames_without_delay(source_is_demo=False, pending_frames=3))
+        self.assertFalse(self.worker._should_drain_pending_frames_without_delay(source_is_demo=False, pending_frames=0))
 
     def test_idle_synchronous_demo_reader_does_not_trigger_stall_recovery(self) -> None:
         fake_reader = Mock()
@@ -290,6 +346,60 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(artifact["count_events"][0]["provenance_status"], "synthetic_approved_chain_token")
         self.assertEqual(artifact["tracks"][0]["perception_gate"]["reason"], "moving_panel_candidate")
 
+    def test_event_based_dead_track_path_emits_count_event_payload(self) -> None:
+        self.worker._runtime_event_counter = None
+        dead_track = Track(
+            track_id=7,
+            centroid=(75, 80),
+            first_centroid=(50, 60),
+            previous_centroid=(70, 78),
+            age=0,
+            frames_seen=8,
+            last_side=None,
+            counted=False,
+        )
+        fake_tracker = Mock()
+        fake_tracker.update_with_dead.return_value = ([dead_track], {})
+        self.worker._event_tracker = fake_tracker
+        self.worker._counting_mode = "event_based"
+        self.worker._yolo_detector.detect = Mock(
+            return_value=DetectionDebugResult(
+                detections=[],
+                foreground_mask=np.zeros((100, 100), dtype=np.uint8),
+            )
+        )
+
+        increment, artifact = self.worker._run_event_based_counting(np.zeros((100, 100, 3), dtype=np.uint8), None)
+
+        self.assertEqual(increment, 1)
+        self.assertEqual(artifact["count_events"][0]["track_id"], 7)
+        self.assertEqual(artifact["count_events"][0]["reason"], "dead_track_event")
+        self.assertEqual(artifact["count_events"][0]["centroid"], [75, 80])
+        self.assertEqual(artifact["count_events"][0]["count_authority"], "runtime_inferred_only")
+
+    def test_event_based_dead_track_path_clusters_nearby_same_frame_detections(self) -> None:
+        os.environ["FC_EVENT_DETECTION_CLUSTER_DISTANCE"] = "30"
+        fake_tracker = Mock()
+        fake_tracker.update_with_dead.return_value = ([], {})
+        self.worker._event_tracker = fake_tracker
+        self.worker._runtime_event_counter = None
+        self.worker._counting_mode = "event_based"
+        self.worker._yolo_detector.detect = Mock(
+            return_value=DetectionDebugResult(
+                detections=[
+                    DetectedObject(centroid=(10, 10), bbox=(0, 0, 20, 20), area=400.0),
+                    DetectedObject(centroid=(25, 10), bbox=(15, 0, 20, 20), area=400.0),
+                    DetectedObject(centroid=(100, 100), bbox=(90, 90, 20, 20), area=400.0),
+                ],
+                foreground_mask=np.zeros((120, 120), dtype=np.uint8),
+            )
+        )
+
+        _, artifact = self.worker._run_event_based_counting(np.zeros((120, 120, 3), dtype=np.uint8), None)
+
+        fake_tracker.update_with_dead.assert_called_once_with([(18, 10), (100, 100)])
+        self.assertEqual(artifact["clustered_centroids"], [(18, 10), (100, 100)])
+
     def test_diagnostics_include_recent_runtime_count_trace(self) -> None:
         self.worker.state = "RUNNING_GREEN"
         self.worker._record_count_events(
@@ -366,6 +476,56 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(self.worker.get_status()["runtime_total"], 1)
         self.assertEqual(self.worker.get_status()["runtime_inferred_only"], 1)
         fake_counter.flush_end_of_stream.assert_called_once_with(iterations=2)
+
+    def test_demo_eof_flush_counts_active_event_tracker_tracks_once(self) -> None:
+        self.worker.state = "RUNNING_GREEN"
+        self.worker._runtime_event_counter = None
+        self.worker._event_tracker = Mock()
+        self.worker._event_tracker.tracks = {
+            11: Track(
+                track_id=11,
+                centroid=(80, 90),
+                first_centroid=(70, 85),
+                previous_centroid=(78, 89),
+                age=0,
+                frames_seen=8,
+                last_side=None,
+                counted=False,
+            ),
+            12: Track(
+                track_id=12,
+                centroid=(20, 25),
+                first_centroid=(20, 25),
+                previous_centroid=None,
+                age=0,
+                frames_seen=2,
+                last_side=None,
+                counted=False,
+            ),
+        }
+
+        flushed = self.worker._flush_demo_end_of_stream_events(
+            reader_sequence_index=9460,
+            reader_frame_time=123.45,
+            reader_source_timestamp_sec=946.5,
+        )
+        flushed_again = self.worker._flush_demo_end_of_stream_events(
+            reader_sequence_index=9460,
+            reader_frame_time=123.45,
+            reader_source_timestamp_sec=946.5,
+        )
+
+        self.assertEqual(flushed, 1)
+        self.assertEqual(flushed_again, 0)
+        self.assertEqual(self.worker.get_status()["runtime_total"], 1)
+        self.assertEqual(self.worker.get_status()["runtime_inferred_only"], 1)
+        diagnostics = self.worker.get_diagnostics(
+            uptime_sec=12.3,
+            db_path=os.path.join(self.temp_dir, "worker.db"),
+            log_directory=os.path.join(self.temp_dir, "logs"),
+        )
+        self.assertEqual(diagnostics["recent_count_events"][0]["reason"], "end_of_stream_active_track_event")
+        self.assertEqual(diagnostics["recent_count_events"][0]["event_ts"], 946.5)
 
     def test_runtime_person_boxes_reuse_cached_detections_within_detect_interval(self) -> None:
         self.worker.stop()

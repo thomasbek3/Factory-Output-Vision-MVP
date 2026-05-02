@@ -22,13 +22,12 @@ If setup takes >15 minutes, it fails.
 - User enters camera IP + login in a local web UI
 - User draws:
   - Output ROI (polygon)
-  - Count line (2 points)
   - Optional operator zone (polygon)
 - User clicks "Calibrate" to set baseline output rate
 - User clicks "Start Monitoring"
 
 System automatically:
-- Counts parts crossing the line (per minute/hour)
+- Counts parts/events in the output zone (per minute/hour)
 - Detects **Stop** (zero count for N minutes)
 - Detects **Drop** (rolling rate < 60% baseline for M minutes)
 - Optionally detects **Operator Absence** ONLY during drop
@@ -57,36 +56,62 @@ System automatically:
 
 ---
 
-## Repo documentation (source of truth)
-All requirements and implementation rules live in:
-- `docs/PROJECT_SPEC.md` (full requirements)
-- `docs/ARCHITECTURE.md` (components + state machine)
-- `docs/API_SPEC.md` (endpoints + payloads)
-- `docs/UX_SPEC.md` (blue-collar UI copy + flows)
-- `docs/BUILD_PLAN.md` (milestones)
-- `docs/TEST_PLAN.md` (acceptance + manual tests)
-- `docs/COMPETITORS.md` (market positioning)
-- `docs/CODEX_RUNBOOK.md` (how to use Codex to generate the codebase safely)
-- `INSTALL/windows/README.md` (Windows install bundle)
+## Repo documentation (current source of truth)
 
-Current implementation note:
-- `frontend/` now contains the React + TypeScript + Vite frontend introduced in Phase 3
-- FastAPI now serves the React build from `frontend/dist` when built assets are present
-- `/dashboard`, `/wizard`, and `/troubleshooting` are now the primary UI routes
-- `/app/dashboard`, `/app/wizard`, and `/app/troubleshooting` remain compatibility aliases
-- the React wizard now uses backend-reported calibration progress instead of a local timer estimate
-- the calibration preview now uses backend-detected object overlays during calibration
-- troubleshooting now includes live, ROI, mask, and tracks debug views backed by a diagnostics snapshot endpoint
-- troubleshooting now includes a demo playback lab for restart-from-beginning, 0.5x/1x/2x/4x playback speed, person-ignore masking, and count resets
-- troubleshooting now also supports managed demo video uploads and active-demo switching directly from the UI
-- dashboard and troubleshooting now use a real browser `<video>` preview for demo sources instead of 1-second snapshot polling
-- old `/legacy/...` URLs now redirect forward to the React routes so existing bookmarks still resolve cleanly
-- the old Jinja templates and legacy static JS have been removed
-- if `frontend/dist` is missing, the web routes return a clear `503` page instead of falling back to deleted templates
-- a real Windows installer EXE is now built at `dist/windows-installer/FactoryCounterSetup-0.1.0.exe`
-- demo-mode validation now works end to end with `demo/demo_counter.mp4` when the ROI covers the block travel lane and the count line direction is set to `Either direction`
-- real-factory demo testing can now reset runtime counts and restart demo playback without restarting the whole app
-- real-factory demo testing no longer requires editing `.env` just to swap video files; uploaded demo files are stored under `data/demo_videos/`
+Start here:
+
+- `docs/00_CURRENT_STATE.md` (verified cases, claim boundary, non-negotiables)
+- `docs/01_PRODUCT_SPEC.md` (current MVP product definition)
+- `docs/02_ARCHITECTURE.md` (short current architecture map)
+- `docs/03_VALIDATION_PIPELINE.md` (new-video validation workflow)
+- `docs/04_TEST_CASE_REGISTRY.md` (registry and manifest rules)
+- `docs/05_OPERATOR_RUNBOOK.md` (dashboard operator workflow)
+- `docs/06_DEVELOPER_RUNBOOK.md` (developer commands and guardrails)
+- `docs/KNOWN_LIMITATIONS.md` (honest product limits)
+
+Detailed references remain available in `docs/PROJECT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`, `docs/UX_SPEC.md`, `docs/TEST_PLAN.md`, and the specific Factory2/IMG workflow docs. Historical docs live under `docs/ARCHIVED_DONOTREAD/` and `docs/archived/`.
+
+Validation is now registry-backed:
+
+- `validation/registry.json`
+- `validation/test_cases/factory2.json`
+- `validation/test_cases/img3262.json`
+- `validation/test_cases/img3254_clean22.json`
+
+---
+
+## Verified Factory2 real-time demo
+
+Alias: `Test Case 1`.
+
+Run the backend only:
+
+```bash
+.venv/bin/python scripts/start_factory2_demo_app.py --port 8091
+```
+
+Run backend + frontend dev stack:
+
+```bash
+.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173
+```
+
+Open `http://127.0.0.1:5173/dashboard`, click `Start monitoring`, and verify Runtime Total climbs to `23`.
+
+Primary proof artifact:
+
+```text
+data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json
+```
+
+Expected result:
+
+```text
+matched_count: 23
+missing_truth_count: 0
+unexpected_observed_count: 0
+first_divergence: null
+```
 
 ---
 

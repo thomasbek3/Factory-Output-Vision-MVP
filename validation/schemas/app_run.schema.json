@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-app-run.schema.json",
+  "title": "Factory Vision Observed App Run",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "observed_event_count",
+    "current_state",
+    "run_complete",
+    "observed_coverage_end_sec",
+    "events"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "observed_event_count": { "type": "integer" },
+    "current_state": { "type": "string" },
+    "run_complete": { "type": "boolean" },
+    "observed_coverage_end_sec": { "type": ["number", "null"] },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["event_ts"],
+        "properties": {
+          "event_ts": { "type": "number" },
+          "runtime_total_after_event": { "type": ["integer", "null"] },
+          "reader_frame_time": { "type": ["number", "null"] },
+          "track_id": { "type": ["integer", "null"] }
+        }
+      }
+    }
+  }
+}

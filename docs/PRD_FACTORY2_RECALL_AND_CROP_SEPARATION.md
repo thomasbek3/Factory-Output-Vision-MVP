@@ -6,6 +6,8 @@
 **Repo:** `/Users/thomas/Projects/Factory-Output-Vision-MVP`  
 **Prior PRD:** [PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md](/Users/thomas/Projects/Factory-Output-Vision-MVP/docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md)  
 
+> 2026-05-01 status note: this PRD is now historical for the runtime/app path. The actual app path has been verified on `factory2.MOV` at real-time speed with `Runtime Total 23` and truth comparison `23/23` in `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json`. The remaining value of this PRD is its proof/crop-separation doctrine: do not loosen thresholds, preserve evidence, and use hard-case crops/model work for generalization.
+
 **Canonical proof command:**
 
 ```bash

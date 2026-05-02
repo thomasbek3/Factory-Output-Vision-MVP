@@ -3,19 +3,27 @@ This is the single source of truth for behavior. Do not implement features not d
 
 See ROADMAP.md for v1.5 (beam), v2.0 (OEE/intelligence), and beyond.
 
-Active perception PRD for the current `factory2.MOV` blocker:
+Current Factory2 real-time app validation:
+
+```text
+docs/FACTORY2_REALTIME_APP_VALIDATION.md
+```
+
+The actual app path has been verified on `factory2.MOV` at `1.0x` with `Runtime Total 23` and truth comparison `23/23`.
+
+Historical perception PRD for the earlier `factory2.MOV` blocker:
 
 ```text
 docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md
 ```
 
-Next-phase PRD after the first accepted Factory2 carry:
+Proof/crop-separation PRD after the first accepted Factory2 carry:
 
 ```text
 docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md
 ```
 
-Work on the worker-entangled carried-panel problem should follow those PRDs before changing count logic.
+Work on future worker-entangled carried-panel problems should follow those PRDs before changing count logic.
 Current Factory2 human truth target: 23 real carried-panel transfers with 0 false positives.
 
 ---

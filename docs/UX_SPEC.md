@@ -73,7 +73,7 @@ Buttons:
 Not in v1.0. In v1.5, insert here:
 
 Option A: "Camera counts parts" (icon: camera)
-  - "Easiest setup. Camera watches parts cross a line."
+  - "Easiest setup. Camera watches parts enter the output zone."
 Option B: "I have a beam sensor" (icon: laser beam)
   - "Most accurate. Sensor counts, camera watches for problems."
 

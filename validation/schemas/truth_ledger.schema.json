@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-truth-ledger.schema.json",
+  "title": "Factory Vision Truth Ledger",
+  "type": "object",
+  "required": ["schema_version", "events"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "video_path": { "type": ["string", "null"] },
+    "video_sha256": { "type": ["string", "null"] },
+    "expected_human_total": { "type": ["integer", "null"] },
+    "counting_rule": { "type": ["string", "null"] },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["event_ts"],
+        "properties": {
+          "truth_event_id": { "type": ["string", "null"] },
+          "count_total": { "type": ["integer", "null"] },
+          "event_ts": { "type": "number" },
+          "notes": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

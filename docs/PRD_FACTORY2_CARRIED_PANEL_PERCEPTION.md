@@ -4,6 +4,8 @@
 **Created:** 2026-04-28 10:40 EDT  
 **Owner:** Thomas Bekkers  
 **Repo:** `/Users/thomas/Projects/Factory-Output-Vision-MVP`  
+> 2026-05-01 status note: this PRD describes the earlier perception reset before the runtime/app path converged. The actual app now counts `factory2.MOV` from real processed frames at `1.0x` and matches the human truth ledger `23/23` in `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json`. Keep the doctrine here for future videos: counts must remain auditable, and worker/body overlap should be solved with stronger evidence rather than threshold loosening.
+
 **Canonical proof command:**
 
 ```bash

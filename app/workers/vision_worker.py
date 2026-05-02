@@ -19,6 +19,7 @@ from app.core.settings import (
     get_drop_minutes,
     get_drop_threshold,
     get_event_gap_seconds,
+    get_event_detection_cluster_distance,
     get_event_min_duration_seconds,
     get_event_track_max_age,
     get_event_track_max_match_distance,
@@ -141,6 +142,7 @@ class VisionWorker:
         self._latest_person_boxes: list[dict[str, int | float]] = []
         self._last_person_ignore_detect_ts = 0.0
         self._last_runtime_person_detect_ts = 0.0
+        self._demo_live_started_at_ts: float | None = None
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -259,6 +261,7 @@ class VisionWorker:
                 return self.get_status()
             self.monitoring_enabled = True
             self._demo_eof_flush_applied = False
+            self._demo_live_started_at_ts = time.time() if source_is_demo else None
             self.video_runtime.reader.discard_pending_frames()
             if should_use_deterministic_demo and self._deterministic_demo_runner is not None:
                 self._clear_count_state()
@@ -278,6 +281,7 @@ class VisionWorker:
     def stop_monitoring(self) -> dict[str, object]:
         with self._lock:
             self.monitoring_enabled = False
+            self._demo_live_started_at_ts = None
             self.operator_absent_active = False
             self._operator_absent_emitted = False
             if self._deterministic_demo_runner is not None:
@@ -422,6 +426,11 @@ class VisionWorker:
                             flushed = self._flush_demo_end_of_stream_events(
                                 reader_sequence_index=int(reader_status.get("last_sequence_index") or 0),
                                 reader_frame_time=float(reader_status.get("last_frame_time") or 0.0),
+                                reader_source_timestamp_sec=(
+                                    None
+                                    if reader_status.get("last_source_timestamp_sec") is None
+                                    else float(reader_status.get("last_source_timestamp_sec") or 0.0)
+                                ),
                             )
                             if flushed > 0:
                                 self._write_health_sample_if_due(source_kind="demo")
@@ -553,8 +562,17 @@ class VisionWorker:
                             self._transition("IDLE", "Waiting for monitoring")
                         self._handle_recovered_from_reconnect_if_needed()
                         self._write_health_sample_if_due(source_kind="demo" if runtime_status.source.is_demo else "camera")
+                next_delay = self._next_frame_pacing_delay(
+                    default_delay=next_delay,
+                    loop_started_ts=started,
+                    source_is_demo=runtime_status.source.is_demo,
+                    frame_snapshot=frame_snapshot,
+                )
                 pending_frames = int(self.video_runtime.reader.status().get("pending_frames") or 0)
-                if pending_frames > 0:
+                if self._should_drain_pending_frames_without_delay(
+                    source_is_demo=runtime_status.source.is_demo,
+                    pending_frames=pending_frames,
+                ):
                     next_delay = 0.0
             except Exception as exc:  # noqa: BLE001
                 logger.exception("Vision loop error")
@@ -574,14 +592,28 @@ class VisionWorker:
         roi_frame = apply_roi_mask(frame, roi) if roi else frame
         debug_result = self._yolo_detector.detect(roi_frame)
         detections = debug_result.detections
-        centroids = [det.centroid for det in detections]
+        centroids = self._cluster_event_detection_centroids([det.centroid for det in detections])
         if centroids:
             logger.debug("EVENT_DETECT: %d detections this frame", len(centroids))
         dead_tracks, active_tracks = self._event_tracker.update_with_dead(centroids) if self._event_tracker is not None else ([], {})
+        min_track_frames = max(1, get_event_track_min_frames())
         increment = count_dead_tracks(
             dead_tracks,
-            min_track_frames=max(1, get_event_track_min_frames()),
+            min_track_frames=min_track_frames,
         )
+        count_events = [
+            {
+                "track_id": track.track_id,
+                "count": 1,
+                "reason": "dead_track_event",
+                "bbox": None,
+                "centroid": list(track.centroid),
+                "frames_seen": track.frames_seen,
+                "count_authority": "runtime_inferred_only",
+            }
+            for track in dead_tracks
+            if track.frames_seen >= min_track_frames
+        ]
         return increment, {
             "roi_frame": roi_frame.copy(),
             "mask_frame": cv2.cvtColor(debug_result.foreground_mask, cv2.COLOR_GRAY2BGR),
@@ -593,6 +625,7 @@ class VisionWorker:
                 }
                 for detection in detections
             ],
+            "clustered_centroids": centroids,
             "tracks": [
                 {
                     "track_id": track.track_id,
@@ -604,7 +637,47 @@ class VisionWorker:
                 for track in active_tracks.values()
             ],
             "person_boxes": [],
+            "count_events": count_events,
         }
+
+    def _cluster_event_detection_centroids(self, centroids: list[tuple[int, int]]) -> list[tuple[int, int]]:
+        max_distance = get_event_detection_cluster_distance()
+        if max_distance <= 0 or len(centroids) < 2:
+            return centroids
+
+        parents = list(range(len(centroids)))
+
+        def find(index: int) -> int:
+            while parents[index] != index:
+                parents[index] = parents[parents[index]]
+                index = parents[index]
+            return index
+
+        def union(left: int, right: int) -> None:
+            root_left = find(left)
+            root_right = find(right)
+            if root_left != root_right:
+                parents[root_right] = root_left
+
+        max_distance_sq = max_distance * max_distance
+        for left, left_centroid in enumerate(centroids):
+            for right in range(left + 1, len(centroids)):
+                right_centroid = centroids[right]
+                dx = left_centroid[0] - right_centroid[0]
+                dy = left_centroid[1] - right_centroid[1]
+                if (dx * dx) + (dy * dy) <= max_distance_sq:
+                    union(left, right)
+
+        grouped_indices: dict[int, list[int]] = {}
+        for index in range(len(centroids)):
+            grouped_indices.setdefault(find(index), []).append(index)
+
+        clustered: list[tuple[int, int]] = []
+        for indices in sorted(grouped_indices.values(), key=lambda values: min(values)):
+            x = round(sum(centroids[index][0] for index in indices) / len(indices))
+            y = round(sum(centroids[index][1] for index in indices) / len(indices))
+            clustered.append((int(x), int(y)))
+        return clustered
 
     def _run_runtime_event_counting(self, frame) -> tuple[int, dict[str, Any]]:
         debug_result = self._yolo_detector.detect(frame)
@@ -800,6 +873,25 @@ class VisionWorker:
         if remaining > 0:
             time.sleep(remaining)
 
+    def _next_frame_pacing_delay(
+        self,
+        *,
+        default_delay: float,
+        loop_started_ts: float,
+        source_is_demo: bool,
+        frame_snapshot,
+    ) -> float:
+        if not source_is_demo or not self.video_runtime.reader.is_synchronous_demo_mode():
+            return default_delay
+        return 0.0
+
+    def _should_drain_pending_frames_without_delay(self, *, source_is_demo: bool, pending_frames: int) -> bool:
+        if pending_frames <= 0:
+            return False
+        if source_is_demo and self.video_runtime.reader.is_synchronous_demo_mode():
+            return False
+        return True
+
     def _minute_key_now(self) -> tuple[int, int, int, int, int]:
         now = datetime.now()
         return (now.year, now.month, now.day, now.hour, now.minute)
@@ -948,20 +1040,42 @@ class VisionWorker:
         *,
         reader_sequence_index: int,
         reader_frame_time: float,
+        reader_source_timestamp_sec: float | None = None,
     ) -> int:
-        if self._demo_eof_flush_applied or self._runtime_event_counter is None:
+        if self._demo_eof_flush_applied:
             self._demo_eof_flush_applied = True
             return 0
         self._demo_eof_flush_applied = True
-        frame_result = self._runtime_event_counter.flush_end_of_stream(iterations=2)
-        count_events = self._runtime_count_event_payloads(frame_result)
+        if self._runtime_event_counter is not None:
+            frame_result = self._runtime_event_counter.flush_end_of_stream(iterations=2)
+            count_events = self._runtime_count_event_payloads(frame_result)
+        elif self._event_tracker is not None:
+            min_track_frames = max(1, get_event_track_min_frames())
+            count_events = []
+            for track in self._event_tracker.tracks.values():
+                if track.counted or track.frames_seen < min_track_frames:
+                    continue
+                track.counted = True
+                count_events.append(
+                    {
+                        "track_id": track.track_id,
+                        "count": 1,
+                        "reason": "end_of_stream_active_track_event",
+                        "bbox": None,
+                        "centroid": list(track.centroid),
+                        "frames_seen": track.frames_seen,
+                        "count_authority": "runtime_inferred_only",
+                    }
+                )
+        else:
+            count_events = []
         if not count_events:
             return 0
         self._record_count_events(
             count_events,
             reader_sequence_index=reader_sequence_index,
             reader_frame_time=reader_frame_time,
-            source_timestamp_sec=None,
+            source_timestamp_sec=reader_source_timestamp_sec,
             source_kind="demo",
         )
         return len(count_events)

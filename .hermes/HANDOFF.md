@@ -1,8 +1,305 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-04-29 12:49:27 EDT
+Updated: 2026-05-02 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `main`
+
+Canonical test-case proof bar:
+- For any candidate factory video, read `docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md` before claiming validation or promotion.
+- The required evidence is the real app/dashboard path at `1.0x`, `live_reader_snapshot`, `event_based`, Runtime Total starting at `0`, captured backend events, clean reviewed truth comparison, measured wall/source pacing, and no replay/timestamp/fake UI/video-specific hacks.
+- If a candidate starts mid-placement, settle operational truth vs clean-cycle truth before running verification.
+
+## 2026-05-02: Repo Cleanup And Validation Productization
+
+Oracle review output:
+
+```text
+data/reports/oracle_factory_vision_repo_productize.md
+```
+
+New current-doc spine:
+
+```text
+docs/00_CURRENT_STATE.md
+docs/01_PRODUCT_SPEC.md
+docs/02_ARCHITECTURE.md
+docs/03_VALIDATION_PIPELINE.md
+docs/04_TEST_CASE_REGISTRY.md
+docs/05_OPERATOR_RUNBOOK.md
+docs/06_DEVELOPER_RUNBOOK.md
+docs/KNOWN_LIMITATIONS.md
+```
+
+Validation registry and manifests:
+
+```text
+validation/registry.json
+validation/test_cases/factory2.json
+validation/test_cases/img3262.json
+validation/test_cases/img3254_clean22.json
+validation/schemas/*.schema.json
+```
+
+Registry-backed validation reports:
+
+```text
+data/reports/factory2_validation_report.registry_v1.json
+data/reports/img3262_validation_report.registry_v1.json
+data/reports/img3254_clean22_validation_report.registry_v1.json
+```
+
+New command entry points:
+
+```bash
+.venv/bin/python scripts/validate_video.py --case-id img3254_clean22_candidate --dry-run
+.venv/bin/python scripts/register_test_case.py --manifest validation/test_cases/img3254_clean22.json --force
+make validate-video CASE_ID=img3254_clean22_candidate
+```
+
+Historical Factory2 research scripts are still at top-level `scripts/` because tests import those module paths. They are now documented as research-only; the product validation path is the registry + manifest + `validate_video.py` flow.
+
+## 2026-05-01: IMG_3254 Real-App Candidate Verified
+
+`demo/IMG_3254.MOV` is verified as a real-app candidate under clean-cycle truth `22`. It is not promoted to a numbered test case.
+
+Video:
+
+```text
+Source copy: demo/IMG_3254.MOV
+SHA-256: f9b72e2a48e96f1f008a0b750504fde13c8ea43ab62f562bacd715c5b19b19cd
+Duration: 1280.516667s
+```
+
+Truth rule:
+
+```text
+Clean-cycle truth: 22 (locked)
+- Excludes the placement already in progress at frame 0.
+
+Operational truth: 23 (context only)
+- Includes the in-progress-at-start placement if completion after frame 0 is visible.
+```
+
+Decision evidence:
+
+```text
+data/videos/review_frames/img3254_start_truth_decision_sheet.jpg
+data/reports/img3254_truth_rule_decision_packet.v1.json
+data/reports/img3254_completion_audit.blocked_v1.json
+
+At 0.0s the worker is already bent over the output pallet with a placement in progress.
+By roughly 8-12s the worker has moved away from that opener.
+That opener belongs only in the operational 23 rule; clean-cycle 22 excludes it because it began before frame 0.
+```
+
+Verified settings:
+
+```text
+Model: models/img3254_active_panel_v4_yolov8n.pt
+Runtime calibration: none
+YOLO confidence: 0.25
+Processing FPS: 10
+Reader FPS: 10
+Event detection cluster distance: 250
+Event track min frames: 12
+Event track max age: 52
+Playback speed for proof: 1
+Observed events: data/reports/img3254_app_observed_events.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json
+Result: observed_event_count 22, DEMO_COMPLETE, coverage_end 1280.417s
+Focused review packet: data/videos/review_frames/img3254_candidate_events_v1/manifest.json
+```
+
+Primary proof artifacts:
+
+```text
+data/reports/img3254_human_truth_event_times.clean_cycle_v1.csv
+data/reports/img3254_human_truth_total.clean_cycle_v1.json
+data/reports/img3254_human_truth_ledger.clean_cycle_v1.json
+data/reports/img3254_app_vs_human_total.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json
+data/reports/img3254_app_vs_truth.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json
+data/reports/img3254_wall_source_pacing.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json
+data/reports/img3254_completion_audit.verified_clean22_v1.json
+```
+
+Expected comparison:
+
+```text
+matched_count: 22
+missing_truth_count: 0
+unexpected_observed_count: 0
+first_divergence: null
+wall_per_source: 1.000000154
+```
+
+Dashboard evidence:
+
+```text
+data/reports/screenshots/img3254_dashboard_visible_start_clean22_1x_v1.png
+data/reports/screenshots/img3254_dashboard_visible_after_click_clean22_1x_v1.png
+data/reports/screenshots/img3254_dashboard_visible_mid_clean22_1x_v1.png
+data/reports/screenshots/img3254_dashboard_visible_end_clean22_1x_v1.png
+```
+
+Why this candidate:
+
+```text
+- v4 max_age=40 produced 24 events from two duplicate split windows around 470/487s and 614/629s.
+- Track-window review showed the split gaps are narrow:
+  - first split last_seen 466.797s, successor start 472.097s
+  - second split last_seen 610.206s, successor start 614.707s
+- max_age=52 merges those fragments without the rejected max_age=180 timing delay.
+- max_age=180 also totals 22 but should not be used as final proof unless timing is separately proven clean.
+- v5 overcounted/broadened, v6 overfragmented, v7 undercounted.
+```
+
+Re-run command:
+
+```bash
+.venv/bin/python scripts/start_factory2_demo_stack.py \
+  --backend-port 8092 \
+  --frontend-port 5174 \
+  --video demo/IMG_3254.MOV \
+  --model models/img3254_active_panel_v4_yolov8n.pt \
+  --no-runtime-calibration \
+  --yolo-confidence 0.25 \
+  --processing-fps 10 \
+  --reader-fps 10 \
+  --playback-speed 1 \
+  --event-track-max-age 52 \
+  --event-track-min-frames 12 \
+  --event-detection-cluster-distance 250
+```
+
+## 2026-05-01: Factory2 Real-Time App Path Verified
+
+Alias:
+
+```text
+Test Case 1 = verified Factory2 investor demo
+```
+
+If Thomas says `run test case 1`, launch:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5173/dashboard
+```
+
+The Factory2 investor-demo path now works in the actual app at true real-time speed.
+
+This is the current trusted state:
+
+```text
+Video:
+- data/videos/from-pc/factory2.MOV
+
+Runtime/app path:
+- real FastAPI + VisionWorker app path
+- `FC_DEMO_COUNT_MODE=live_reader_snapshot`
+- `FC_COUNTING_MODE=event_based`
+- one-pass demo source, no loop
+- ordered real processed frames
+- backend-counted MJPEG/dashboard stream
+- Chrome dashboard visible run
+
+Result:
+- Runtime Total visibly climbs
+- final dashboard state: Demo complete
+- final dashboard Runtime Total: 23
+- human truth comparison: 23/23
+- real-time ratio: wall_per_source = 1.0
+```
+
+Primary verification artifacts:
+
+```text
+data/reports/factory2_app_observed_events.run8104.visible_dashboard_v1.json
+data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json
+```
+
+Expected comparison:
+
+```text
+matched_count: 23
+missing_truth_count: 0
+unexpected_observed_count: 0
+first_divergence: null
+```
+
+Supporting source-clock backend artifact:
+
+```text
+data/reports/factory2_app_observed_events.run8103.sourceclock_10fps_v1.json
+data/reports/factory2_app_vs_truth.run8103.sourceclock_10fps_v1.json
+```
+
+Important implementation lessons:
+
+```text
+- Source-clock pacing fixed the last speed problem. File-backed live demos must pace to frame source timestamps, not fixed sleep after processing.
+- Local crop-based live separation cut hot-path cost without changing count semantics.
+- Fractional frame sampling is now honest for non-divisor FPS values, but 9.5 FPS failed truth comparison and is not promoted.
+- The dev dashboard must proxy API calls through Vite. Direct cross-origin calls can execute backend actions while leaving diagnostics stale with `Failed to fetch`.
+- The visible dashboard source must be the backend-counted frame stream, not a separate browser video clock.
+```
+
+Verified launch paths:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/start_factory2_demo_app.py --port 8091
+```
+
+Optional backend + frontend stack:
+
+```bash
+cd /Users/thomas/Projects/Factory-Output-Vision-MVP
+.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5173/dashboard
+```
+
+Reset/restart for a clean visible run:
+
+```bash
+curl -X POST http://127.0.0.1:8091/api/control/reset_counts
+curl -X POST http://127.0.0.1:8091/api/control/restart_video
+```
+
+Then click `Start monitoring`.
+
+Honest claim boundary:
+
+```text
+This proves the real app can count Factory2-style frames at 1.0x from a file-backed live source.
+It does not yet prove Reolink/RTSP field operation until the same path is validated on an actual live camera stream.
+Do not claim Reolink works yet.
+```
+
+Next video candidates:
+
+```text
+data/videos/from-pc/real_factory.MOV  (~29.5 min, 1920x1080 HEVC)
+data/videos/from-pc/IMG_2628.MOV      (~27.8 min, 1920x1080 HEVC)
+demo/IMG_3262.MOV                     (~15.8 min, 1920x1080 HEVC)
+```
+
+Use these as the current demo records:
+
+```text
+docs/FACTORY2_REALTIME_APP_VALIDATION.md
+docs/FACTORY2_INVESTOR_DEMO_RUNBOOK.md
+```
 
 ## 2026-04-29: Factory2 Synthetic Count Authority Hardened
 
@@ -3259,3 +3556,86 @@ Exact next recommended step:
 1. Finish the `7.5 FPS` truth run on `8095`.
 2. If `7.5 FPS` still lands `23/23`, test `6 FPS` because the measured processed-frame rate suggests that should reach true real-time wall-clock on this hardware.
 3. Promote the lowest-FPS configuration that still matches truth into `scripts/start_factory2_demo_app.py` defaults for the investor demo.
+
+## 2026-05-01: IMG_3262 Real App Verification
+
+Current state:
+- `IMG_3262.MOV` is verified as a clean candidate real-app test case through the same non-replay path as Test Case 1.
+- It has not been renamed/promoted to a numbered "Test Case 2" in docs.
+
+Verified run configuration:
+- Video: `demo/IMG_3262.MOV`
+- Model: `models/img3262_active_panel_v2.pt`
+- `FC_DEMO_COUNT_MODE=live_reader_snapshot`
+- `FC_COUNTING_MODE=event_based`
+- `FC_DEMO_PLAYBACK_SPEED=1.0`
+- `FC_DEMO_LOOP=0`
+- `FC_PROCESSING_FPS=10`
+- `FC_READER_FPS=10`
+- No runtime calibration
+- YOLO confidence `0.25`
+- Event track max age `10`
+- Event track min frames `4`
+- Same-frame detection cluster distance `90`
+
+Launch command:
+```bash
+.venv/bin/python scripts/start_factory2_demo_stack.py \
+  --backend-port 8092 \
+  --frontend-port 5174 \
+  --video demo/IMG_3262.MOV \
+  --model models/img3262_active_panel_v2.pt \
+  --no-runtime-calibration \
+  --yolo-confidence 0.25 \
+  --processing-fps 10 \
+  --reader-fps 10 \
+  --playback-speed 1 \
+  --event-track-max-age 10 \
+  --event-track-min-frames 4 \
+  --event-detection-cluster-distance 90
+```
+
+Primary artifacts:
+- Observed events:
+  - `data/reports/img3262_app_observed_events.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3.json`
+- Human total comparison:
+  - `data/reports/img3262_app_vs_human_total.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3.json`
+- Reviewed timestamp ledger:
+  - `data/reports/img3262_human_truth_event_times.v2.csv`
+  - `data/reports/img3262_human_truth_ledger.v2.json`
+- Timestamp comparison:
+  - `data/reports/img3262_app_vs_truth.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3_ledger_v2.json`
+- Dashboard evidence:
+  - `data/reports/screenshots/img3262_dashboard_visible_start_1x_paced_v3.png`
+  - `data/reports/screenshots/img3262_dashboard_visible_mid_1x_paced_v3.png`
+  - `data/reports/screenshots/img3262_dashboard_visible_reattached_end_1x_paced_v3.png`
+  - `data/reports/img3262_dashboard_visible_run_1x_paced_v3_reattached.json`
+
+Verified result:
+- Human final total: `21`
+- Captured app events: `21`
+- App-vs-reviewed-timestamp truth:
+  - `matched_count: 21`
+  - `missing_truth_count: 0`
+  - `unexpected_observed_count: 0`
+  - `first_divergence: null`
+- Final event: `946.892s`, `end_of_stream_active_track_event`, covering the final-second placement.
+- Real-time wall/source evidence from first to final event:
+  - wall delta `904.291629s`
+  - source delta `904.291s`
+  - `wall_per_source=1.0000007`
+
+Implementation notes:
+- The dashboard ready-state check is now generic for one-pass `live_reader_snapshot` + `event_based` demo videos instead of only `factory2.MOV`, and the header shows the demo filename.
+- Reader-level source-clock pacing in `FFmpegFrameReader.pump_next_demo_frame()` prevents sync demo runs from racing ahead.
+- No IMG_3262-specific runtime hacks were added; the settings are launcher-configurable and apply to future file-backed/live sources.
+
+Checks passed:
+- `npm run lint`
+- `npm run build`
+- `.venv/bin/python -m pytest tests/test_frame_reader.py tests/test_vision_worker_states.py tests/test_start_factory2_demo_app.py tests/test_build_human_truth_ledger_from_csv.py tests/test_compare_app_run_to_human_total.py -q`
+- Existing Test Case 1 service on `8091` still reported `DEMO_COMPLETE`, `factory2.MOV`, `live_reader_snapshot`, `event_based`, and `23` events.
+
+Exact next recommended step:
+1. If Thomas wants it officially named "Test Case 2", update the user-facing runbooks after he approves the promotion wording.
+2. For future customer videos, repeat the same pattern: train/reuse a generalized detector, preserve ordered-frame app counting, build a reviewed timestamp ledger, then verify a visible dashboard run at `1.0x`.
