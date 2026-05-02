@@ -2,12 +2,19 @@
 
 Updated: 2026-05-02 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
-Branch: `main`
+Branch: `codex/factory-vision-validation-foundation`
 
 Canonical test-case proof bar:
 - For any candidate factory video, read `docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md` before claiming validation or promotion.
 - The required evidence is the real app/dashboard path at `1.0x`, `live_reader_snapshot`, `event_based`, Runtime Total starting at `0`, captured backend events, clean reviewed truth comparison, measured wall/source pacing, and no replay/timestamp/fake UI/video-specific hacks.
 - If a candidate starts mid-placement, settle operational truth vs clean-cycle truth before running verification.
+
+Artifact storage memory:
+- GitHub is the project brain/index; do not use normal Git as the raw-video warehouse.
+- Current local artifact root: `/Users/thomas/FactoryVisionArtifacts`.
+- Policy/index: `docs/07_ARTIFACT_STORAGE.md`, `validation/artifact_storage.json`.
+- Current raw videos have local copies in `/Users/thomas/FactoryVisionArtifacts/videos/raw/` with SHA-256 entries in `validation/artifact_storage.json`.
+- Keep repo `data/` and `models/` paths as working cache paths for scripts and app validation.
 
 ## 2026-05-02: IMG_2628 Verified Candidate
 

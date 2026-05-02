@@ -29,6 +29,7 @@ Validate `data/videos/from-pc/IMG_2628.MOV` through the real Factory Vision app 
 - [x] Update `.hermes/HANDOFF.md` with current status and next command
 - [x] Update registry/manifests only after real app proof is clean
 - [x] Update `tasks/lessons.md` if a correction, trap, or reusable lesson appears
+- [x] Persist artifact storage memory: local-first warehouse at `/Users/thomas/FactoryVisionArtifacts`, GitHub as index/brain, no raw videos in normal Git
 
 ## Review
 
@@ -36,6 +37,7 @@ Validate `data/videos/from-pc/IMG_2628.MOV` through the real Factory Vision app 
 - Human reference total is `25`, but this is not proof. Promotion requires reviewed event-level truth, a visible `1.0x` real app run, clean app-vs-truth comparison, and measured wall/source pacing.
 - Moondream output, if generated, remains advisory review acceleration only and cannot be validation truth or training data without later human/reconciled promotion.
 - Fingerprint confirmed: SHA-256 `b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139`; duration `1668.210s`; `1920x1080` HEVC Main 10; nominal `30fps`; `50045` video frames. Summary artifact: `data/reports/img2628_video_fingerprint.v1.json`.
+- Artifact storage policy now exists in `docs/07_ARTIFACT_STORAGE.md` and `validation/artifact_storage.json`. Current raw videos for Factory2, IMG_2628, IMG_3254, IMG_3262, `real_factory`, and `demo_counter` were clone-copied into `/Users/thomas/FactoryVisionArtifacts/videos/raw/` and SHA-256 was verified against repo working copies.
 - Candidate ports `8092`/`5174` and Test Case 1 ports `8091`/`5173` were clear at kickoff.
 - Human total artifact created: `data/reports/img2628_human_truth_total.v1.json` with `expected_human_total=25` and `verification_status=provisional_total_only`.
 - Preview/review artifacts:

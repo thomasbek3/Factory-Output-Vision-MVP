@@ -232,6 +232,8 @@ Frame differencing approaches are fragile because the worker's body dominates th
 
 1. **The registry should carry the current proof map.** If a future developer has to reconstruct case status from `.hermes`, `tasks/todo.md`, or a pile of report filenames, the validation process is still too ad hoc.
 2. **Manifests are the right place for video-specific settings.** Model path, truth rule, launch command, event parameters, proof artifacts, and promotion status belong in `validation/test_cases/*.json`, not in memory or one-off command history.
+
+3. **GitHub is the brain, not the warehouse.** Store validation manifests, detector cards, schemas, small reports, and hashes in GitHub. Store raw factory videos, full frame dumps, large model libraries, and embedding databases in `/Users/thomas/FactoryVisionArtifacts` first, with later Cloudflare R2/Backblaze B2 sync only after explicit permission. Every durable heavy artifact needs a path plus SHA-256 in `validation/artifact_storage.json` or the relevant case manifest.
 3. **Do not move research scripts until imports/tests move with them.** The repo needs a cleaner script tree, but mechanically relocating top-level Factory2 scripts without shims would break existing tests. Mark the product path first, then move research scripts in a separate import-safe pass.
 4. **Known limitations increase credibility.** Explicitly documenting that file-backed live validation is not yet live RTSP/Reolink validation makes the repo more trustworthy, not weaker.
 

@@ -42,6 +42,18 @@ The current registry lives in `validation/registry.json`. Per-case manifests liv
 
 The app has proven file-backed live counting at real-time speed for the cases above. That is legitimate investor-demo evidence for the app path. It is not yet a live Reolink field validation.
 
+## Artifact Storage Boundary
+
+Heavy factory artifacts are local-first. GitHub stores the code, docs, validation registry, manifests, schemas, and small proof summaries. Raw videos, large frame dumps, model libraries, and embedding/search databases live outside normal Git.
+
+Current local artifact root:
+
+```text
+/Users/thomas/FactoryVisionArtifacts
+```
+
+The durable policy and current local raw-video index live in `docs/07_ARTIFACT_STORAGE.md` and `validation/artifact_storage.json`. Repo paths under `data/` and `models/` remain working-cache paths for scripts and visible app validation.
+
 ## Active Learning Boundary
 
 The active-learning foundation is documented in `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`.

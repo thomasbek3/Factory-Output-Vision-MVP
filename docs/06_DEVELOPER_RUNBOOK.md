@@ -79,6 +79,26 @@ Validation commands still use the manifest:
 .venv/bin/python scripts/register_test_case.py --manifest validation/test_cases/<case-id>.json --force
 ```
 
+## Artifact Storage
+
+Heavy artifacts are local-first. The current local artifact root is:
+
+```text
+/Users/thomas/FactoryVisionArtifacts
+```
+
+Use it as the durable local warehouse for raw videos, large frame folders, model libraries, reports, and embedding/search indexes. Keep repo `data/` and `models/` paths working as the local script/app cache.
+
+For a new raw video:
+
+```bash
+mkdir -p /Users/thomas/FactoryVisionArtifacts/videos/raw
+cp -c -n data/videos/from-pc/NEW_VIDEO.MOV /Users/thomas/FactoryVisionArtifacts/videos/raw/
+shasum -a 256 data/videos/from-pc/NEW_VIDEO.MOV /Users/thomas/FactoryVisionArtifacts/videos/raw/NEW_VIDEO.MOV
+```
+
+Then record the artifact path and hash in the test-case manifest or `validation/artifact_storage.json`. Do not commit raw factory videos to normal Git and do not upload them to cloud storage without explicit permission.
+
 ## Guardrails
 
 - Do not delete historical artifacts during cleanup.

@@ -12,6 +12,7 @@ Start with the concise current docs before relying on older task logs or researc
 - `docs/03_VALIDATION_PIPELINE.md`
 - `docs/04_TEST_CASE_REGISTRY.md`
 - `docs/06_DEVELOPER_RUNBOOK.md`
+- `docs/07_ARTIFACT_STORAGE.md`
 - `docs/KNOWN_LIMITATIONS.md`
 - `validation/registry.json`
 

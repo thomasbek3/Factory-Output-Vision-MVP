@@ -23,6 +23,7 @@ The machine-readable registry is `validation/registry.json`.
 Each manifest must include:
 
 - Video path, SHA-256, duration, codec, width, and height.
+- Artifact storage reference for retained heavy inputs when applicable; see `validation/artifact_storage.json`.
 - Truth rule ID, expected total, count rule, and truth ledger.
 - Runtime settings: count mode, demo count mode, playback speed, FPS, model, calibration, and event parameters.
 - Proof artifacts: observed app events, app-vs-truth comparison, pacing report when available, screenshots when available.
@@ -32,3 +33,5 @@ Each manifest must include:
 ## Review Standard
 
 If a future developer cannot reproduce the launch command and find the exact truth/comparison artifacts from the manifest, the entry is not complete.
+
+Raw videos should not be committed to normal Git. The manifest records the repo working path used by scripts, while `validation/artifact_storage.json` records the durable local artifact copy and SHA-256.

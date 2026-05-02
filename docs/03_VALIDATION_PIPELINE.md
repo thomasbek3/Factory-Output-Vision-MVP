@@ -8,27 +8,31 @@ Each video candidate should end with a manifest, truth ledger, observed app even
 
 ## Inputs
 
-- Source video copied into the repo, usually under `demo/`.
+- Source video copied into the repo working cache, usually under `data/videos/from-pc/` or `demo/`.
+- Durable local copy under `/Users/thomas/FactoryVisionArtifacts/videos/raw/` when the video should be retained.
 - Video SHA-256 and ffprobe metadata.
 - Reviewed human truth rule and timestamped truth ledger.
 - Model/settings manifest.
 - Real app launch settings.
 
+Artifact storage policy lives in `docs/07_ARTIFACT_STORAGE.md` and `validation/artifact_storage.json`. Do not put raw factory videos in normal Git; record artifact paths and hashes in manifests instead.
+
 ## Stages
 
 1. Register or update the video manifest.
 2. Fingerprint the video with SHA-256.
-3. Probe duration, codec, resolution, and frame rate.
-4. Generate preview/review sheets.
-5. Lock the truth rule before final proof.
-6. Build a timestamped human truth ledger.
-7. Launch the real app stack.
-8. Open the dashboard and click `Start monitoring`.
-9. Capture backend observed events.
-10. Compare observed events to the truth ledger.
-11. Measure wall/source pacing.
-12. Write a final validation report.
-13. Update `validation/registry.json`.
+3. Copy or verify the raw video in the local artifact root.
+4. Probe duration, codec, resolution, and frame rate.
+5. Generate preview/review sheets.
+6. Lock the truth rule before final proof.
+7. Build a timestamped human truth ledger.
+8. Launch the real app stack.
+9. Open the dashboard and click `Start monitoring`.
+10. Capture backend observed events.
+11. Compare observed events to the truth ledger.
+12. Measure wall/source pacing.
+13. Write a final validation report.
+14. Update `validation/registry.json`.
 
 ## Real App Requirements
 
