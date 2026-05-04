@@ -38,6 +38,7 @@ class VisionWorkerStateTests(unittest.TestCase):
             "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
             "FC_EVENT_DETECTION_CLUSTER_DISTANCE": os.environ.get("FC_EVENT_DETECTION_CLUSTER_DISTANCE"),
+            "FC_EVENT_COUNT_RULE": os.environ.get("FC_EVENT_COUNT_RULE"),
         }
         os.environ["FC_DB_PATH"] = os.path.join(self.temp_dir, "worker.db")
         os.environ["FC_LOG_DIR"] = os.path.join(self.temp_dir, "logs")
@@ -402,6 +403,39 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.assertEqual(artifact["count_events"][0]["reason"], "dead_track_event")
         self.assertEqual(artifact["count_events"][0]["centroid"], [75, 80])
         self.assertEqual(artifact["count_events"][0]["count_authority"], "runtime_inferred_only")
+
+    def test_event_count_rule_dead_track_keeps_legacy_tracker_even_with_calibration(self) -> None:
+        self.worker.stop()
+        os.environ["FC_COUNTING_MODE"] = "event_based"
+        os.environ["FC_EVENT_COUNT_RULE"] = "dead_track"
+        calibration_path = Path(self.temp_dir) / "runtime-calibration.json"
+        calibration_path.write_text(
+            '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
+            encoding="utf-8",
+        )
+        os.environ["FC_RUNTIME_CALIBRATION_PATH"] = str(calibration_path)
+
+        self.worker = VisionWorker(VideoRuntime())
+
+        self.assertEqual(self.worker._event_count_rule, "dead_track")
+        self.assertIsNone(self.worker._runtime_event_counter)
+        self.assertIsNotNone(self.worker._event_tracker)
+
+    def test_event_count_rule_placed_and_stayed_fails_closed_without_calibration(self) -> None:
+        self.worker.stop()
+        os.environ["FC_COUNTING_MODE"] = "event_based"
+        os.environ["FC_EVENT_COUNT_RULE"] = "placed_and_stayed"
+        os.environ["FC_RUNTIME_CALIBRATION_PATH"] = ""
+
+        self.worker = VisionWorker(VideoRuntime())
+
+        self.assertEqual(self.worker._event_count_rule, "placed_and_stayed")
+        self.assertIsNone(self.worker._runtime_event_counter)
+        self.assertIsNone(self.worker._event_tracker)
+        self.assertEqual(
+            self.worker._event_count_rule_config_error,
+            "FC_EVENT_COUNT_RULE=placed_and_stayed requires FC_RUNTIME_CALIBRATION_PATH",
+        )
 
     def test_event_based_dead_track_path_clusters_nearby_same_frame_detections(self) -> None:
         os.environ["FC_EVENT_DETECTION_CLUSTER_DISTANCE"] = "30"

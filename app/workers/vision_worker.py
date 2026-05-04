@@ -22,6 +22,7 @@ from app.core.settings import (
     get_event_detection_cluster_distance,
     get_event_count_debounce_sec,
     get_event_min_duration_seconds,
+    get_event_count_rule,
     get_event_track_max_age,
     get_event_track_max_match_distance,
     get_event_track_min_frames,
@@ -81,13 +82,20 @@ class VisionWorker:
 
         self._counting_mode = get_counting_mode()
         self._demo_count_mode = get_demo_count_mode()
+        self._event_count_rule = get_event_count_rule()
+        self._event_count_rule_config_error: str | None = None
         self._event_counter: EventBasedCounter | None = None  # kept for reference, no longer used
         self._event_tracker: CentroidTracker | None = None
         self._runtime_calibration_path = get_runtime_calibration_path() if self._counting_mode == "event_based" else None
         self._deterministic_demo_runner: DeterministicDemoRunner | None = None
         self._runtime_event_counter: RuntimeEventCounter | None = None
         if self._counting_mode == "event_based":
-            if self._runtime_calibration_path is not None:
+            if self._event_count_rule == "dead_track":
+                self._event_tracker = CentroidTracker(
+                    max_age_frames=get_event_track_max_age(),
+                    max_match_distance=get_event_track_max_match_distance(),
+                )
+            elif self._runtime_calibration_path is not None:
                 zones, gate = load_runtime_calibration(self._runtime_calibration_path)
                 self._runtime_event_counter = RuntimeEventCounter(
                     zones=zones,
@@ -96,6 +104,9 @@ class VisionWorker:
                 )
                 if self._demo_count_mode == "deterministic_file_runner":
                     self._deterministic_demo_runner = DeterministicDemoRunner()
+            elif self._event_count_rule == "placed_and_stayed":
+                self._event_count_rule_config_error = "FC_EVENT_COUNT_RULE=placed_and_stayed requires FC_RUNTIME_CALIBRATION_PATH"
+                logger.error(self._event_count_rule_config_error)
             else:
                 self._event_tracker = CentroidTracker(
                     max_age_frames=get_event_track_max_age(),
@@ -592,6 +603,21 @@ class VisionWorker:
         if self._runtime_event_counter is not None:
             return self._run_runtime_event_counting(frame)
 
+        if self._event_tracker is None:
+            mask_frame = frame.copy()
+            mask_frame[:] = 0
+            return 0, {
+                "roi_frame": frame.copy(),
+                "mask_frame": mask_frame,
+                "detections": [],
+                "clustered_centroids": [],
+                "tracks": [],
+                "person_boxes": [],
+                "count_events": [],
+                "event_count_rule": self._event_count_rule,
+                "event_count_rule_config_error": self._event_count_rule_config_error,
+            }
+
         roi_frame = apply_roi_mask(frame, roi) if roi else frame
         debug_result = self._yolo_detector.detect(roi_frame)
         detections = debug_result.detections
@@ -645,6 +671,8 @@ class VisionWorker:
             ],
             "person_boxes": [],
             "count_events": count_events,
+            "event_count_rule": self._event_count_rule,
+            "event_count_rule_config_error": self._event_count_rule_config_error,
         }
 
     def _cluster_event_detection_centroids(self, centroids: list[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -724,6 +752,8 @@ class VisionWorker:
             "person_boxes": [self._person_box_payload(item) for item in person_boxes],
             "event_count_authorities": event_count_authorities,
             "count_events": self._runtime_count_event_payloads(frame_result),
+            "event_count_rule": self._event_count_rule,
+            "event_count_rule_config_error": self._event_count_rule_config_error,
         }
 
     def _next_reader_frame(self, *, source_is_demo: bool):
@@ -1332,6 +1362,9 @@ class VisionWorker:
             "person_ignore_enabled": self.person_ignore_enabled,
             "people_detected_count": len(self._latest_person_boxes),
             "counting_mode": self._counting_mode,
+            "event_count_rule": self._event_count_rule,
+            "event_count_rule_config_error": self._event_count_rule_config_error,
+            "runtime_calibration_path": None if self._runtime_calibration_path is None else str(self._runtime_calibration_path),
             "latest_error_code": self.last_error_code,
             "latest_error_message": latest_error_message,
             "recent_count_events": [dict(item) for item in self._recent_count_events],

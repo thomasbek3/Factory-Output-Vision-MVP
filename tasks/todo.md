@@ -1,5 +1,40 @@
 # Factory2 Real-Time Demo Counting
 
+# Placed-And-Stayed Counting Prototype
+
+## Goal
+
+Prototype the practical rule Thomas described: when a detected part is placed in the output/right-side zone, wait long enough to confirm it stays down, then count it once. Keep the existing working runtime behavior unchanged by default until the new rule is proven on regressions.
+
+## Checklist
+
+- [x] Inspect the existing YOLO/event state-machine path and identify whether placed-and-stayed is already implemented but not wired for `real_factory`
+- [x] Write focused tests for placed-and-stayed behavior before changing runtime behavior
+- [x] Keep the rule behind an explicit mode/flag; do not replace current `track_based` or default `event_based` behavior
+- [x] Use Factory2 as the 20+ count regression case because it has verified 23-count runtime evidence
+- [x] Run focused counting tests plus existing Factory2/real_factory safety checks
+- [x] Update `.hermes/HANDOFF.md` with the exact result and next command
+
+## Review
+
+- Started 2026-05-04 after `real_factory` counted 4 through the real local app/runtime path.
+- Runtime authority remains YOLO/event code only. LLM/Codex may help write tests, inspect frames, and draft implementation, but cannot be the count authority.
+- The new rule must count physical output placements, not static diagnostic detections or bronze anchor timestamps.
+- Current hypothesis: the richer runtime state-machine path may already contain stable-output semantics; the main product gap may be choosing/wiring that path safely for videos like `real_factory` without breaking Factory2.
+- Confirmed: `app/services/count_state_machine.py` already contains the core placed-and-stayed behavior via `stable_in_output` after source-token delivery into the output zone.
+- Implemented `FC_EVENT_COUNT_RULE` with `auto`, `placed_and_stayed`, and `dead_track`.
+- `auto` preserves existing behavior: calibrated event runtime uses the state-machine path; no-calibration event runtime keeps the legacy dead-track diagnostic path.
+- `placed_and_stayed` is explicit and fail-closed without `FC_RUNTIME_CALIBRATION_PATH`.
+- `dead_track` remains explicitly selectable for diagnostic/no-calibration recovery runs like the current `real_factory` count-4 proof.
+- Verification passed:
+  - `.venv/bin/python -m pytest tests/test_count_state_machine.py tests/test_count_state_machine_adversarial.py tests/test_runtime_event_counter.py tests/test_settings_runtime.py tests/test_start_factory2_demo_app.py tests/test_vision_worker_states.py -q` (`79 passed`)
+  - `.venv/bin/python -m pytest tests/test_build_real_factory_diagnostic_action_dataset.py tests/test_capture_factory2_app_run_events.py tests/test_validation_registry_schema.py tests/test_learning_registry_schema.py -q` (`13 passed`)
+  - `.venv/bin/python -m py_compile app/core/settings.py app/workers/vision_worker.py scripts/start_factory2_demo_app.py scripts/start_factory2_demo_stack.py`
+- Regression evidence checked:
+  - Factory2 previous app runtime artifact remains `observed_event_count=23`, `run_complete=true`, `current_state=DEMO_COMPLETE`.
+  - real_factory current evidence remains `observed_event_count=4`, `run_complete=true`, `current_state=DEMO_COMPLETE`.
+- Next command for a future explicit placed-and-stayed run is to add/create a `real_factory` runtime calibration file, then run the app with `--event-count-rule placed_and_stayed --calibration <real_factory calibration path>`. Do not reuse bronze anchors as validation truth.
+
 # real_factory Failed Blind Run Recovery
 
 ## Goal

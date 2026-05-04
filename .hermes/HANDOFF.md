@@ -4,6 +4,94 @@ Updated: 2026-05-04 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `codex/factory-vision-validation-foundation`
 
+## 2026-05-04: Placed-And-Stayed Counting Rule Flag
+
+Goal:
+
+```text
+Prototype Thomas's practical rule safely: count when a detected part is placed in the output/right-side zone and stays there long enough, without breaking the current working runtime paths.
+```
+
+Current status:
+
+```text
+IMPLEMENTED / FOCUSED TESTS PASS
+No registry promotion or validation-truth change.
+Default runtime behavior is unchanged.
+```
+
+What changed:
+
+```text
+- Added FC_EVENT_COUNT_RULE with values: auto, placed_and_stayed, dead_track.
+- auto preserves existing behavior:
+  - event_based + runtime calibration -> RuntimeEventCounter / CountStateMachine placed-and-stayed path
+  - event_based + no runtime calibration -> legacy dead-track event path
+- placed_and_stayed is now explicit and fail-closed without FC_RUNTIME_CALIBRATION_PATH.
+- dead_track remains explicitly selectable for diagnostic/no-calibration recovery runs.
+- start_factory2_demo_app.py and start_factory2_demo_stack.py now accept --event-count-rule.
+- Diagnostics/debug artifacts expose event_count_rule and event_count_rule_config_error.
+```
+
+Key finding:
+
+```text
+The core "put it down and wait until it stays down" behavior already existed in app/services/count_state_machine.py as stable_in_output.
+The product gap was not a smarter LLM at runtime; it was making the calibrated state-machine path explicit and safely selectable while preserving the existing dead-track recovery path.
+```
+
+Regression/safety evidence:
+
+```text
+Factory2 previous app runtime artifact:
+data/reports/factory2_app_observed_events.run8103.sourceclock_10fps_v1.json
+observed_event_count=23
+run_complete=true
+current_state=DEMO_COMPLETE
+
+real_factory current runtime evidence:
+data/reports/real_factory_runtime_count4_app_path_evidence_v1.json
+observed_event_count=4
+run_complete=true
+current_state=DEMO_COMPLETE
+```
+
+Verification:
+
+```text
+.venv/bin/python -m pytest tests/test_count_state_machine.py tests/test_count_state_machine_adversarial.py tests/test_runtime_event_counter.py tests/test_settings_runtime.py tests/test_start_factory2_demo_app.py tests/test_vision_worker_states.py -q
+79 passed
+
+.venv/bin/python -m pytest tests/test_build_real_factory_diagnostic_action_dataset.py tests/test_capture_factory2_app_run_events.py tests/test_validation_registry_schema.py tests/test_learning_registry_schema.py -q
+13 passed
+
+.venv/bin/python -m py_compile app/core/settings.py app/workers/vision_worker.py scripts/start_factory2_demo_app.py scripts/start_factory2_demo_stack.py
+```
+
+Exact next command:
+
+```bash
+# After creating a real_factory runtime calibration file with source/output zones:
+FC_DB_PATH=data/factory_counter_real_factory_placed_and_stayed.db .venv/bin/python scripts/start_factory2_demo_stack.py \
+  --backend-port 8092 \
+  --frontend-port 5174 \
+  --skip-frontend \
+  --video data/videos/from-pc/real_factory.MOV \
+  --calibration data/calibration/real_factory_placed_and_stayed_v1.json \
+  --event-count-rule placed_and_stayed \
+  --model models/real_factory_diagnostic_action_v2.pt \
+  --yolo-confidence 0.25 \
+  --processing-fps 5 \
+  --reader-fps 5 \
+  --playback-speed 8
+```
+
+Boundary:
+
+```text
+Do not call a future placed-and-stayed real_factory run verified unless it counts 4 through the real app/runtime path with a genuine real_factory calibration and evidence artifact. Bronze anchors remain debugging aids only.
+```
+
 ## 2026-05-04: real_factory Runtime Count 4 Through App Path
 
 Goal:

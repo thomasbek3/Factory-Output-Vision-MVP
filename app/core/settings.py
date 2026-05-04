@@ -38,14 +38,14 @@ def is_demo_loop_enabled() -> bool:
     explicit = os.getenv("FC_DEMO_LOOP")
     if explicit is not None:
         return explicit == "1"
-    return not (get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None)
+    return not should_use_runtime_event_counter()
 
 
 def get_demo_count_mode() -> str:
     explicit = os.getenv("FC_DEMO_COUNT_MODE", "").strip()
     if explicit:
         return explicit
-    if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
+    if should_use_runtime_event_counter():
         return "deterministic_file_runner"
     return "live_reader_snapshot"
 
@@ -173,7 +173,7 @@ def get_yolo_conf_threshold() -> float:
     explicit = os.getenv("FC_YOLO_CONF_THRESHOLD")
     if explicit is not None:
         return float(explicit)
-    if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
+    if should_use_runtime_event_counter():
         return 0.25
     if get_counting_mode() == "event_based":
         return 0.40
@@ -224,6 +224,25 @@ def get_count_debounce_sec() -> float:
 def get_counting_mode() -> str:
     """'track_based' (default, existing) or 'event_based' (transit detection)."""
     return os.getenv("FC_COUNTING_MODE", "track_based")
+
+
+def get_event_count_rule() -> str:
+    """'auto' (default), 'placed_and_stayed', or 'dead_track'."""
+    value = os.getenv("FC_EVENT_COUNT_RULE", "auto").strip().lower().replace("-", "_")
+    allowed = {"auto", "placed_and_stayed", "dead_track"}
+    if value not in allowed:
+        choices = ", ".join(sorted(allowed))
+        raise ValueError(f"FC_EVENT_COUNT_RULE must be one of: {choices}")
+    return value
+
+
+def should_use_runtime_event_counter() -> bool:
+    """Whether event_based mode should use the calibrated placed-and-stayed counter."""
+    if get_counting_mode() != "event_based":
+        return False
+    if get_event_count_rule() == "dead_track":
+        return False
+    return get_runtime_calibration_path() is not None
 
 
 def get_event_gap_seconds() -> float:

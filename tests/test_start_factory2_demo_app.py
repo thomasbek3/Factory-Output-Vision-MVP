@@ -41,6 +41,7 @@ def test_build_demo_env_allows_overrides() -> None:
         event_count_debounce_sec=30.0,
         event_track_max_match_distance=150.5,
         event_detection_cluster_distance=125.0,
+        event_count_rule="placed_and_stayed",
         playback_speed=2.0,
         processing_fps=8.0,
         reader_fps=8.0,
@@ -57,6 +58,7 @@ def test_build_demo_env_allows_overrides() -> None:
     assert env["FC_EVENT_COUNT_DEBOUNCE_SEC"] == "30"
     assert env["FC_EVENT_TRACK_MAX_MATCH_DISTANCE"] == "150.5"
     assert env["FC_EVENT_DETECTION_CLUSTER_DISTANCE"] == "125"
+    assert env["FC_EVENT_COUNT_RULE"] == "placed_and_stayed"
     assert env["FC_DEMO_PLAYBACK_SPEED"] == "2"
     assert env["FC_PROCESSING_FPS"] == "8"
     assert env["FC_READER_FPS"] == "8"
@@ -108,6 +110,7 @@ def test_stack_backend_command_passes_demo_overrides() -> None:
         event_count_debounce_sec=30.0,
         event_track_max_match_distance=150.5,
         event_detection_cluster_distance=125.0,
+        event_count_rule="placed_and_stayed",
         playback_speed=1.0,
         processing_fps=12.5,
         reader_fps=12.5,
@@ -125,6 +128,7 @@ def test_stack_backend_command_passes_demo_overrides() -> None:
     assert command[command.index("--event-count-debounce-sec") + 1] == "30"
     assert command[command.index("--event-track-max-match-distance") + 1] == "150.5"
     assert command[command.index("--event-detection-cluster-distance") + 1] == "125"
+    assert command[command.index("--event-count-rule") + 1] == "placed_and_stayed"
     assert command[command.index("--playback-speed") + 1] == "1"
     assert command[command.index("--processing-fps") + 1] == "12.5"
     assert command[command.index("--reader-fps") + 1] == "12.5"
@@ -143,6 +147,7 @@ def test_stack_backend_command_can_disable_runtime_calibration() -> None:
         event_count_debounce_sec=None,
         event_track_max_match_distance=None,
         event_detection_cluster_distance=None,
+        event_count_rule=None,
         playback_speed=1.0,
         processing_fps=10,
         reader_fps=10,

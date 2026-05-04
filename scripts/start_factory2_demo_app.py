@@ -30,6 +30,7 @@ def build_demo_env(
     event_count_debounce_sec: float | None = None,
     event_track_max_match_distance: float | None = None,
     event_detection_cluster_distance: float | None = None,
+    event_count_rule: str | None = None,
     playback_speed: float = 1.0,
     processing_fps: float = 10.0,
     reader_fps: float = 10.0,
@@ -65,6 +66,8 @@ def build_demo_env(
         env["FC_EVENT_TRACK_MAX_MATCH_DISTANCE"] = _stringify_number(event_track_max_match_distance)
     if event_detection_cluster_distance is not None:
         env["FC_EVENT_DETECTION_CLUSTER_DISTANCE"] = _stringify_number(event_detection_cluster_distance)
+    if event_count_rule is not None:
+        env["FC_EVENT_COUNT_RULE"] = event_count_rule
     return env
 
 
@@ -96,6 +99,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--event-count-debounce-sec", type=float, default=None)
     parser.add_argument("--event-track-max-match-distance", type=float, default=None)
     parser.add_argument("--event-detection-cluster-distance", type=float, default=None)
+    parser.add_argument("--event-count-rule", choices=["auto", "dead_track", "placed_and_stayed"], default=None)
     parser.add_argument("--playback-speed", type=float, default=1.0)
     parser.add_argument("--processing-fps", type=float, default=10.0)
     parser.add_argument("--reader-fps", type=float, default=10.0)
@@ -115,6 +119,7 @@ def main() -> None:
         event_count_debounce_sec=args.event_count_debounce_sec,
         event_track_max_match_distance=args.event_track_max_match_distance,
         event_detection_cluster_distance=args.event_detection_cluster_distance,
+        event_count_rule=args.event_count_rule,
         playback_speed=args.playback_speed,
         processing_fps=args.processing_fps,
         reader_fps=args.reader_fps,

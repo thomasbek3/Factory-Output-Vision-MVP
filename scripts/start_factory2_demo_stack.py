@@ -42,6 +42,7 @@ def _backend_command(
     event_count_debounce_sec: float | None,
     event_track_max_match_distance: float | None,
     event_detection_cluster_distance: float | None,
+    event_count_rule: str | None,
     playback_speed: float,
     processing_fps: float,
     reader_fps: float,
@@ -80,6 +81,8 @@ def _backend_command(
         command.extend(["--event-track-max-match-distance", f"{event_track_max_match_distance:g}"])
     if event_detection_cluster_distance is not None:
         command.extend(["--event-detection-cluster-distance", f"{event_detection_cluster_distance:g}"])
+    if event_count_rule is not None:
+        command.extend(["--event-count-rule", event_count_rule])
     return command
 
 
@@ -99,6 +102,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--event-count-debounce-sec", type=float, default=None)
     parser.add_argument("--event-track-max-match-distance", type=float, default=None)
     parser.add_argument("--event-detection-cluster-distance", type=float, default=None)
+    parser.add_argument("--event-count-rule", choices=["auto", "dead_track", "placed_and_stayed"], default=None)
     parser.add_argument("--playback-speed", type=float, default=1.0)
     parser.add_argument("--processing-fps", type=float, default=10.0)
     parser.add_argument("--reader-fps", type=float, default=10.0)
@@ -201,6 +205,7 @@ def main() -> None:
             event_count_debounce_sec=args.event_count_debounce_sec,
             event_track_max_match_distance=args.event_track_max_match_distance,
             event_detection_cluster_distance=args.event_detection_cluster_distance,
+            event_count_rule=args.event_count_rule,
             playback_speed=args.playback_speed,
             processing_fps=args.processing_fps,
             reader_fps=args.reader_fps,
