@@ -1,5 +1,31 @@
 # Factory2 Real-Time Demo Counting
 
+# Factory2 Placed-And-Stayed Diagnostic Replay
+
+## Goal
+
+Run the already verified high-count Factory2 video through explicit `FC_EVENT_COUNT_RULE=placed_and_stayed` to check whether the new safe selector preserves the 23-count runtime behavior on a 20+ count case.
+
+## Checklist
+
+- [x] Launch Factory2 backend app path with `--event-count-rule placed_and_stayed`
+- [x] Capture runtime events from the live reader snapshot path
+- [x] Compare final runtime total to the known Factory2 total `23`
+- [x] Record report/log paths and whether the rule held up
+
+## Review
+
+- Started 2026-05-04.
+- This is an accelerated diagnostic replay, not a new registry-promotion run.
+- Expected high-count regression target: `23` runtime events on `factory2.MOV`.
+- Result: explicit `placed_and_stayed` run counted `23` and reached `DEMO_COMPLETE`.
+- Runtime report: `data/reports/factory2_app_observed_events.run8093.placed_and_stayed_speed8_complete_v1.json`.
+- Truth comparison: `data/reports/factory2_app_vs_truth.run8093.placed_and_stayed_speed8_v1.json`.
+- Comparison result: `matched_count=23`, `missing_truth_count=0`, `unexpected_observed_count=0`, `first_divergence=null`.
+- Backend log: `data/logs/factory2_demo_backend_8093.log`.
+- Run config: `FC_COUNTING_MODE=event_based`, `FC_DEMO_COUNT_MODE=live_reader_snapshot`, `--event-count-rule placed_and_stayed`, `--calibration data/calibration/factory2_ai_only_v1.json`, `--model models/panel_in_transit.pt`, `--playback-speed 8`.
+- Count authority split in the runtime report: `proof_backed_total_after_event=11`, `runtime_inferred_only_after_event=12`, total `23`.
+
 # Placed-And-Stayed Counting Prototype
 
 ## Goal

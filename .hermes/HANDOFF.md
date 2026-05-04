@@ -4,6 +4,62 @@ Updated: 2026-05-04 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `codex/factory-vision-validation-foundation`
 
+## 2026-05-04: Factory2 Explicit Placed-And-Stayed Replay
+
+Goal:
+
+```text
+Try the explicit placed-and-stayed selector on a higher-count known video.
+```
+
+Current status:
+
+```text
+DIAGNOSTIC REPLAY PASS
+Factory2 explicit placed_and_stayed run counted 23/23 through the app runtime path.
+```
+
+Runtime report:
+
+```text
+data/reports/factory2_app_observed_events.run8093.placed_and_stayed_speed8_complete_v1.json
+observed_event_count=23
+run_complete=true
+current_state=DEMO_COMPLETE
+observed_coverage_end_sec=426.912
+```
+
+Truth comparison:
+
+```text
+data/reports/factory2_app_vs_truth.run8093.placed_and_stayed_speed8_v1.json
+matched_count=23
+missing_truth_count=0
+unexpected_observed_count=0
+first_divergence=null
+```
+
+Run config:
+
+```text
+Video: data/videos/from-pc/factory2.MOV
+Calibration: data/calibration/factory2_ai_only_v1.json
+Model: models/panel_in_transit.pt
+Counting: FC_COUNTING_MODE=event_based, FC_DEMO_COUNT_MODE=live_reader_snapshot
+Rule: --event-count-rule placed_and_stayed
+Playback: --playback-speed 8
+Backend: http://127.0.0.1:8093
+Log: data/logs/factory2_demo_backend_8093.log
+DB: data/factory_counter_factory2_placed_and_stayed_run8093.db
+```
+
+Interpretation:
+
+```text
+This is good regression evidence for the selector on a 20+ count case.
+It does not by itself prove real_factory through placed_and_stayed, because real_factory still needs its own runtime calibration file.
+```
+
 ## 2026-05-04: Placed-And-Stayed Counting Rule Flag
 
 Goal:
