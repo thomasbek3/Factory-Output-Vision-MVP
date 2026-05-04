@@ -1,0 +1,35 @@
+{
+  "schema_version": "factory-vision-human-truth-total-v1",
+  "case_id": "real_factory_candidate",
+  "created_at": "2026-05-02",
+  "human_counter": "Thomas",
+  "source": "Hidden human total revealed in-thread after the blind AI/app estimate was completed and requested.",
+  "video": {
+    "path": "data/videos/from-pc/real_factory.MOV",
+    "artifact_copy": "/Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV",
+    "sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86",
+    "duration_sec": 1770.48,
+    "frame_count": 53113,
+    "width": 1920,
+    "height": 1080,
+    "codec": "hevc"
+  },
+  "count_rule": "Count one completed placement when the worker finishes putting the finished product in the output/resting area.",
+  "expected_human_total": 4,
+  "human_total_status": "revealed_total_only_pending_event_review",
+  "revealed_after_blind_estimate": true,
+  "blind_prediction_known_at_reveal": {
+    "predicted_total": 18,
+    "report_path": "data/reports/real_factory_blind_ai_event_estimate.v1.json",
+    "csv_ledger_path": "data/reports/real_factory_blind_ai_event_estimate.v1.csv"
+  },
+  "timestamp_truth_status": "not_reviewed",
+  "truth_ledger_path": "data/reports/real_factory_human_truth_ledger.reviewed_v1.json",
+  "validation_truth_eligible": false,
+  "registry_promotion_eligible": false,
+  "notes": [
+    "This artifact records the revealed total for blind-total comparison only.",
+    "It is not an event-level truth ledger and is not sufficient for registry promotion.",
+    "A reviewed timestamp truth ledger is still required for any full validation claim."
+  ]
+}

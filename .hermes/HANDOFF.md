@@ -1,8 +1,500 @@
 # Factory Vision Hermes Handoff
 
-Updated: 2026-05-02 EDT
+Updated: 2026-05-04 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `codex/factory-vision-validation-foundation`
+
+## 2026-05-04: real_factory Runtime Count 4 Through App Path
+
+Goal:
+
+```text
+Make data/videos/from-pc/real_factory.MOV count exactly 4 through the real local YOLO/event app runtime path, with evidence and without promoting bronze/static diagnostics into validation truth.
+```
+
+Current status:
+
+```text
+RUNTIME COUNT RECOVERED / FOCUSED TESTS PASS
+Final local FastAPI app runtime total: 4
+real_factory remains NOT VERIFIED / NOT REGISTRY-PROMOTED
+```
+
+Successful app/runtime evidence:
+
+```text
+Evidence report:
+data/reports/real_factory_runtime_count4_app_path_evidence_v1.json
+
+Runtime capture:
+data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_min30_cluster250_age52_debounce60_speed8_v1.json
+
+Backend log:
+data/logs/factory2_demo_backend_8092.log
+
+Video SHA-256:
+48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86
+```
+
+Final runtime result:
+
+```text
+run_complete=true
+current_state=DEMO_COMPLETE
+observed_coverage_end_sec=1770.413
+reader_last_source_timestamp_sec=1770.413
+observed_event_count=4
+event_ts: 470.612, 1038.194, 1421.604, 1564.208
+track frames_seen: 98, 34, 165, 70
+```
+
+Runtime/model/config:
+
+```text
+Model: models/real_factory_diagnostic_action_v2.pt
+Model SHA-256: e22beb2c87fa90ec1b349a1ccea113c4e791f64a8350a54ac98ab494d30829a1
+Dataset manifest: data/labels/real_factory_diagnostic_action_v2/dataset_manifest.json
+Counting path: FC_DEMO_COUNT_MODE=live_reader_snapshot, FC_COUNTING_MODE=event_based
+Detector threshold: FC_YOLO_CONF_THRESHOLD=0.25
+Event acceptance: FC_EVENT_TRACK_MIN_FRAMES=30, FC_EVENT_TRACK_MAX_AGE=52, FC_EVENT_COUNT_DEBOUNCE_SEC=60, match_distance=260, cluster_distance=250
+```
+
+Important boundary:
+
+```text
+This is a successful runtime-count recovery, not registry verification.
+The v2 model is diagnostic-only because it was trained from bronze visual draft anchors plus local hard negatives.
+validation_truth_eligible=false
+training_eligible_for_promotion=false
+validation/registry.json was not updated.
+The failed static diagnostic total 18 remains invalid as a count prediction.
+```
+
+What changed:
+
+```text
+- Added scripts/build_real_factory_diagnostic_action_dataset.py.
+- Added tests/test_build_real_factory_diagnostic_action_dataset.py.
+- Built diagnostic dataset v2 with tighter action boxes and hard negatives.
+- Trained models/real_factory_diagnostic_action_v2.pt.
+- Final app run uses min_frames=30. The prior v2 app run with min_frames=12 counted 5 because it accepted a late 18-frame transient at 1695.011s; min_frames=30 rejects that short false track while preserving the four sustained runtime tracks.
+```
+
+Oracle status:
+
+```text
+Oracle escalation was attempted after the first serious local app/runtime path failed to count 4.
+Browser Oracle failed because no ChatGPT cookies were applied from Chrome profiles.
+Cookie paths tried:
+- /Users/thomas/Library/Application Support/Google/Chrome/Default/Cookies
+- /Users/thomas/Library/Application Support/Google/Chrome/Profile 1/Cookies
+No Thomas credential interruption was made.
+```
+
+Verification:
+
+```text
+.venv/bin/python -m json.tool data/reports/real_factory_runtime_count4_app_path_evidence_v1.json
+.venv/bin/python -m py_compile scripts/build_real_factory_diagnostic_action_dataset.py
+.venv/bin/python -m pytest tests/test_build_real_factory_diagnostic_action_dataset.py -q
+5 passed
+.venv/bin/python -m pytest tests/test_capture_factory2_app_run_events.py tests/test_start_factory2_demo_app.py -q
+11 passed
+.venv/bin/python -m pytest tests/test_validation_registry_schema.py tests/test_learning_registry_schema.py -q
+6 passed
+```
+
+Exact rerun command:
+
+```bash
+FC_DB_PATH=data/factory_counter_real_factory_run8092_diag_action_v2_conf025_min30.db .venv/bin/python scripts/start_factory2_demo_stack.py \
+  --backend-port 8092 \
+  --frontend-port 5174 \
+  --skip-frontend \
+  --video data/videos/from-pc/real_factory.MOV \
+  --no-runtime-calibration \
+  --model models/real_factory_diagnostic_action_v2.pt \
+  --yolo-confidence 0.25 \
+  --processing-fps 5 \
+  --reader-fps 5 \
+  --playback-speed 8 \
+  --event-track-max-age 52 \
+  --event-track-min-frames 30 \
+  --event-count-debounce-sec 60 \
+  --event-track-max-match-distance 260 \
+  --event-detection-cluster-distance 250
+```
+
+Then capture:
+
+```bash
+.venv/bin/python scripts/capture_factory2_app_run_events.py \
+  --base-url http://127.0.0.1:8092 \
+  --output data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_min30_cluster250_age52_debounce60_speed8_v1.json \
+  --poll-interval-sec 5 \
+  --max-wait-sec 540 \
+  --auto-start \
+  --force
+```
+
+## 2026-05-04: real_factory Review-To-Training Anchor Prep
+
+Goal:
+
+```text
+Continue the real_factory recovery loop by converting the failed blind run into reviewed training/validation anchors, while keeping every output pending/bronze until Thomas fills review decisions.
+```
+
+Current status:
+
+```text
+IMPLEMENTED / FOCUSED TESTS PASS
+real_factory remains NOT VERIFIED / NOT REGISTRY-PROMOTED
+Current worksheet remains fully pending: no reviewed event timestamps, no gold truth ledger, no training-eligible dataset.
+```
+
+New tooling:
+
+```text
+Script: scripts/convert_failed_blind_run_review.py
+Tests: tests/test_convert_failed_blind_run_review.py
+```
+
+What the converter does:
+
+```text
+- Fails closed by default if any worksheet row is pending or unclear.
+- With --allow-pending, writes only bronze/pending review status artifacts.
+- Once reviewed decisions exist, writes:
+  - reviewed truth timestamp CSV
+  - reviewed gold human truth ledger JSON
+  - reviewed label JSON for positives and hard negatives
+  - active-learning dataset manifest
+- It still marks YOLO dataset export blocked until positive bounding-box labels exist.
+```
+
+Current pending artifacts:
+
+```text
+data/reports/active_learning/real_factory_failed_blind_run_review_conversion.pending_v1.json
+data/reports/active_learning/real_factory_failed_blind_run_review_labels.pending_v1.json
+data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json
+data/reports/active_learning/real_factory_codex_visual_count_draft.v1.json
+data/reports/real_factory_codex_visual_count_events.draft_v1.csv
+```
+
+Pending conversion result:
+
+```text
+status=pending_human_review
+expected_true_total=4
+accepted_true_placement_count=0
+pending_row_count=82
+hard_negative_label_count=0
+validation_truth_eligible=false
+training_eligible=false
+yolo_dataset_export_ready=false
+```
+
+Follow-up correction after Thomas called out that the practical goal was to count:
+
+```text
+Codex visual draft count: 4
+Draft candidate timestamps: 448.0, 1026.0, 1404.0, 1554.0
+Authority: bronze / codex_visual_draft_pending_thomas_review
+validation_truth_eligible=false
+training_eligible=false
+runtime_count_authority=false
+```
+
+Registry/manifest updates:
+
+```text
+validation/learning_registry.json indexes the pending conversion, review labels, dataset manifest, and Codex visual draft count.
+validation/test_cases/real_factory.json references the same pending/draft artifacts.
+validation/registry.json still does not contain real_factory.
+```
+
+Focused verification:
+
+```text
+.venv/bin/python -m pytest \
+  tests/test_convert_failed_blind_run_review.py \
+  tests/test_build_failed_blind_run_learning_packet.py \
+  tests/test_assess_blind_prediction_viability.py \
+  tests/test_learning_registry_schema.py \
+  tests/test_screen_detector_transfer.py \
+  tests/test_validation_registry_schema.py \
+  tests/test_bootstrap_video_candidate.py \
+  tests/test_active_learning_schemas.py \
+  tests/test_dataset_poisoning.py \
+  -q
+
+35 passed
+```
+
+Actual pending conversion command already run:
+
+```bash
+.venv/bin/python scripts/convert_failed_blind_run_review.py \
+  --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv \
+  --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json \
+  --manifest validation/test_cases/real_factory.json \
+  --status-output data/reports/active_learning/real_factory_failed_blind_run_review_conversion.pending_v1.json \
+  --truth-csv data/reports/real_factory_human_truth_event_times.reviewed_v1.csv \
+  --truth-ledger data/reports/real_factory_human_truth_ledger.reviewed_v1.json \
+  --review-labels data/reports/active_learning/real_factory_failed_blind_run_review_labels.pending_v1.json \
+  --dataset-manifest data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json \
+  --allow-pending \
+  --force
+```
+
+Next command after Thomas fills the worksheet decisions and exactly 4 reviewed event timestamps:
+
+```bash
+.venv/bin/python scripts/convert_failed_blind_run_review.py \
+  --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv \
+  --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json \
+  --manifest validation/test_cases/real_factory.json \
+  --status-output data/reports/active_learning/real_factory_failed_blind_run_review_conversion.reviewed_v1.json \
+  --truth-csv data/reports/real_factory_human_truth_event_times.reviewed_v1.csv \
+  --truth-ledger data/reports/real_factory_human_truth_ledger.reviewed_v1.json \
+  --review-labels data/reports/active_learning/real_factory_failed_blind_run_review_labels.reviewed_v1.json \
+  --dataset-manifest data/reports/active_learning/real_factory_active_learning_dataset_manifest.reviewed_v1.json \
+  --reviewer-id thomas \
+  --force
+```
+
+Then run:
+
+```bash
+.venv/bin/python scripts/check_dataset_poisoning.py \
+  --dataset data/reports/active_learning/real_factory_active_learning_dataset_manifest.reviewed_v1.json \
+  --truth-artifact data/reports/real_factory_human_truth_ledger.reviewed_v1.json
+```
+
+Important blocker after reviewed event decisions:
+
+```text
+Reviewed event timestamps are gold validation truth anchors, but they are not positive YOLO bounding boxes. The first detector-training export still needs positive box labels around the reviewed true-placement frames before yolo_dataset_export_ready can become true.
+```
+
+## 2026-05-03: Learning Library Recovery Slice
+
+Goal:
+
+```text
+Turn the real_factory blind failure into reusable learning-library data and add a guardrail that refuses numeric blind predictions when active detector transfer is dead and only a static detector is firing.
+```
+
+Current status:
+
+```text
+IMPLEMENTED / FOCUSED TESTS PASS
+real_factory remains NOT VERIFIED / NOT REGISTRY-PROMOTED
+```
+
+New doctrine/index artifacts:
+
+```text
+docs/08_LEARNING_LIBRARY_ARCHITECTURE.md
+validation/schemas/learning_registry.schema.json
+validation/learning_registry.json
+```
+
+`real_factory_candidate` learning-registry status:
+
+```text
+status: failed_diagnostic
+privacy_mode: offline_local
+hidden_human_total: 4
+failed_static_detector_diagnostic_total: 18
+blind_prediction_status: no_valid_blind_prediction
+registry_promotion_eligible: false
+validation_truth_eligible: false
+training_eligible: false
+```
+
+Blind prediction guardrail:
+
+```text
+Script: scripts/assess_blind_prediction_viability.py
+Artifact: data/reports/real_factory_blind_prediction_viability.v1.json
+
+Result:
+- status=no_valid_blind_prediction
+- numeric_prediction_allowed=false
+- active_transfer_failed=true
+- active_transfer_plausible=false
+- static_detector_risk=true
+- runtime diagnostics are parameter-sensitive: non-EOF counts 27 vs 18
+```
+
+Failed-run recovery packet:
+
+```text
+Script: scripts/build_failed_blind_run_learning_packet.py
+JSON: data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json
+Worksheet: data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv
+HTML: data/reports/active_learning/real_factory_failed_blind_run_review_packet.v1.html
+
+Contents:
+- 4 pending true-placement slots
+- 18 pending runtime false-positive / hard-negative candidates from the failed wire_mesh diagnostic
+- 60 pending motion-window candidates to find the 4 true placements
+- validation_truth_eligible=false
+- training_eligible=false
+```
+
+Focused check already run:
+
+```text
+.venv/bin/python -m pytest tests/test_assess_blind_prediction_viability.py tests/test_learning_registry_schema.py -q
+6 passed
+```
+
+Full focused check:
+
+```text
+.venv/bin/python -m pytest tests/test_assess_blind_prediction_viability.py tests/test_learning_registry_schema.py tests/test_screen_detector_transfer.py tests/test_validation_registry_schema.py tests/test_bootstrap_video_candidate.py -q
+23 passed
+```
+
+JSON parse checks passed for `validation/learning_registry.json`, `validation/schemas/learning_registry.schema.json`, `data/reports/real_factory_blind_prediction_viability.v1.json`, `validation/test_cases/real_factory.json`, and `data/reports/real_factory_blind_ai_event_estimate.v1.json`.
+
+Next useful command is to build the reviewed 4-event truth ledger and hard-negative review packet, then assemble the first `real_factory` detector-training dataset.
+
+## 2026-05-02: real_factory Blind Candidate Phase
+
+Goal:
+
+```text
+Validate data/videos/from-pc/real_factory.MOV as far as possible through the real app path, but keep the first phase blind until the AI/app estimate exists.
+```
+
+Current status:
+
+```text
+BLIND AI/APP ESTIMATE COMPLETE / HIDDEN HUMAN TOTAL REVEALED AND COMPARED
+NOT VERIFIED / NOT REGISTRY-PROMOTED
+```
+
+Fingerprint:
+
+```text
+Video: data/videos/from-pc/real_factory.MOV
+Artifact copy: /Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV
+SHA-256: 48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86
+Duration: 1770.480s
+Resolution/FPS: 1920x1080 HEVC Main 10, nominal 30fps, 53113 frames
+Size: 2046294207 bytes
+```
+
+Blind bootstrap artifacts:
+
+```text
+validation/test_cases/real_factory.json
+data/reports/real_factory_video_fingerprint.v1.json
+data/reports/real_factory_human_truth_total.v1.json
+data/reports/real_factory_human_truth_total.revealed_v1.json
+data/reports/real_factory_human_truth_event_times.pending_reveal.csv
+data/videos/preview_sheets/real_factory_candidate/real_factory.jpg
+```
+
+Bootstrap tooling was patched to support blind candidates:
+
+```text
+scripts/bootstrap_video_candidate.py accepts omitted/unknown expected total.
+Initial blind manifests write expected_total=null without inventing truth; after reveal, real_factory manifest now records expected_total=4 with human_total_status=revealed_total_only_pending_event_review and validation_truth_eligible=false.
+Tests: .venv/bin/python -m pytest tests/test_bootstrap_video_candidate.py tests/test_screen_detector_transfer.py -q -> 14 passed.
+```
+
+Detector transfer screen:
+
+```text
+Artifact: data/reports/real_factory_detector_transfer_screen.blind_v1.json
+
+img2628_worksheet_accept_event_diag_v1.pt: 0/80 at conf 0.25
+img3254_active_panel_v4_yolov8n.pt: 0/80
+img3262_active_panel_v2.pt: 0/80
+panel_in_transit.pt: 1/80
+wire_mesh_panel.pt: 80/80, 656 total detections
+
+Conclusion: transferred active detectors fail; wire_mesh is only a broad/static detector risk screen.
+```
+
+Motion/review scaffolding:
+
+```text
+data/reports/real_factory_motion_mined_windows.blind_v1.json
+data/videos/review_frames/real_factory_blind_motion_overview_v1/
+data/videos/review_frames/real_factory_timelapse_15s_v1/
+```
+
+Real app backend diagnostics attempted on `8092`:
+
+```text
+Common settings:
+FC_DEMO_COUNT_MODE=live_reader_snapshot
+FC_COUNTING_MODE=event_based
+model=models/wire_mesh_panel.pt
+conf=0.25
+processing_fps=5
+reader_fps=5
+event_track_max_age=52
+event_track_min_frames=12
+event_track_min_travel_px=0
+event_track_max_match_distance=260
+event_detection_cluster_distance=250
+accelerated playback requested 16; diagnostics reported speed 8.0
+
+Debounce 30:
+data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json
+- raw observed_event_count=31
+- non-EOF events=27
+- EOF same-timestamp events=4
+
+Debounce 60:
+data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json
+- raw observed_event_count=22
+- non-EOF events=18
+- EOF same-timestamp events=4
+```
+
+Blind estimate:
+
+```text
+Primary report: data/reports/real_factory_blind_ai_event_estimate.v1.json
+CSV ledger: data/reports/real_factory_blind_ai_event_estimate.v1.csv
+Predicted total: 18
+Predicted timestamps:
+38.401, 121.603, 192.805, 266.007, 342.209, 421.211, 496.413, 568.015, 630.217, 808.388, 948.192, 1227.799, 1304.601, 1386.203, 1478.206, 1544.807, 1651.810, 1732.812
+Status: blind_ai_estimate only; validation_truth_eligible=false; training_eligible=false.
+After this estimate was written, Thomas was asked to reveal the hidden human total. Thomas revealed the hidden total as 4.
+Comparison report: data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json
+Goal completion audit: data/reports/real_factory_goal_completion_audit.v1.json
+Comparison result: total_matches=false; observed_minus_human_delta=14.
+Clarification: the 18 rows are failed wire_mesh static-detector dead-track diagnostic events, not visually confirmed completed placements.
+```
+
+Boundary:
+
+```text
+Do not call this verified.
+Do not register/promote this case.
+Visible 1.0x dashboard proof was not run because diagnostics are static-detector/parameter-sensitive, not promotion-plausible.
+Next step: build/review the 4-event timestamp truth ledger and create a plausible real_factory-specific YOLO/event-based runtime detector path before any future verification attempt.
+```
+
+Checks:
+
+```text
+.venv/bin/python -m pytest tests/test_bootstrap_video_candidate.py tests/test_screen_detector_transfer.py tests/test_validation_registry_schema.py -q
+17 passed
+
+jq parse checks passed for real_factory manifest/reveal/comparison/audit artifacts.
+Built-in required-key/candidate-boundary check passed for validation/test_cases/real_factory.json.
+```
 
 Canonical test-case proof bar:
 - For any candidate factory video, read `docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md` before claiming validation or promotion.

@@ -1,0 +1,246 @@
+{
+  "schema_version": "factory-vision-goal-completion-audit-v1",
+  "case_id": "real_factory_candidate",
+  "created_at": "2026-05-02",
+  "objective": "Validate data/videos/from-pc/real_factory.MOV as far as possible through a blind AI/app estimate first, then request the hidden human count for comparison before any verification claim.",
+  "objective_deliverables": [
+    "Fingerprint and bootstrap real_factory without inventing human truth.",
+    "Generate preview/contact sheets and detector-transfer evidence.",
+    "Attempt the real app path with live_reader_snapshot and event_based counting.",
+    "Produce a blind AI/app predicted total and event ledger before hidden human total reveal.",
+    "Ask for the hidden human total only after the blind estimate exists.",
+    "Compare the blind total to the revealed hidden human total and diagnose any delta.",
+    "Leave registry/verification status untouched unless the proof boundary is satisfied."
+  ],
+  "prompt_to_artifact_checklist": [
+    {
+      "requirement": "Use goal mode.",
+      "status": "complete",
+      "evidence": [
+        "Active goal objective matches real_factory blind validation and comparison."
+      ]
+    },
+    {
+      "requirement": "Read current repo docs and validation context before proof claims.",
+      "status": "complete",
+      "evidence": [
+        "AGENTS.md, .hermes/HANDOFF.md, tasks/lessons.md, tasks/todo.md, docs/00_CURRENT_STATE.md, docs/01_PRODUCT_SPEC.md, docs/02_ARCHITECTURE.md, docs/03_VALIDATION_PIPELINE.md, docs/04_TEST_CASE_REGISTRY.md, docs/06_DEVELOPER_RUNBOOK.md, docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md, docs/07_ARTIFACT_STORAGE.md, docs/REAL_APP_TEST_CASE_DEFINITION_OF_DONE.md, docs/KNOWN_LIMITATIONS.md, validation/registry.json, and validation/artifact_storage.json were read before producing the blind estimate."
+      ]
+    },
+    {
+      "requirement": "Confirm SHA-256 for repo video and artifact copy.",
+      "status": "complete",
+      "evidence": [
+        "shasum -a 256 confirmed data/videos/from-pc/real_factory.MOV and /Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV both equal 48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86.",
+        "data/reports/real_factory_video_fingerprint.v1.json"
+      ]
+    },
+    {
+      "requirement": "Confirm ffprobe metadata.",
+      "status": "complete",
+      "evidence": [
+        "ffprobe confirms duration 1770.480000s, size 2046294207 bytes, HEVC Main 10, 1920x1080, r_frame_rate 30/1, avg_frame_rate 1327825/44262, nb_frames 53113."
+      ]
+    },
+    {
+      "requirement": "Confirm local artifact copy exists and do not upload raw footage.",
+      "status": "complete",
+      "evidence": [
+        "/Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV exists with matching hash.",
+        "No cloud upload was performed.",
+        "validation/artifact_storage.json remains the artifact index."
+      ]
+    },
+    {
+      "requirement": "Create candidate case id and provisional manifest without human truth before reveal.",
+      "status": "complete",
+      "evidence": [
+        "case_id real_factory_candidate",
+        "scripts/bootstrap_video_candidate.py was patched to allow blind expected totals.",
+        "Initial manifest wrote expected_total=null and validation_truth_eligible=false before reveal.",
+        "validation/test_cases/real_factory.json"
+      ]
+    },
+    {
+      "requirement": "Generate preview/contact sheets.",
+      "status": "complete",
+      "evidence": [
+        "data/videos/preview_sheets/real_factory_candidate/real_factory.jpg",
+        "data/videos/preview_sheets/real_factory_candidate/manifest.json",
+        "data/videos/review_frames/real_factory_blind_motion_overview_v1/",
+        "data/videos/review_frames/real_factory_timelapse_15s_v1/"
+      ]
+    },
+    {
+      "requirement": "Run detector transfer screening against all named known detectors.",
+      "status": "complete",
+      "evidence": [
+        "data/reports/real_factory_detector_transfer_screen.blind_v1.json",
+        "models/img2628_worksheet_accept_event_diag_v1.pt: 0/80 sampled frames, 0 detections.",
+        "models/img3254_active_panel_v4_yolov8n.pt: 0/80 sampled frames, 0 detections.",
+        "models/img3262_active_panel_v2.pt: 0/80 sampled frames, 0 detections.",
+        "models/panel_in_transit.pt: 1/80 sampled frames, 1 detection.",
+        "models/wire_mesh_panel.pt: 80/80 sampled frames, 656 detections; treated only as static-detector risk screen."
+      ]
+    },
+    {
+      "requirement": "Use screening to choose a diagnostic path.",
+      "status": "complete",
+      "evidence": [
+        "Transferred active detectors failed, so runtime diagnostics used wire_mesh_panel.pt only as a static-risk diagnostic path.",
+        "The static-detector risk was explicitly recorded in data/reports/real_factory_blind_ai_event_estimate.v1.json and data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json."
+      ]
+    },
+    {
+      "requirement": "Generate candidate event windows and a proposed blind event ledger.",
+      "status": "complete",
+      "evidence": [
+        "data/reports/real_factory_motion_mined_windows.blind_v1.json",
+        "data/reports/real_factory_blind_ai_event_estimate.v1.json",
+        "data/reports/real_factory_blind_ai_event_estimate.v1.csv",
+        "Prediction contains 18 proposed event timestamps."
+      ]
+    },
+    {
+      "requirement": "Produce predicted total and timestamps without hidden human count.",
+      "status": "complete",
+      "evidence": [
+        "Blind report was written before the hidden total was revealed.",
+        "Predicted total: 18.",
+        "Predicted timestamps: 38.401, 121.603, 192.805, 266.007, 342.209, 421.211, 496.413, 568.015, 630.217, 808.388, 948.192, 1227.799, 1304.601, 1386.203, 1478.206, 1544.807, 1651.810, 1732.812."
+      ]
+    },
+    {
+      "requirement": "Attempt real app path using FC_DEMO_COUNT_MODE=live_reader_snapshot and FC_COUNTING_MODE=event_based.",
+      "status": "complete_with_limitations",
+      "evidence": [
+        "Runtime diagnostic artifacts were captured from the real backend event path.",
+        "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json",
+        "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json",
+        "The diagnostics used accelerated playback and are not promotion-quality proof."
+      ]
+    },
+    {
+      "requirement": "Use FC_DEMO_PLAYBACK_SPEED=1.0 for any promotion-quality visible run.",
+      "status": "not_run_with_justification",
+      "evidence": [
+        "Visible 1.0x dashboard proof was deferred because diagnostics were static-detector and parameter-sensitive, not promotion-plausible.",
+        "No promotion-quality visible run was claimed."
+      ]
+    },
+    {
+      "requirement": "Runtime total must start at 0 and increment from ordered processed frames; no replay, reveal, fake updates, or hardcoded hacks.",
+      "status": "complete_for_attempted_diagnostics",
+      "evidence": [
+        "Diagnostics used start_factory2_demo_stack.py and capture_factory2_app_run_events.py against the backend app path.",
+        "No deterministic replay, timestamp reveal, fake UI updates, or real_factory timestamp hardcoding was added.",
+        "The visible 1.0x proof requirement was not claimed because the detector path was not plausible."
+      ]
+    },
+    {
+      "requirement": "Visible dashboard proof if diagnostics become plausible.",
+      "status": "not_required_by_evidence",
+      "evidence": [
+        "Diagnostics did not become plausible: debounce 30 produced 27 non-EOF events and debounce 60 produced 18 non-EOF events before comparison to hidden total 4.",
+        "The known static detector was the only broadly firing detector."
+      ]
+    },
+    {
+      "requirement": "Write blind report under data/reports and label it as blind_ai_estimate, not validation truth.",
+      "status": "complete",
+      "evidence": [
+        "data/reports/real_factory_blind_ai_event_estimate.v1.json",
+        "validation_truth_eligible=false",
+        "training_eligible=false",
+        "claim_boundary states blind AI/app estimate only."
+      ]
+    },
+    {
+      "requirement": "Ask Thomas to reveal hidden human total only after blind estimate exists.",
+      "status": "complete",
+      "evidence": [
+        "The hidden total was requested after the blind report and CSV ledger existed.",
+        "Thomas revealed the total as 4 after the request."
+      ]
+    },
+    {
+      "requirement": "Compare blind AI/app total to hidden human total.",
+      "status": "complete",
+      "evidence": [
+        "data/reports/real_factory_human_truth_total.revealed_v1.json",
+        "data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json",
+        "Predicted total 18 versus hidden human total 4.",
+        "total_matches=false, observed_minus_human_delta=14."
+      ]
+    },
+    {
+      "requirement": "If count differs, diagnose delta honestly.",
+      "status": "complete",
+      "evidence": [
+        "data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json diagnosis records failed active-detector transfer, static detector overcount risk, debounce sensitivity, and EOF burst exclusion."
+      ]
+    },
+    {
+      "requirement": "Do not claim verified and do not promote registry unless proof boundary is clean.",
+      "status": "complete",
+      "evidence": [
+        "validation/test_cases/real_factory.json status=candidate and promotion_status=not_promoted.",
+        "validation/registry.json has no real_factory entry.",
+        "The comparison report marks fully_verified=false and registry_promotion_eligible=false."
+      ]
+    },
+    {
+      "requirement": "Update task/handoff state during the run.",
+      "status": "complete",
+      "evidence": [
+        "tasks/todo.md updated with real_factory checklist, reveal, comparison, and failed verification outcome.",
+        ".hermes/HANDOFF.md updated with current status and next work.",
+        "tasks/lessons.md updated with reusable blind-bootstrap and static-detector lessons."
+      ]
+    },
+    {
+      "requirement": "Run focused tests/checks after code/schema/test edits.",
+      "status": "complete",
+      "evidence": [
+        ".venv/bin/python -m pytest tests/test_bootstrap_video_candidate.py tests/test_screen_detector_transfer.py tests/test_validation_registry_schema.py -q -> 17 passed.",
+        "jq parse checks passed for real_factory manifest/reveal/comparison/audit artifacts.",
+        "Required-key/candidate-boundary check passed for validation/test_cases/real_factory.json."
+      ]
+    }
+  ],
+  "current_state": {
+    "blind_phase_complete": true,
+    "hidden_total_requested_after_blind_estimate": true,
+    "hidden_total_revealed": true,
+    "human_total_comparison_complete": true,
+    "blind_predicted_total": 18,
+    "hidden_human_total": 4,
+    "total_matches": false,
+    "observed_minus_human_delta": 14,
+    "candidate_status": "candidate",
+    "promotion_status": "not_promoted",
+    "fully_verified": false,
+    "registry_promotion_eligible": false
+  },
+  "post_reveal_clarification": {
+    "interpretation": "The 18 blind rows are what the weak app diagnostic counted, not what should now be treated as the true number of placements.",
+    "reason": "The hidden human total is 4, and the 18 came from wire_mesh dead-track events on a detector that fired on every sampled frame.",
+    "correct_status": "failed_blind_diagnostic_overcount"
+  },
+  "unmet_full_verification_requirements": [
+    "No reviewed 4-event timestamp truth ledger exists.",
+    "No real_factory-specific active detector or other plausible non-static YOLO/event-based runtime path exists.",
+    "No visible 1.0x dashboard proof was run or claimed because diagnostics were not promotion-plausible.",
+    "matched_count is false because predicted total 18 does not match hidden human total 4."
+  ],
+  "completion_decision": {
+    "goal_process_complete": true,
+    "candidate_verified": false,
+    "reason": "The requested blind AI/app estimate, post-estimate hidden total reveal, total comparison, and delta diagnosis are complete. The validation attempt reached a determinate failed outcome, so real_factory remains an unverified candidate rather than a promoted registry case.",
+    "next_work_if_pursuing_future_promotion": [
+      "Create or review a human timestamp ledger for the 4 true events.",
+      "Train or otherwise obtain a plausible real_factory-specific active detector.",
+      "Run a visible 1.0x dashboard proof only after diagnostics are no longer static-detector/parameter-sensitive."
+    ]
+  }
+}

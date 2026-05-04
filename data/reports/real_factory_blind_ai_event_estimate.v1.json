@@ -1,0 +1,665 @@
+{
+  "blind_phase": {
+    "claim_boundary": "Blind AI/app estimate only. Not verified; not registry-promotion evidence.",
+    "human_total_requested": true,
+    "human_total_request_status": "revealed_after_blind_estimate",
+    "human_total_revealed": true,
+    "human_total_revealed_at": "2026-05-02",
+    "hidden_human_total": 4,
+    "training_eligible": false,
+    "truth_status": "revealed_total_only_pending_event_review",
+    "validation_truth_eligible": false
+  },
+  "case_id": "real_factory_candidate",
+  "created_at": "2026-05-02T22:32:17.587254+00:00",
+  "human_total_comparison": {
+    "comparison_report_path": "data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json",
+    "human_total_path": "data/reports/real_factory_human_truth_total.revealed_v1.json",
+    "predicted_total": 18,
+    "hidden_human_total": 4,
+    "total_matches": false,
+    "observed_minus_human_delta": 14,
+    "status": "not_verified_total_mismatch_and_event_truth_missing"
+  },
+  "blind_prediction_viability": {
+    "path": "data/reports/real_factory_blind_prediction_viability.v1.json",
+    "status": "no_valid_blind_prediction",
+    "numeric_prediction_allowed": false,
+    "valid_blind_prediction_total": null,
+    "failed_static_detector_diagnostic_total": 18,
+    "reason": "Post-run guardrail classifies the 18-row ledger as static-detector diagnostic evidence, not a valid blind count."
+  },
+  "post_reveal_interpretation": {
+    "corrected_reading": "The 18 rows are a failed wire_mesh static-detector diagnostic dead-track ledger, not 18 validated completed placements.",
+    "why_18_was_not_reliable": [
+      "All 18 blind rows came from runtime dead_track_event outputs on wire_mesh_panel.pt.",
+      "The detector-transfer screen showed wire_mesh_panel.pt fired on every sampled frame, which is a static/resident-material risk profile.",
+      "Several counted tracks barely moved at all, including travel distances of 1px, 2px, 3.162px, 4.123px, and 5px.",
+      "The hidden human total reveal of 4 invalidates the blind diagnostic as a count estimate."
+    ],
+    "candidate_verified": false
+  },
+  "detector_transfer_screen": {
+    "interpretation": [
+      "IMG_2628, IMG_3254, and IMG_3262 active detectors produced 0/80 detections at confidence 0.25.",
+      "panel_in_transit produced 1/80 detections at confidence 0.25 and is not viable transfer recall.",
+      "wire_mesh_panel produced detections on 80/80 sampled frames with 656 total detections; it is a broad/static detector risk screen, not proof."
+    ],
+    "path": "data/reports/real_factory_detector_transfer_screen.blind_v1.json",
+    "summary": [
+      {
+        "confidence": 0.25,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img2628_worksheet_accept_event_diag_v1.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "detection_rate": 0.0125,
+        "images_with_detections": 1,
+        "model_path": "models/panel_in_transit.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 1
+      },
+      {
+        "confidence": 0.25,
+        "detection_rate": 1.0,
+        "images_with_detections": 80,
+        "model_path": "models/wire_mesh_panel.pt",
+        "recommendation": "broad_or_static_detector_risk_requires_runtime_diagnostic",
+        "sample_count": 80,
+        "total_detections": 656
+      }
+    ]
+  },
+  "motion_mining": {
+    "path": "data/reports/real_factory_motion_mined_windows.blind_v1.json",
+    "review_assets": [
+      "data/videos/review_frames/real_factory_blind_motion_overview_v1/page_01.jpg",
+      "data/videos/review_frames/real_factory_blind_motion_overview_v1/page_02.jpg",
+      "data/videos/review_frames/real_factory_blind_motion_overview_v1/page_03.jpg",
+      "data/videos/review_frames/real_factory_timelapse_15s_v1/page_01.jpg",
+      "data/videos/review_frames/real_factory_timelapse_15s_v1/page_02.jpg",
+      "data/videos/review_frames/real_factory_timelapse_15s_v1/page_03.jpg",
+      "data/videos/review_frames/real_factory_timelapse_15s_v1/page_04.jpg",
+      "data/videos/review_frames/real_factory_timelapse_15s_v1/page_05.jpg",
+      "data/videos/review_frames/real_factory_timelapse_15s_v1/page_06.jpg"
+    ],
+    "window_count": 60
+  },
+  "next_required_step": "Build/review event-level human truth and a plausible real_factory-specific runtime detector path before any verification or registry promotion.",
+  "prediction": {
+    "basis": "Conservative blind estimate from real-app wire_mesh diagnostic with 60s debounce, excluding same-timestamp EOF active-track burst.",
+    "confidence": "low_to_medium",
+    "known_failure_risks": [
+      "Transferred active detectors failed; no real_factory-specific active-part detector exists yet.",
+      "wire_mesh_panel is a static/resident-material detector and is known to be unsafe as validation proof.",
+      "Changing debounce from 30s to 60s changed non-EOF app events from 27 to 18, so the app result is parameter-sensitive.",
+      "No human total or reviewed event truth has been used in this blind phase."
+    ],
+    "predicted_events": [
+      {
+        "blind_event_id": "real_factory-blind-ai-0001",
+        "confidence": "low_to_medium",
+        "event_ts": 38.401,
+        "nearest_motion_window": {
+          "center_timestamp": 45.0,
+          "event_id": "event-0003",
+          "score": 0.030875,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0003_t000045.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 1,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1322,
+            356
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 77,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 1,
+          "track_id": 3,
+          "travel_px": 23.854
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0002",
+        "confidence": "low_to_medium",
+        "event_ts": 121.603,
+        "nearest_motion_window": {
+          "center_timestamp": 111.0,
+          "event_id": "event-0005",
+          "score": 0.044971,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0005_t000111.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 2,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1330,
+            354
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 12,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 2,
+          "track_id": 13,
+          "travel_px": 3.162
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0003",
+        "confidence": "low_to_medium",
+        "event_ts": 192.805,
+        "nearest_motion_window": {
+          "center_timestamp": 189.0,
+          "event_id": "event-0007",
+          "score": 0.028418,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0007_t000189.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 3,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1317,
+            903
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 25,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 3,
+          "track_id": 18,
+          "travel_px": 77.318
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0004",
+        "confidence": "low_to_medium",
+        "event_ts": 266.007,
+        "nearest_motion_window": {
+          "center_timestamp": 265.0,
+          "event_id": "event-0009",
+          "score": 0.041692,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0009_t000265.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 4,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            996,
+            617
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 146,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 4,
+          "track_id": 21,
+          "travel_px": 69.123
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0005",
+        "confidence": "low_to_medium",
+        "event_ts": 342.209,
+        "nearest_motion_window": {
+          "center_timestamp": 330.0,
+          "event_id": "event-0012",
+          "score": 0.022302,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0012_t000330.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 5,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1238,
+            897
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 48,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 5,
+          "track_id": 24,
+          "travel_px": 1.0
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0006",
+        "confidence": "low_to_medium",
+        "event_ts": 421.211,
+        "nearest_motion_window": {
+          "center_timestamp": 410.0,
+          "event_id": "event-0014",
+          "score": 0.047031,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0014_t000410.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 6,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1236,
+            897
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 38,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 6,
+          "track_id": 28,
+          "travel_px": 4.123
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0007",
+        "confidence": "low_to_medium",
+        "event_ts": 496.413,
+        "nearest_motion_window": {
+          "center_timestamp": 486.0,
+          "event_id": "event-0017",
+          "score": 0.035646,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0017_t000486.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 7,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            997,
+            559
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 65,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 7,
+          "track_id": 31,
+          "travel_px": 88.363
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0008",
+        "confidence": "low_to_medium",
+        "event_ts": 568.015,
+        "nearest_motion_window": {
+          "center_timestamp": 567.0,
+          "event_id": "event-0020",
+          "score": 0.019729,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0020_t000567.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 8,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1332,
+            324
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 27,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 8,
+          "track_id": 35,
+          "travel_px": 354.16
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0009",
+        "confidence": "low_to_medium",
+        "event_ts": 630.217,
+        "nearest_motion_window": {
+          "center_timestamp": 623.0,
+          "event_id": "event-0022",
+          "score": 0.023049,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0022_t000623.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 9,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1442,
+            313
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 154,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 9,
+          "track_id": 38,
+          "travel_px": 88.233
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0010",
+        "confidence": "low_to_medium",
+        "event_ts": 808.388,
+        "nearest_motion_window": {
+          "center_timestamp": 828.0,
+          "event_id": "event-0026",
+          "score": 0.027497,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0026_t000828.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 10,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1028,
+            658
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 1098,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 10,
+          "track_id": 37,
+          "travel_px": 106.621
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0011",
+        "confidence": "low_to_medium",
+        "event_ts": 948.192,
+        "nearest_motion_window": {
+          "center_timestamp": 942.0,
+          "event_id": "event-0030",
+          "score": 0.053947,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0030_t000942.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 11,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            877,
+            692
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 301,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 11,
+          "track_id": 45,
+          "travel_px": 416.395
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0012",
+        "confidence": "low_to_medium",
+        "event_ts": 1227.799,
+        "nearest_motion_window": {
+          "center_timestamp": 1215.0,
+          "event_id": "event-0042",
+          "score": 0.04274,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0042_t001215.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 12,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1287,
+            441
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 37,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 12,
+          "track_id": 56,
+          "travel_px": 282.554
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0013",
+        "confidence": "low_to_medium",
+        "event_ts": 1304.601,
+        "nearest_motion_window": {
+          "center_timestamp": 1314.0,
+          "event_id": "event-0044",
+          "score": 0.02513,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0044_t001314.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 13,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1063,
+            649
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 72,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 13,
+          "track_id": 59,
+          "travel_px": 5.0
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0014",
+        "confidence": "low_to_medium",
+        "event_ts": 1386.203,
+        "nearest_motion_window": {
+          "center_timestamp": 1377.0,
+          "event_id": "event-0046",
+          "score": 0.049438,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0046_t001377.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 14,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            999,
+            631
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 31,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 14,
+          "track_id": 61,
+          "travel_px": 56.569
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0015",
+        "confidence": "low_to_medium",
+        "event_ts": 1478.206,
+        "nearest_motion_window": {
+          "center_timestamp": 1461.0,
+          "event_id": "event-0049",
+          "score": 0.061889,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0049_t001461.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 15,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1241,
+            896
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 444,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 15,
+          "track_id": 62,
+          "travel_px": 2.0
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0016",
+        "confidence": "low_to_medium",
+        "event_ts": 1544.807,
+        "nearest_motion_window": {
+          "center_timestamp": 1553.0,
+          "event_id": "event-0052",
+          "score": 0.045367,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0052_t001553.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 16,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1324,
+            903
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 195,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 16,
+          "track_id": 67,
+          "travel_px": 85.288
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0017",
+        "confidence": "low_to_medium",
+        "event_ts": 1651.81,
+        "nearest_motion_window": {
+          "center_timestamp": 1641.0,
+          "event_id": "event-0056",
+          "score": 0.05055,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0056_t001641.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 17,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1033,
+            579
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 275,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 17,
+          "track_id": 72,
+          "travel_px": 225.577
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      },
+      {
+        "blind_event_id": "real_factory-blind-ai-0018",
+        "confidence": "low_to_medium",
+        "event_ts": 1732.812,
+        "nearest_motion_window": {
+          "center_timestamp": 1724.0,
+          "event_id": "event-0059",
+          "score": 0.041026,
+          "sheet_path": "data/events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0059_t001724.00.jpg"
+        },
+        "notes": "Estimated before hidden human total reveal; static detector and motion windows require human event-level review.",
+        "predicted_count_total": 18,
+        "review_status": "blind_ai_estimate_not_human_truth",
+        "runtime_event": {
+          "centroid": [
+            1299,
+            433
+          ],
+          "count_authority": "runtime_inferred_only",
+          "frames_seen": 22,
+          "reason": "dead_track_event",
+          "runtime_total_after_event": 18,
+          "track_id": 78,
+          "travel_px": 10.198
+        },
+        "source": "real_app_diagnostic_wire_mesh_debounce60_non_eof",
+        "validation_truth_eligible": false
+      }
+    ],
+    "predicted_total": 18
+  },
+  "real_app_diagnostics": [
+    {
+      "counting_mode": "event_based",
+      "demo_count_mode": "live_reader_snapshot",
+      "eof_event_count": 4,
+      "model_path": "models/wire_mesh_panel.pt",
+      "non_eof_event_count": 27,
+      "observed_event_count_raw": 31,
+      "path": "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json",
+      "playback_speed_requested": 16,
+      "risk": "overcount_static_fragmentation_and_eof_duplicate_burst"
+    },
+    {
+      "counting_mode": "event_based",
+      "demo_count_mode": "live_reader_snapshot",
+      "eof_event_count": 4,
+      "model_path": "models/wire_mesh_panel.pt",
+      "non_eof_event_count": 18,
+      "observed_event_count_raw": 22,
+      "path": "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json",
+      "playback_speed_requested": 16,
+      "risk": "conservative_static_detector_estimate_parameter_sensitive_not_proof"
+    }
+  ],
+  "schema_version": "factory-vision-blind-ai-estimate-v1",
+  "video": {
+    "artifact_copy": "/Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV",
+    "codec": "hevc",
+    "duration_sec": 1770.48,
+    "frame_count": 53113,
+    "height": 1080,
+    "path": "data/videos/from-pc/real_factory.MOV",
+    "sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86",
+    "width": 1920
+  }
+}

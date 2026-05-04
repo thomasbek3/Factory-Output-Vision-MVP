@@ -1,0 +1,5 @@
+draft_event_id,count_total,event_ts,source_window,evidence_path,notes
+real_factory_codex_draft_0001,1,448.0,t0430_0480,data/reports/active_learning/real_factory_draft_count_review_frames/t0430_0480_every2s.jpg,Worker appears to finish moving/setting a mesh panel at the right output stack area; draft visual event only.
+real_factory_codex_draft_0002,2,1026.0,t0990_1045,data/reports/active_learning/real_factory_draft_count_review_frames/t0990_1045_every2s.jpg,Worker appears to complete another output-side mesh handling/placement near the right stack; draft visual event only.
+real_factory_codex_draft_0003,3,1404.0,t1360_1420,data/reports/active_learning/real_factory_draft_count_review_frames/t1360_1420_every2s.jpg,Worker raises and settles a large mesh panel near the output/resting stack area; draft visual event only.
+real_factory_codex_draft_0004,4,1554.0,t1520_1570,data/reports/active_learning/real_factory_draft_count_review_frames/t1520_1570_every2s.jpg,Worker rotates/sets a large mesh panel down after the handling sequence; draft visual event only.

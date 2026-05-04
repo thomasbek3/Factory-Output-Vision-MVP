@@ -57,6 +57,7 @@ The durable policy and current local raw-video index live in `docs/07_ARTIFACT_S
 ## Active Learning Boundary
 
 The active-learning foundation is documented in `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`.
+The learning-library architecture and failed-run registry path are documented in `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md` and indexed in `validation/learning_registry.json`.
 
 - Live Runtime Total remains AI-only and YOLO/event-based.
 - VLMs, frontier teacher models, Moondream, and Moondream Lens are advisory audit/labeling helpers only.
@@ -65,3 +66,4 @@ The active-learning foundation is documented in `docs/06_AI_ONLY_ACTIVE_LEARNING
 - Cloud-assisted labeling/audit requires explicit permission and must not happen silently.
 - New model/settings promotion must still pass the registry validation cases and customer-specific cases.
 - `scripts/moondream_audit_events.py` supports dry-run audit labels and a localhost-gated Moondream Station provider for offline/local review.
+- Static-detector failures like `real_factory_candidate` must be recorded as learning cases, not forced numeric predictions or verified registry cases.

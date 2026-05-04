@@ -1,0 +1,5 @@
+path: /Users/thomas/Projects/Factory-Output-Vision-MVP/data/labels/real_factory_diagnostic_action_v2
+train: images/train
+val: images/val
+names:
+  0: real_factory_active_placement

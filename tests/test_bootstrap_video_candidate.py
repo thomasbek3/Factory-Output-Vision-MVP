@@ -8,6 +8,8 @@ from scripts.bootstrap_video_candidate import (
     build_next_steps,
     build_total_payload,
     metadata_from_ffprobe,
+    parse_expected_total,
+    write_blind_truth_placeholder,
     write_truth_template,
 )
 
@@ -58,6 +60,26 @@ def test_build_total_payload_keeps_total_provisional() -> None:
     assert "reviewed timestamp truth" in payload["validation_note"]
 
 
+def test_build_total_payload_allows_blind_hidden_total() -> None:
+    payload = build_total_payload(
+        video_path=Path("demo/blind.mov"),
+        video_sha256="abc",
+        metadata={"duration_sec": 10.0},
+        expected_total=None,
+        human_counter=None,
+        truth_rule_id="blind_estimate_pending_human_reveal",
+        count_rule="count rule",
+        today=date(2026, 5, 2),
+    )
+
+    assert payload["expected_human_total"] is None
+    assert payload["human_counter"] is None
+    assert payload["verification_status"] == "blind_estimate_pending_human_reveal"
+    assert payload["timestamp_truth_status"] == "not_requested_blind_phase"
+    assert payload["validation_truth_eligible"] is False
+    assert "has not been requested" in payload["validation_note"]
+
+
 def test_build_candidate_manifest_copies_baseline_runtime_but_stays_candidate() -> None:
     manifest = build_candidate_manifest(
         case_id="new_case",
@@ -86,6 +108,28 @@ def test_build_candidate_manifest_copies_baseline_runtime_but_stays_candidate() 
     assert manifest["runtime"]["event_track_max_match_distance"] == 260.0
 
 
+def test_build_candidate_manifest_allows_blind_expected_total() -> None:
+    manifest = build_candidate_manifest(
+        case_id="blind_case",
+        display_name="Blind Case",
+        video_path=Path("demo/blind.mov"),
+        video_sha256="abc",
+        metadata={"duration_sec": 10.0, "width": 1920, "height": 1080, "codec": "hevc"},
+        expected_total=None,
+        truth_rule_id="blind_estimate_pending_human_reveal",
+        count_rule="count rule",
+        human_total_path=Path("data/reports/blind_total.json"),
+        truth_ledger_path=Path("data/reports/blind_ledger.json"),
+        baseline_manifest=None,
+    )
+
+    assert manifest["status"] == "candidate"
+    assert manifest["truth"]["expected_total"] is None
+    assert manifest["truth"]["human_total_status"] == "hidden_not_requested_blind_phase"
+    assert manifest["truth"]["validation_truth_eligible"] is False
+    assert "no human expected total" in manifest["truth"]["notes"][0]
+
+
 def test_write_truth_template_creates_pending_rows(tmp_path: Path) -> None:
     output = tmp_path / "truth.csv"
 
@@ -95,6 +139,16 @@ def test_write_truth_template_creates_pending_rows(tmp_path: Path) -> None:
         "truth_event_id,count_total,event_ts,notes",
         "new_case-truth-0001,1,,pending reviewed timestamp",
         "new_case-truth-0002,2,,pending reviewed timestamp",
+    ]
+
+
+def test_write_blind_truth_placeholder_creates_header_only(tmp_path: Path) -> None:
+    output = tmp_path / "truth.csv"
+
+    write_blind_truth_placeholder(output)
+
+    assert output.read_text(encoding="utf-8").splitlines() == [
+        "truth_event_id,count_total,event_ts,notes",
     ]
 
 
@@ -109,3 +163,20 @@ def test_next_steps_encode_fast_path_gates() -> None:
     assert any("detector transfer screen" in step for step in steps)
     assert any("Only run the visible 1.0x dashboard proof" in step for step in steps)
     assert any("final total matches but event diff has swaps" in step for step in steps)
+
+
+def test_next_steps_for_blind_case_do_not_request_human_total_first() -> None:
+    steps = build_next_steps(
+        case_id="blind_case",
+        video_path=Path("demo/blind.mov"),
+        expected_total=None,
+        baseline_case_id="img2628_candidate",
+    )
+
+    assert any("before requesting the hidden human total" in step for step in steps)
+
+
+def test_parse_expected_total_accepts_unknown_markers() -> None:
+    assert parse_expected_total(None) is None
+    assert parse_expected_total("unknown") is None
+    assert parse_expected_total("7") == 7

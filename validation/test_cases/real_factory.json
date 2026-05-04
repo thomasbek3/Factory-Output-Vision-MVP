@@ -1,0 +1,80 @@
+{
+  "case_id": "real_factory_candidate",
+  "display_name": "real_factory blind candidate",
+  "launch": {
+    "backend_port": 8092,
+    "command": [],
+    "dashboard_url": "http://127.0.0.1:5174/dashboard",
+    "frontend_port": 5174
+  },
+  "promotion_status": "not_promoted",
+  "blind_estimate_artifacts": {
+    "blind_ai_estimate_csv": "data/reports/real_factory_blind_ai_event_estimate.v1.csv",
+    "blind_ai_estimate_report": "data/reports/real_factory_blind_ai_event_estimate.v1.json",
+    "blind_prediction_viability": "data/reports/real_factory_blind_prediction_viability.v1.json",
+    "blind_vs_hidden_human_total": "data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json",
+    "codex_visual_count_draft": "data/reports/active_learning/real_factory_codex_visual_count_draft.v1.json",
+    "codex_visual_count_events_csv": "data/reports/real_factory_codex_visual_count_events.draft_v1.csv",
+    "goal_completion_audit": "data/reports/real_factory_goal_completion_audit.v1.json",
+    "pending_active_learning_dataset_manifest": "data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json",
+    "pending_review_conversion_status": "data/reports/active_learning/real_factory_failed_blind_run_review_conversion.pending_v1.json",
+    "pending_review_labels": "data/reports/active_learning/real_factory_failed_blind_run_review_labels.pending_v1.json",
+    "learning_review_packet": "data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json",
+    "learning_review_packet_html": "data/reports/active_learning/real_factory_failed_blind_run_review_packet.v1.html",
+    "learning_review_worksheet": "data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv",
+    "detector_transfer_screen": "data/reports/real_factory_detector_transfer_screen.blind_v1.json",
+    "motion_mined_windows": "data/reports/real_factory_motion_mined_windows.blind_v1.json",
+    "runtime_diagnostic_debounce30": "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json",
+    "runtime_diagnostic_debounce60": "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json"
+  },
+  "proof_artifacts": {
+    "comparison_report": "data/reports/real_factory_candidate_app_vs_truth.visible_dashboard_1x_v1.json",
+    "observed_events": "data/reports/real_factory_candidate_app_observed_events.visible_dashboard_1x_v1.json",
+    "pacing_report": "data/reports/real_factory_candidate_wall_source_pacing.visible_dashboard_1x_v1.json",
+    "screenshots": [],
+    "validation_report": "data/reports/real_factory_candidate_validation_report.registry_v1.json"
+  },
+  "proof_summary": {},
+  "runtime": {
+    "counting_mode": "event_based",
+    "demo_count_mode": "live_reader_snapshot",
+    "event_count_debounce_sec": 30.0,
+    "event_detection_cluster_distance": 250.0,
+    "event_track_max_age": 20,
+    "event_track_max_match_distance": 260.0,
+    "event_track_min_frames": 10,
+    "event_track_min_travel_px": 0.0,
+    "model_path": "models/img2628_worksheet_accept_event_diag_v1.pt",
+    "playback_speed": 1.0,
+    "processing_fps": 5.0,
+    "reader_fps": 5.0,
+    "runtime_calibration_path": null,
+    "yolo_confidence": 0.76
+  },
+  "schema_version": "factory-vision-video-manifest-v1",
+  "status": "candidate",
+  "truth": {
+    "count_rule": "Count one completed placement when the worker finishes putting the finished product in the output/resting area.",
+    "expected_total": 4,
+    "human_total_path": "data/reports/real_factory_human_truth_total.revealed_v1.json",
+    "human_total_status": "revealed_total_only_pending_event_review",
+    "notes": [
+      "Blind bootstrap candidate manifest only; no human expected total was requested or revealed before the blind AI/app estimate was produced.",
+      "After the blind estimate was written, Thomas revealed the hidden human total as 4.",
+      "Blind prediction was 18, so the blind/app estimate overcounted by 14 and does not match the revealed total.",
+      "Do not mark verified until a plausible visible 1.0x app run and clean app-vs-reviewed-truth exist."
+    ],
+    "rule_id": "revealed_total_only_pending_event_review",
+    "truth_ledger_path": "data/reports/real_factory_human_truth_ledger.reviewed_v1.json",
+    "validation_truth_eligible": false
+  },
+  "verified_at": null,
+  "video": {
+    "codec": "hevc",
+    "duration_sec": 1770.48,
+    "height": 1080,
+    "path": "data/videos/from-pc/real_factory.MOV",
+    "sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86",
+    "width": 1920
+  }
+}

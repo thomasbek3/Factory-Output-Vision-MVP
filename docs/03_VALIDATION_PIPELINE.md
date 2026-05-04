@@ -81,6 +81,18 @@ Screen detector transfer before running a full real-time proof:
   --force
 ```
 
+Assess whether the transfer screen and diagnostics support a numeric blind prediction:
+
+```bash
+.venv/bin/python scripts/assess_blind_prediction_viability.py \
+  --detector-screen data/reports/new_candidate_detector_transfer_screen.v1.json \
+  --diagnostic data/reports/new_candidate_observed_events.diag_v1.json \
+  --output data/reports/new_candidate_blind_prediction_viability.v1.json \
+  --force
+```
+
+If this returns `numeric_prediction_allowed=false`, do not publish a numeric blind count as a valid estimate. Route the case to the learning library described in `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md`.
+
 Plan or execute from a manifest:
 
 ```bash

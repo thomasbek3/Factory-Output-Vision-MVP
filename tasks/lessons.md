@@ -1,5 +1,17 @@
 # Lessons Learned
 
+## 2026-05-04: real_factory Review-To-Training Boundary
+
+1. **Reviewed event timestamps are not positive detector boxes.** A filled `real_factory` worksheet can create a gold event ledger and reviewed positive/negative anchors, but a YOLO export still needs explicit positive bounding-box labels before detector training is ready.
+2. **Pending worksheets should still produce poison-checkable manifests.** A pending active-learning dataset manifest with all rows in the `review` split lets the registry track the next step without accidentally making bronze labels training-eligible.
+3. **Review converters must fail closed by default.** The safe default is to refuse truth outputs while any worksheet row is blank or unclear; `--allow-pending` is only for bronze status artifacts.
+
+## 2026-05-03: Static-Detector Abstention
+
+1. **A static detector firing on every sampled frame is not a weak count signal; it is an abstention signal.** If active transfer detectors are dead and the only high-recall model is a known static/resident-material detector, do not publish its runtime total as a valid blind estimate.
+2. **Failed diagnostics are still learning data.** The false runtime events become hard-negative review candidates, while the reviewed real placements become gold positives for a video-specific detector.
+3. **Detector transfer must gate runtime interpretation.** Parameter-sensitive dead-track counts from static detectors should route to `numeric_prediction_allowed=false` and the learning registry before anyone treats the number as product evidence.
+
 ## 2026-05-01: Factory2 Real-Time Bar
 
 1. **“Near real-time” is not the target.** For Factory2 demo work, the bar is sustained true `1.0x` real-time behavior on the actual app path, not “close enough” wall-clock speed.
@@ -255,6 +267,13 @@ Frame differencing approaches are fragile because the worker's body dominates th
 8. **When a user gives a trusted total, do the timestamp reconciliation work instead of bouncing it back by default.** For IMG_2628, the right move after the visible app hit `25` was focused dispute review against frames/contact sheets, then an auditable reviewed ledger. Keep Moondream out of truth, but do not make the user manually fill timestamps when local evidence can settle the disagreement.
 9. **Manifest launch reconstruction must include every runtime knob.** IMG_2628 needed `event_track_max_match_distance=260`; the validation orchestrator initially omitted it from reconstructed launch commands. Add tests for any new manifest runtime setting that affects reproducibility.
 10. **A lesson is not learned until it changes the next-video command path.** Notes alone did not make IMG_2628 faster. Reusable learning now needs either a script, manifest default, test, or runbook gate. `scripts/bootstrap_video_candidate.py` and `scripts/screen_detector_transfer.py` are the first explicit fast-path hooks for that rule.
+
+## 2026-05-02: real_factory Blind Validation Lessons
+
+1. **Blind bootstrap needs first-class tooling.** If the human total is intentionally hidden, candidate bootstrap must allow `expected_total=null` and mark `blind_estimate_pending_human_reveal`; forcing a numeric total invites fabricated truth.
+2. **Static detector diagnostics are parameter-sensitivity probes, not count authority.** On `real_factory.MOV`, `wire_mesh_panel.pt` detected `80/80` sampled frames and the same app path shifted from `27` non-EOF events at `30s` debounce to `18` at `60s`. That swing is evidence to stop before visible proof and build/review a real active-part detector path.
+3. **Bronze-anchor recovery must stay diagnostic unless truth is reviewed.** A `real_factory` model trained from draft visual anchors plus hard negatives can recover the app runtime count path, but it remains non-promotion evidence. Record the model/dataset boundary and keep `validation/registry.json` untouched until reviewed timestamp truth and eligible labels exist.
+4. **Minimum track duration should reject measured transients, not chase totals.** The `real_factory` v2 detector counted four sustained tracks plus one 18-frame late false track at `min_frames=12`; setting `min_frames=30` rejected that measured transient while preserving tracks of `98`, `34`, `165`, and `70` frames.
 
 ### Training & Deployment Lessons
 

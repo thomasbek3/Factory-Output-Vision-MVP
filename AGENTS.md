@@ -12,9 +12,12 @@ Start with the concise current docs before relying on older task logs or researc
 - `docs/03_VALIDATION_PIPELINE.md`
 - `docs/04_TEST_CASE_REGISTRY.md`
 - `docs/06_DEVELOPER_RUNBOOK.md`
+- `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`
 - `docs/07_ARTIFACT_STORAGE.md`
+- `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md`
 - `docs/KNOWN_LIMITATIONS.md`
 - `validation/registry.json`
+- `validation/learning_registry.json`
 
 ## What This Is
 
@@ -171,6 +174,15 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - If genuinely stuck after inspecting code/artifacts and trying obvious local debugging, ask Oracle before interrupting Thomas for direction.
 - Use `oracle --help` first in a session, prefer dry-run previews, and pass the minimum necessary file set.
 - Use browser mode by default unless Thomas explicitly accepts API spend.
+- This Mac's working Oracle browser path is the normal Chrome ChatGPT session, not a project `.env` password. Current verified config is in `~/.oracle/config.json`: `browser.manualLogin: false`, `browser.modelStrategy: "ignore"`, `browser.keepBrowser: true`, `browser.hideWindow: false`.
+- Chrome cookie DBs to try if Oracle needs an explicit cookie path:
+  - `/Users/thomas/Library/Application Support/Google/Chrome/Default/Cookies`
+  - `/Users/thomas/Library/Application Support/Google/Chrome/Profile 1/Cookies`
+- Reliable Oracle invocation for this repo:
+  ```bash
+  oracle --engine browser --browser-model-strategy ignore --browser-keep-browser --prompt "<question>" --file "src/**" --file "docs/00_CURRENT_STATE.md"
+  ```
+- If Oracle says `Unable to locate the ChatGPT model selector button` while ChatGPT is visibly logged in, do **not** ask for a password. Keep `--browser-model-strategy ignore`; the selector UI is the failure, not cookies.
 
 ### 5. Lessons and durable knowledge
 - Corrections that affect this repo should update the relevant current doc or `tasks/lessons.md`.

@@ -24,6 +24,7 @@ def test_validation_registry_points_to_valid_case_manifests() -> None:
     case_ids = {entry["case_id"] for entry in registry["cases"]}
     assert case_ids == {
         "factory2_test_case_1",
+        "img2628_candidate",
         "img3262_candidate",
         "img3254_clean22_candidate",
     }

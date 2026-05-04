@@ -1,5 +1,159 @@
 # Factory2 Real-Time Demo Counting
 
+# real_factory Failed Blind Run Recovery
+
+## Goal
+
+Turn the `real_factory.MOV` failed blind run into reviewed training/validation anchors without promoting runtime or static-detector diagnostics into truth, then prepare the first `real_factory`-specific detector-training path.
+
+## Checklist
+
+- [x] Use goal mode, `task-kickoff`, `factory-video-testcase-validation`, `writing-plans`, and verification-before-completion boundaries
+- [x] Re-read current source-of-truth docs, handoff, lessons, learning registry, and `real_factory` manifest
+- [x] Inspect the failed-run review packet and worksheet shape
+- [x] Add worksheet conversion tests that fail closed while rows remain pending
+- [x] Build converter tooling for filled review worksheets
+- [x] Generate a pending/bronze conversion status artifact from the current unreviewed worksheet
+- [x] Keep `real_factory` out of `validation/registry.json`
+- [x] Update `validation/learning_registry.json` and `validation/test_cases/real_factory.json` only with legitimate pending/review artifact references
+- [x] Run focused verification for the new tooling and registry/schema guards
+- [x] Update `.hermes/HANDOFF.md` with exact status and next command
+
+## Review
+
+- Started 2026-05-03. `real_factory_candidate` remains `failed_diagnostic`, not verified and not promoted.
+- Packet reviewed:
+  - `data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json`
+  - `data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv`
+  - `data/reports/active_learning/real_factory_failed_blind_run_review_packet.v1.html`
+- Current packet contents are still pending: 4 blank true-placement slots, 18 runtime false-positive / hard-negative candidates, and 60 motion-window candidates.
+- Converter must not create a reviewed truth ledger, gold labels, or training-eligible dataset until Thomas fills reviewed decisions and exactly 4 true-placement timestamps exist.
+- Converter tooling added:
+  - `scripts/convert_failed_blind_run_review.py`
+  - `tests/test_convert_failed_blind_run_review.py`
+- Current pending conversion artifacts:
+  - `data/reports/active_learning/real_factory_failed_blind_run_review_conversion.pending_v1.json`
+  - `data/reports/active_learning/real_factory_failed_blind_run_review_labels.pending_v1.json`
+  - `data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json`
+- Current pending conversion status: `pending_human_review`, `accepted_true_placement_count=0`, `pending_row_count=82`, `validation_truth_eligible=false`, `training_eligible=false`, and `yolo_dataset_export_ready=false`.
+- After the follow-up correction, Codex visual draft count artifacts were added:
+  - `data/reports/active_learning/real_factory_codex_visual_count_draft.v1.json`
+  - `data/reports/real_factory_codex_visual_count_events.draft_v1.csv`
+  - Draft count is `4`, with candidate timestamps `448.0`, `1026.0`, `1404.0`, and `1554.0`.
+  - This is explicitly `bronze`, `validation_truth_eligible=false`, `training_eligible=false`, not runtime count authority, and pending Thomas review.
+- Reviewed truth outputs were intentionally not created because Thomas has not filled the 4 reviewed event timestamps.
+- Focused verification passed: `.venv/bin/python -m pytest tests/test_convert_failed_blind_run_review.py tests/test_build_failed_blind_run_learning_packet.py tests/test_assess_blind_prediction_viability.py tests/test_learning_registry_schema.py tests/test_screen_detector_transfer.py tests/test_validation_registry_schema.py tests/test_bootstrap_video_candidate.py tests/test_active_learning_schemas.py tests/test_dataset_poisoning.py -q` (`35 passed`).
+- The next reviewed conversion command, after the worksheet is filled, is:
+
+```bash
+.venv/bin/python scripts/convert_failed_blind_run_review.py \
+  --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv \
+  --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json \
+  --manifest validation/test_cases/real_factory.json \
+  --status-output data/reports/active_learning/real_factory_failed_blind_run_review_conversion.reviewed_v1.json \
+  --truth-csv data/reports/real_factory_human_truth_event_times.reviewed_v1.csv \
+  --truth-ledger data/reports/real_factory_human_truth_ledger.reviewed_v1.json \
+  --review-labels data/reports/active_learning/real_factory_failed_blind_run_review_labels.reviewed_v1.json \
+  --dataset-manifest data/reports/active_learning/real_factory_active_learning_dataset_manifest.reviewed_v1.json \
+  --reviewer-id thomas \
+  --force
+```
+
+# Learning Library Recovery Slice
+
+## Goal
+
+Turn the `real_factory.MOV` blind failure into a productized learning-library path: preserve the failure as reusable data, document the architecture, and prevent static-detector diagnostics from being reported as valid blind predictions.
+
+## Checklist
+
+- [x] Use `task-kickoff` to reset the task from validation attempt to learning-flywheel implementation
+- [x] Capture Oracle's learning-flywheel architecture as repo doctrine
+- [x] Add a learning registry and schema
+- [x] Record `real_factory_candidate` as a failed diagnostic learning case, not a verified registry case
+- [x] Add a blind-prediction viability guardrail for dead active transfer plus static-detector overcount
+- [x] Run the guardrail on `real_factory` diagnostics and write a `numeric_prediction_allowed=false` artifact
+- [x] Build a failed-run review packet with 4 true-placement slots, 18 hard-negative candidates, and 60 motion windows
+- [x] Add focused tests for the guardrail and learning registry
+- [x] Run full focused verification suite after docs/handoff updates
+
+## Review
+
+- Canonical architecture doc: `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md`.
+- Learning index: `validation/learning_registry.json`; schema: `validation/schemas/learning_registry.schema.json`.
+- `real_factory_candidate` is indexed as `failed_diagnostic` with hidden human total `4`, failed static diagnostic total `18`, and `registry_promotion_eligible=false`.
+- Guardrail script: `scripts/assess_blind_prediction_viability.py`.
+- Guardrail artifact: `data/reports/real_factory_blind_prediction_viability.v1.json`; result `status=no_valid_blind_prediction`, `numeric_prediction_allowed=false`, active transfer failed, static detector risk true, runtime diagnostics parameter-sensitive with non-EOF counts `27` vs `18`.
+- Recovery review artifacts:
+  - `data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json`
+  - `data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv`
+  - `data/reports/active_learning/real_factory_failed_blind_run_review_packet.v1.html`
+  - Contents: `4` pending true-placement slots, `18` pending false-positive/hard-negative candidates, and `60` pending motion-window candidates. All remain `validation_truth_eligible=false` and `training_eligible=false`.
+- Initial focused check passed: `.venv/bin/python -m pytest tests/test_assess_blind_prediction_viability.py tests/test_learning_registry_schema.py -q` (`6 passed`).
+- Full focused check passed: `.venv/bin/python -m pytest tests/test_assess_blind_prediction_viability.py tests/test_learning_registry_schema.py tests/test_screen_detector_transfer.py tests/test_validation_registry_schema.py tests/test_bootstrap_video_candidate.py -q` (`23 passed`).
+- JSON parse checks passed for the new learning registry/schema, blind viability artifact, real_factory manifest, and updated blind estimate report.
+
+# real_factory Blind Candidate Validation
+
+## Goal
+
+Validate `data/videos/from-pc/real_factory.MOV` as far as possible through the real Factory Vision app path, with the first phase kept blind: produce the AI/app predicted total and event ledger before requesting Thomas's hidden human total.
+
+## Checklist
+
+- [x] Use goal mode, `task-kickoff`, and the `factory-video-testcase-validation` skill
+- [x] Read active project docs, handoff, lessons, todo, registry, artifact storage, and real-app definition of done
+- [x] Check dirty worktree and preserve unrelated existing changes
+- [x] Confirm repo and artifact raw-video SHA-256 and ffprobe metadata
+- [x] Patch bootstrap tooling to allow a blind candidate without inventing an expected total
+- [x] Bootstrap `real_factory_candidate` with `expected_total=null` / hidden-count status
+- [x] Generate preview/contact sheets
+- [x] Run detector transfer screening across known successful detectors and static-detector risk screen
+- [x] Choose the least-bad diagnostic path from screening evidence
+- [x] Generate candidate event windows and blind AI/app event ledger
+- [x] Attempt real app path with `FC_DEMO_COUNT_MODE=live_reader_snapshot`, `FC_COUNTING_MODE=event_based`, and accelerated backend diagnostics; defer visible `1.0x` because diagnostics are static-detector/parameter-sensitive, not promotion-plausible
+- [ ] Preserve dashboard screenshots and observed events if the visible app path is run
+- [x] Write blind estimate report under `data/reports` with predicted total, event timestamps, detector screen, diagnostics, and proof boundary
+- [x] Ask Thomas to reveal the hidden human total only after the blind estimate exists
+- [x] Compare to hidden total after reveal; require reviewed event truth before any registry promotion
+
+## Review
+
+- Started 2026-05-02. `real_factory.MOV` is intentionally blind: Thomas has a hidden human count, but it must not be requested until the AI/app prediction and event ledger exist.
+- Current fingerprint confirmed for both repo cache and artifact copy: SHA-256 `48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86`.
+- ffprobe confirms duration `1770.480000s`, `1920x1080`, HEVC Main 10, nominal `30fps`, `53113` video frames, file size `2046294207` bytes, and iPhone-created MOV metadata.
+- `scripts/bootstrap_video_candidate.py` now supports blind candidates by allowing omitted/`unknown` expected total, writing `expected_total: null`, `blind_estimate_pending_human_reveal`, and `validation_truth_eligible=false`. Focused bootstrap tests passed with `.venv/bin/python -m pytest tests/test_bootstrap_video_candidate.py -q` (`10 passed`).
+- Blind candidate bootstrap wrote `data/reports/real_factory_video_fingerprint.v1.json`, `data/reports/real_factory_human_truth_total.v1.json`, `data/reports/real_factory_human_truth_event_times.pending_reveal.csv`, `validation/test_cases/real_factory.json`, and `data/videos/preview_sheets/real_factory_candidate/real_factory.jpg`.
+- Detector transfer screen: `data/reports/real_factory_detector_transfer_screen.blind_v1.json`.
+  - `models/img2628_worksheet_accept_event_diag_v1.pt`: `0/80` sampled frames at `conf=0.25`.
+  - `models/img3254_active_panel_v4_yolov8n.pt`: `0/80`.
+  - `models/img3262_active_panel_v2.pt`: `0/80`.
+  - `models/panel_in_transit.pt`: `1/80`; not enough transfer recall.
+  - `models/wire_mesh_panel.pt`: `80/80`, `656` detections; broad/static detector risk only.
+- Motion/review scaffolding:
+  - `data/reports/real_factory_motion_mined_windows.blind_v1.json` with `60` mined motion windows.
+  - Motion overview pages under `data/videos/review_frames/real_factory_blind_motion_overview_v1/`.
+  - 15-second full-video time-lapse pages under `data/videos/review_frames/real_factory_timelapse_15s_v1/`.
+- Real app backend diagnostics were attempted on `8092` with `FC_DEMO_COUNT_MODE=live_reader_snapshot`, `FC_COUNTING_MODE=event_based`, `models/wire_mesh_panel.pt`, `conf=0.25`, `processing_fps=5`, `reader_fps=5`, accelerated playback requested at `16` but diagnostics reported `8.0`.
+  - Debounce `30s`: `data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json`; raw `31` events, `27` non-EOF, `4` same-timestamp EOF events.
+  - Debounce `60s`: `data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json`; raw `22` events, `18` non-EOF, `4` same-timestamp EOF events.
+  - The count is parameter-sensitive and uses the known static detector, so visible `1.0x` dashboard proof was not run.
+- Blind estimate report: `data/reports/real_factory_blind_ai_event_estimate.v1.json`; CSV ledger: `data/reports/real_factory_blind_ai_event_estimate.v1.csv`.
+  - Blind predicted total: `18`.
+  - Predicted event timestamps: `38.401`, `121.603`, `192.805`, `266.007`, `342.209`, `421.211`, `496.413`, `568.015`, `630.217`, `808.388`, `948.192`, `1227.799`, `1304.601`, `1386.203`, `1478.206`, `1544.807`, `1651.810`, `1732.812`.
+  - Status remains `blind_ai_estimate`, `validation_truth_eligible=false`, `training_eligible=false`, and not verified.
+- Hidden human count was requested after the blind estimate was produced. Thomas then revealed the hidden total as `4`.
+- Total comparison artifact: `data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json`.
+  - Blind predicted total: `18`.
+  - Revealed hidden human total: `4`.
+  - Delta: `+14` app/AI overcount; `total_matches=false`.
+  - Clarification: the `18` rows are diagnostic `dead_track_event` outputs from a failed `wire_mesh_panel.pt` static-detector path, not 18 visually confirmed completed placements.
+  - Status remains candidate-only and not verified: the transferred active detectors failed, the wire-mesh diagnostic overcounted via a static/resident detector, and reviewed event-level truth is still missing.
+- Revealed total artifact: `data/reports/real_factory_human_truth_total.revealed_v1.json`; this is total-only comparison evidence, not a reviewed event ledger or registry-promotion artifact.
+- Goal completion audit artifact: `data/reports/real_factory_goal_completion_audit.v1.json`; it maps the prompt requirements to concrete evidence and records the completed validation-attempt outcome as not verified.
+- Focused checks after code/schema/test edits: `.venv/bin/python -m pytest tests/test_bootstrap_video_candidate.py tests/test_screen_detector_transfer.py tests/test_validation_registry_schema.py -q` (`17 passed`). The registry-schema test expectation was updated to include existing `img2628_candidate`.
+- JSON parse checks passed for the real_factory manifest/reveal/comparison/audit artifacts, and a required-key/candidate-boundary check passed for `validation/test_cases/real_factory.json`.
+
 # IMG_2628 Candidate Test Case
 
 ## Goal
@@ -417,3 +571,89 @@ Convert event evidence plus advisory MD2/Moondream teacher labels into a reviewe
 - Exported `data/reports/active_learning/img3254_review_queue.local_v1.html` for local reviewer triage.
 - IMG_3254 queue result: `22` entries total, `21` `review_first`, `1` `hard_negative_review`; candidate uses were `18` `needs_human_review` and `4` `hard_negative_review`.
 - Documented the queue and HTML export commands plus safety boundaries in `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`.
+---
+
+# real_factory Runtime Count 4 Through YOLO/Event App Path
+
+## Goal
+
+Make `data/videos/from-pc/real_factory.MOV` count exactly `4` through the real local `live_reader_snapshot` + `event_based` app/runtime path, with evidence that does not treat the failed static diagnostic total or bronze draft anchors as validation truth.
+
+## Checklist
+
+- [x] Start goal mode and preserve the existing dirty worktree
+- [x] Run `git status --short --branch`
+- [x] Inspect the required draft/learning packet summaries
+- [x] Read current validation, active-learning, artifact, learning-library, handoff, lessons, manifest, and artifact context
+- [x] Verify the repo and artifact raw-video SHA-256 values
+- [x] Reproduce the current real app/runtime path on `real_factory.MOV`
+- [x] Compare the captured runtime total/events to the required total `4`
+- [x] Diagnose detector/config/counting failure against runtime events and frame evidence around the four draft navigation anchors
+- [x] Apply the shortest legitimate runtime/model/config/counting fix, or ask Oracle if the first serious local pass cannot get to `4`
+- [x] Rerun the real app/runtime path until final runtime total is exactly `4`, or document the concrete post-Oracle blocker
+- [x] Write an evidence artifact with command, env/config/model path, video SHA, runtime event output, logs/report path, and why it counted `4`
+- [x] Run relevant tests/checks
+- [x] Update `.hermes/HANDOFF.md` with exact status and next command
+
+## Review
+
+- Completed runtime recovery on 2026-05-04. `real_factory.MOV` now counts exactly `4` through the local FastAPI app runtime path with `FC_DEMO_COUNT_MODE=live_reader_snapshot` and `FC_COUNTING_MODE=event_based`.
+- Successful runtime report: `data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_min30_cluster250_age52_debounce60_speed8_v1.json`.
+  - `run_complete=true`
+  - `current_state=DEMO_COMPLETE`
+  - `observed_coverage_end_sec=1770.413`
+  - `observed_event_count=4`
+  - Runtime event timestamps: `470.612`, `1038.194`, `1421.604`, `1564.208`
+  - Counted track durations: `98`, `34`, `165`, and `70` frames
+- Evidence artifact: `data/reports/real_factory_runtime_count4_app_path_evidence_v1.json`.
+  - Includes the exact launch/capture commands, env/config, model path/hash, video SHA, runtime output, backend log path, and why the final runtime count is `4`.
+  - Explicit boundary: diagnostic/runtime recovery only; `validation_truth_eligible=false`, `training_eligible_for_promotion=false`, and `real_factory` was not added to `validation/registry.json`.
+- Model used: `models/real_factory_diagnostic_action_v2.pt` from `training_runs/real_factory_diagnostic_action_v2/weights/best.pt`.
+  - Model SHA-256: `e22beb2c87fa90ec1b349a1ccea113c4e791f64a8350a54ac98ab494d30829a1`.
+  - Dataset manifest: `data/labels/real_factory_diagnostic_action_v2/dataset_manifest.json`.
+  - Dataset is diagnostic-only because labels came from bronze visual draft anchors plus local hard negatives, not reviewed validation truth.
+- Key runtime fix: keep `models/real_factory_diagnostic_action_v2.pt` at `--yolo-confidence 0.25`, but set `--event-track-min-frames 30`.
+  - The prior v2 app run at `min_frames=12` counted `5`: the same four sustained tracks plus a late short 18-frame false track at `1695.011s`.
+  - The final `min_frames=30` run retained the four sustained tracks and rejected that short transient.
+- Oracle rule was followed after the first serious local runtime path failed to count `4`.
+  - Oracle browser escalation failed locally because no ChatGPT cookies were applied from the Chrome profiles.
+  - Explicit cookie paths tried: `/Users/thomas/Library/Application Support/Google/Chrome/Default/Cookies` and `/Users/thomas/Library/Application Support/Google/Chrome/Profile 1/Cookies`.
+  - Work continued locally without asking Thomas for credentials.
+- Verification passed:
+  - `.venv/bin/python -m json.tool data/reports/real_factory_runtime_count4_app_path_evidence_v1.json`
+  - `.venv/bin/python -m py_compile scripts/build_real_factory_diagnostic_action_dataset.py`
+  - `.venv/bin/python -m pytest tests/test_build_real_factory_diagnostic_action_dataset.py -q` (`5 passed`)
+  - `.venv/bin/python -m pytest tests/test_capture_factory2_app_run_events.py tests/test_start_factory2_demo_app.py -q` (`11 passed`)
+  - `.venv/bin/python -m pytest tests/test_validation_registry_schema.py tests/test_learning_registry_schema.py -q` (`6 passed`)
+- Exact rerun command:
+
+```bash
+FC_DB_PATH=data/factory_counter_real_factory_run8092_diag_action_v2_conf025_min30.db .venv/bin/python scripts/start_factory2_demo_stack.py \
+  --backend-port 8092 \
+  --frontend-port 5174 \
+  --skip-frontend \
+  --video data/videos/from-pc/real_factory.MOV \
+  --no-runtime-calibration \
+  --model models/real_factory_diagnostic_action_v2.pt \
+  --yolo-confidence 0.25 \
+  --processing-fps 5 \
+  --reader-fps 5 \
+  --playback-speed 8 \
+  --event-track-max-age 52 \
+  --event-track-min-frames 30 \
+  --event-count-debounce-sec 60 \
+  --event-track-max-match-distance 260 \
+  --event-detection-cluster-distance 250
+```
+
+Then capture:
+
+```bash
+.venv/bin/python scripts/capture_factory2_app_run_events.py \
+  --base-url http://127.0.0.1:8092 \
+  --output data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_min30_cluster250_age52_debounce60_speed8_v1.json \
+  --poll-interval-sec 5 \
+  --max-wait-sec 540 \
+  --auto-start \
+  --force
+```

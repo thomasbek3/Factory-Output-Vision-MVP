@@ -41,10 +41,12 @@
       "required": ["rule_id", "expected_total", "count_rule", "truth_ledger_path"],
       "properties": {
         "rule_id": { "type": "string" },
-        "expected_total": { "type": "integer" },
+        "expected_total": { "type": ["integer", "null"] },
         "count_rule": { "type": "string" },
         "truth_ledger_path": { "type": "string" },
         "human_total_path": { "type": ["string", "null"] },
+        "human_total_status": { "type": "string" },
+        "validation_truth_eligible": { "type": "boolean" },
         "notes": { "type": "array", "items": { "type": "string" } }
       }
     },

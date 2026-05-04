@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-learning-registry.schema.json",
+  "title": "Factory Vision Learning Registry",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_root",
+    "policy",
+    "cases"
+  ],
+  "properties": {
+    "schema_version": { "const": "factory-vision-learning-registry-v1" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "artifact_root": { "type": "string", "minLength": 1 },
+    "policy": {
+      "type": "object",
+      "required": [
+        "runtime_count_authority",
+        "teacher_label_default_tier",
+        "validation_truth_rule",
+        "cloud_upload_default"
+      ],
+      "properties": {
+        "runtime_count_authority": { "const": "yolo_event_app_path_only" },
+        "teacher_label_default_tier": { "const": "bronze_pending" },
+        "validation_truth_rule": { "const": "reviewed_gold_truth_required" },
+        "cloud_upload_default": { "const": "forbidden_without_explicit_permission" }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "source_video_sha256",
+          "status",
+          "privacy_mode",
+          "manifest_path",
+          "learning_outcome",
+          "recommended_next_actions"
+        ],
+        "properties": {
+          "case_id": { "type": "string", "minLength": 1 },
+          "source_video_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "learning_candidate",
+              "training_candidate",
+              "validated_candidate",
+              "failed_diagnostic",
+              "verified_registry_case"
+            ]
+          },
+          "privacy_mode": {
+            "type": "string",
+            "enum": [
+              "offline_local",
+              "cloud_assisted_setup",
+              "cloud_assisted_audit"
+            ]
+          },
+          "manifest_path": { "type": "string", "minLength": 1 },
+          "artifact_paths": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["string", "array", "object", "null"]
+            }
+          },
+          "learning_outcome": {
+            "type": "object",
+            "required": [
+              "blind_prediction_status",
+              "detector_transfer_status",
+              "registry_promotion_eligible"
+            ],
+            "properties": {
+              "blind_prediction_status": {
+                "type": "string",
+                "enum": [
+                  "not_started",
+                  "plausible_blind_estimate",
+                  "no_valid_blind_prediction",
+                  "matched_human_total_pending_event_review",
+                  "failed_total_comparison"
+                ]
+              },
+              "hidden_human_total": { "type": ["integer", "null"], "minimum": 0 },
+              "failed_diagnostic_total": { "type": ["integer", "null"], "minimum": 0 },
+              "observed_minus_human_delta": { "type": ["integer", "null"] },
+              "detector_transfer_status": { "type": "string", "minLength": 1 },
+              "registry_promotion_eligible": { "type": "boolean" },
+              "validation_truth_eligible": { "type": "boolean" },
+              "training_eligible": { "type": "boolean" }
+            }
+          },
+          "recommended_next_actions": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

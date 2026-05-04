@@ -1,0 +1,118 @@
+{
+  "captured_at": 1777933054.013,
+  "current_state": "DEMO_COMPLETE",
+  "events": [
+    {
+      "bbox": null,
+      "centroid": [
+        1108,
+        492
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 470.612,
+      "first_centroid": [
+        1117,
+        502
+      ],
+      "frames_seen": 98,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 2354,
+      "reader_frame_time": 1777932796.826755,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 1,
+      "runtime_total_after_event": 1,
+      "source_kind": "demo",
+      "track_id": 2,
+      "travel_px": 13.454,
+      "worker_state": "RUNNING_RED_STOPPED"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1411,
+        566
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 1038.194,
+      "first_centroid": [
+        1426,
+        563
+      ],
+      "frames_seen": 34,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 5192,
+      "reader_frame_time": 1777932905.70373,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 2,
+      "runtime_total_after_event": 2,
+      "source_kind": "demo",
+      "track_id": 6,
+      "travel_px": 15.297,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        957,
+        585
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 1421.604,
+      "first_centroid": [
+        965,
+        579
+      ],
+      "frames_seen": 165,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 7109,
+      "reader_frame_time": 1777932983.156643,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 3,
+      "runtime_total_after_event": 3,
+      "source_kind": "demo",
+      "track_id": 8,
+      "travel_px": 10.0,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        902,
+        577
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 1564.208,
+      "first_centroid": [
+        916,
+        573
+      ],
+      "frames_seen": 70,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 7822,
+      "reader_frame_time": 1777933011.862662,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 4,
+      "runtime_total_after_event": 4,
+      "source_kind": "demo",
+      "track_id": 10,
+      "travel_px": 14.56,
+      "worker_state": "RUNNING_GREEN"
+    }
+  ],
+  "metadata": {
+    "auto_start": true,
+    "base_url": "http://127.0.0.1:8092",
+    "max_wait_sec": 540.0,
+    "poll_interval_sec": 5.0
+  },
+  "observed_coverage_end_sec": 1770.413,
+  "observed_event_count": 4,
+  "reader_last_sequence_index": 8853,
+  "reader_last_source_timestamp_sec": 1770.413,
+  "run_complete": true,
+  "schema_version": "factory2-app-observed-events-v1"
+}
