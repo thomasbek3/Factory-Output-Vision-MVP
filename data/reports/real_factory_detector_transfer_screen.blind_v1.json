@@ -1,0 +1,155 @@
+{
+  "duration_sec": 1770.48,
+  "models": [
+    {
+      "confidence_summaries": [
+        {
+          "confidence": 0.25,
+          "detection_rate": 0.0,
+          "images_with_detections": 0,
+          "recommendation": "transfer_failed_build_video_specific_detector",
+          "sample_count": 80,
+          "total_detections": 0
+        }
+      ],
+      "model_path": "models/img2628_worksheet_accept_event_diag_v1.pt"
+    },
+    {
+      "confidence_summaries": [
+        {
+          "confidence": 0.25,
+          "detection_rate": 0.0,
+          "images_with_detections": 0,
+          "recommendation": "transfer_failed_build_video_specific_detector",
+          "sample_count": 80,
+          "total_detections": 0
+        }
+      ],
+      "model_path": "models/img3254_active_panel_v4_yolov8n.pt"
+    },
+    {
+      "confidence_summaries": [
+        {
+          "confidence": 0.25,
+          "detection_rate": 0.0,
+          "images_with_detections": 0,
+          "recommendation": "transfer_failed_build_video_specific_detector",
+          "sample_count": 80,
+          "total_detections": 0
+        }
+      ],
+      "model_path": "models/img3262_active_panel_v2.pt"
+    },
+    {
+      "confidence_summaries": [
+        {
+          "confidence": 0.25,
+          "detection_rate": 0.0125,
+          "images_with_detections": 1,
+          "recommendation": "transfer_failed_build_video_specific_detector",
+          "sample_count": 80,
+          "total_detections": 1
+        }
+      ],
+      "model_path": "models/panel_in_transit.pt"
+    },
+    {
+      "confidence_summaries": [
+        {
+          "confidence": 0.25,
+          "detection_rate": 1.0,
+          "images_with_detections": 80,
+          "recommendation": "broad_or_static_detector_risk_requires_runtime_diagnostic",
+          "sample_count": 80,
+          "total_detections": 656
+        }
+      ],
+      "model_path": "models/wire_mesh_panel.pt"
+    }
+  ],
+  "sample_count": 80,
+  "sample_timestamps_sec": [
+    11.066,
+    33.197,
+    55.328,
+    77.459,
+    99.59,
+    121.721,
+    143.852,
+    165.983,
+    188.113,
+    210.244,
+    232.376,
+    254.506,
+    276.637,
+    298.769,
+    320.899,
+    343.031,
+    365.161,
+    387.293,
+    409.424,
+    431.555,
+    453.685,
+    475.816,
+    497.947,
+    520.079,
+    542.21,
+    564.341,
+    586.471,
+    608.602,
+    630.734,
+    652.865,
+    674.995,
+    697.126,
+    719.258,
+    741.389,
+    763.519,
+    785.65,
+    807.781,
+    829.913,
+    852.043,
+    874.175,
+    896.305,
+    918.437,
+    940.567,
+    962.698,
+    984.83,
+    1006.961,
+    1029.091,
+    1051.223,
+    1073.353,
+    1095.485,
+    1117.615,
+    1139.747,
+    1161.878,
+    1184.008,
+    1206.139,
+    1228.271,
+    1250.402,
+    1272.533,
+    1294.663,
+    1316.794,
+    1338.926,
+    1361.057,
+    1383.188,
+    1405.318,
+    1427.449,
+    1449.581,
+    1471.712,
+    1493.842,
+    1515.973,
+    1538.105,
+    1560.236,
+    1582.367,
+    1604.497,
+    1626.629,
+    1648.76,
+    1670.89,
+    1693.022,
+    1715.152,
+    1737.284,
+    1759.415
+  ],
+  "schema_version": "factory-vision-detector-transfer-screen-v1",
+  "video_path": "data/videos/from-pc/real_factory.MOV"
+}

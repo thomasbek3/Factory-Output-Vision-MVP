@@ -1,0 +1,86 @@
+{
+  "schema_version": "factory-vision-video-manifest-v1",
+  "case_id": "img3262_candidate",
+  "display_name": "IMG_3262 verified candidate",
+  "status": "verified_candidate",
+  "promotion_status": "not_promoted",
+  "verified_at": "2026-05-01",
+  "video": {
+    "path": "demo/IMG_3262.MOV",
+    "sha256": "4cb1d274cd2a53ca792bd3b7b217b84bf7734c780a7e43a1b7cc77557a32bf6e",
+    "duration_sec": 946.991667,
+    "width": 1920,
+    "height": 1080,
+    "codec": "hevc"
+  },
+  "truth": {
+    "rule_id": "completed_placement_21",
+    "expected_total": 21,
+    "count_rule": "Count each completed placement after the worker finishes putting the part or panel down. Include the final placement in the last second of the video.",
+    "truth_ledger_path": "data/reports/img3262_human_truth_ledger.v2.json",
+    "human_total_path": "data/reports/img3262_human_truth_total.v1.json",
+    "notes": [
+      "Verified as a clean real-app candidate, not promoted to a numbered test case."
+    ]
+  },
+  "runtime": {
+    "demo_count_mode": "live_reader_snapshot",
+    "counting_mode": "event_based",
+    "playback_speed": 1.0,
+    "processing_fps": 10.0,
+    "reader_fps": 10.0,
+    "runtime_calibration_path": null,
+    "model_path": "models/img3262_active_panel_v2.pt",
+    "yolo_confidence": 0.25,
+    "event_track_max_age": 10,
+    "event_track_min_frames": 4,
+    "event_detection_cluster_distance": 90.0
+  },
+  "launch": {
+    "backend_port": 8092,
+    "frontend_port": 5174,
+    "command": [
+      ".venv/bin/python",
+      "scripts/start_factory2_demo_stack.py",
+      "--backend-port",
+      "8092",
+      "--frontend-port",
+      "5174",
+      "--video",
+      "demo/IMG_3262.MOV",
+      "--model",
+      "models/img3262_active_panel_v2.pt",
+      "--no-runtime-calibration",
+      "--yolo-confidence",
+      "0.25",
+      "--processing-fps",
+      "10",
+      "--reader-fps",
+      "10",
+      "--playback-speed",
+      "1",
+      "--event-track-max-age",
+      "10",
+      "--event-track-min-frames",
+      "4",
+      "--event-detection-cluster-distance",
+      "90"
+    ],
+    "dashboard_url": "http://127.0.0.1:5174/dashboard"
+  },
+  "proof_artifacts": {
+    "observed_events": "data/reports/img3262_app_observed_events.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3.json",
+    "comparison_report": "data/reports/img3262_app_vs_truth.run8092.active_panel_v2_conf025_cluster90_age10.visible_dashboard_1x_paced_v3_ledger_v2.json",
+    "validation_report": "data/reports/img3262_validation_report.registry_v1.json",
+    "pacing_report": null,
+    "screenshots": []
+  },
+  "proof_summary": {
+    "observed_event_count": 21,
+    "matched_count": 21,
+    "missing_truth_count": 0,
+    "unexpected_observed_count": 0,
+    "first_divergence": null,
+    "wall_per_source": 1.0000006956566017
+  }
+}

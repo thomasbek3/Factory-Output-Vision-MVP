@@ -1,0 +1,133 @@
+{
+  "schema_version": "factory-vision-runtime-count-evidence-v1",
+  "case_id": "real_factory",
+  "created_at_utc": "2026-05-04T22:17:55Z",
+  "video": {
+    "repo_path": "data/videos/from-pc/real_factory.MOV",
+    "artifact_copy": "/Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV",
+    "sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86"
+  },
+  "runtime_authority": {
+    "path": "local_fastapi_app_runtime",
+    "counting_mode": "event_based",
+    "demo_count_mode": "live_reader_snapshot",
+    "source": "YOLO detections tracked by app/services/counting.py through app/workers/vision_worker.py",
+    "runtime_count_authority": true,
+    "validation_truth_eligible": false,
+    "training_eligible_for_promotion": false,
+    "registry_action": "not_added_to_validation_registry"
+  },
+  "model": {
+    "path": "models/real_factory_diagnostic_action_v2.pt",
+    "sha256": "e22beb2c87fa90ec1b349a1ccea113c4e791f64a8350a54ac98ab494d30829a1",
+    "source_training_run": "training_runs/real_factory_diagnostic_action_v2/weights/best.pt",
+    "dataset_manifest": "data/labels/real_factory_diagnostic_action_v2/dataset_manifest.json",
+    "diagnostic_only": true,
+    "label_source": "bronze_visual_draft_anchors_and_local_hard_negatives_not_validation_truth",
+    "boundary": "This model is valid for local engineering recovery of the runtime path only. It does not create reviewed timestamp truth or promotion evidence."
+  },
+  "final_app_run": {
+    "start_command": "FC_DB_PATH=data/factory_counter_real_factory_run8092_diag_action_v2_conf025_min30.db .venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8092 --frontend-port 5174 --skip-frontend --video data/videos/from-pc/real_factory.MOV --no-runtime-calibration --model models/real_factory_diagnostic_action_v2.pt --yolo-confidence 0.25 --processing-fps 5 --reader-fps 5 --playback-speed 8 --event-track-max-age 52 --event-track-min-frames 30 --event-count-debounce-sec 60 --event-track-max-match-distance 260 --event-detection-cluster-distance 250",
+    "capture_command": ".venv/bin/python scripts/capture_factory2_app_run_events.py --base-url http://127.0.0.1:8092 --output data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_min30_cluster250_age52_debounce60_speed8_v1.json --poll-interval-sec 5 --max-wait-sec 540 --auto-start --force",
+    "report_path": "data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_min30_cluster250_age52_debounce60_speed8_v1.json",
+    "backend_log_path": "data/logs/factory2_demo_backend_8092.log",
+    "db_path": "data/factory_counter_real_factory_run8092_diag_action_v2_conf025_min30.db",
+    "backend_url": "http://127.0.0.1:8092/dashboard"
+  },
+  "env_config": {
+    "FC_DEMO_MODE": "1",
+    "FC_DEMO_VIDEO_PATH": "data/videos/from-pc/real_factory.MOV",
+    "FC_DEMO_LOOP": "0",
+    "FC_DEMO_PLAYBACK_SPEED": "8",
+    "FC_DEMO_COUNT_MODE": "live_reader_snapshot",
+    "FC_COUNTING_MODE": "event_based",
+    "FC_RUNTIME_CALIBRATION_PATH": "",
+    "FC_YOLO_MODEL_PATH": "models/real_factory_diagnostic_action_v2.pt",
+    "FC_YOLO_CONF_THRESHOLD": "0.25",
+    "FC_YOLO_EXCLUDED_CLASSES": "",
+    "FC_PROCESSING_FPS": "5",
+    "FC_READER_FPS": "5",
+    "FC_EVENT_TRACK_MAX_AGE": "52",
+    "FC_EVENT_TRACK_MIN_FRAMES": "30",
+    "FC_EVENT_COUNT_DEBOUNCE_SEC": "60",
+    "FC_EVENT_TRACK_MAX_MATCH_DISTANCE": "260",
+    "FC_EVENT_DETECTION_CLUSTER_DISTANCE": "250"
+  },
+  "runtime_output": {
+    "run_complete": true,
+    "current_state": "DEMO_COMPLETE",
+    "observed_coverage_end_sec": 1770.413,
+    "reader_last_source_timestamp_sec": 1770.413,
+    "observed_event_count": 4,
+    "events": [
+      {
+        "event_ts": 470.612,
+        "track_id": 2,
+        "frames_seen": 98,
+        "travel_px": 13.454,
+        "first_centroid": [1117, 502],
+        "centroid": [1108, 492],
+        "runtime_total_after_event": 1,
+        "reason": "dead_track_event"
+      },
+      {
+        "event_ts": 1038.194,
+        "track_id": 6,
+        "frames_seen": 34,
+        "travel_px": 15.297,
+        "first_centroid": [1426, 563],
+        "centroid": [1411, 566],
+        "runtime_total_after_event": 2,
+        "reason": "dead_track_event"
+      },
+      {
+        "event_ts": 1421.604,
+        "track_id": 8,
+        "frames_seen": 165,
+        "travel_px": 10.0,
+        "first_centroid": [965, 579],
+        "centroid": [957, 585],
+        "runtime_total_after_event": 3,
+        "reason": "dead_track_event"
+      },
+      {
+        "event_ts": 1564.208,
+        "track_id": 10,
+        "frames_seen": 70,
+        "travel_px": 14.56,
+        "first_centroid": [916, 573],
+        "centroid": [902, 577],
+        "runtime_total_after_event": 4,
+        "reason": "dead_track_event"
+      }
+    ]
+  },
+  "why_counted_4": [
+    "The final run used the real FastAPI demo runtime path with live_reader_snapshot and event_based counting, not the failed static diagnostic.",
+    "The YOLO detector emitted sustained tracks around the four action windows; the app counted those tracks when they died after meeting the event acceptance criteria.",
+    "The four counted tracks were all sustained under FC_EVENT_TRACK_MIN_FRAMES=30: 98, 34, 165, and 70 frames.",
+    "The previous v2 app run with FC_EVENT_TRACK_MIN_FRAMES=12 counted the same four tracks plus a late short 18-frame false track at 1695.011s. Raising the minimum to 30 rejects that short transient while retaining the four sustained runtime tracks."
+  ],
+  "prior_runtime_attempts": [
+    {
+      "report_path": "data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v2_conf025_cluster250_age52_min12_debounce60_speed8_v1.json",
+      "observed_event_count": 5,
+      "reason_for_rejection": "Over-counted one late short 18-frame track at 1695.011s."
+    },
+    {
+      "report_path": "data/reports/real_factory_app_observed_events.run8092.real_factory_diag_action_v1_conf035_cluster250_age52_min12_debounce60_speed8_v1.json",
+      "observed_event_count": 8,
+      "reason_for_rejection": "V1 detector learned broad/static background detections and over-counted."
+    }
+  ],
+  "oracle": {
+    "required_after_first_failed_local_pass": true,
+    "attempted": true,
+    "result": "Oracle browser escalation failed locally because no ChatGPT cookies were applied from Chrome profiles; work continued locally without asking Thomas for credentials.",
+    "cookie_paths_tried": [
+      "/Users/thomas/Library/Application Support/Google/Chrome/Default/Cookies",
+      "/Users/thomas/Library/Application Support/Google/Chrome/Profile 1/Cookies"
+    ]
+  },
+  "status": "runtime_count_4_diagnostic_only_not_registry_verified"
+}

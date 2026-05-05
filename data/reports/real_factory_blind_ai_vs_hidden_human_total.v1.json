@@ -1,0 +1,84 @@
+{
+  "schema_version": "factory-vision-blind-ai-vs-hidden-human-total-v1",
+  "case_id": "real_factory_candidate",
+  "created_at": "2026-05-02",
+  "video": {
+    "path": "data/videos/from-pc/real_factory.MOV",
+    "artifact_copy": "/Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV",
+    "sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86",
+    "duration_sec": 1770.48
+  },
+  "blind_prediction": {
+    "report_path": "data/reports/real_factory_blind_ai_event_estimate.v1.json",
+    "csv_ledger_path": "data/reports/real_factory_blind_ai_event_estimate.v1.csv",
+    "predicted_total": 18,
+    "predicted_event_timestamps_sec": [
+      38.401,
+      121.603,
+      192.805,
+      266.007,
+      342.209,
+      421.211,
+      496.413,
+      568.015,
+      630.217,
+      808.388,
+      948.192,
+      1227.799,
+      1304.601,
+      1386.203,
+      1478.206,
+      1544.807,
+      1651.81,
+      1732.812
+    ],
+    "basis": "Conservative non-EOF events from the wire_mesh real-app diagnostic with 60s debounce, excluding same-timestamp EOF burst.",
+    "validation_truth_eligible": false
+  },
+  "hidden_human_truth": {
+    "total_path": "data/reports/real_factory_human_truth_total.revealed_v1.json",
+    "expected_total": 4,
+    "status": "revealed_total_only_pending_event_review",
+    "timestamp_truth_status": "not_reviewed"
+  },
+  "total_comparison": {
+    "total_matches": false,
+    "observed_minus_human_delta": 14,
+    "absolute_delta": 14,
+    "overcount_factor": 4.5,
+    "human_total_comparison_complete": true
+  },
+  "event_level_comparison": {
+    "status": "not_available_without_reviewed_human_event_ledger",
+    "missing_truth_count": null,
+    "unexpected_observed_count": null,
+    "first_divergence": null,
+    "notes": [
+      "Only the hidden total has been revealed.",
+      "Event-level truth review is still required to classify which predicted events are false positives or whether any true placements are missing."
+    ]
+  },
+  "diagnosis": [
+    "The blind app/AI prediction overcounted the hidden human total by 14.",
+    "Read the 18 as diagnostic dead-track events from a failed static-detector path, not as 18 visually confirmed completed placements.",
+    "The transferred active detectors did not detect this video reliably: IMG_2628, IMG_3254, and IMG_3262 active detectors were 0/80 sampled frames, and panel_in_transit was 1/80.",
+    "The only detector with broad recall was wire_mesh_panel, which fired on every sampled frame and is a known static/resident-material risk screen rather than a countable active-part detector.",
+    "Runtime diagnostics were parameter-sensitive: 30s debounce produced 27 non-EOF events, while 60s debounce produced 18 non-EOF events.",
+    "The same-timestamp EOF active-track burst was excluded from the blind prediction, but many non-EOF static-fragmentation false positives remain likely.",
+    "Several events in the 18-row ledger have tiny travel distances, including 1px, 2px, 3.162px, 4.123px, and 5px, which is inconsistent with robust completed-placement evidence."
+  ],
+  "validation_outcome": {
+    "blind_phase_complete": true,
+    "hidden_total_revealed": true,
+    "human_total_comparison_complete": true,
+    "matched_count": false,
+    "fully_verified": false,
+    "registry_promotion_eligible": false,
+    "status": "not_verified_total_mismatch_and_event_truth_missing"
+  },
+  "next_required_work": [
+    "Review or build a human timestamp truth ledger for the 4 true events before any event-level validation claim.",
+    "Build a real_factory-specific active detector or other legitimate YOLO/event-based runtime path before another promotion-quality app proof attempt.",
+    "Do not add real_factory to validation/registry.json unless a future run matches reviewed event truth with no missing or unexpected events."
+  ]
+}

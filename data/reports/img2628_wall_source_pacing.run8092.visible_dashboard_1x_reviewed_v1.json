@@ -1,0 +1,11 @@
+{
+  "schema_version": "factory-vision-wall-source-pacing-v1",
+  "case_id": "img2628_candidate",
+  "observed_events_path": "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x_candidate25_v1.json",
+  "first_event_ts": 55.601,
+  "last_event_ts": 1654.41,
+  "wall_delta_sec": 1598.810033082962,
+  "source_delta_sec": 1598.8090000000002,
+  "wall_per_source": 1.0000006461578348,
+  "result": "near_1x"
+}

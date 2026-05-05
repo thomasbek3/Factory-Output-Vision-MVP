@@ -1,0 +1,350 @@
+{
+  "confidence_screens": {
+    "0.1": [
+      {
+        "examples": [
+          {
+            "best_confidence": 0.111,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000636.00.jpg",
+            "timestamp_seconds": 636.005
+          }
+        ],
+        "images_with_detection": 1,
+        "max_detections_in_frame": 1,
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "total_detections": 1
+      },
+      {
+        "examples": [],
+        "images_with_detection": 0,
+        "max_detections_in_frame": 0,
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "total_detections": 0
+      },
+      {
+        "examples": [
+          {
+            "best_confidence": 0.212,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000072.98.jpg",
+            "timestamp_seconds": 72.984
+          },
+          {
+            "best_confidence": 0.124,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000698.56.jpg",
+            "timestamp_seconds": 698.563
+          },
+          {
+            "best_confidence": 0.206,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000740.27.jpg",
+            "timestamp_seconds": 740.268
+          },
+          {
+            "best_confidence": 0.142,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000781.97.jpg",
+            "timestamp_seconds": 781.973
+          },
+          {
+            "best_confidence": 0.165,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000907.09.jpg",
+            "timestamp_seconds": 907.089
+          },
+          {
+            "best_confidence": 0.107,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000969.65.jpg",
+            "timestamp_seconds": 969.647
+          },
+          {
+            "best_confidence": 0.32,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001011.35.jpg",
+            "timestamp_seconds": 1011.352
+          },
+          {
+            "best_confidence": 0.136,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001053.06.jpg",
+            "timestamp_seconds": 1053.058
+          }
+        ],
+        "images_with_detection": 14,
+        "max_detections_in_frame": 3,
+        "model_path": "models/panel_in_transit.pt",
+        "total_detections": 24
+      },
+      {
+        "examples": [
+          {
+            "best_confidence": 0.779,
+            "detections": 7,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000010.43.jpg",
+            "timestamp_seconds": 10.426
+          },
+          {
+            "best_confidence": 0.764,
+            "detections": 5,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000031.28.jpg",
+            "timestamp_seconds": 31.279
+          },
+          {
+            "best_confidence": 0.681,
+            "detections": 5,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000052.13.jpg",
+            "timestamp_seconds": 52.132
+          },
+          {
+            "best_confidence": 0.659,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000072.98.jpg",
+            "timestamp_seconds": 72.984
+          },
+          {
+            "best_confidence": 0.647,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000093.84.jpg",
+            "timestamp_seconds": 93.837
+          },
+          {
+            "best_confidence": 0.669,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000114.69.jpg",
+            "timestamp_seconds": 114.689
+          },
+          {
+            "best_confidence": 0.639,
+            "detections": 5,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000135.54.jpg",
+            "timestamp_seconds": 135.542
+          },
+          {
+            "best_confidence": 0.723,
+            "detections": 6,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000156.40.jpg",
+            "timestamp_seconds": 156.395
+          }
+        ],
+        "images_with_detection": 80,
+        "max_detections_in_frame": 12,
+        "model_path": "models/wire_mesh_panel.pt",
+        "total_detections": 572
+      }
+    ],
+    "0.15": [
+      {
+        "examples": [],
+        "images_with_detection": 0,
+        "max_detections_in_frame": 0,
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "total_detections": 0
+      },
+      {
+        "examples": [],
+        "images_with_detection": 0,
+        "max_detections_in_frame": 0,
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "total_detections": 0
+      },
+      {
+        "examples": [
+          {
+            "best_confidence": 0.212,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000072.98.jpg",
+            "timestamp_seconds": 72.984
+          },
+          {
+            "best_confidence": 0.206,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000740.27.jpg",
+            "timestamp_seconds": 740.268
+          },
+          {
+            "best_confidence": 0.165,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000907.09.jpg",
+            "timestamp_seconds": 907.089
+          },
+          {
+            "best_confidence": 0.32,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001011.35.jpg",
+            "timestamp_seconds": 1011.352
+          },
+          {
+            "best_confidence": 0.171,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001219.88.jpg",
+            "timestamp_seconds": 1219.879
+          },
+          {
+            "best_confidence": 0.2,
+            "detections": 1,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001240.73.jpg",
+            "timestamp_seconds": 1240.731
+          },
+          {
+            "best_confidence": 0.224,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001344.99.jpg",
+            "timestamp_seconds": 1344.994
+          }
+        ],
+        "images_with_detection": 7,
+        "max_detections_in_frame": 2,
+        "model_path": "models/panel_in_transit.pt",
+        "total_detections": 11
+      },
+      {
+        "examples": [
+          {
+            "best_confidence": 0.779,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000010.43.jpg",
+            "timestamp_seconds": 10.426
+          },
+          {
+            "best_confidence": 0.764,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000031.28.jpg",
+            "timestamp_seconds": 31.279
+          },
+          {
+            "best_confidence": 0.681,
+            "detections": 5,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000052.13.jpg",
+            "timestamp_seconds": 52.132
+          },
+          {
+            "best_confidence": 0.659,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000072.98.jpg",
+            "timestamp_seconds": 72.984
+          },
+          {
+            "best_confidence": 0.647,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000093.84.jpg",
+            "timestamp_seconds": 93.837
+          },
+          {
+            "best_confidence": 0.669,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000114.69.jpg",
+            "timestamp_seconds": 114.689
+          },
+          {
+            "best_confidence": 0.639,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000135.54.jpg",
+            "timestamp_seconds": 135.542
+          },
+          {
+            "best_confidence": 0.723,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000156.40.jpg",
+            "timestamp_seconds": 156.395
+          }
+        ],
+        "images_with_detection": 80,
+        "max_detections_in_frame": 11,
+        "model_path": "models/wire_mesh_panel.pt",
+        "total_detections": 437
+      }
+    ],
+    "0.25": [
+      {
+        "examples": [],
+        "images_with_detection": 0,
+        "max_detections_in_frame": 0,
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "total_detections": 0
+      },
+      {
+        "examples": [],
+        "images_with_detection": 0,
+        "max_detections_in_frame": 0,
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "total_detections": 0
+      },
+      {
+        "examples": [
+          {
+            "best_confidence": 0.32,
+            "detections": 2,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t001011.35.jpg",
+            "timestamp_seconds": 1011.352
+          }
+        ],
+        "images_with_detection": 1,
+        "max_detections_in_frame": 2,
+        "model_path": "models/panel_in_transit.pt",
+        "total_detections": 2
+      },
+      {
+        "examples": [
+          {
+            "best_confidence": 0.779,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000010.43.jpg",
+            "timestamp_seconds": 10.426
+          },
+          {
+            "best_confidence": 0.764,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000031.28.jpg",
+            "timestamp_seconds": 31.279
+          },
+          {
+            "best_confidence": 0.681,
+            "detections": 4,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000052.13.jpg",
+            "timestamp_seconds": 52.132
+          },
+          {
+            "best_confidence": 0.659,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000072.98.jpg",
+            "timestamp_seconds": 72.984
+          },
+          {
+            "best_confidence": 0.647,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000093.84.jpg",
+            "timestamp_seconds": 93.837
+          },
+          {
+            "best_confidence": 0.669,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000114.69.jpg",
+            "timestamp_seconds": 114.689
+          },
+          {
+            "best_confidence": 0.639,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000135.54.jpg",
+            "timestamp_seconds": 135.542
+          },
+          {
+            "best_confidence": 0.723,
+            "detections": 3,
+            "frame_path": "data/videos/selected_frames/img2628_uniform_80/IMG_2628_t000156.40.jpg",
+            "timestamp_seconds": 156.395
+          }
+        ],
+        "images_with_detection": 80,
+        "max_detections_in_frame": 8,
+        "model_path": "models/wire_mesh_panel.pt",
+        "total_detections": 268
+      }
+    ]
+  },
+  "frame_count": 80,
+  "frame_manifest": "data/videos/selected_frames/img2628_uniform_80/manifest.json",
+  "schema_version": "img2628-sampled-detector-screen-v1"
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-validation-report.schema.json",
+  "title": "Factory Vision Validation Report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "status",
+    "video",
+    "truth",
+    "runtime",
+    "proof_artifacts",
+    "proof_summary"
+  ],
+  "properties": {
+    "schema_version": { "const": "factory-vision-validation-report-v1" },
+    "case_id": { "type": "string" },
+    "status": { "type": "string" },
+    "video": { "type": "object" },
+    "truth": { "type": "object" },
+    "runtime": { "type": "object" },
+    "proof_artifacts": { "type": "object" },
+    "proof_summary": { "type": "object" },
+    "commands": { "type": "object" }
+  }
+}

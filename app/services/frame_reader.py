@@ -53,6 +53,7 @@ class FFmpegFrameReader:
         self._sync_demo_last_frame_index = -1
         self._sync_demo_buffered_frame: Optional[np.ndarray] = None
         self._sync_demo_buffered_frame_index = -1
+        self._sync_demo_started_at_ts: float | None = None
 
     def start(
         self,
@@ -121,6 +122,7 @@ class FFmpegFrameReader:
             self._sync_demo_last_frame_index = -1
             self._sync_demo_buffered_frame = None
             self._sync_demo_buffered_frame_index = -1
+            self._sync_demo_started_at_ts = None
         self._thread = None
         self._process = None
         if sync_demo_capture is not None:
@@ -160,6 +162,13 @@ class FFmpegFrameReader:
                 self._demo_finished = True
                 return None
             frame_index = self._sync_demo_frame_indices[self._sync_demo_cursor]
+            source_timestamp_sec = frame_index / max(self._sync_demo_video_fps, 1.0)
+            if self._sync_demo_started_at_ts is None:
+                self._sync_demo_started_at_ts = time.time()
+            self._sleep_until(
+                self._sync_demo_started_at_ts
+                + (source_timestamp_sec / max(self._demo_playback_speed, 0.01))
+            )
             if (
                 self._sync_demo_buffered_frame is not None
                 and frame_index == self._sync_demo_buffered_frame_index
@@ -178,7 +187,7 @@ class FFmpegFrameReader:
             self._frame = frame
             self._last_frame_time = frame_time
             self._last_error = None
-            self._last_source_timestamp_sec = frame_index / max(self._sync_demo_video_fps, 1.0)
+            self._last_source_timestamp_sec = source_timestamp_sec
             self._demo_finished = self._sync_demo_cursor >= len(self._sync_demo_frame_indices)
             return ReaderSnapshot(
                 frame=None if self._frame is None else self._frame.copy(),
@@ -239,6 +248,7 @@ class FFmpegFrameReader:
             self._sync_demo_last_frame_index = frame_indices[0] if preview is not None and frame_indices else -1
             self._sync_demo_buffered_frame = preview
             self._sync_demo_buffered_frame_index = frame_indices[0] if preview is not None and frame_indices else -1
+            self._sync_demo_started_at_ts = None
             self._demo_finished = len(frame_indices) == 0
             self._last_source_timestamp_sec = None
             if preview is not None:
@@ -474,5 +484,21 @@ def encode_jpeg(frame: np.ndarray) -> bytes:
 
 def _sampled_frame_indices(*, video_fps: float, frame_count: int, output_fps: float) -> list[int]:
     fps = max(float(video_fps), 1.0)
-    step = max(int(round(fps / max(float(output_fps), 0.1))), 1)
-    return list(range(0, max(int(frame_count), 0), step))
+    total_frames = max(int(frame_count), 0)
+    selected_fps = max(float(output_fps), 0.1)
+    if total_frames <= 0:
+        return []
+    if selected_fps >= fps:
+        return list(range(total_frames))
+
+    indices: list[int] = []
+    timestamp = 0.0
+    frame_interval = 1.0 / selected_fps
+    while True:
+        frame_index = int(timestamp * fps + 0.5)
+        if frame_index >= total_frames:
+            break
+        if not indices or frame_index > indices[-1]:
+            indices.append(frame_index)
+        timestamp += frame_interval
+    return indices

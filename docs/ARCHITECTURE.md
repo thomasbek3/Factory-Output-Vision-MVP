@@ -74,6 +74,18 @@ Implemented as of 2026-03-11:
 - compatibility aliases retained on `/app/dashboard`, `/app/wizard`, and `/app/troubleshooting`
 - old `/legacy/...` URLs now redirect forward instead of serving Jinja pages
 
+Implemented as of 2026-05-01 for Factory2 validation:
+- file-backed demo sources can run as a live-paced one-pass stream through the same FastAPI/VisionWorker/dashboard path used by the app
+- synchronous demo pacing follows processed frame source timestamps so `factory2.MOV` can run at true `1.0x` instead of accumulating fixed-delay lag
+- the verified Factory2 path uses `FC_DEMO_COUNT_MODE=live_reader_snapshot`, `FC_COUNTING_MODE=event_based`, `FC_DEMO_LOOP=0`, `FC_PROCESSING_FPS=10`, and `FC_READER_FPS=10`
+- local crop-based live person/panel separation reduces hot-path cost while preserving full-frame count coordinates
+- React dashboard live view uses the backend frame stream, so visible motion and Runtime Total stay on the same clock
+- Vite development mode proxies `/api` and `/ws` to the selected backend origin to avoid cross-origin dashboard staleness
+- verified artifact: `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json` (`23/23`, no missing/unexpected, `wall_per_source=1.0`)
+- Reolink/RTSP field operation is still unverified until tested on an actual live stream
+
+See `docs/FACTORY2_REALTIME_APP_VALIDATION.md` for the concise validation report.
+
 ---
 
 ## 1.1) v1.5 additions (not in v1.0 scope)

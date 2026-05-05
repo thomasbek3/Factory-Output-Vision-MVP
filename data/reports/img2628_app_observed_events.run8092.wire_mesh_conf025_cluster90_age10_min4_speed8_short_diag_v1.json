@@ -1,0 +1,578 @@
+{
+  "captured_at": 1777696683.749,
+  "current_state": "RUNNING_GREEN",
+  "events": [
+    {
+      "bbox": null,
+      "centroid": [
+        725,
+        551
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 1.5,
+      "frames_seen": 4,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 16,
+      "reader_frame_time": 1777696639.938596,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 1,
+      "runtime_total_after_event": 1,
+      "source_kind": "demo",
+      "track_id": 3,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        697,
+        705
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 1.7,
+      "frames_seen": 4,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 18,
+      "reader_frame_time": 1777696639.995989,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 2,
+      "runtime_total_after_event": 2,
+      "source_kind": "demo",
+      "track_id": 2,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        695,
+        438
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 7.5,
+      "frames_seen": 5,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 76,
+      "reader_frame_time": 1777696641.617093,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 3,
+      "runtime_total_after_event": 3,
+      "source_kind": "demo",
+      "track_id": 6,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        691,
+        451
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 10.1,
+      "frames_seen": 10,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 102,
+      "reader_frame_time": 1777696642.340493,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 4,
+      "runtime_total_after_event": 4,
+      "source_kind": "demo",
+      "track_id": 7,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1285,
+        435
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 14.8,
+      "frames_seen": 102,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 149,
+      "reader_frame_time": 1777696643.641808,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 5,
+      "runtime_total_after_event": 5,
+      "source_kind": "demo",
+      "track_id": 5,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1268,
+        436
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 21.201,
+      "frames_seen": 34,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 213,
+      "reader_frame_time": 1777696645.40181,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 6,
+      "runtime_total_after_event": 6,
+      "source_kind": "demo",
+      "track_id": 9,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        696,
+        436
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 35.301,
+      "frames_seen": 9,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 354,
+      "reader_frame_time": 1777696649.299719,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 7,
+      "runtime_total_after_event": 7,
+      "source_kind": "demo",
+      "track_id": 15,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        697,
+        449
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 38.701,
+      "frames_seen": 6,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 388,
+      "reader_frame_time": 1777696650.241708,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 8,
+      "runtime_total_after_event": 8,
+      "source_kind": "demo",
+      "track_id": 16,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1282,
+        438
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 47.201,
+      "frames_seen": 167,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 473,
+      "reader_frame_time": 1777696652.592073,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 9,
+      "runtime_total_after_event": 9,
+      "source_kind": "demo",
+      "track_id": 13,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        906,
+        456
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 48.401,
+      "frames_seen": 8,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 485,
+      "reader_frame_time": 1777696652.931954,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 10,
+      "runtime_total_after_event": 10,
+      "source_kind": "demo",
+      "track_id": 18,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1321,
+        432
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 50.901,
+      "frames_seen": 10,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 510,
+      "reader_frame_time": 1777696653.626311,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 11,
+      "runtime_total_after_event": 11,
+      "source_kind": "demo",
+      "track_id": 19,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1280,
+        433
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 52.901,
+      "frames_seen": 5,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 530,
+      "reader_frame_time": 1777696654.185827,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 12,
+      "runtime_total_after_event": 12,
+      "source_kind": "demo",
+      "track_id": 20,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        638,
+        585
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 56.001,
+      "frames_seen": 6,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 561,
+      "reader_frame_time": 1777696655.037021,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 13,
+      "runtime_total_after_event": 13,
+      "source_kind": "demo",
+      "track_id": 23,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        711,
+        444
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 60.902,
+      "frames_seen": 11,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 610,
+      "reader_frame_time": 1777696656.390532,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 14,
+      "runtime_total_after_event": 14,
+      "source_kind": "demo",
+      "track_id": 25,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1284,
+        435
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 73.402,
+      "frames_seen": 176,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 735,
+      "reader_frame_time": 1777696659.847093,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 15,
+      "runtime_total_after_event": 15,
+      "source_kind": "demo",
+      "track_id": 22,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        894,
+        465
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 75.702,
+      "frames_seen": 9,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 758,
+      "reader_frame_time": 1777696660.484404,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 16,
+      "runtime_total_after_event": 16,
+      "source_kind": "demo",
+      "track_id": 27,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        709,
+        445
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 88.502,
+      "frames_seen": 6,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 886,
+      "reader_frame_time": 1777696664.01127,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 17,
+      "runtime_total_after_event": 17,
+      "source_kind": "demo",
+      "track_id": 32,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        601,
+        589
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 104.503,
+      "frames_seen": 9,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1046,
+      "reader_frame_time": 1777696668.431663,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 18,
+      "runtime_total_after_event": 18,
+      "source_kind": "demo",
+      "track_id": 34,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1348,
+        373
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 105.603,
+      "frames_seen": 204,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1057,
+      "reader_frame_time": 1777696668.734227,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 19,
+      "runtime_total_after_event": 19,
+      "source_kind": "demo",
+      "track_id": 31,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        721,
+        509
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 108.903,
+      "frames_seen": 10,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1090,
+      "reader_frame_time": 1777696669.636207,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 20,
+      "runtime_total_after_event": 20,
+      "source_kind": "demo",
+      "track_id": 36,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        683,
+        447
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 119.803,
+      "frames_seen": 11,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1199,
+      "reader_frame_time": 1777696672.656466,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 21,
+      "runtime_total_after_event": 21,
+      "source_kind": "demo",
+      "track_id": 40,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        561,
+        577
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 121.703,
+      "frames_seen": 4,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1218,
+      "reader_frame_time": 1777696673.173096,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 22,
+      "runtime_total_after_event": 22,
+      "source_kind": "demo",
+      "track_id": 41,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1290,
+        429
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 130.503,
+      "frames_seen": 181,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1306,
+      "reader_frame_time": 1777696675.605701,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 23,
+      "runtime_total_after_event": 23,
+      "source_kind": "demo",
+      "track_id": 38,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1290,
+        436
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 133.703,
+      "frames_seen": 4,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1338,
+      "reader_frame_time": 1777696676.500459,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 24,
+      "runtime_total_after_event": 24,
+      "source_kind": "demo",
+      "track_id": 43,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        889,
+        457
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 134.703,
+      "frames_seen": 6,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1348,
+      "reader_frame_time": 1777696676.779109,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 25,
+      "runtime_total_after_event": 25,
+      "source_kind": "demo",
+      "track_id": 44,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1282,
+        436
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 145.304,
+      "frames_seen": 92,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1454,
+      "reader_frame_time": 1777696679.679914,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 26,
+      "runtime_total_after_event": 26,
+      "source_kind": "demo",
+      "track_id": 45,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1273,
+        436
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 152.204,
+      "frames_seen": 48,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1523,
+      "reader_frame_time": 1777696681.578473,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 27,
+      "runtime_total_after_event": 27,
+      "source_kind": "demo",
+      "track_id": 48,
+      "worker_state": "RUNNING_GREEN"
+    },
+    {
+      "bbox": null,
+      "centroid": [
+        1299,
+        415
+      ],
+      "count": 1,
+      "count_authority": "runtime_inferred_only",
+      "event_ts": 159.504,
+      "frames_seen": 29,
+      "proof_backed_total_after_event": 0,
+      "reader_frame_sequence_index": 1596,
+      "reader_frame_time": 1777696683.601965,
+      "reason": "dead_track_event",
+      "runtime_inferred_only_after_event": 28,
+      "runtime_total_after_event": 28,
+      "source_kind": "demo",
+      "track_id": 50,
+      "worker_state": "RUNNING_GREEN"
+    }
+  ],
+  "metadata": {
+    "auto_start": false,
+    "base_url": "http://127.0.0.1:8092",
+    "max_wait_sec": 1.0,
+    "poll_interval_sec": 1.0
+  },
+  "observed_coverage_end_sec": 160.004,
+  "observed_event_count": 28,
+  "reader_last_sequence_index": 1601,
+  "reader_last_source_timestamp_sec": 160.004,
+  "run_complete": false,
+  "schema_version": "factory2-app-observed-events-v1"
+}

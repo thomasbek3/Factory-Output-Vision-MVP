@@ -1,0 +1,13 @@
+{
+  "delta": 0,
+  "expected_human_total": 25,
+  "human_total_path": "data/reports/img2628_human_truth_total.v1.json",
+  "observed_coverage_end_sec": 1668.01,
+  "observed_event_count": 25,
+  "observed_events_path": "data/reports/img2628_app_observed_events.run8092.worksheet_event_diag_conf076_fps5_age20_min10_debounce30_speed16_diag_v1.json",
+  "observed_run_complete": true,
+  "schema_version": "app-run-vs-human-total-comparison-v1",
+  "total_matches": true,
+  "verification_level": "total_only",
+  "warning": "Total-only comparison cannot prove event-level correctness. Use a timestamped truth ledger before promoting this to a verified test case."
+}

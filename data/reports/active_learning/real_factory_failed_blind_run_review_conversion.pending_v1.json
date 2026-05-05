@@ -1,0 +1,31 @@
+{
+  "accepted_true_placement_count": 0,
+  "authority_boundary": {
+    "requires_human_reviewed_event_timestamps": true,
+    "requires_positive_box_labels_before_yolo_export": true,
+    "runtime_or_teacher_labels_are_truth": false
+  },
+  "case_id": "real_factory_candidate",
+  "created_at": 1777867074.267,
+  "dataset_manifest_path": "data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json",
+  "detector_training": {
+    "blocked_reason": "positive bounding boxes are not present in the failed-run review worksheet; use this manifest as reviewed event/window anchors before YOLO image-label export",
+    "positive_box_labels_ready": false,
+    "target_detector": "real_factory_specific_yolo",
+    "yolo_dataset_export_ready": false
+  },
+  "expected_true_total": 4,
+  "hard_negative_label_count": 0,
+  "manifest_path": "validation/test_cases/real_factory.json",
+  "packet_path": "data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json",
+  "pending_row_count": 82,
+  "review_labels_path": "data/reports/active_learning/real_factory_failed_blind_run_review_labels.pending_v1.json",
+  "schema_version": "factory-vision-failed-blind-review-conversion-v1",
+  "status": "pending_human_review",
+  "training_eligible": false,
+  "truth_csv_path": null,
+  "truth_ledger_path": null,
+  "unclear_row_count": 0,
+  "validation_truth_eligible": false,
+  "worksheet_path": "data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv"
+}

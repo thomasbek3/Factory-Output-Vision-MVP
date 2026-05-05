@@ -13,6 +13,8 @@ NOTE: Training on CPU is slow (~1-2 hours). For faster training (~20 min),
 use Google Colab with a free GPU. Just upload this script and the dataset.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path

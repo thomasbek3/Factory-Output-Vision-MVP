@@ -1,5 +1,28 @@
 # Lessons Learned
 
+## 2026-05-04: real_factory Review-To-Training Boundary
+
+1. **Reviewed event timestamps are not positive detector boxes.** A filled `real_factory` worksheet can create a gold event ledger and reviewed positive/negative anchors, but a YOLO export still needs explicit positive bounding-box labels before detector training is ready.
+2. **Pending worksheets should still produce poison-checkable manifests.** A pending active-learning dataset manifest with all rows in the `review` split lets the registry track the next step without accidentally making bronze labels training-eligible.
+3. **Review converters must fail closed by default.** The safe default is to refuse truth outputs while any worksheet row is blank or unclear; `--allow-pending` is only for bronze status artifacts.
+
+## 2026-05-03: Static-Detector Abstention
+
+1. **A static detector firing on every sampled frame is not a weak count signal; it is an abstention signal.** If active transfer detectors are dead and the only high-recall model is a known static/resident-material detector, do not publish its runtime total as a valid blind estimate.
+2. **Failed diagnostics are still learning data.** The false runtime events become hard-negative review candidates, while the reviewed real placements become gold positives for a video-specific detector.
+3. **Detector transfer must gate runtime interpretation.** Parameter-sensitive dead-track counts from static detectors should route to `numeric_prediction_allowed=false` and the learning registry before anyone treats the number as product evidence.
+
+## 2026-05-01: Factory2 Real-Time Bar
+
+1. **“Near real-time” is not the target.** For Factory2 demo work, the bar is sustained true `1.0x` real-time behavior on the actual app path, not “close enough” wall-clock speed.
+2. **Do not redefine the success metric during planning.** If the user says real time, keep the task framed as real time in `tasks/todo.md`, implementation notes, and verification.
+3. **Correctness still constrains speed.** Real-time only counts if it preserves real processed-frame semantics, placement-timed increments, and the final `23/23` truth match.
+4. **Synchronous demo pacing must follow the source clock.** A fixed post-frame sleep carries lag forever after expensive frames. For one-pass file-backed live demos, pace against each processed frame's source timestamp and skip sleep only when the worker is behind that clock.
+5. **Non-divisor FPS values need fractional sampling.** Rounded integer strides make settings like `9.5 FPS` lie about the requested cadence. Sampling by source timestamps keeps frame selection honest, even if a specific FPS still fails the truth diff.
+6. **The dev dashboard should proxy API calls through Vite.** Direct cross-origin fetches can execute backend actions while the browser reports `Failed to fetch`, leaving diagnostics stale. Same-origin proxying keeps the visible UI honest.
+7. **A new video is a new proof problem.** Do not assume Factory2 calibration, truth count, or event timing transfers to `real_factory.MOV`, `IMG_2628.MOV`, or `IMG_3262.MOV`. Build or load a human truth ledger, run the actual app path, then compare.
+8. **Reolink remains an unvalidated claim.** The architecture should transfer to RTSP, but a real camera can introduce codec, network, exposure, reconnect, and angle problems. Do not say Reolink works until a real stream is validated.
+
 ## 2026-04-28: Factory2 Definition Of Done
 
 1. **Proof-only success is not done.** If Factory2 counts in `scripts/run_factory2_morning_proof.py` but the actual worker/app runtime path still shows `counts_this_hour: 0`, the task is still in progress.
@@ -173,6 +196,8 @@ Frame differencing approaches are fragile because the worker's body dominates th
 
 ## 2026-04-29: Factory2 Deterministic Demo Runner Lessons
 
+> Superseded for investor evidence as of 2026-05-01. Deterministic replay was an intermediate debugging/demo bridge. The accepted proof point is now the `live_reader_snapshot` app path that processes ordered frames at `1.0x` and matches truth `23/23`.
+
 1. **The live ffmpeg snapshot loop is the wrong place to derive investor-demo counts.** Even after single-pass EOF handling was fixed, the app-side `reader.snapshot()` counting path still dropped most events on `factory2.MOV` at accelerated playback.
 2. **For demo mode, preview and counting need to be decoupled.** The honest fix is a deterministic file-backed runner that replays audited runtime receipts against wall-clock playback while the ffmpeg reader is used only for preview frames.
 3. **Restart the demo at monitor start.** If the preview is already mid-file when monitoring begins, receipt reveal and visible playback diverge. Restarting the demo source when `monitor/start` arms the deterministic runner keeps the visible run aligned from frame 0.
@@ -196,15 +221,64 @@ Frame differencing approaches are fragile because the worker's body dominates th
 ## 2026-04-30: Factory2 Live Demo Speed Lessons
 
 1. **The single biggest demo-reader bug was random seeking every sampled frame.** In synchronous single-pass demo mode, calling `capture.set(CAP_PROP_POS_FRAMES, frame_index)` on every processed frame destroyed throughput. Advancing sequentially through sampled indices and reusing the primed first frame removed that seek tax.
-2. **Live person/panel analysis should only run in the worker-overlap danger zone.** The expensive silhouette/crop path is only needed when track overlap actually enters the gate’s reject corridor. Running it on clear non-overlap tracks wastes time without improving decisions.
+2. **Live person/panel analysis should only run in the worker-overlap danger zone.** The expensive silhouette/crop path is only needed when track overlap actually enters the gate's reject corridor. Running it on clear non-overlap tracks wastes time without improving decisions.
 3. **Adjacent-frame reuse is safe when the track/person geometry barely changes.** Reusing live separation/crop results across nearby same-zone frames preserved the `23/23` truth match while cutting hot-burst per-frame cost materially.
 4. **Runtime person detection should respect its own FPS setting.** Re-running the separate person detector on every processed frame was unnecessary. Caching the last person boxes inside the configured detect interval reduced live-path cost without changing the verified outcome.
 5. **A speed change is not real until the app-truth diff still says `23/23`.** The optimized `8094` app run still matched the human ledger exactly, so this slice is a real live-app speedup, not just a microbench win.
 
+## 2026-05-01: IMG_3262 Real-App Validation Lessons
+
+1. **Do not trust `FC_DEMO_PLAYBACK_SPEED=1.0` without measuring wall/source time.** IMG_3262 initially looked configured correctly while source timestamps advanced too fast. A valid real-time claim needs a recorded wall/source ratio from the real app run.
+2. **Synchronous demo pacing belongs at the frame-pump boundary.** Worker-level pacing can be bypassed by pending-frame draining or double-subtracted by loop sleep accounting. Pacing `pump_next_demo_frame()` against source timestamps keeps preview, counting, and diagnostics on the same clock.
+3. **EOF flush is required for final-second placements.** If a carried/placed object is still an active event track when a one-pass demo reaches EOF, the runtime must flush that active track once with source timestamp authority; otherwise the last legitimate placement is silently missed.
+4. **A rough timestamp ledger can create false timing failures.** The IMG_3262 v1 ledger had a `629s` rough marker after the worker had already moved on. Keep the app comparison honest by preserving the failed rough-ledger comparison and creating a reviewed v2 ledger rather than loosening runtime thresholds.
+
+## 2026-05-01: IMG_3254 Candidate Lessons
+
+1. **A detector that improves selected-frame precision can still worsen runtime counting.** IMG_3254 v5/v6/v7 refinements looked plausible on sampled frames but either broadened detections, overfragmented, or undercounted in the app path. Runtime event artifacts must be the authority for candidate settings.
+2. **Tune tracker lifetime from measured split gaps, not from final totals.** v4 `max_age=180` hit the clean-cycle total but delayed counts too much to trust. Inspecting the actual duplicate windows showed gaps of about `4.5-5.3s`, which made `max_age=52` a much tighter candidate.
+3. **High-confidence false/split detections rule out simple threshold fixes.** The bad approach fragment around `464.19s` was high-confidence while some likely true placements were lower-confidence, so confidence tightening would trade false positives for missed truth.
+4. **A mid-placement opener must stay a product decision, not a model accident.** IMG_3254 can be treated as clean-cycle `22` or operational `23`; lock that rule before final proof rather than letting whichever setting happens to count the opener define truth.
+
+## 2026-05-02: Validation Productization Lessons
+
+1. **The registry should carry the current proof map.** If a future developer has to reconstruct case status from `.hermes`, `tasks/todo.md`, or a pile of report filenames, the validation process is still too ad hoc.
+2. **Manifests are the right place for video-specific settings.** Model path, truth rule, launch command, event parameters, proof artifacts, and promotion status belong in `validation/test_cases/*.json`, not in memory or one-off command history.
+
+3. **GitHub is the brain, not the warehouse.** Store validation manifests, detector cards, schemas, small reports, and hashes in GitHub. Store raw factory videos, full frame dumps, large model libraries, and embedding databases in `/Users/thomas/FactoryVisionArtifacts` first, with later Cloudflare R2/Backblaze B2 sync only after explicit permission. Every durable heavy artifact needs a path plus SHA-256 in `validation/artifact_storage.json` or the relevant case manifest.
+3. **Do not move research scripts until imports/tests move with them.** The repo needs a cleaner script tree, but mechanically relocating top-level Factory2 scripts without shims would break existing tests. Mark the product path first, then move research scripts in a separate import-safe pass.
+4. **Known limitations increase credibility.** Explicitly documenting that file-backed live validation is not yet live RTSP/Reolink validation makes the repo more trustworthy, not weaker.
+
+## 2026-05-02: AI-Only Active Learning Boundary
+
+1. **Active learning must not blur runtime authority.** Evidence windows, teacher labels, Moondream, Lens, and human/VA review are offline helpers; Runtime Total must still come from the YOLO/event app path without waiting for humans or VLMs.
+2. **Teacher labels are poisoned truth until promoted.** Raw frontier/VLM suggestions start as `bronze` and `pending`. Validation tooling should reject them as truth rather than relying on filenames or reviewer memory.
+3. **Dataset safety belongs in tooling, not policy text alone.** Train/test leakage and unreviewed gold labels need executable checks before any future active-learning dataset feeds model promotion.
+
+## 2026-05-02: IMG_2628 Candidate Lessons
+
+1. **Total-only truth is still a blocker, even when the total is trusted.** IMG_2628 starts with a human reference total of `25`, but without reviewed timestamps it can only support diagnostics and review packets, not promotion.
+2. **Detector transfer can fail silently across visually similar press-brake videos.** IMG_3254/IMG_3262 active-panel models had near-zero sampled-frame recall on IMG_2628, so do a sampled detector screen before spending time on full app runs.
+3. **A static detector cannot be tuned into proof by final-total pressure.** `wire_mesh_panel.pt` saw every sampled IMG_2628 frame; short lifetimes overcounted static fragmentation, while aggressive clustering/lifetimes undercounted. That is evidence for a new reviewed active-panel detector, not permission to keep nudging until the final number happens to be `25`.
+4. **Moondream review queues are useful even when validation blocks.** Local MD2 generated an advisory review queue for the least-bad diagnostic windows, but all labels remained `bronze`/`pending`, `validation_truth_eligible=false`, and `training_eligible=false`.
+5. **For long HEVC review scans, avoid random seek per timestamp.** A 1 fps CV-motion draft pass that used OpenCV `CAP_PROP_POS_MSEC` for every sampled second burned minutes on `IMG_2628`; the same advisory scan should use sequential ffmpeg decoding and reserve random seeks only for a small number of candidate contact strips.
+6. **Separate operator frustration from proof boundaries.** When the user asks why Moondream or human review is slowing things down, explain the split plainly: runtime counting can and should keep moving without Moondream, while promotion truth still needs reviewed event evidence.
+7. **A total-clean diagnostic can still hide event swaps.** The IMG_2628 worksheet detector reached `25/25` total, but draft-ledger comparison showed missing and unexpected events. Treat that as a candidate for visible operational review, not as event-level validation.
+8. **When a user gives a trusted total, do the timestamp reconciliation work instead of bouncing it back by default.** For IMG_2628, the right move after the visible app hit `25` was focused dispute review against frames/contact sheets, then an auditable reviewed ledger. Keep Moondream out of truth, but do not make the user manually fill timestamps when local evidence can settle the disagreement.
+9. **Manifest launch reconstruction must include every runtime knob.** IMG_2628 needed `event_track_max_match_distance=260`; the validation orchestrator initially omitted it from reconstructed launch commands. Add tests for any new manifest runtime setting that affects reproducibility.
+10. **A lesson is not learned until it changes the next-video command path.** Notes alone did not make IMG_2628 faster. Reusable learning now needs either a script, manifest default, test, or runbook gate. `scripts/bootstrap_video_candidate.py` and `scripts/screen_detector_transfer.py` are the first explicit fast-path hooks for that rule.
+
+## 2026-05-02: real_factory Blind Validation Lessons
+
+1. **Blind bootstrap needs first-class tooling.** If the human total is intentionally hidden, candidate bootstrap must allow `expected_total=null` and mark `blind_estimate_pending_human_reveal`; forcing a numeric total invites fabricated truth.
+2. **Static detector diagnostics are parameter-sensitivity probes, not count authority.** On `real_factory.MOV`, `wire_mesh_panel.pt` detected `80/80` sampled frames and the same app path shifted from `27` non-EOF events at `30s` debounce to `18` at `60s`. That swing is evidence to stop before visible proof and build/review a real active-part detector path.
+3. **Bronze-anchor recovery must stay diagnostic unless truth is reviewed.** A `real_factory` model trained from draft visual anchors plus hard negatives can recover the app runtime count path, but it remains non-promotion evidence. Record the model/dataset boundary and keep `validation/registry.json` untouched until reviewed timestamp truth and eligible labels exist.
+4. **Minimum track duration should reject measured transients, not chase totals.** The `real_factory` v2 detector counted four sustained tracks plus one 18-frame late false track at `min_frames=12`; setting `min_frames=30` rejected that measured transient while preserving tracks of `98`, `34`, `165`, and `70` frames.
+
 ### Training & Deployment Lessons
 
-8. **ONNX export provides no speedup on i7-12700F.** PyTorch already runs at ~60ms/frame. ONNX overhead (model loading, conversion) wasn't worth it for this CPU. Don't bother unless moving to ARM/edge devices.
-9. **Roboflow auto-label works for common shapes but NOT wire mesh.** Grounding DINO + SAM struggles with niche industrial objects. Manual labeling is required. Budget time accordingly.
-10. **Camera angle matters critically.** Overhead/high angle reduces occlusion from worker's body. Side angle causes worker to block the panel during transit, killing recall.
-11. **Kenneth at RMFG: shipped with 60 images, iterated.** Deploy imperfect, improve with production data. Don't wait for perfect model — correction buttons cover the gap.
-12. **Training is fast on CPU.** YOLOv8n fine-tuning: ~20 min for 25 epochs on i7-12700F. No GPU needed for small datasets.
+11. **ONNX export provides no speedup on i7-12700F.** PyTorch already runs at ~60ms/frame. ONNX overhead (model loading, conversion) wasn't worth it for this CPU. Don't bother unless moving to ARM/edge devices.
+12. **Roboflow auto-label works for common shapes but NOT wire mesh.** Grounding DINO + SAM struggles with niche industrial objects. Manual labeling is required. Budget time accordingly.
+13. **Camera angle matters critically.** Overhead/high angle reduces occlusion from worker's body. Side angle causes worker to block the panel during transit, killing recall.
+14. **Kenneth at RMFG: shipped with 60 images, iterated.** Deploy imperfect, improve with production data. Don't wait for perfect model — correction buttons cover the gap.
+15. **Training is fast on CPU.** YOLOv8n fine-tuning: ~20 min for 25 epochs on i7-12700F. No GPU needed for small datasets.

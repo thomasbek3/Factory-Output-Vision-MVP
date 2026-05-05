@@ -1,0 +1,219 @@
+{
+  "first_divergence": {
+    "event_ts": 110.003,
+    "runtime_total_after_event": 2,
+    "track_id": 2,
+    "type": "unexpected_observed"
+  },
+  "matched": [
+    {
+      "delta_sec": 2.601,
+      "observed_event_ts": 55.601,
+      "observed_track_id": 1,
+      "truth_event_id": "img2628-codex-draft-0001",
+      "truth_event_ts": 53.0
+    },
+    {
+      "delta_sec": 4.206,
+      "observed_event_ts": 228.206,
+      "observed_track_id": 5,
+      "truth_event_id": "img2628-codex-draft-0002",
+      "truth_event_ts": 224.0
+    },
+    {
+      "delta_sec": 1.409,
+      "observed_event_ts": 330.409,
+      "observed_track_id": 8,
+      "truth_event_id": "img2628-codex-draft-0003",
+      "truth_event_ts": 329.0
+    },
+    {
+      "delta_sec": 2.21,
+      "observed_event_ts": 384.21,
+      "observed_track_id": 9,
+      "truth_event_id": "img2628-codex-draft-0004",
+      "truth_event_ts": 382.0
+    },
+    {
+      "delta_sec": 2.211,
+      "observed_event_ts": 435.211,
+      "observed_track_id": 10,
+      "truth_event_id": "img2628-codex-draft-0005",
+      "truth_event_ts": 433.0
+    },
+    {
+      "delta_sec": 2.613,
+      "observed_event_ts": 486.613,
+      "observed_track_id": 11,
+      "truth_event_id": "img2628-codex-draft-0006",
+      "truth_event_ts": 484.0
+    },
+    {
+      "delta_sec": 3.414,
+      "observed_event_ts": 537.414,
+      "observed_track_id": 12,
+      "truth_event_id": "img2628-codex-draft-0007",
+      "truth_event_ts": 534.0
+    },
+    {
+      "delta_sec": 3.415,
+      "observed_event_ts": 593.415,
+      "observed_track_id": 13,
+      "truth_event_id": "img2628-codex-draft-0008",
+      "truth_event_ts": 590.0
+    },
+    {
+      "delta_sec": 2.783,
+      "observed_event_ts": 644.783,
+      "observed_track_id": 14,
+      "truth_event_id": "img2628-codex-draft-0009",
+      "truth_event_ts": 642.0
+    },
+    {
+      "delta_sec": 1.385,
+      "observed_event_ts": 696.385,
+      "observed_track_id": 15,
+      "truth_event_id": "img2628-codex-draft-0010",
+      "truth_event_ts": 695.0
+    },
+    {
+      "delta_sec": 1.99,
+      "observed_event_ts": 884.99,
+      "observed_track_id": 18,
+      "truth_event_id": "img2628-codex-draft-0012",
+      "truth_event_ts": 883.0
+    },
+    {
+      "delta_sec": 3.591,
+      "observed_event_ts": 940.591,
+      "observed_track_id": 19,
+      "truth_event_id": "img2628-codex-draft-0013",
+      "truth_event_ts": 937.0
+    },
+    {
+      "delta_sec": 1.992,
+      "observed_event_ts": 993.992,
+      "observed_track_id": 20,
+      "truth_event_id": "img2628-codex-draft-0014",
+      "truth_event_ts": 992.0
+    },
+    {
+      "delta_sec": 2.194,
+      "observed_event_ts": 1050.194,
+      "observed_track_id": 21,
+      "truth_event_id": "img2628-codex-draft-0015",
+      "truth_event_ts": 1048.0
+    },
+    {
+      "delta_sec": 1.395,
+      "observed_event_ts": 1100.395,
+      "observed_track_id": 22,
+      "truth_event_id": "img2628-codex-draft-0016",
+      "truth_event_ts": 1099.0
+    },
+    {
+      "delta_sec": 1.197,
+      "observed_event_ts": 1161.197,
+      "observed_track_id": 23,
+      "truth_event_id": "img2628-codex-draft-0017",
+      "truth_event_ts": 1160.0
+    },
+    {
+      "delta_sec": 2.598,
+      "observed_event_ts": 1218.598,
+      "observed_track_id": 24,
+      "truth_event_id": "img2628-codex-draft-0018",
+      "truth_event_ts": 1216.0
+    },
+    {
+      "delta_sec": 1.4,
+      "observed_event_ts": 1278.4,
+      "observed_track_id": 25,
+      "truth_event_id": "img2628-codex-draft-0019",
+      "truth_event_ts": 1277.0
+    },
+    {
+      "delta_sec": 1.401,
+      "observed_event_ts": 1333.401,
+      "observed_track_id": 26,
+      "truth_event_id": "img2628-codex-draft-0020",
+      "truth_event_ts": 1332.0
+    },
+    {
+      "delta_sec": 1.403,
+      "observed_event_ts": 1387.403,
+      "observed_track_id": 28,
+      "truth_event_id": "img2628-codex-draft-0021",
+      "truth_event_ts": 1386.0
+    },
+    {
+      "delta_sec": 1.204,
+      "observed_event_ts": 1441.204,
+      "observed_track_id": 29,
+      "truth_event_id": "img2628-codex-draft-0022",
+      "truth_event_ts": 1440.0
+    },
+    {
+      "delta_sec": 3.405,
+      "observed_event_ts": 1493.405,
+      "observed_track_id": 30,
+      "truth_event_id": "img2628-codex-draft-0023",
+      "truth_event_ts": 1490.0
+    },
+    {
+      "delta_sec": 2.008,
+      "observed_event_ts": 1601.008,
+      "observed_track_id": 32,
+      "truth_event_id": "img2628-codex-draft-0024",
+      "truth_event_ts": 1599.0
+    },
+    {
+      "delta_sec": 2.41,
+      "observed_event_ts": 1654.41,
+      "observed_track_id": 33,
+      "truth_event_id": "img2628-codex-draft-0025",
+      "truth_event_ts": 1652.0
+    }
+  ],
+  "matched_count": 24,
+  "missing_truth": [
+    {
+      "event_ts": 752.0,
+      "truth_event_id": "img2628-codex-draft-0011"
+    }
+  ],
+  "missing_truth_count": 1,
+  "observed_coverage_end_sec": 1668.01,
+  "observed_event_count": 28,
+  "observed_events_path": "data/reports/img2628_app_observed_events.run8092.worksheet_event_diag_conf076_fps5_age20_debounce30_speed16_diag_v1.json",
+  "observed_run_complete": true,
+  "pending_truth": [],
+  "pending_truth_count": 0,
+  "schema_version": "factory2-app-run-vs-truth-comparison-v1",
+  "tolerance_sec": 8.0,
+  "truth_event_count": 25,
+  "truth_ledger_path": "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+  "unexpected_observed": [
+    {
+      "event_ts": 110.003,
+      "runtime_total_after_event": 2,
+      "track_id": 2
+    },
+    {
+      "event_ts": 162.004,
+      "runtime_total_after_event": 3,
+      "track_id": 3
+    },
+    {
+      "event_ts": 777.787,
+      "runtime_total_after_event": 13,
+      "track_id": 17
+    },
+    {
+      "event_ts": 1549.007,
+      "runtime_total_after_event": 26,
+      "track_id": 31
+    }
+  ],
+  "unexpected_observed_count": 4
+}

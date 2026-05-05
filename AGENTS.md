@@ -1,36 +1,55 @@
-# CLAUDE.md
+# Factory Vision — Agent Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides repo-local guidance for AI coding assistants working in this repository. Keep it short: route durable doctrine to `docs/` and founder-brain/Obsidian rather than duplicating it here.
+
+## Current Source Of Truth
+
+Start with the concise current docs before relying on older task logs or research notes:
+
+- `docs/00_CURRENT_STATE.md`
+- `docs/01_PRODUCT_SPEC.md`
+- `docs/02_ARCHITECTURE.md`
+- `docs/03_VALIDATION_PIPELINE.md`
+- `docs/04_TEST_CASE_REGISTRY.md`
+- `docs/06_DEVELOPER_RUNBOOK.md`
+- `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`
+- `docs/07_ARTIFACT_STORAGE.md`
+- `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md`
+- `docs/KNOWN_LIMITATIONS.md`
+- `validation/registry.json`
+- `validation/learning_registry.json`
 
 ## What This Is
 
 Factory Vision Output Counter — a plug-and-play factory appliance that counts parts in an output zone using a Reolink camera + YOLO object detection on an Ubuntu edge PC. Runs fully offline on LAN. No cloud, no Docker, no YAML. Setup must complete in <15 minutes via a web wizard.
 
-## Vision Pipeline (as of 2026-03-18)
+## Current Context Routing
 
-The counting pipeline uses **YOLOv8 object detection** exclusively. Previous approaches (background subtraction, contour/blob detection, frame differencing, count-line crossing) were all red-teamed and rejected as unreliable in real factory environments.
+This file is a routing layer, not the project brain. Before changing behavior or making proof claims:
 
-**Two counting modes** (set via `FC_COUNTING_MODE` env var):
-- **`track_based`** (default): Frame → ROI mask (output zone polygon) → YOLO inference → filter out person class (class 0) → centroid tracking → count unique objects that appear in and exit the output zone.
-- **`event_based`**: Frame → YOLO inference (panel_in_transit.pt) → `EventBasedCounter` groups detection clusters over time → each cluster = +1 count. Designed for non-conveyor factories where a worker carries parts past the camera. Person-ignore masking is auto-disabled. ROI is optional.
+1. Read `docs/00_CURRENT_STATE.md` for current validated cases, claim boundaries, and non-negotiables.
+2. Read the relevant canonical doc from the list above.
+3. For durable product doctrine/research history, consult founder-brain / Obsidian Factory Vision pages.
+4. For implementation truth, inspect the live code, validation registry, reports, tests, and logs.
 
-**Key architectural decisions**:
-- **No count line.** Users draw an output zone (ROI polygon), not a line. Counting = tracking unique YOLO-detected objects within that zone.
-- **Person exclusion is always on.** YOLO class 0 (person) is excluded from counting to prevent hands/body parts triggering false counts.
-- **Model-agnostic pipeline.** Default model is `yolov8n.pt` (COCO 80-class). For factory parts not in COCO (which is most of them), swap in a custom-trained model via `FC_YOLO_MODEL_PATH`. Zero code changes needed.
-- **Custom model training via Roboflow.** Extract frames from customer video → label on Roboflow (auto-label with Grounding DINO + manual review) → fine-tune YOLOv8n (~60-100 labeled images) → deploy. ~1 hour per customer. See `docs/CUSTOM_MODEL_TRAINING.md`.
-- **Person-ignore pixel masking should be OFF with custom models.** Custom models trained on "panel in worker's hands" need to see inside the person bounding box. The custom model already excludes person class, making pixel masking unnecessary and harmful.
-- **+/- correction buttons on dashboard** are a deliberate safety net, not a crutch. Framed as "AI-assisted counting with operator oversight."
+Do not rely on older task logs, archived docs, chat memory, or stale AGENTS prose when a current doc or artifact exists.
 
-**Why not blob/frame-diff detection?** The worker's body dominates the visual signal (~40% of frame diff vs ~2% for the part). Person masking creates reveal artifacts. Similar parts stacked on each other are nearly invisible to pixel-level detection. Direct object detection via custom YOLO is the only reliable approach for arbitrary factory parts.
+## Critical Claim Boundary
 
-**Roboflow integration**: Workspace `thomass-workspace-7u6ay`, projects `wire-mesh-panel` and `panel-in-transit`. API keys in `.env` (gitignored). Downloaded datasets go in `datasets/`. Training runs stored in `training_runs/`. CPU-only training (~20 min for 25 epochs on i7-12700F).
+Current app evidence proves file-backed live counting at real-time speed for promoted/verified cases listed in `docs/00_CURRENT_STATE.md`. It does **not** prove live Reolink/RTSP field operation until the same runtime path is validated on an actual live camera stream.
 
-**Trained models** (in `models/` directory):
-- `wire_mesh_panel.pt` — Stack detection. 98% precision, 91% recall, mAP50 94.6% (71 training images). NOT useful for counting (detects static stacks).
-- `panel_in_transit.pt` / `panel_in_transit.onnx` — Transit detection for event_based counting. 94% precision, 53% recall (47 training images). Needs 150+ images for 80%+ recall target. ONNX export provides no speedup on this CPU (i7-12700F already runs PyTorch at ~60ms/frame).
+Factory Vision project doctrine belongs in Obsidian/project docs, not Hermes always-loaded memory. This `AGENTS.md` should point agents to the right sources and commands only.
 
-**Continuous improvement loop** (planned): Use Roboflow API to auto-collect more training images during production, retrain periodically to improve accuracy over time.
+## Learning Library Routing
+
+For failed runs, diagnostic recoveries, training candidates, and artifact trust boundaries, use the learning registry before making recommendations:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+.venv/bin/python scripts/factory_learn.py recommend --case-id factory2 --format json
+```
+
+`factory2_test_case_1` alias `factory2` is the verified high-count app-proof anchor. `real_factory_candidate` alias `real_factory` is diagnostic-recovered only; it is not validation truth, not training eligible, and not registry-promotion eligible until reviewed gold truth, calibration, and clean app-vs-truth proof exist.
 
 ## Commands
 
@@ -45,6 +64,12 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
 
 # Run in demo mode (uses demo/demo.mp4 or demo/demo_counter.mp4)
 FC_DEMO_MODE=1 FC_DEMO_VIDEO_PATH=demo/demo_counter.mp4 python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
+
+# Run the verified Factory2 real-time demo backend
+.venv/bin/python scripts/start_factory2_demo_app.py --port 8091
+
+# Run verified Factory2 backend + frontend dev stack
+.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173
 
 # Run backend tests (pytest, from repo root)
 python -m pytest tests/
@@ -142,108 +167,38 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 
 ## Workflow Orchestration
 
-### 1. Plan Mode Default
-- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-- If something goes sideways, STOP and re-plan immediately
-- Use plan mode for verification steps, not just building
-- Write detailed specs upfront to reduce ambiguity
+### 1. Plan for non-trivial work
+- For tasks with 3+ steps, architectural decisions, or validation impact, write/update a compact plan before implementation.
+- If a proof/validation task has a definition-of-done doc, use that doc as the plan spine.
 
-### 2. Subagent Strategy
-- Use subagents liberally to keep main context window clean
-- Offload research, exploration, and parallel analysis to subagents
-- For complex problems, throw more compute at it via subagents
-- One task per subagent for focused execution
+### 2. Continue by default
+- Keep executing the next obvious step until the stated definition of done is met.
+- Do not stop after each subtask to summarize progress if the next step is already implied by the PRD, handoff, failure, or verification result.
+- Stop only for destructive actions, missing required artifacts, genuinely risky product/technical decisions, or true completion.
 
-### 3. Self-Improvement Loop
-- After ANY correction from the user: update tasks/lessons.md with the pattern
-- Write rules for yourself that prevent the same mistake
-- Ruthlessly iterate on these lessons until mistake rate drops
-- Review lessons at session start for relevant project
+### 3. Verification before done
+- Never mark work complete without proof: tests, logs, report artifacts, dashboard evidence, or app/runtime verification as appropriate.
+- For validation/proof work, use the registry and current docs rather than ad hoc totals.
+- Do not claim investor/customer proof from offline replay, timestamp reveal, fake UI updates, or retrospective diagnostics.
 
-### 4. Verification Before Done
-- Never mark a task complete without proving it works
-- Diff behavior between main and your changes when relevant
-- Ask yourself: "Would a staff engineer approve this?"
-- Run tests, check logs, demonstrate correctness
+### 4. Oracle escalation
+- If genuinely stuck after inspecting code/artifacts and trying obvious local debugging, ask Oracle before interrupting Thomas for direction.
+- Use `oracle --help` first in a session, prefer dry-run previews, and pass the minimum necessary file set.
+- Use browser mode by default unless Thomas explicitly accepts API spend.
+- This Mac's working Oracle browser path is the normal Chrome ChatGPT session, not a project `.env` password. Current verified config is in `~/.oracle/config.json`: `browser.manualLogin: false`, `browser.modelStrategy: "ignore"`, `browser.keepBrowser: true`, `browser.hideWindow: false`.
+- Chrome cookie DBs to try if Oracle needs an explicit cookie path:
+  - `/Users/thomas/Library/Application Support/Google/Chrome/Default/Cookies`
+  - `/Users/thomas/Library/Application Support/Google/Chrome/Profile 1/Cookies`
+- Reliable Oracle invocation for this repo:
+  ```bash
+  oracle --engine browser --browser-model-strategy ignore --browser-keep-browser --prompt "<question>" --file "src/**" --file "docs/00_CURRENT_STATE.md"
+  ```
+- If Oracle says `Unable to locate the ChatGPT model selector button` while ChatGPT is visibly logged in, do **not** ask for a password. Keep `--browser-model-strategy ignore`; the selector UI is the failure, not cookies.
 
-### 5. Demand Elegance (Balanced)
-- For non-trivial changes: pause and ask "is there a more elegant way?"
-- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
-- Skip this for simple, obvious fixes -- don't over-engineer
-- Challenge your own work before presenting it
-
-### 6. Autonomous Bug Fixing
-- When given a bug report: just fix it. Don't ask for hand-holding
-- Point at logs, errors, failing tests -- then resolve them
-- Zero context switching required from the user
-- Go fix failing CI tests without being told how
-
-### 6A. Continue By Default
-- For this project, default behavior is to keep executing the next obvious step until the stated definition of done is met.
-- Do not stop after each subtask to summarize progress or ask the user what to do next if the next step is already implied by the PRD, handoff, current failures, latest verification result, or the active blocker.
-- After finishing one step, immediately execute the next highest-leverage step.
-- Only stop and ask the user when:
-  - a genuinely risky product or technical decision must be made
-  - a required dependency, artifact, or data source is missing
-  - a destructive action needs explicit approval
-  - the project goal is actually complete
-- If the user asks a rhetorical "what's next?" style question while the path is obvious, treat it as a request to continue the work, not as a request to pause for planning.
-- If you are truly stuck, use the Oracle escalation rule before interrupting the user.
-
-### 7. Oracle Escalation Rule
-- If you are truly stuck and are about to ask the user what to do next, ask Oracle first.
-- "Stuck" means you have already inspected the relevant code/artifacts, tried the obvious local verification/debugging steps, and still do not have a credible next move.
-- Do not use Oracle as a substitute for normal code reading. Use it as the escalation path before interrupting the user for direction.
-- Oracle on this machine:
-  - Binary on PATH: `oracle` (`/opt/homebrew/bin/oracle`)
-  - Local checkout: `/Users/thomas/Projects/_research/oracle`
-  - Codex skill: `/Users/thomas/.codex/skills/oracle/SKILL.md`
-- Before the first Oracle run in a session, run `oracle --help`.
-- Prefer a dry-run preview first: `oracle --dry-run summary --files-report -p "<task>" --file "<paths>"`
-- When using Oracle here, default to browser mode unless the user explicitly wants an API run or explicitly accepts API spend.
-- Always pass both a prompt and the minimum necessary file set. Reattach to existing Oracle sessions instead of spawning duplicates unless a fresh run is clearly needed.
-
-### 8. Definition Of Done Rule
-- For Factory2 carried-panel work, "done" does not mean the proof report or diagnostics improved.
-- Do not stop at proof-only success.
-- The task is only done when the actual counting/runtime path works end to end on `factory2.MOV` and produces the defensible count behavior the proof established.
-- If the proof path works but the app/runtime counter path does not, the work is still in progress.
-- Do not stop to summarize partial progress while that runtime path is still failing. Keep working until the runtime path counts correctly or you are genuinely blocked.
-- If you become genuinely blocked, use the Oracle escalation rule before asking the user what to do next.
-
-### 9. Factory2 Recall Doctrine
-- The human truth set for `factory2.MOV` is 23 real carried-panel transfers. That is the current target.
-- A single accepted carry is not the finish line. After the first proof/runtime success, the next definition of done is:
-  - proof path accepted_count = 23
-  - runtime/app path count = 23
-  - false positives = 0
-- Broad mixed diagnostic windows undercount. Prefer narrow, event-centered windows when building recall-oriented proof sets.
-- When merging narrow diagnostics into one proof artifact, freeze or copy the finalized diagnostic directories first. Do not build merged proof results from mutable diagnostics that are still being regenerated.
-- Merged proof `accepted_count` must be a distinct-delivery count, not a raw accepted-receipt count. If overlapping windows produce two accepted receipts for the same physical carry, dedupe them at the report layer and keep both receipts only as audit evidence.
-- If recall stalls on worker-overlap cases, the next product move is not threshold loosening. Export blocked receipt crops and build a panel-vs-worker separation dataset.
-- Runtime-only `approved_delivery_chain` events are not automatically proof-eligible. If runtime lineage shows `synthetic_approved_chain_token`, do not promote that event into proof receipts or use it to raise `accepted_count`.
-- Current honest state after runtime-lineage audit: runtime/app path reaches `23`, but proof stays at `21` because the remaining `305.708s` and `425.012s` events are synthetic approved-chain tokens rather than fresh source-backed proof receipts.
-- The corrected source-history-driven rescue searches for `305.708s` and `425.012s` are now exhausted work. Across the focused `5/8/10fps` lineage windows, both events still collapse into `shared_source_lineage_no_distinct_proof_receipt`.
-- Synthetic `approved_delivery_chain` events are operational/runtime counts, not source-token-backed proof authority. Do not mint fake `source_token_id` or `source_bbox` values for them; serialize them as `count_authority = runtime_inferred_only`.
-- The current count-authority ledger is `data/reports/factory2_count_authority_ledger.v1.json`: runtime total `23`, proof total `21`, inherited live source token `11`, synthetic with overlapping proof `10`, synthetic without distinct proof `2`.
-- Product/API surfaces must expose the count-authority split explicitly. For Factory2, do not collapse everything into one opaque total when runtime and proof diverge; surface `runtime_total`, `proof_backed_total`, and `runtime_inferred_only`.
-- For investor/demo validation on `factory2.MOV`, use the real one-pass app path, not replayed receipts. The verified demo configuration is:
-  - `FC_DEMO_COUNT_MODE=live_reader_snapshot`
-  - `FC_COUNTING_MODE=event_based`
-  - `FC_RUNTIME_CALIBRATION_PATH=data/calibration/factory2_ai_only_v1.json`
-  - `FC_DEMO_LOOP=0`
-  - `FC_PROCESSING_FPS=10`
-  - `FC_READER_FPS=10`
-- Use `scripts/start_factory2_demo_app.py` for the investor demo launch instead of hand-assembling env vars.
-- The final-two option-2 path now has a divergent-chain review package plus a local rescue dataset. Use `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md` as the active spec for `305.708s` and `425.012s`.
-- Treat `same_delivery_as_prior` as a lineage/relation label, not automatically as a pure visual crop class. Before training or promoting anything, check whether the target is learnable from isolated crops or whether it needs pairwise/sequence context.
-- If a chain-level adjudication marks a divergent runtime event as `duplicate_of_prior_runtime_event` or `source_authority_blocked`, the proof action must remain `do_not_mint`. Do not override that with crop-only confidence.
-- Roboflow is acceptable for offline private annotation/training of those hard crops, but it is not a live runtime dependency and should not be treated as the immediate fix by itself.
-- Demo-mode app verification still has a trap: if `FC_DEMO_LOOP` is left on or the app is launched in `track_based` mode, the demo result is not a valid Factory2 proof run. Do not claim success unless the app is running the verified one-pass event-based configuration.
-- Active PRDs for this phase:
-  - `docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md`
-  - `docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md`
-  - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
+### 5. Lessons and durable knowledge
+- Corrections that affect this repo should update the relevant current doc or `tasks/lessons.md`.
+- Durable Factory Vision doctrine/research should also be filed in founder-brain/Obsidian.
+- Repeatable procedures belong in skills, not in this file.
 
 ## Task Management
 

@@ -3,7 +3,25 @@ from __future__ import annotations
 import numpy as np
 
 from app.services.calibration import CalibrationZones
-from app.services.runtime_event_counter import RuntimeEventCounter
+from app.services.runtime_event_counter import RuntimeEventCounter, crop_live_separation_inputs
+
+
+def test_crop_live_separation_inputs_keeps_boxes_in_crop_coordinates() -> None:
+    frame = np.zeros((200, 300, 3), dtype=np.uint8)
+
+    crop = crop_live_separation_inputs(
+        frame,
+        panel_box=(120.0, 80.0, 30.0, 20.0),
+        person_box=(100.0, 60.0, 80.0, 90.0),
+        margin_ratio=0.0,
+        min_margin_px=10,
+    )
+
+    assert crop.left == 90
+    assert crop.top == 50
+    assert crop.image.shape[:2] == (110, 100)
+    assert crop.panel_box == (30.0, 30.0, 30.0, 20.0)
+    assert crop.person_box == (10.0, 10.0, 80.0, 90.0)
 
 
 def test_runtime_event_counter_counts_worker_overlap_track_only_after_live_separation() -> None:
@@ -82,6 +100,49 @@ def test_runtime_event_counter_reuses_nearby_live_separation_samples() -> None:
 
     counter.process_frame(frame=frame, detections=[{"box": (5, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     counter.process_frame(frame=frame, detections=[{"box": (8, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+    result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
+
+    assert counter.total_count == 1
+    assert len(result.events) == 1
+    assert separation_calls == [
+        ("source", (5.0, 20.0, 20.0, 20.0)),
+        ("output", (65.0, 20.0, 20.0, 20.0)),
+    ]
+
+
+def test_runtime_event_counter_reuses_stable_live_separation_across_configured_gap() -> None:
+    zones = CalibrationZones(
+        source_polygons=[[(0, 0), (40, 0), (40, 100), (0, 100)]],
+        output_polygons=[[(60, 0), (100, 0), (100, 100), (60, 100)]],
+        ignore_polygons=[],
+    )
+    separation_calls: list[tuple[str, tuple[float, float, float, float]]] = []
+
+    def fake_separation_analyzer(*, image, panel_box_xywh, person_box_xywh, zone):
+        separation_calls.append((zone, panel_box_xywh))
+        return {
+            "zone": zone,
+            "separation_decision": "separable_panel_candidate",
+            "visible_nonperson_ratio": 0.42,
+            "estimated_visible_nonperson_region_signal": 0.08,
+            "reason_strings": ["synthetic outside-silhouette panel evidence"],
+        }
+
+    counter = RuntimeEventCounter(
+        zones=zones,
+        gate=None,
+        source_min_frames=2,
+        output_stable_frames=1,
+        tracker_match_distance=100.0,
+        separation_analyzer=fake_separation_analyzer,
+        crop_classifier=None,
+        live_analysis_cache_max_gap_frames=5,
+    )
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+    person_boxes = [(0.0, 0.0, 100.0, 100.0)]
+
+    for x in (5, 6, 7, 8, 9):
+        counter.process_frame(frame=frame, detections=[{"box": (x, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
     result = counter.process_frame(frame=frame, detections=[{"box": (65, 20, 20, 20), "confidence": 0.9}], person_boxes=person_boxes)
 
     assert counter.total_count == 1

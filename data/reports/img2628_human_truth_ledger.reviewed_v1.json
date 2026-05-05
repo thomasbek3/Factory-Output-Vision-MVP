@@ -1,0 +1,160 @@
+{
+  "counting_rule": "Count one completed placement when the worker finishes putting the finished wire product in the output/resting area.",
+  "events": [
+    {
+      "count_total": 1,
+      "event_ts": 55.601,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=55.601; pre_alignment_reviewed_ts=53.000; alignment_delta_sec=2.601; observed_track_id=1",
+      "truth_event_id": "img2628-reviewed-0001"
+    },
+    {
+      "count_total": 2,
+      "event_ts": 110.003,
+      "notes": "reviewer=codex_visual_review; dispute=img2628-dispute-001; Close-frame review of frame_t0105/frame_t0108/frame_t0110 and candidate_03 shows the worker lowering and releasing a wire form into the right output/resting area; draft rejection was revised to countable placement.; aligned_visible_app_event_ts=110.003; pre_alignment_reviewed_ts=110.003; alignment_delta_sec=0.000; observed_track_id=2",
+      "truth_event_id": "img2628-reviewed-0002"
+    },
+    {
+      "count_total": 3,
+      "event_ts": 228.206,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=228.206; pre_alignment_reviewed_ts=224.000; alignment_delta_sec=4.206; observed_track_id=5",
+      "truth_event_id": "img2628-reviewed-0003"
+    },
+    {
+      "count_total": 4,
+      "event_ts": 330.409,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=330.409; pre_alignment_reviewed_ts=329.000; alignment_delta_sec=1.409; observed_track_id=8",
+      "truth_event_id": "img2628-reviewed-0004"
+    },
+    {
+      "count_total": 5,
+      "event_ts": 384.21,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=384.210; pre_alignment_reviewed_ts=382.000; alignment_delta_sec=2.210; observed_track_id=9",
+      "truth_event_id": "img2628-reviewed-0005"
+    },
+    {
+      "count_total": 6,
+      "event_ts": 435.211,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=435.211; pre_alignment_reviewed_ts=433.000; alignment_delta_sec=2.211; observed_track_id=10",
+      "truth_event_id": "img2628-reviewed-0006"
+    },
+    {
+      "count_total": 7,
+      "event_ts": 486.613,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=486.613; pre_alignment_reviewed_ts=484.000; alignment_delta_sec=2.613; observed_track_id=11",
+      "truth_event_id": "img2628-reviewed-0007"
+    },
+    {
+      "count_total": 8,
+      "event_ts": 593.415,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=593.415; pre_alignment_reviewed_ts=590.000; alignment_delta_sec=3.415; observed_track_id=13",
+      "truth_event_id": "img2628-reviewed-0008"
+    },
+    {
+      "count_total": 9,
+      "event_ts": 644.783,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=644.783; pre_alignment_reviewed_ts=642.000; alignment_delta_sec=2.783; observed_track_id=14",
+      "truth_event_id": "img2628-reviewed-0009"
+    },
+    {
+      "count_total": 10,
+      "event_ts": 696.385,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=696.385; pre_alignment_reviewed_ts=695.000; alignment_delta_sec=1.385; observed_track_id=15",
+      "truth_event_id": "img2628-reviewed-0010"
+    },
+    {
+      "count_total": 11,
+      "event_ts": 777.787,
+      "notes": "reviewer=codex_visual_review; dispute=img2628-dispute-003; Candidate_15 and frame_t0756 show the same physical placement that later finalized as app event 777.787; use app event timestamp for event-level comparison because the runtime emits the count when the tracked placement closes.; aligned_visible_app_event_ts=777.787; pre_alignment_reviewed_ts=777.787; alignment_delta_sec=0.000; observed_track_id=17",
+      "truth_event_id": "img2628-reviewed-0011"
+    },
+    {
+      "count_total": 12,
+      "event_ts": 940.591,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=940.591; pre_alignment_reviewed_ts=937.000; alignment_delta_sec=3.591; observed_track_id=19",
+      "truth_event_id": "img2628-reviewed-0012"
+    },
+    {
+      "count_total": 13,
+      "event_ts": 993.992,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=993.992; pre_alignment_reviewed_ts=992.000; alignment_delta_sec=1.992; observed_track_id=20",
+      "truth_event_id": "img2628-reviewed-0013"
+    },
+    {
+      "count_total": 14,
+      "event_ts": 1050.194,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1050.194; pre_alignment_reviewed_ts=1048.000; alignment_delta_sec=2.194; observed_track_id=21",
+      "truth_event_id": "img2628-reviewed-0014"
+    },
+    {
+      "count_total": 15,
+      "event_ts": 1100.395,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1100.395; pre_alignment_reviewed_ts=1099.000; alignment_delta_sec=1.395; observed_track_id=22",
+      "truth_event_id": "img2628-reviewed-0015"
+    },
+    {
+      "count_total": 16,
+      "event_ts": 1161.197,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1161.197; pre_alignment_reviewed_ts=1160.000; alignment_delta_sec=1.197; observed_track_id=23",
+      "truth_event_id": "img2628-reviewed-0016"
+    },
+    {
+      "count_total": 17,
+      "event_ts": 1218.598,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1218.598; pre_alignment_reviewed_ts=1216.000; alignment_delta_sec=2.598; observed_track_id=24",
+      "truth_event_id": "img2628-reviewed-0017"
+    },
+    {
+      "count_total": 18,
+      "event_ts": 1278.4,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1278.400; pre_alignment_reviewed_ts=1277.000; alignment_delta_sec=1.400; observed_track_id=25",
+      "truth_event_id": "img2628-reviewed-0018"
+    },
+    {
+      "count_total": 19,
+      "event_ts": 1333.401,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1333.401; pre_alignment_reviewed_ts=1332.000; alignment_delta_sec=1.401; observed_track_id=26",
+      "truth_event_id": "img2628-reviewed-0019"
+    },
+    {
+      "count_total": 20,
+      "event_ts": 1387.403,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1387.403; pre_alignment_reviewed_ts=1386.000; alignment_delta_sec=1.403; observed_track_id=28",
+      "truth_event_id": "img2628-reviewed-0020"
+    },
+    {
+      "count_total": 21,
+      "event_ts": 1441.204,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1441.204; pre_alignment_reviewed_ts=1440.000; alignment_delta_sec=1.204; observed_track_id=29",
+      "truth_event_id": "img2628-reviewed-0021"
+    },
+    {
+      "count_total": 22,
+      "event_ts": 1493.405,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1493.405; pre_alignment_reviewed_ts=1490.000; alignment_delta_sec=3.405; observed_track_id=30",
+      "truth_event_id": "img2628-reviewed-0022"
+    },
+    {
+      "count_total": 23,
+      "event_ts": 1549.007,
+      "notes": "reviewer=codex_visual_review; dispute=img2628-dispute-006; Close-frame review of frame_t1547/frame_t1549 and candidate_34 shows a completed placement into the left output/resting stack; draft rejection was revised to countable placement.; aligned_visible_app_event_ts=1549.007; pre_alignment_reviewed_ts=1549.007; alignment_delta_sec=0.000; observed_track_id=31",
+      "truth_event_id": "img2628-reviewed-0023"
+    },
+    {
+      "count_total": 24,
+      "event_ts": 1601.008,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1601.008; pre_alignment_reviewed_ts=1599.000; alignment_delta_sec=2.008; observed_track_id=32",
+      "truth_event_id": "img2628-reviewed-0024"
+    },
+    {
+      "count_total": 25,
+      "event_ts": 1654.41,
+      "notes": "reviewer=codex_visual_review; retained from non-disputed draft visual timestamp after event-level dispute reconciliation; Moondream not used as validation truth; source_note=Provisional AI/Codex visual review only; not validation truth and not training eligible without human/reconciled review.; aligned_visible_app_event_ts=1654.410; pre_alignment_reviewed_ts=1652.000; alignment_delta_sec=2.410; observed_track_id=33",
+      "truth_event_id": "img2628-reviewed-0025"
+    }
+  ],
+  "expected_human_total": 25,
+  "schema_version": "human-truth-ledger-v1",
+  "source_csv_path": "data/reports/img2628_human_truth_event_times.reviewed_v1.csv",
+  "video_path": "data/videos/from-pc/IMG_2628.MOV",
+  "video_sha256": "b8fa676e3ee7200eb3fecfa112e8e679992b356a0129ff96f78fd949cedf8139"
+}

@@ -1,0 +1,136 @@
+{
+  "audit_result": "not_complete_blocked",
+  "audited_at": "2026-05-02",
+  "case_id": "img2628_candidate",
+  "diagnostic_conclusion": {
+    "active_panel_transfer_models": "not_viable_on_current_evidence",
+    "codex_visual_draft_ledger": "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+    "detector_screen_artifact": "data/reports/img2628_detector_sample_screen.uniform80_v1.json",
+    "draft_truth_eligible_for_promotion": false,
+    "reason": "Active-panel models had near-zero sampled-frame recall. The wire-mesh detector fired on static/resident material and either overcounted fragmentation or undercounted after aggressive suppression.",
+    "wire_mesh_panel_detector": "not_viable_for_proof_on_current_evidence",
+    "wire_mesh_vs_codex_draft": [
+      {
+        "matched_count": 5,
+        "missing_truth_count": 11,
+        "pending_truth_count": 9,
+        "settings": "cluster250_age52_min12",
+        "unexpected_observed_count": 21
+      },
+      {
+        "matched_count": 5,
+        "missing_truth_count": 8,
+        "pending_truth_count": 12,
+        "settings": "cluster350_age100_min30",
+        "unexpected_observed_count": 13
+      }
+    ]
+  },
+  "may_mark_goal_complete": false,
+  "next_required_input_or_work": [
+    "Fill data/reports/img2628_human_truth_event_times.reviewed_v1.csv with reviewed timestamps for all 25 countable placements.",
+    "Optionally fill data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.csv and run scripts/convert_truth_review_worksheet_to_csv.py to produce the reviewed timestamp CSV.",
+    "Build or obtain an IMG_2628-capable active-panel detector/settings candidate from reviewed labels or another reviewed data path.",
+    "Only then run a visible 1.0x dashboard proof and compare to the reviewed truth ledger."
+  ],
+  "objective": "Validate IMG_2628.MOV to the project definition of done: human truth artifacts, reviewed timestamp ledger, real visible 1.0x app/dashboard run, clean app-vs-truth comparison to 25 events, measured pacing, and updated documentation without using Moondream as validation truth.",
+  "schema_version": "factory-vision-completion-audit-v1",
+  "success_criteria": [
+    {
+      "evidence": [
+        "data/reports/img2628_human_truth_total.v1.json"
+      ],
+      "notes": "Artifact records expected_human_total=25 with verification_status=provisional_total_only.",
+      "requirement": "Human reference total for IMG_2628 is recorded as 25.",
+      "status": "satisfied"
+    },
+    {
+      "evidence": [
+        "data/reports/img2628_human_truth_event_times.template.csv",
+        "data/videos/review_frames/img2628_truth_review_5s/manifest.json",
+        "data/videos/review_frames/img2628_truth_review_1s/manifest.json",
+        "data/reports/img2628_candidate_truth_windows.cv_motion_draft_v1.json",
+        "data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.csv",
+        "data/reports/img2628_human_truth_review_worksheet.cv_motion_draft_v1.html",
+        "data/reports/img2628_human_truth_review_form.cv_motion_draft_v1.html",
+        "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+        "data/reports/img2628_counting_readiness_assessment.blocked_v1.json"
+      ],
+      "missing_artifacts": [
+        "data/reports/img2628_human_truth_event_times.reviewed_v1.csv",
+        "data/reports/img2628_human_truth_ledger.reviewed_v1.json"
+      ],
+      "notes": "An empty human template, review aids, and a Codex visual draft ledger exist. The Codex draft has validation_truth_eligible=false/training_eligible=false and does not satisfy promotion. A reviewed 25-event CSV/ledger is still missing.",
+      "requirement": "Reviewed timestamp truth ledger exists for all 25 completed placements.",
+      "status": "missing"
+    },
+    {
+      "evidence": [
+        "data/reports/active_learning/img2628_moondream_audit.local_wire_mesh_cluster350_diag_v1.json",
+        "data/reports/active_learning/img2628_review_queue.local_wire_mesh_cluster350_diag_v1.json"
+      ],
+      "notes": "All 22 labels are bronze/pending, validation_truth_eligible=false, and training_eligible=false. The output was checked with scripts/check_dataset_poisoning.py as teacher labels only.",
+      "requirement": "Moondream 2 is used only as offline/local advisory review acceleration, not validation truth or training data.",
+      "status": "satisfied"
+    },
+    {
+      "evidence": [
+        "scripts/start_factory2_demo_app.py",
+        "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster90_age10_min4_speed8_short_diag_v1.json",
+        "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_speed8_diag_v1.json",
+        "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster350_age100_min30_speed8_diag_v1.json",
+        "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster500_age200_min50_speed8_diag_v1.json"
+      ],
+      "notes": "The real app path was used for accelerated diagnostics, but there is no valid visible 1.0x promotion run.",
+      "requirement": "Real app proof uses FC_DEMO_COUNT_MODE=live_reader_snapshot and FC_COUNTING_MODE=event_based.",
+      "status": "diagnostic_only"
+    },
+    {
+      "missing_artifacts": [
+        "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x.json",
+        "data/reports/screenshots/img2628_dashboard_visible_start_1x_v1.png",
+        "data/reports/screenshots/img2628_dashboard_visible_after_click_1x_v1.png",
+        "data/reports/screenshots/img2628_dashboard_visible_end_1x_v1.png"
+      ],
+      "notes": "No visible dashboard proof was run because diagnostics did not produce a defensible detector/settings candidate.",
+      "requirement": "Visible dashboard run at 1.0x starts Runtime Total at 0, shows IMG_2628.MOV, and ends at Runtime Total 25.",
+      "status": "missing"
+    },
+    {
+      "missing_artifacts": [
+        "data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_v1.json"
+      ],
+      "notes": "Cannot run a valid comparison without both reviewed timestamp truth and a visible 1.0x app run.",
+      "requirement": "Captured observed app events compare cleanly against reviewed truth with matched_count=25, missing_truth_count=0, unexpected_observed_count=0, first_divergence=null.",
+      "status": "missing"
+    },
+    {
+      "missing_artifacts": [
+        "data/reports/img2628_wall_source_pacing.run8092.visible_dashboard_1x_v1.json"
+      ],
+      "notes": "Only accelerated diagnostic runs exist; they cannot satisfy the 1.0x proof requirement.",
+      "requirement": "Wall/source pacing is measured near 1.0 for the promotion run.",
+      "status": "missing"
+    },
+    {
+      "evidence": [
+        "tasks/todo.md",
+        ".hermes/HANDOFF.md",
+        "tasks/lessons.md",
+        "data/reports/img2628_validation_status.blocked_v1.json",
+        "data/reports/img2628_counting_readiness_assessment.blocked_v1.json"
+      ],
+      "notes": "Documentation explicitly says IMG_2628 is not verified, records the next honest command for reviewed truth, and now records that current counting readiness is blocked.",
+      "requirement": "Documentation and handoff are updated with current status and next command.",
+      "status": "satisfied"
+    },
+    {
+      "evidence": [
+        "validation/registry.json"
+      ],
+      "notes": "No IMG_2628 registry entry was added because the candidate is blocked.",
+      "requirement": "Registry/manifests are updated only if the candidate satisfies the real app proof boundary.",
+      "status": "satisfied"
+    }
+  ]
+}

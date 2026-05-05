@@ -1,0 +1,112 @@
+{
+  "assessed_at": "2026-05-02",
+  "can_count_like_verified_candidates": false,
+  "can_promote_or_verify": false,
+  "can_run_real_app_path": true,
+  "case_id": "img2628_candidate",
+  "claim_boundary": "IMG_2628 can be loaded and diagnosed by the real app path, but it is not currently countable to the verified-candidate standard. Do not claim it counts like IMG_3262 or IMG_3254 until reviewed timestamp truth exists, detector/runtime diagnostics are plausible, and a visible 1.0x dashboard run compares cleanly to the reviewed ledger.",
+  "detector_readiness": {
+    "confidence_0_25_summary": [
+      {
+        "images_with_detection": 0,
+        "interpretation": "not_viable_transfer_model_for_img2628",
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "total_detections": 0
+      },
+      {
+        "images_with_detection": 0,
+        "interpretation": "not_viable_transfer_model_for_img2628",
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "total_detections": 0
+      },
+      {
+        "images_with_detection": 1,
+        "interpretation": "too_sparse_for_defensible_event_based_runtime_counting",
+        "model_path": "models/panel_in_transit.pt",
+        "total_detections": 2
+      },
+      {
+        "images_with_detection": 80,
+        "interpretation": "detects_static_or_resident_material_not_clean_completed_placements",
+        "model_path": "models/wire_mesh_panel.pt",
+        "total_detections": 268
+      }
+    ],
+    "required_next_step": "Build or obtain an IMG_2628-capable active-panel detector/settings candidate from reviewed labels or another reviewed data path.",
+    "sample_count": 80,
+    "sample_screen_artifact": "data/reports/img2628_detector_sample_screen.uniform80_v1.json",
+    "status": "blocked"
+  },
+  "expected_human_total": 25,
+  "overall_status": "blocked_not_ready_for_promotion_proof",
+  "promotion_missing_artifacts": [
+    "data/reports/img2628_human_truth_event_times.reviewed_v1.csv",
+    "data/reports/img2628_human_truth_ledger.reviewed_v1.json",
+    "data/reports/img2628_app_observed_events.run8092.visible_dashboard_1x.json",
+    "data/reports/img2628_app_vs_truth.run8092.visible_dashboard_1x_v1.json",
+    "data/reports/img2628_wall_source_pacing.run8092.visible_dashboard_1x_v1.json"
+  ],
+  "runtime_diagnostic_readiness": {
+    "diagnostic_runs": [
+      {
+        "artifact": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster90_age10_min4_speed8_short_diag_v1.json",
+        "coverage_end_sec": 160.004,
+        "interpretation": "clear_static_fragmentation_overcount_with_incomplete_coverage",
+        "observed_event_count": 28,
+        "state": "RUNNING_GREEN"
+      },
+      {
+        "artifact": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_speed8_diag_v1.json",
+        "coverage_end_sec": 1092.795,
+        "interpretation": "still_overcounting_or_duplicating_before_full_video_completion",
+        "observed_event_count": 26,
+        "state": "RUNNING_GREEN"
+      },
+      {
+        "artifact": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster350_age100_min30_speed8_diag_v1.json",
+        "coverage_end_sec": 947.391,
+        "interpretation": "undercounting_and_not_completed",
+        "observed_event_count": 18,
+        "state": "RUNNING_GREEN"
+      },
+      {
+        "artifact": "data/reports/img2628_app_observed_events.run8092.wire_mesh_conf025_cluster500_age200_min50_speed8_diag_v1.json",
+        "coverage_end_sec": 1307.201,
+        "interpretation": "over_suppressed_undercount",
+        "observed_event_count": 5,
+        "state": "RUNNING_GREEN"
+      }
+    ],
+    "draft_truth_comparisons": [
+      {
+        "artifact": "data/reports/img2628_app_vs_codex_visual_draft.run8092.wire_mesh_conf025_cluster250_age52_min12_speed8_diag_v1.json",
+        "matched_count": 5,
+        "missing_truth_count": 11,
+        "pending_truth_count": 9,
+        "unexpected_observed_count": 21
+      },
+      {
+        "artifact": "data/reports/img2628_app_vs_codex_visual_draft.run8092.wire_mesh_conf025_cluster350_age100_min30_speed8_diag_v1.json",
+        "matched_count": 5,
+        "missing_truth_count": 8,
+        "pending_truth_count": 12,
+        "unexpected_observed_count": 13
+      }
+    ],
+    "status": "diagnostic_only_not_promotion_ready"
+  },
+  "schema_version": "factory-vision-counting-readiness-assessment-v1",
+  "truth_readiness": {
+    "codex_visual_draft_ledger": "data/reports/img2628_codex_visual_truth_ledger.draft_v1.json",
+    "codex_visual_draft_validation_truth_eligible": false,
+    "human_total_artifact": "data/reports/img2628_human_truth_total.v1.json",
+    "human_total_status": "provisional_total_only",
+    "missing_promotion_artifacts": [
+      "data/reports/img2628_human_truth_event_times.reviewed_v1.csv",
+      "data/reports/img2628_human_truth_ledger.reviewed_v1.json"
+    ],
+    "status": "blocked_for_promotion",
+    "timestamp_truth_status": "not_reviewed_yet"
+  },
+  "video_path": "data/videos/from-pc/IMG_2628.MOV"
+}

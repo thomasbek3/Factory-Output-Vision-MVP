@@ -5,6 +5,30 @@
 **Owner:** Thomas Bekkers  
 **Repo:** `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 
+## 2026-05-01 App Runtime Update
+
+The runtime/app side of Factory2 is now verified in the actual visible app path at true real-time speed:
+
+```text
+dashboard-started app run
+FC_DEMO_COUNT_MODE=live_reader_snapshot
+FC_COUNTING_MODE=event_based
+FC_DEMO_LOOP=0
+FC_PROCESSING_FPS=10
+FC_READER_FPS=10
+Runtime Total: 23
+truth comparison: 23/23
+wall_per_source: 1.0
+```
+
+Primary artifact:
+
+```text
+data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json
+```
+
+This update does not resolve the proof-backed final-two question below. It does establish that the actual app can count the Factory2 human-truth total from real processed frames at real-time speed. The remaining final-two work is proof/evidence authority and future generalization, not basic runtime correctness on `factory2.MOV`.
+
 ## 1. Problem
 
 Factory2 currently has:

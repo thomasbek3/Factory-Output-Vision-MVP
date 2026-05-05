@@ -38,14 +38,14 @@ def is_demo_loop_enabled() -> bool:
     explicit = os.getenv("FC_DEMO_LOOP")
     if explicit is not None:
         return explicit == "1"
-    return not (get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None)
+    return not should_use_runtime_event_counter()
 
 
 def get_demo_count_mode() -> str:
     explicit = os.getenv("FC_DEMO_COUNT_MODE", "").strip()
     if explicit:
         return explicit
-    if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
+    if should_use_runtime_event_counter():
         return "deterministic_file_runner"
     return "live_reader_snapshot"
 
@@ -157,6 +157,10 @@ def get_person_conf_threshold() -> float:
     return float(os.getenv("FC_PERSON_CONF_THRESHOLD", "0.5"))
 
 
+def get_live_analysis_cache_max_gap_frames() -> int:
+    return int(os.getenv("FC_LIVE_ANALYSIS_CACHE_MAX_GAP_FRAMES", "8"))
+
+
 def is_person_ignore_enabled() -> bool:
     return os.getenv("FC_PERSON_IGNORE_ENABLED", "1") == "1"
 
@@ -169,7 +173,7 @@ def get_yolo_conf_threshold() -> float:
     explicit = os.getenv("FC_YOLO_CONF_THRESHOLD")
     if explicit is not None:
         return float(explicit)
-    if get_counting_mode() == "event_based" and get_runtime_calibration_path() is not None:
+    if should_use_runtime_event_counter():
         return 0.25
     if get_counting_mode() == "event_based":
         return 0.40
@@ -222,6 +226,25 @@ def get_counting_mode() -> str:
     return os.getenv("FC_COUNTING_MODE", "track_based")
 
 
+def get_event_count_rule() -> str:
+    """'auto' (default), 'placed_and_stayed', or 'dead_track'."""
+    value = os.getenv("FC_EVENT_COUNT_RULE", "auto").strip().lower().replace("-", "_")
+    allowed = {"auto", "placed_and_stayed", "dead_track"}
+    if value not in allowed:
+        choices = ", ".join(sorted(allowed))
+        raise ValueError(f"FC_EVENT_COUNT_RULE must be one of: {choices}")
+    return value
+
+
+def should_use_runtime_event_counter() -> bool:
+    """Whether event_based mode should use the calibrated placed-and-stayed counter."""
+    if get_counting_mode() != "event_based":
+        return False
+    if get_event_count_rule() == "dead_track":
+        return False
+    return get_runtime_calibration_path() is not None
+
+
 def get_event_gap_seconds() -> float:
     """Detections more than this many seconds apart = separate events."""
     return float(os.getenv("FC_EVENT_GAP_SECONDS", "3.0"))
@@ -247,7 +270,28 @@ def get_event_track_min_frames() -> int:
     return int(os.getenv("FC_EVENT_TRACK_MIN_FRAMES", "8"))
 
 
+def get_event_track_min_travel_px() -> float:
+    """Minimum first-to-last centroid travel before an event track can count.
+    Default 0 preserves existing Factory2 behavior. Raising this is useful for
+    static-stack videos where repeated stationary detections should not count."""
+    return float(os.getenv("FC_EVENT_TRACK_MIN_TRAVEL_PX", "0"))
+
+
+def get_event_count_debounce_sec() -> float:
+    """Minimum source-time gap between event_based dead-track counts.
+    Default 0 preserves existing behavior. Use this to absorb detector flicker
+    that briefly kills and recreates a track inside one physical carry event."""
+    return float(os.getenv("FC_EVENT_COUNT_DEBOUNCE_SEC", "0"))
+
+
 def get_event_track_max_match_distance() -> float:
     """Max pixel distance for centroid matching in event_based mode.
     Generous default (200) since usually only 1 panel in transit at a time."""
     return float(os.getenv("FC_EVENT_TRACK_MAX_MATCH_DISTANCE", "200"))
+
+
+def get_event_detection_cluster_distance() -> float:
+    """Optional same-frame detection clustering distance for event_based mode.
+    A value <= 0 disables clustering. This is useful when one large part is
+    detected as several nearby boxes in the same frame."""
+    return float(os.getenv("FC_EVENT_DETECTION_CLUSTER_DISTANCE", "0"))

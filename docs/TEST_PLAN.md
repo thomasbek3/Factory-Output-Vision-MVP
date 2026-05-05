@@ -21,6 +21,11 @@ Current automated suite:
 - troubleshooting contract coverage now also exercises demo playback speed changes, count resets, and person-ignore toggles
 - troubleshooting contract coverage now also exercises managed demo video upload and active-demo selection
 
+Current Factory2 real-time acceptance reference:
+- `docs/FACTORY2_REALTIME_APP_VALIDATION.md`
+- `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json`
+- expected result: `matched_count=23`, `missing_truth_count=0`, `unexpected_observed_count=0`, `wall_per_source=1.0`
+
 ---
 
 ## B) Manual acceptance tests — v1.0 Camera-Only MVP
@@ -41,7 +46,7 @@ Current automated suite:
 - Camera settings can be saved
 - Test Camera works
 - ROI saves and reloads
-- Count line saves and reloads
+- Compatibility count-line config saves and reloads, but current counting doctrine is output-zone/event-based counting
 - Operator zone can be skipped or saved
 - Calibration can be started from the React flow
 - Calibration progress updates from `/api/status`, not from a frontend-only timer
@@ -79,8 +84,18 @@ Current automated suite:
 - Set FC_DEMO_MODE=1 and FC_DEMO_VIDEO_PATH
 - Counting works and updates dashboard
 - For `demo/demo_counter.mp4`, keep the ROI as a horizontal lane around the white block path
-- For `demo/demo_counter.mp4`, set the count line direction to `Either direction` unless the line orientation is retuned deliberately
-- If the block is outside the ROI or the line direction is reversed, the app may appear healthy while counts remain at zero
+- Count-line controls are compatibility surface only for current YOLO/event-based counting
+- If the block is outside the ROI, the app may appear healthy while counts remain at zero
+
+### 4.1) Factory2 real-time app validation
+- Start the verified Factory2 stack with `.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173`
+- Open `http://127.0.0.1:5173/dashboard`
+- Click `Start monitoring`
+- Confirm source is `Demo Video`, live feed is connected, and Runtime Total climbs from backend metrics
+- Confirm final state is `Demo complete` and Runtime Total is `23`
+- Capture events with `scripts/capture_factory2_app_run_events.py`
+- Compare against `data/reports/factory2_human_truth_ledger.v1.json`
+- Pass only if comparison reports `23` matched, `0` missing, `0` unexpected, and no first divergence
 
 ### 5) Stop detection
 - Provide a demo video segment with no parts

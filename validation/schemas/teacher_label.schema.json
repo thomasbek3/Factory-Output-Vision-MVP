@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-teacher-label.schema.json",
+  "title": "Factory Vision Teacher Labels",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "source_evidence_path",
+    "privacy_mode",
+    "provider",
+    "refuses_validation_truth",
+    "labels"
+  ],
+  "properties": {
+    "schema_version": { "const": "factory-vision-teacher-labels-v1" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "number" },
+    "source_evidence_path": { "type": "string" },
+    "privacy_mode": {
+      "type": "string",
+      "enum": ["offline_local", "cloud_assisted_setup", "cloud_assisted_audit"]
+    },
+    "provider": {
+      "type": "object",
+      "required": ["name", "mode", "network_calls_made"],
+      "properties": {
+        "name": { "type": "string" },
+        "mode": { "type": "string" },
+        "model": { "type": ["string", "null"] },
+        "model_revision": { "type": ["string", "null"] },
+        "prompt_version": { "type": "string" },
+        "network_calls_made": { "type": "boolean" }
+      }
+    },
+    "refuses_validation_truth": { "const": true },
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label_id",
+          "window_id",
+          "teacher_output_status",
+          "confidence_tier",
+          "duplicate_risk",
+          "miss_risk",
+          "label_authority_tier",
+          "review_status",
+          "validation_truth_eligible"
+        ],
+        "properties": {
+          "label_id": { "type": "string", "minLength": 1 },
+          "window_id": { "type": "string", "minLength": 1 },
+          "teacher_output_status": {
+            "type": "string",
+            "enum": ["countable", "completed", "in_transit", "static_stack", "worker_only", "unclear"]
+          },
+          "suggested_event_ts_sec": { "type": ["number", "null"] },
+          "confidence_tier": { "type": "string", "enum": ["high", "medium", "low", "unknown"] },
+          "duplicate_risk": { "type": "string", "enum": ["high", "medium", "low", "unknown"] },
+          "miss_risk": { "type": "string", "enum": ["high", "medium", "low", "unknown"] },
+          "rationale": { "type": "string" },
+          "label_authority_tier": { "type": "string", "enum": ["gold", "silver", "bronze"] },
+          "review_status": { "type": "string", "enum": ["pending", "approved", "rejected", "edited", "unclear"] },
+          "validation_truth_eligible": { "type": "boolean" },
+          "training_eligible": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

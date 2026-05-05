@@ -1,0 +1,68 @@
+{
+  "schema_version": "factory-vision-video-manifest-v1",
+  "case_id": "factory2_test_case_1",
+  "display_name": "Factory2 / Test Case 1",
+  "status": "verified_test_case",
+  "promotion_status": "promoted_test_case_1",
+  "verified_at": "2026-05-01",
+  "video": {
+    "path": "data/videos/from-pc/factory2.MOV",
+    "sha256": "f9cd9dcc71cc9e02c0f5a5ba65094510f5ac4cfbe3a39a4eb1e9cae32e69c3d8",
+    "duration_sec": 426.976667,
+    "width": 1920,
+    "height": 1080,
+    "codec": "hevc"
+  },
+  "truth": {
+    "rule_id": "factory2_operational_23",
+    "expected_total": 23,
+    "count_rule": "Count each completed carried-panel transfer into the output area.",
+    "truth_ledger_path": "data/reports/factory2_human_truth_ledger.v1.json",
+    "human_total_path": null,
+    "notes": [
+      "Factory2 is the promoted Test Case 1 investor demo.",
+      "The trusted proof is the visible real app path, not offline proof or timestamp replay."
+    ]
+  },
+  "runtime": {
+    "demo_count_mode": "live_reader_snapshot",
+    "counting_mode": "event_based",
+    "playback_speed": 1.0,
+    "processing_fps": 10.0,
+    "reader_fps": 10.0,
+    "runtime_calibration_path": "data/calibration/factory2_ai_only_v1.json",
+    "model_path": null,
+    "yolo_confidence": null,
+    "event_track_max_age": null,
+    "event_track_min_frames": null,
+    "event_detection_cluster_distance": null
+  },
+  "launch": {
+    "backend_port": 8091,
+    "frontend_port": 5173,
+    "command": [
+      ".venv/bin/python",
+      "scripts/start_factory2_demo_stack.py",
+      "--backend-port",
+      "8091",
+      "--frontend-port",
+      "5173"
+    ],
+    "dashboard_url": "http://127.0.0.1:5173/dashboard"
+  },
+  "proof_artifacts": {
+    "observed_events": "data/reports/factory2_app_observed_events.run8104.visible_dashboard_v1.json",
+    "comparison_report": "data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json",
+    "validation_report": "data/reports/factory2_validation_report.registry_v1.json",
+    "pacing_report": null,
+    "screenshots": []
+  },
+  "proof_summary": {
+    "observed_event_count": 23,
+    "matched_count": 23,
+    "missing_truth_count": 0,
+    "unexpected_observed_count": 0,
+    "first_divergence": null,
+    "wall_per_source": 1.000041126370596
+  }
+}

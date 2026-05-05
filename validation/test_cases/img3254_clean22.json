@@ -1,0 +1,92 @@
+{
+  "schema_version": "factory-vision-video-manifest-v1",
+  "case_id": "img3254_clean22_candidate",
+  "display_name": "IMG_3254 clean-cycle verified candidate",
+  "status": "verified_candidate",
+  "promotion_status": "not_promoted",
+  "verified_at": "2026-05-01",
+  "video": {
+    "path": "demo/IMG_3254.MOV",
+    "sha256": "f9b72e2a48e96f1f008a0b750504fde13c8ea43ab62f562bacd715c5b19b19cd",
+    "duration_sec": 1280.516667,
+    "width": 1920,
+    "height": 1080,
+    "codec": "hevc"
+  },
+  "truth": {
+    "rule_id": "clean_cycle_22",
+    "expected_total": 22,
+    "count_rule": "Count only completed placements that begin after frame 0. Exclude the placement already in progress at the start of IMG_3254.",
+    "truth_ledger_path": "data/reports/img3254_human_truth_ledger.clean_cycle_v1.json",
+    "human_total_path": "data/reports/img3254_human_truth_total.clean_cycle_v1.json",
+    "notes": [
+      "Operational total would be 23 if the in-progress-at-start placement were included.",
+      "Verified as a clean real-app candidate, not promoted to a numbered test case."
+    ]
+  },
+  "runtime": {
+    "demo_count_mode": "live_reader_snapshot",
+    "counting_mode": "event_based",
+    "playback_speed": 1.0,
+    "processing_fps": 10.0,
+    "reader_fps": 10.0,
+    "runtime_calibration_path": null,
+    "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+    "yolo_confidence": 0.25,
+    "event_track_max_age": 52,
+    "event_track_min_frames": 12,
+    "event_detection_cluster_distance": 250.0
+  },
+  "launch": {
+    "backend_port": 8092,
+    "frontend_port": 5174,
+    "command": [
+      ".venv/bin/python",
+      "scripts/start_factory2_demo_stack.py",
+      "--backend-port",
+      "8092",
+      "--frontend-port",
+      "5174",
+      "--video",
+      "demo/IMG_3254.MOV",
+      "--model",
+      "models/img3254_active_panel_v4_yolov8n.pt",
+      "--no-runtime-calibration",
+      "--yolo-confidence",
+      "0.25",
+      "--processing-fps",
+      "10",
+      "--reader-fps",
+      "10",
+      "--playback-speed",
+      "1",
+      "--event-track-max-age",
+      "52",
+      "--event-track-min-frames",
+      "12",
+      "--event-detection-cluster-distance",
+      "250"
+    ],
+    "dashboard_url": "http://127.0.0.1:5174/dashboard"
+  },
+  "proof_artifacts": {
+    "observed_events": "data/reports/img3254_app_observed_events.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json",
+    "comparison_report": "data/reports/img3254_app_vs_truth.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json",
+    "validation_report": "data/reports/img3254_clean22_validation_report.registry_v1.json",
+    "pacing_report": "data/reports/img3254_wall_source_pacing.run8092.active_panel_v4_yolov8n_conf025_cluster250_age52_min12.visible_dashboard_1x_clean22_v1.json",
+    "screenshots": [
+      "data/reports/screenshots/img3254_dashboard_visible_start_clean22_1x_v1.png",
+      "data/reports/screenshots/img3254_dashboard_visible_after_click_clean22_1x_v1.png",
+      "data/reports/screenshots/img3254_dashboard_visible_mid_clean22_1x_v1.png",
+      "data/reports/screenshots/img3254_dashboard_visible_end_clean22_1x_v1.png"
+    ]
+  },
+  "proof_summary": {
+    "observed_event_count": 22,
+    "matched_count": 22,
+    "missing_truth_count": 0,
+    "unexpected_observed_count": 0,
+    "first_divergence": null,
+    "wall_per_source": 1.000000154140581
+  }
+}

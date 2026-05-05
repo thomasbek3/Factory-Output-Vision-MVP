@@ -1,7 +1,7 @@
 import type { ConfigResponse, DiagnosticsResponse, LineDirection, StatusResponse } from './api/types.ts'
 
 export function statusTone(state: string): 'green' | 'yellow' | 'red' | 'gray' {
-  if (state === 'RUNNING_GREEN' || state === 'DEMO_COMPLETE') {
+  if (state === 'RUNNING_GREEN' || state === 'DEMO_COMPLETE' || state === 'DEMO_READY') {
     return 'green'
   }
   if (state === 'RUNNING_YELLOW_DROP' || state === 'RUNNING_YELLOW_RECONNECTING' || state === 'CALIBRATING') {
@@ -25,6 +25,8 @@ export function statusLabel(state: string): string {
       return 'Stopped'
     case 'DEMO_COMPLETE':
       return 'Demo complete'
+    case 'DEMO_READY':
+      return 'Ready for demo'
     case 'CALIBRATING':
       return 'Calibrating'
     case 'IDLE':
@@ -48,6 +50,8 @@ export function statusGuidance(state: string): string {
       return 'The backend sees the line as stopped. Check the live view and recent events.'
     case 'DEMO_COMPLETE':
       return 'Demo playback finished. The final count is frozen until you restart the demo.'
+    case 'DEMO_READY':
+      return 'Demo video is loaded. Click Start monitoring to run the live-counting demo.'
     case 'CALIBRATING':
       return 'Calibration is running. Keep the line moving normally until the baseline is set.'
     case 'IDLE':
@@ -61,6 +65,18 @@ export function statusGuidance(state: string): string {
 
 export function countSourceLabel(countSource: 'vision' | 'beam'): string {
   return countSource === 'beam' ? 'Beam Sensor' : 'Camera'
+}
+
+export function displayStateForContext(state: string, diagnostics: DiagnosticsResponse | null): string {
+  const readyOnePassDemo =
+    (state === 'NOT_CONFIGURED' || state === 'IDLE') &&
+    diagnostics?.source_kind === 'demo' &&
+    diagnostics.demo_video_name != null &&
+    diagnostics.demo_count_mode === 'live_reader_snapshot' &&
+    diagnostics.counting_mode === 'event_based' &&
+    diagnostics.demo_loop_enabled === false
+
+  return readyOnePassDemo ? 'DEMO_READY' : state
 }
 
 export function lineDirectionLabel(direction: LineDirection): string {

@@ -1,0 +1,160 @@
+{
+  "detector_screen_path": "data/reports/real_factory_detector_transfer_screen.blind_v1.json",
+  "diagnostic_paths": [
+    "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json",
+    "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json"
+  ],
+  "numeric_prediction_allowed": false,
+  "reasons": [
+    "All non-static transferred detectors failed or were near-dead.",
+    "The only high-recall path is a configured/static detector risk.",
+    "Runtime diagnostic events are evidence for hard negatives, not a valid blind count.",
+    "Runtime diagnostic counts changed across settings, so the output is parameter-sensitive."
+  ],
+  "recommendation": "route_to_learning_library",
+  "runtime_diagnostics": {
+    "non_eof_event_count_spread": 9,
+    "parameter_sensitive": true,
+    "summaries": [
+      {
+        "current_state": "DEMO_COMPLETE",
+        "eof_event_count": 4,
+        "first_non_eof_event_ts": 38.401,
+        "last_non_eof_event_ts": 1762.813,
+        "non_eof_event_count": 27,
+        "observed_event_count": 31,
+        "path": "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json",
+        "raw_event_count": 31,
+        "tiny_travel_event_count": 8
+      },
+      {
+        "current_state": "DEMO_COMPLETE",
+        "eof_event_count": 4,
+        "first_non_eof_event_ts": 38.401,
+        "last_non_eof_event_ts": 1732.812,
+        "non_eof_event_count": 18,
+        "observed_event_count": 22,
+        "path": "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json",
+        "raw_event_count": 22,
+        "tiny_travel_event_count": 5
+      }
+    ]
+  },
+  "schema_version": "factory-vision-blind-prediction-viability-v1",
+  "static_risk_models": [
+    "models/wire_mesh_panel.pt",
+    "wire_mesh_panel.pt"
+  ],
+  "status": "no_valid_blind_prediction",
+  "transfer_summary": {
+    "active_rows": [
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img2628_worksheet_accept_event_diag_v1.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0125,
+        "images_with_detections": 1,
+        "model_path": "models/panel_in_transit.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 1
+      }
+    ],
+    "active_transfer_failed": true,
+    "active_transfer_plausible": false,
+    "rows": [
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img2628_worksheet_accept_event_diag_v1.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img3254_active_panel_v4_yolov8n.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0,
+        "images_with_detections": 0,
+        "model_path": "models/img3262_active_panel_v2.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 0
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": false,
+        "detection_rate": 0.0125,
+        "images_with_detections": 1,
+        "model_path": "models/panel_in_transit.pt",
+        "recommendation": "transfer_failed_build_video_specific_detector",
+        "sample_count": 80,
+        "total_detections": 1
+      },
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": true,
+        "detection_rate": 1.0,
+        "images_with_detections": 80,
+        "model_path": "models/wire_mesh_panel.pt",
+        "recommendation": "broad_or_static_detector_risk_requires_runtime_diagnostic",
+        "sample_count": 80,
+        "total_detections": 656
+      }
+    ],
+    "static_detector_risk": true,
+    "static_rows": [
+      {
+        "confidence": 0.25,
+        "configured_static_risk_model": true,
+        "detection_rate": 1.0,
+        "images_with_detections": 80,
+        "model_path": "models/wire_mesh_panel.pt",
+        "recommendation": "broad_or_static_detector_risk_requires_runtime_diagnostic",
+        "sample_count": 80,
+        "total_detections": 656
+      }
+    ]
+  }
+}

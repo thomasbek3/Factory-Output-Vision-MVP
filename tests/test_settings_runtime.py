@@ -13,6 +13,7 @@ class RuntimeSettingsTests(unittest.TestCase):
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
             "FC_YOLO_CONF_THRESHOLD": os.environ.get("FC_YOLO_CONF_THRESHOLD"),
             "FC_DEMO_LOOP": os.environ.get("FC_DEMO_LOOP"),
+            "FC_EVENT_COUNT_RULE": os.environ.get("FC_EVENT_COUNT_RULE"),
         }
         try:
             os.environ["FC_COUNTING_MODE"] = "event_based"
@@ -32,6 +33,7 @@ class RuntimeSettingsTests(unittest.TestCase):
             "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
             "FC_DEMO_LOOP": os.environ.get("FC_DEMO_LOOP"),
+            "FC_EVENT_COUNT_RULE": os.environ.get("FC_EVENT_COUNT_RULE"),
         }
         try:
             os.environ["FC_COUNTING_MODE"] = "event_based"
@@ -51,6 +53,7 @@ class RuntimeSettingsTests(unittest.TestCase):
             "FC_COUNTING_MODE": os.environ.get("FC_COUNTING_MODE"),
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
             "FC_DEMO_LOOP": os.environ.get("FC_DEMO_LOOP"),
+            "FC_EVENT_COUNT_RULE": os.environ.get("FC_EVENT_COUNT_RULE"),
         }
         try:
             os.environ["FC_COUNTING_MODE"] = "event_based"
@@ -64,3 +67,40 @@ class RuntimeSettingsTests(unittest.TestCase):
                     os.environ.pop(key, None)
                 else:
                     os.environ[key] = value
+
+    def test_event_count_rule_defaults_to_auto(self) -> None:
+        previous = os.environ.get("FC_EVENT_COUNT_RULE")
+        try:
+            os.environ.pop("FC_EVENT_COUNT_RULE", None)
+
+            self.assertEqual(settings.get_event_count_rule(), "auto")
+        finally:
+            if previous is None:
+                os.environ.pop("FC_EVENT_COUNT_RULE", None)
+            else:
+                os.environ["FC_EVENT_COUNT_RULE"] = previous
+
+    def test_event_count_rule_accepts_placed_and_stayed(self) -> None:
+        previous = os.environ.get("FC_EVENT_COUNT_RULE")
+        try:
+            os.environ["FC_EVENT_COUNT_RULE"] = "placed_and_stayed"
+
+            self.assertEqual(settings.get_event_count_rule(), "placed_and_stayed")
+        finally:
+            if previous is None:
+                os.environ.pop("FC_EVENT_COUNT_RULE", None)
+            else:
+                os.environ["FC_EVENT_COUNT_RULE"] = previous
+
+    def test_event_count_rule_rejects_unknown_values(self) -> None:
+        previous = os.environ.get("FC_EVENT_COUNT_RULE")
+        try:
+            os.environ["FC_EVENT_COUNT_RULE"] = "magic"
+
+            with self.assertRaises(ValueError):
+                settings.get_event_count_rule()
+        finally:
+            if previous is None:
+                os.environ.pop("FC_EVENT_COUNT_RULE", None)
+            else:
+                os.environ["FC_EVENT_COUNT_RULE"] = previous

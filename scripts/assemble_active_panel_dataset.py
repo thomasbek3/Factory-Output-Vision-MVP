@@ -105,9 +105,10 @@ def add_positive_label(*, label: dict[str, Any], reviewed_manifest_path: Path, o
     if src is None:
         raise ValueError(f"Positive label {label.get('label_id')} is missing metadata.frame_path")
     suffix = src.suffix if src.suffix.lower() in IMAGE_EXTENSIONS else ".jpg"
+    split = str(label.get("split") or metadata.get("split") or "train")
     stem = f"pos-{index:06d}-{safe_stem(str(label.get('label_id') or label.get('frame_id') or index))}"
-    image_dst = out_dir / "images" / "train" / f"{stem}{suffix}"
-    label_dst = out_dir / "labels" / "train" / f"{stem}.txt"
+    image_dst = out_dir / "images" / split / f"{stem}{suffix}"
+    label_dst = out_dir / "labels" / split / f"{stem}.txt"
     copy_asset(src, image_dst)
     line = yolo_line_from_xyxy(
         list(label.get("box") or []),
@@ -122,7 +123,7 @@ def add_positive_label(*, label: dict[str, Any], reviewed_manifest_path: Path, o
         "source_image_path": str(src),
         "image_path": str(image_dst),
         "label_path": str(label_dst),
-        "split": "train",
+        "split": split,
         "class_name": "active_panel",
     }
 

@@ -7,6 +7,7 @@ from typing import Any, Callable, Optional
 import json
 import numpy as np
 
+from app.core.settings import get_live_analysis_cache_max_gap_frames
 from app.services.calibration import Box, CalibrationZones, Gate, box_center, zone_membership
 from app.services.count_state_machine import CountConfig, CountEvent, CountStateMachine, TrackDetection
 from app.services.person_panel_crop_classifier import summarize_panel_box_crop
@@ -299,6 +300,7 @@ class RuntimeEventCounter:
         separation_analyzer: SeparationAnalyzer = analyze_frame_person_panel_separation,
         crop_classifier: CropClassifier | None = summarize_panel_box_crop,
         gate_config: GateConfig | None = None,
+        live_analysis_cache_max_gap_frames: int | None = None,
     ) -> None:
         self._zones = zones
         self._tracker_match_distance = tracker_match_distance
@@ -306,7 +308,12 @@ class RuntimeEventCounter:
         self._gate_config = gate_config or GateConfig()
         self._separation_analyzer = separation_analyzer
         self._crop_classifier = crop_classifier
-        self._live_analysis_cache_max_gap_frames = 2
+        selected_cache_gap = (
+            get_live_analysis_cache_max_gap_frames()
+            if live_analysis_cache_max_gap_frames is None
+            else live_analysis_cache_max_gap_frames
+        )
+        self._live_analysis_cache_max_gap_frames = max(0, int(selected_cache_gap))
         self._live_analysis_panel_center_epsilon = 8.0
         self._live_analysis_person_center_epsilon = 16.0
         self._count_config = CountConfig(
@@ -539,10 +546,10 @@ class RuntimeEventCounter:
         if self._can_reuse_live_analysis(cached, panel_box=panel_box, person_box=person_box, zone=zone):
             return cached.frame_result, cached.crop_summary
 
-        frame_result = self._separation_analyzer(
-            image=frame,
-            panel_box_xywh=panel_box,
-            person_box_xywh=person_box,
+        frame_result = self._analyze_live_separation(
+            frame=frame,
+            panel_box=panel_box,
+            person_box=person_box,
             zone=zone,
         )
         crop_summary = None
@@ -561,6 +568,34 @@ class RuntimeEventCounter:
             crop_summary=crop_summary,
         )
         return frame_result, crop_summary
+
+    def _analyze_live_separation(
+        self,
+        *,
+        frame: np.ndarray,
+        panel_box: Box,
+        person_box: Box,
+        zone: str,
+    ) -> dict[str, Any]:
+        if self._separation_analyzer is not analyze_frame_person_panel_separation:
+            return self._separation_analyzer(
+                image=frame,
+                panel_box_xywh=panel_box,
+                person_box_xywh=person_box,
+                zone=zone,
+            )
+
+        crop = crop_live_separation_inputs(frame, panel_box=panel_box, person_box=person_box)
+        frame_result = self._separation_analyzer(
+            image=crop.image,
+            panel_box_xywh=crop.panel_box,
+            person_box_xywh=crop.person_box,
+            zone=zone,
+        )
+        frame_result["panel_box_xywh"] = [round(float(value), 3) for value in panel_box]
+        frame_result["person_box_xywh"] = [round(float(value), 3) for value in person_box]
+        frame_result["analysis_crop_origin_xy"] = [crop.left, crop.top]
+        return frame_result
 
     def _can_reuse_live_analysis(
         self,
@@ -602,6 +637,51 @@ def load_runtime_calibration(path: Path) -> tuple[CalibrationZones, Gate | None]
             source_side=int(gate_payload.get("source_side", 1)),
         )
     return zones, gate
+
+
+@dataclass(frozen=True)
+class LiveSeparationCrop:
+    image: np.ndarray
+    panel_box: Box
+    person_box: Box
+    left: int
+    top: int
+
+
+def crop_live_separation_inputs(
+    image: np.ndarray,
+    *,
+    panel_box: Box,
+    person_box: Box,
+    margin_ratio: float = 0.12,
+    min_margin_px: int = 24,
+) -> LiveSeparationCrop:
+    height, width = image.shape[:2]
+    px, py, pw, ph = panel_box
+    hx, hy, hw, hh = person_box
+    margin = max(
+        int(min_margin_px),
+        int(round(max(pw, ph, hw, hh, 1.0) * max(0.0, float(margin_ratio)))),
+    )
+    left = max(0, int(round(min(px, hx) - margin)))
+    top = max(0, int(round(min(py, hy) - margin)))
+    right = min(width, int(round(max(px + pw, hx + hw) + margin)))
+    bottom = min(height, int(round(max(py + ph, hy + hh) + margin)))
+    if right <= left or bottom <= top:
+        return LiveSeparationCrop(
+            image=image,
+            panel_box=panel_box,
+            person_box=person_box,
+            left=0,
+            top=0,
+        )
+    return LiveSeparationCrop(
+        image=image[top:bottom, left:right],
+        panel_box=(px - left, py - top, pw, ph),
+        person_box=(hx - left, hy - top, hw, hh),
+        left=left,
+        top=top,
+    )
 
 
 def detector_metadata(detection: dict[str, Any]) -> dict[str, Any]:

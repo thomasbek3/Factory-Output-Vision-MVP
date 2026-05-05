@@ -1,0 +1,1684 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Factory Vision Failed Blind Run Review - real_factory_candidate</title>
+  <style>
+    :root {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #1e2320;
+      background: #f6f7f4;
+    }
+    body { margin: 0; }
+    header { padding: 22px 28px; background: #fff; border-bottom: 1px solid #d7ddd5; position: sticky; top: 0; z-index: 2; }
+    h1 { font-size: 22px; margin: 0 0 8px; letter-spacing: 0; }
+    h2 { font-size: 15px; margin: 0 0 8px; letter-spacing: 0; overflow-wrap: anywhere; }
+    .warning { color: #7a3f00; font-weight: 650; font-size: 13px; line-height: 1.45; }
+    .summary { color: #4d5751; font-size: 13px; line-height: 1.5; }
+    section { padding: 18px; }
+    section > h2 { font-size: 18px; margin: 0 0 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .card { background: #fff; border: 1px solid #d7ddd5; border-radius: 8px; overflow: hidden; min-width: 0; }
+    .media { aspect-ratio: 16 / 9; background: #111; display: flex; align-items: center; justify-content: center; }
+    img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .missing { color: #fff; font-size: 13px; }
+    .body { padding: 12px; }
+    .meta { font-size: 12px; color: #536057; margin-bottom: 10px; overflow-wrap: anywhere; }
+    .decision { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+    input, select { font: inherit; max-width: 160px; }
+    a { color: #135f8a; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Failed Blind Run Learning Review</h1>
+    <div class="summary">Case: real_factory_candidate | expected true placements: 4 | false-positive candidates: 18 | motion windows: 60</div>
+    <div class="warning">Pending review only. This packet is not validation truth and is not training eligible until reviewed labels are promoted.</div>
+  </header>
+  <section>
+    <h2>Runtime False-Positive Candidates</h2>
+    <div class="grid">
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0003_t000045.00.jpg" alt="real_factory_candidate-hard-negative-0001" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0001</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=38.401 | travel=23.854 | track=3</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0003_t000045.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0005_t000111.00.jpg" alt="real_factory_candidate-hard-negative-0002" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0002</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=121.603 | travel=3.162 | track=13</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0005_t000111.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0007_t000189.00.jpg" alt="real_factory_candidate-hard-negative-0003" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0003</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=192.805 | travel=77.318 | track=18</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0007_t000189.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0009_t000265.00.jpg" alt="real_factory_candidate-hard-negative-0004" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0004</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=266.007 | travel=69.123 | track=21</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0009_t000265.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0012_t000330.00.jpg" alt="real_factory_candidate-hard-negative-0005" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0005</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=342.209 | travel=1 | track=24</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0012_t000330.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0014_t000410.00.jpg" alt="real_factory_candidate-hard-negative-0006" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0006</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=421.211 | travel=4.123 | track=28</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0014_t000410.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0017_t000486.00.jpg" alt="real_factory_candidate-hard-negative-0007" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0007</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=496.413 | travel=88.363 | track=31</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0017_t000486.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0020_t000567.00.jpg" alt="real_factory_candidate-hard-negative-0008" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0008</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=568.015 | travel=354.16 | track=35</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0020_t000567.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0022_t000623.00.jpg" alt="real_factory_candidate-hard-negative-0009" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0009</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=630.217 | travel=88.233 | track=38</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0022_t000623.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0026_t000828.00.jpg" alt="real_factory_candidate-hard-negative-0010" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0010</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=808.388 | travel=106.621 | track=37</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0026_t000828.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0030_t000942.00.jpg" alt="real_factory_candidate-hard-negative-0011" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0011</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=948.192 | travel=416.395 | track=45</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0030_t000942.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0042_t001215.00.jpg" alt="real_factory_candidate-hard-negative-0012" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0012</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1227.799 | travel=282.554 | track=56</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0042_t001215.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0044_t001314.00.jpg" alt="real_factory_candidate-hard-negative-0013" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0013</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1304.601 | travel=5 | track=59</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0044_t001314.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0046_t001377.00.jpg" alt="real_factory_candidate-hard-negative-0014" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0014</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1386.203 | travel=56.569 | track=61</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0046_t001377.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0049_t001461.00.jpg" alt="real_factory_candidate-hard-negative-0015" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0015</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1478.206 | travel=2 | track=62</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0049_t001461.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0052_t001553.00.jpg" alt="real_factory_candidate-hard-negative-0016" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0016</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1544.807 | travel=85.288 | track=67</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0052_t001553.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0056_t001641.00.jpg" alt="real_factory_candidate-hard-negative-0017" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0017</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1651.81 | travel=225.577 | track=72</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0056_t001641.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0059_t001724.00.jpg" alt="real_factory_candidate-hard-negative-0018" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-hard-negative-0018</h2>
+        <div class="meta">type=runtime_false_positive_candidate | t=1732.812 | travel=10.198 | track=78</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0059_t001724.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+    </div>
+  </section>
+  <section>
+    <h2>Motion Windows To Find The 4 True Placements</h2>
+    <div class="grid">
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0001_t000001.00.jpg" alt="real_factory_candidate-motion-window-0001" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0001</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0001_t000001.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0002_t000026.00.jpg" alt="real_factory_candidate-motion-window-0002" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0002</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=26</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0002_t000026.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0003_t000045.00.jpg" alt="real_factory_candidate-motion-window-0003" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0003</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=45</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0003_t000045.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0004_t000087.00.jpg" alt="real_factory_candidate-motion-window-0004" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0004</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=87</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0004_t000087.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0005_t000111.00.jpg" alt="real_factory_candidate-motion-window-0005" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0005</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=111</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0005_t000111.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0006_t000150.00.jpg" alt="real_factory_candidate-motion-window-0006" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0006</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=150</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0006_t000150.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0007_t000189.00.jpg" alt="real_factory_candidate-motion-window-0007" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0007</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=189</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0007_t000189.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0008_t000244.00.jpg" alt="real_factory_candidate-motion-window-0008" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0008</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=244</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0008_t000244.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0009_t000265.00.jpg" alt="real_factory_candidate-motion-window-0009" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0009</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=265</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0009_t000265.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0010_t000287.00.jpg" alt="real_factory_candidate-motion-window-0010" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0010</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=287</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0010_t000287.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0011_t000309.00.jpg" alt="real_factory_candidate-motion-window-0011" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0011</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=309</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0011_t000309.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0012_t000330.00.jpg" alt="real_factory_candidate-motion-window-0012" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0012</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=330</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0012_t000330.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0013_t000367.00.jpg" alt="real_factory_candidate-motion-window-0013" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0013</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=367</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0013_t000367.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0014_t000410.00.jpg" alt="real_factory_candidate-motion-window-0014" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0014</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=410</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0014_t000410.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0015_t000446.00.jpg" alt="real_factory_candidate-motion-window-0015" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0015</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=446</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0015_t000446.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0016_t000464.00.jpg" alt="real_factory_candidate-motion-window-0016" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0016</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=464</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0016_t000464.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0017_t000486.00.jpg" alt="real_factory_candidate-motion-window-0017" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0017</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=486</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0017_t000486.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0018_t000510.00.jpg" alt="real_factory_candidate-motion-window-0018" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0018</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=510</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0018_t000510.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0019_t000548.00.jpg" alt="real_factory_candidate-motion-window-0019" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0019</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=548</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0019_t000548.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0020_t000567.00.jpg" alt="real_factory_candidate-motion-window-0020" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0020</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=567</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0020_t000567.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0021_t000591.00.jpg" alt="real_factory_candidate-motion-window-0021" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0021</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=591</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0021_t000591.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0022_t000623.00.jpg" alt="real_factory_candidate-motion-window-0022" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0022</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=623</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0022_t000623.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0023_t000716.00.jpg" alt="real_factory_candidate-motion-window-0023" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0023</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=716</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0023_t000716.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0024_t000746.00.jpg" alt="real_factory_candidate-motion-window-0024" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0024</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=746</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0024_t000746.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0025_t000774.00.jpg" alt="real_factory_candidate-motion-window-0025" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0025</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=774</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0025_t000774.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0026_t000828.00.jpg" alt="real_factory_candidate-motion-window-0026" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0026</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=828</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0026_t000828.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0027_t000850.00.jpg" alt="real_factory_candidate-motion-window-0027" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0027</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=850</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0027_t000850.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0028_t000903.00.jpg" alt="real_factory_candidate-motion-window-0028" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0028</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=903</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0028_t000903.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0029_t000923.00.jpg" alt="real_factory_candidate-motion-window-0029" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0029</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=923</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0029_t000923.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0030_t000942.00.jpg" alt="real_factory_candidate-motion-window-0030" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0030</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=942</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0030_t000942.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0031_t000964.00.jpg" alt="real_factory_candidate-motion-window-0031" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0031</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=964</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0031_t000964.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0032_t000983.00.jpg" alt="real_factory_candidate-motion-window-0032" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0032</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=983</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0032_t000983.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0033_t001002.00.jpg" alt="real_factory_candidate-motion-window-0033" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0033</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1002</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0033_t001002.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0034_t001021.00.jpg" alt="real_factory_candidate-motion-window-0034" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0034</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1021</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0034_t001021.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0035_t001039.00.jpg" alt="real_factory_candidate-motion-window-0035" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0035</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1039</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0035_t001039.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0036_t001060.00.jpg" alt="real_factory_candidate-motion-window-0036" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0036</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1060</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0036_t001060.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0037_t001086.00.jpg" alt="real_factory_candidate-motion-window-0037" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0037</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1086</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0037_t001086.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0038_t001115.00.jpg" alt="real_factory_candidate-motion-window-0038" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0038</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1115</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0038_t001115.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0039_t001149.00.jpg" alt="real_factory_candidate-motion-window-0039" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0039</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1149</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0039_t001149.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0040_t001172.00.jpg" alt="real_factory_candidate-motion-window-0040" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0040</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1172</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0040_t001172.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0041_t001190.00.jpg" alt="real_factory_candidate-motion-window-0041" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0041</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1190</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0041_t001190.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0042_t001215.00.jpg" alt="real_factory_candidate-motion-window-0042" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0042</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1215</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0042_t001215.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0043_t001264.00.jpg" alt="real_factory_candidate-motion-window-0043" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0043</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1264</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0043_t001264.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0044_t001314.00.jpg" alt="real_factory_candidate-motion-window-0044" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0044</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1314</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0044_t001314.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0045_t001358.00.jpg" alt="real_factory_candidate-motion-window-0045" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0045</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1358</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0045_t001358.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0046_t001377.00.jpg" alt="real_factory_candidate-motion-window-0046" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0046</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1377</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0046_t001377.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0047_t001413.00.jpg" alt="real_factory_candidate-motion-window-0047" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0047</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1413</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0047_t001413.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0048_t001434.00.jpg" alt="real_factory_candidate-motion-window-0048" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0048</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1434</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0048_t001434.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0049_t001461.00.jpg" alt="real_factory_candidate-motion-window-0049" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0049</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1461</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0049_t001461.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0050_t001505.00.jpg" alt="real_factory_candidate-motion-window-0050" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0050</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1505</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0050_t001505.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0051_t001535.00.jpg" alt="real_factory_candidate-motion-window-0051" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0051</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1535</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0051_t001535.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0052_t001553.00.jpg" alt="real_factory_candidate-motion-window-0052" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0052</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1553</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0052_t001553.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0053_t001576.00.jpg" alt="real_factory_candidate-motion-window-0053" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0053</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1576</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0053_t001576.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0054_t001603.00.jpg" alt="real_factory_candidate-motion-window-0054" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0054</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1603</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0054_t001603.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0055_t001622.00.jpg" alt="real_factory_candidate-motion-window-0055" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0055</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1622</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0055_t001622.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0056_t001641.00.jpg" alt="real_factory_candidate-motion-window-0056" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0056</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1641</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0056_t001641.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0057_t001675.00.jpg" alt="real_factory_candidate-motion-window-0057" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0057</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1675</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0057_t001675.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0058_t001705.00.jpg" alt="real_factory_candidate-motion-window-0058" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0058</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1705</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0058_t001705.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0059_t001724.00.jpg" alt="real_factory_candidate-motion-window-0059" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0059</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1724</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0059_t001724.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="media"><img src="../../events/mined/real_factory_blind_motion_v1/sheets/real_factory_event_0060_t001746.00.jpg" alt="real_factory_candidate-motion-window-0060" loading="lazy"></div>
+      <div class="body">
+        <h2>real_factory_candidate-motion-window-0060</h2>
+        <div class="meta">type=possible_true_or_missed_event_window | t=1746</div>
+        <div class="decision">Review decision:
+          <select>
+            <option></option>
+            <option>true_placement</option>
+            <option>hard_negative_static</option>
+            <option>duplicate</option>
+            <option>worker_motion_only</option>
+            <option>unclear</option>
+          </select>
+          <label>event ts <input type="text" placeholder="seconds"></label>
+          <a href="../../events/mined/real_factory_blind_motion_v1/clips/real_factory_event_0060_t001746.00.mp4">clip</a>
+        </div>
+      </div>
+    </article>
+    </div>
+  </section>
+</body>
+</html>
