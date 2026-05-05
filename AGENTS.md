@@ -40,6 +40,17 @@ Current app evidence proves file-backed live counting at real-time speed for pro
 
 Factory Vision project doctrine belongs in Obsidian/project docs, not Hermes always-loaded memory. This `AGENTS.md` should point agents to the right sources and commands only.
 
+## Learning Library Routing
+
+For failed runs, diagnostic recoveries, training candidates, and artifact trust boundaries, use the learning registry before making recommendations:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+.venv/bin/python scripts/factory_learn.py recommend --case-id factory2 --format json
+```
+
+`factory2_test_case_1` alias `factory2` is the verified high-count app-proof anchor. `real_factory_candidate` alias `real_factory` is diagnostic-recovered only; it is not validation truth, not training eligible, and not registry-promotion eligible until reviewed gold truth, calibration, and clean app-vs-truth proof exist.
+
 ## Commands
 
 ### Backend (Python / FastAPI)

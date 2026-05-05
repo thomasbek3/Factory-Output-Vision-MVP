@@ -12,8 +12,12 @@ Start with the concise current docs before relying on older task logs or researc
 - `docs/03_VALIDATION_PIPELINE.md`
 - `docs/04_TEST_CASE_REGISTRY.md`
 - `docs/06_DEVELOPER_RUNBOOK.md`
+- `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`
+- `docs/07_ARTIFACT_STORAGE.md`
+- `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md`
 - `docs/KNOWN_LIMITATIONS.md`
 - `validation/registry.json`
+- `validation/learning_registry.json`
 
 ## What This Is
 
@@ -70,6 +74,17 @@ Non-negotiable claim boundary:
 - This proves real app counting at `1.0x` from a file-backed live source.
 - It does **not** prove Reolink/RTSP field operation yet. Do not claim Reolink works until the same path is validated on an actual live stream.
 - Do not use deterministic/timestamp/replay demo modes as investor evidence.
+
+## Learning Library Routing
+
+For failed runs, diagnostic recoveries, training candidates, and artifact trust boundaries, use the learning registry before making recommendations:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+.venv/bin/python scripts/factory_learn.py recommend --case-id factory2 --format json
+```
+
+`factory2_test_case_1` alias `factory2` is the verified high-count app-proof anchor. `real_factory_candidate` alias `real_factory` is diagnostic-recovered only; it is not validation truth, not training eligible, and not registry-promotion eligible until reviewed gold truth, calibration, and clean app-vs-truth proof exist.
 
 Key implementation lessons:
 

@@ -29,6 +29,7 @@ What changed:
 - Kept real_factory_candidate with alias real_factory as diagnostic_recovered only, not validation truth and not training/promotion eligible.
 - Added scripts/factory_learn.py recommend --case-id ... --format text|json.
 - Added contract tests for Factory2 output, alias resolution, real_factory blockers, unknown cases, invalid trust claims, and missing-artifact readiness blocking.
+- Updated AGENTS.md and CLAUDE.md to route future agents through docs/08 plus `scripts/factory_learn.py recommend` before making learning-library recommendations.
 ```
 
 Key command:
