@@ -17,6 +17,7 @@ Current status:
 ```text
 IMPLEMENTED / FOCUSED TESTS PASS
 No UI, no auto-training, no embeddings, no runtime video rerun, and no real_factory validation promotion.
+Implementation commit pushed: e625b0e feat: add learning registry recommend cli
 ```
 
 What changed:

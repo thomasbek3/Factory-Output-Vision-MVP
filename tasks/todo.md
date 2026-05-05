@@ -15,7 +15,7 @@ Build a registry-first learning-library command that tells us what a case is, wh
 - [x] Implement the smallest registry-backed CLI and guardrails
 - [x] Run focused verification
 - [x] Update `.hermes/HANDOFF.md` with exact result and next command
-- [ ] Commit and push tracked changes, leaving old untracked model files untouched
+- [x] Commit and push tracked changes, leaving old untracked model files untouched
 
 ## Review
 
@@ -41,6 +41,8 @@ Build a registry-first learning-library command that tells us what a case is, wh
 ```bash
 .venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
 ```
+
+- Implementation commit pushed: `e625b0e feat: add learning registry recommend cli`.
 
 # Factory2 Placed-And-Stayed Diagnostic Replay
 
