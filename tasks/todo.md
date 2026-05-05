@@ -1,5 +1,47 @@
 # Factory2 Real-Time Demo Counting
 
+# Learning Library v1 Registry Recommendation CLI
+
+## Goal
+
+Build a registry-first learning-library command that tells us what a case is, what can be trusted, what is blocked, and the next useful command without confusing diagnostic artifacts with validation truth.
+
+## Checklist
+
+- [x] Write failing v2 learning-registry/schema tests
+- [x] Migrate `validation/learning_registry.json` in place to schema v2
+- [x] Add `factory2_test_case_1` with alias `factory2` and keep `real_factory_candidate` as a non-promoted learning case
+- [x] Write failing `scripts/factory_learn.py recommend` contract tests for text/json output, aliases, unknown cases, missing artifacts, and invalid trust claims
+- [x] Implement the smallest registry-backed CLI and guardrails
+- [x] Run focused verification
+- [x] Update `.hermes/HANDOFF.md` with exact result and next command
+- [ ] Commit and push tracked changes, leaving old untracked model files untouched
+
+## Review
+
+- Started 2026-05-04.
+- Scope is registry/library tooling only: no UI, no auto-training, no embeddings, no long runtime video reruns, and no `real_factory` validation promotion.
+- `real_factory` runtime count-4 evidence remains diagnostic-only because it used a diagnostic model trained from bronze anchors and local hard negatives.
+- Factory2 remains the verified/high-count anchor case.
+- Implemented `validation/learning_registry.json` schema v2 with explicit artifact authority, trust boundaries, readiness, dataset gates, related cases, and command prerequisites.
+- Added `scripts/factory_learn.py recommend --case-id ... --format text|json`.
+- Factory2 alias `factory2` returns verified runtime/validation/promotion readiness and no artifact warnings.
+- `real_factory_candidate` alias `real_factory` returns blocked validation/training/promotion readiness, `artifact_warnings[]` for missing `data/calibration/real_factory_placed_and_stayed_v1.json`, and guardrails against trusting the failed 18 count, bronze anchors, or diagnostic count-4 recovery as validation proof.
+- Focused verification passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_learning_registry_schema.py tests/test_factory_learn_recommend.py tests/test_assess_blind_prediction_viability.py tests/test_build_failed_blind_run_learning_packet.py tests/test_validation_registry_schema.py tests/test_active_learning_validation_guard.py tests/test_active_learning_schemas.py -q
+# 23 passed
+
+.venv/bin/python -m py_compile scripts/factory_learn.py
+```
+
+- Exact next command:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+```
+
 # Factory2 Placed-And-Stayed Diagnostic Replay
 
 ## Goal

@@ -2,29 +2,430 @@
   "artifact_root": "/Users/thomas/FactoryVisionArtifacts",
   "cases": [
     {
-      "artifact_paths": {
-        "blind_ai_estimate_report": "data/reports/real_factory_blind_ai_event_estimate.v1.json",
-        "blind_prediction_viability": "data/reports/real_factory_blind_prediction_viability.v1.json",
-        "blind_vs_hidden_human_total": "data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json",
-        "codex_visual_count_draft": "data/reports/active_learning/real_factory_codex_visual_count_draft.v1.json",
-        "codex_visual_count_events_csv": "data/reports/real_factory_codex_visual_count_events.draft_v1.csv",
-        "detector_transfer_screen": "data/reports/real_factory_detector_transfer_screen.blind_v1.json",
-        "goal_completion_audit": "data/reports/real_factory_goal_completion_audit.v1.json",
-        "learning_review_packet": "data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json",
-        "learning_review_packet_html": "data/reports/active_learning/real_factory_failed_blind_run_review_packet.v1.html",
-        "learning_review_worksheet": "data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv",
-        "pending_active_learning_dataset_manifest": "data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json",
-        "pending_review_conversion_status": "data/reports/active_learning/real_factory_failed_blind_run_review_conversion.pending_v1.json",
-        "pending_review_labels": "data/reports/active_learning/real_factory_failed_blind_run_review_labels.pending_v1.json",
-        "motion_mined_windows": "data/reports/real_factory_motion_mined_windows.blind_v1.json",
-        "oracle_architecture": "data/reports/oracle_factory_learning_flywheel_architecture.v1.md",
-        "runtime_diagnostics": [
-          "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce30_speed16_blind_diag_v1.json",
-          "data/reports/real_factory_app_observed_events.run8092.wire_mesh_conf025_cluster250_age52_min12_debounce60_speed16_blind_diag_v1.json"
+      "aliases": ["factory2"],
+      "best_next_action": "Use Factory2 as the verified high-count regression anchor before changing event counting, model promotion, or dashboard proof behavior.",
+      "blocked_reasons": [
+        "dataset_export_not_assembled_for_learning_library_v1"
+      ],
+      "case_id": "factory2_test_case_1",
+      "commands": [
+        {
+          "command": ".venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173",
+          "label": "Run Factory2 verified demo stack",
+          "prerequisites": [
+            {
+              "affects": ["runtime", "validation"],
+              "path": "data/videos/from-pc/factory2.MOV",
+              "required": true
+            },
+            {
+              "affects": ["runtime", "validation"],
+              "path": "data/calibration/factory2_ai_only_v1.json",
+              "required": true
+            }
+          ]
+        },
+        {
+          "command": ".venv/bin/python scripts/compare_factory2_app_run_to_truth_ledger.py --observed-events data/reports/factory2_app_observed_events.run8104.visible_dashboard_v1.json --truth-ledger data/reports/factory2_human_truth_ledger.v1.json --output data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json --force",
+          "label": "Rebuild Factory2 app-vs-truth comparison",
+          "prerequisites": [
+            {
+              "affects": ["validation", "promotion"],
+              "path": "data/reports/factory2_app_observed_events.run8104.visible_dashboard_v1.json",
+              "required": true
+            },
+            {
+              "affects": ["validation", "promotion"],
+              "path": "data/reports/factory2_human_truth_ledger.v1.json",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "dataset_export": {
+        "checks": [
+          {
+            "id": "gold_event_ledger_present",
+            "reason": "Factory2 has a reviewed truth ledger, but no learning-library dataset export is declared in v1.",
+            "status": "pass"
+          },
+          {
+            "id": "positive_box_labels_present",
+            "reason": "Not declared for learning-library v1.",
+            "status": "blocked"
+          },
+          {
+            "id": "source_hashes_present",
+            "reason": "Source video hash is present in the manifest.",
+            "status": "pass"
+          },
+          {
+            "id": "label_tier_allowed",
+            "reason": "Factory2 validation proof uses reviewed truth, not teacher labels.",
+            "status": "pass"
+          },
+          {
+            "id": "split_leakage_checked",
+            "reason": "No dataset export split is declared in v1.",
+            "status": "blocked"
+          },
+          {
+            "id": "permission_ok",
+            "reason": "Local/offline case; no cloud upload required.",
+            "status": "pass"
+          },
+          {
+            "id": "hard_negatives_reviewed",
+            "reason": "No negative-label export declared in v1.",
+            "status": "not_applicable"
+          }
         ],
-        "truth_total_revealed": "data/reports/real_factory_human_truth_total.revealed_v1.json"
+        "path": null,
+        "state": "blocked"
       },
+      "do_not_trust": [
+        "Do not claim live Reolink/RTSP field validation from this file-backed demo proof.",
+        "Do not replace the visible 1.0x app proof with accelerated diagnostics or timestamp replay.",
+        "Do not treat supporting regression runs as the canonical promotion proof."
+      ],
+      "evidence_refs": [
+        {
+          "affects": ["runtime", "validation", "promotion"],
+          "artifact_id": "visible_app_observed_events",
+          "artifact_type": "app_proof_run",
+          "authority": "canonical_proof",
+          "must_exist": true,
+          "notes": "Visible dashboard app path; observed_event_count=23 and run_complete=true.",
+          "path": "data/reports/factory2_app_observed_events.run8104.visible_dashboard_v1.json",
+          "promotion_eligible": true,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": true
+        },
+        {
+          "affects": ["validation", "promotion"],
+          "artifact_id": "visible_app_truth_comparison",
+          "artifact_type": "comparison_report",
+          "authority": "canonical_proof",
+          "must_exist": true,
+          "notes": "matched_count=23, missing_truth_count=0, unexpected_observed_count=0, first_divergence=null.",
+          "path": "data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json",
+          "promotion_eligible": true,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": true
+        },
+        {
+          "affects": ["validation", "promotion"],
+          "artifact_id": "registry_validation_report",
+          "artifact_type": "validation_report",
+          "authority": "canonical_proof",
+          "must_exist": true,
+          "notes": "Registry proof summary for the promoted Factory2 test case.",
+          "path": "data/reports/factory2_validation_report.registry_v1.json",
+          "promotion_eligible": true,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": true
+        },
+        {
+          "affects": ["validation"],
+          "artifact_id": "human_truth_ledger",
+          "artifact_type": "gold_event_ledger",
+          "authority": "canonical_proof",
+          "must_exist": true,
+          "notes": "Reviewed Factory2 truth ledger used by the canonical proof comparison.",
+          "path": "data/reports/factory2_human_truth_ledger.v1.json",
+          "promotion_eligible": true,
+          "runtime_observation_allowed": false,
+          "training_eligible": true,
+          "validation_truth_eligible": true
+        },
+        {
+          "affects": ["runtime"],
+          "artifact_id": "placed_and_stayed_speed8_regression_events",
+          "artifact_type": "runtime_diagnostic_run",
+          "authority": "supporting_regression",
+          "must_exist": true,
+          "notes": "Accelerated diagnostic replay of explicit placed_and_stayed selector; counted 23/23 but is not canonical proof.",
+          "path": "data/reports/factory2_app_observed_events.run8093.placed_and_stayed_speed8_complete_v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["runtime"],
+          "artifact_id": "placed_and_stayed_speed8_regression_comparison",
+          "artifact_type": "comparison_report",
+          "authority": "supporting_regression",
+          "must_exist": true,
+          "notes": "Accelerated regression comparison matched 23/23; useful for engineering confidence only.",
+          "path": "data/reports/factory2_app_vs_truth.run8093.placed_and_stayed_speed8_v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        }
+      ],
+      "learning_outcome": {
+        "blind_prediction_status": "not_applicable_verified_seed_case",
+        "detector_transfer_status": "verified_factory2_app_path",
+        "expected_total": 23,
+        "observed_event_count": 23,
+        "registry_promotion_eligible": true
+      },
+      "manifest_path": "validation/test_cases/factory2.json",
+      "privacy_mode": "offline_local",
+      "readiness": {
+        "promotion": "verified",
+        "runtime": "verified",
+        "training": "blocked",
+        "validation": "verified"
+      },
+      "related_cases": [
+        {
+          "case_id": "real_factory_candidate",
+          "reason": "Use Factory2 to regression-test placed-and-stayed counting before applying similar semantics to real_factory.",
+          "relation": "high_count_regression_anchor"
+        }
+      ],
+      "source_video": {
+        "artifact_copy": null,
+        "duration_sec": 426.976667,
+        "path": "data/videos/from-pc/factory2.MOV",
+        "sha256": "f9cd9dcc71cc9e02c0f5a5ba65094510f5ac4cfbe3a39a4eb1e9cae32e69c3d8"
+      },
+      "status": "verified_app_proof",
+      "trust_boundaries": {
+        "promotion_eligible": true,
+        "runtime_observation_allowed": true,
+        "training_eligible": false,
+        "validation_truth_eligible": true
+      }
+    },
+    {
+      "aliases": ["real_factory"],
+      "best_next_action": "Build the reviewed gold event ledger and reviewed positive/hard-negative labels first; then create a real_factory runtime calibration and rerun placed-and-stayed as diagnostic evidence before any promotion attempt.",
+      "blocked_reasons": [
+        "reviewed_gold_truth_missing",
+        "real_factory_runtime_calibration_missing",
+        "diagnostic_model_not_promotion_eligible",
+        "dataset_export_gates_blocked",
+        "no_clean_1x_app_vs_reviewed_truth"
+      ],
       "case_id": "real_factory_candidate",
+      "commands": [
+        {
+          "command": ".venv/bin/python scripts/convert_failed_blind_run_review.py --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json --manifest validation/test_cases/real_factory.json --status-output data/reports/active_learning/real_factory_failed_blind_run_review_conversion.reviewed_v1.json --truth-csv data/reports/real_factory_human_truth_event_times.reviewed_v1.csv --truth-ledger data/reports/real_factory_human_truth_ledger.reviewed_v1.json --review-labels data/reports/active_learning/real_factory_failed_blind_run_review_labels.reviewed_v1.json --dataset-manifest data/reports/active_learning/real_factory_active_learning_dataset_manifest.reviewed_v1.json --reviewer-id thomas --force",
+          "label": "Convert reviewed real_factory worksheet into gold/pending outputs",
+          "prerequisites": [
+            {
+              "affects": ["review", "validation", "training"],
+              "path": "data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv",
+              "required": true
+            },
+            {
+              "affects": ["review", "validation", "training"],
+              "path": "data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json",
+              "required": true
+            },
+            {
+              "affects": ["review", "validation", "training"],
+              "path": "validation/test_cases/real_factory.json",
+              "required": true
+            }
+          ]
+        },
+        {
+          "command": "FC_DB_PATH=data/factory_counter_real_factory_placed_and_stayed.db .venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8092 --frontend-port 5174 --skip-frontend --video data/videos/from-pc/real_factory.MOV --calibration data/calibration/real_factory_placed_and_stayed_v1.json --event-count-rule placed_and_stayed --model models/real_factory_diagnostic_action_v2.pt --yolo-confidence 0.25 --processing-fps 5 --reader-fps 5 --playback-speed 8",
+          "label": "Run real_factory placed-and-stayed diagnostic after calibration exists",
+          "prerequisites": [
+            {
+              "affects": ["runtime", "validation"],
+              "path": "data/videos/from-pc/real_factory.MOV",
+              "required": true
+            },
+            {
+              "affects": ["runtime", "validation"],
+              "path": "data/calibration/real_factory_placed_and_stayed_v1.json",
+              "required": true
+            },
+            {
+              "affects": ["runtime"],
+              "path": "models/real_factory_diagnostic_action_v2.pt",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "dataset_export": {
+        "checks": [
+          {
+            "id": "gold_event_ledger_present",
+            "reason": "Only total-only reveal and bronze draft anchors exist; reviewed event ledger is still missing.",
+            "status": "blocked"
+          },
+          {
+            "id": "positive_box_labels_present",
+            "reason": "Positive placement labels remain pending review.",
+            "status": "blocked"
+          },
+          {
+            "id": "source_hashes_present",
+            "reason": "Source video SHA-256 is recorded.",
+            "status": "pass"
+          },
+          {
+            "id": "label_tier_allowed",
+            "reason": "Current Codex/teacher labels are bronze_pending and cannot train promotion models.",
+            "status": "blocked"
+          },
+          {
+            "id": "split_leakage_checked",
+            "reason": "Reviewed dataset split has not been assembled.",
+            "status": "blocked"
+          },
+          {
+            "id": "permission_ok",
+            "reason": "Offline/local workflow only; no cloud/API labeling was used.",
+            "status": "pass"
+          },
+          {
+            "id": "hard_negatives_reviewed",
+            "reason": "Hard-negative candidates are preserved but not reviewed.",
+            "status": "blocked"
+          }
+        ],
+        "path": "data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json",
+        "state": "blocked"
+      },
+      "do_not_trust": [
+        "Do not use the failed static diagnostic total of 18 as a valid prediction.",
+        "Do not treat bronze Codex/VLM/teacher anchors as validation truth.",
+        "Do not treat the diagnostic runtime count-4 recovery as registry promotion proof.",
+        "Do not train or promote a real_factory detector until reviewed gold labels and dataset gates pass.",
+        "Do not add real_factory to validation/registry.json without a clean eligible app proof run against reviewed truth."
+      ],
+      "evidence_refs": [
+        {
+          "affects": ["validation"],
+          "artifact_id": "blind_prediction_viability",
+          "artifact_type": "guardrail_report",
+          "authority": "diagnostic",
+          "must_exist": true,
+          "notes": "numeric_prediction_allowed=false; active transfer failed and static detector overcounted.",
+          "path": "data/reports/real_factory_blind_prediction_viability.v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["validation"],
+          "artifact_id": "blind_ai_estimate_report",
+          "artifact_type": "failed_blind_estimate",
+          "authority": "diagnostic",
+          "must_exist": true,
+          "notes": "Failed static detector diagnostic counted 18; invalid as a prediction.",
+          "path": "data/reports/real_factory_blind_ai_event_estimate.v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["validation"],
+          "artifact_id": "blind_vs_hidden_human_total",
+          "artifact_type": "total_only_comparison",
+          "authority": "diagnostic",
+          "must_exist": true,
+          "notes": "Hidden total revealed as 4 after blind phase; total-only reveal is not event truth.",
+          "path": "data/reports/real_factory_blind_ai_vs_hidden_human_total.v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["runtime"],
+          "artifact_id": "runtime_count4_recovery_evidence",
+          "artifact_type": "runtime_diagnostic_run",
+          "authority": "diagnostic",
+          "must_exist": true,
+          "notes": "Real local app runtime path counted 4, but the model is diagnostic-only and not validation truth.",
+          "path": "data/reports/real_factory_runtime_count4_app_path_evidence_v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["review", "training", "validation"],
+          "artifact_id": "learning_review_packet",
+          "artifact_type": "review_packet",
+          "authority": "review_scaffold",
+          "must_exist": true,
+          "notes": "Contains four pending true-placement slots plus hard-negative/motion candidates.",
+          "path": "data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["review", "training", "validation"],
+          "artifact_id": "learning_review_worksheet",
+          "artifact_type": "review_worksheet",
+          "authority": "review_scaffold",
+          "must_exist": true,
+          "notes": "Worksheet still needs reviewed decisions before gold outputs can be created.",
+          "path": "data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["review"],
+          "artifact_id": "codex_visual_count_draft",
+          "artifact_type": "bronze_visual_draft",
+          "authority": "teacher_suggestion",
+          "must_exist": true,
+          "notes": "Draft count is 4 with anchors 448, 1026, 1404, 1554; bronze only.",
+          "path": "data/reports/active_learning/real_factory_codex_visual_count_draft.v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["training"],
+          "artifact_id": "pending_dataset_manifest",
+          "artifact_type": "pending_dataset_manifest",
+          "authority": "training_artifact",
+          "must_exist": true,
+          "notes": "Pending manifest only; yolo_dataset_export_ready=false.",
+          "path": "data/reports/active_learning/real_factory_active_learning_dataset_manifest.pending_v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": false,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        },
+        {
+          "affects": ["runtime"],
+          "artifact_id": "detector_transfer_screen",
+          "artifact_type": "detector_transfer_screen",
+          "authority": "diagnostic",
+          "must_exist": true,
+          "notes": "Transferred active detectors failed; wire_mesh detector was broad/static risk.",
+          "path": "data/reports/real_factory_detector_transfer_screen.blind_v1.json",
+          "promotion_eligible": false,
+          "runtime_observation_allowed": true,
+          "training_eligible": false,
+          "validation_truth_eligible": false
+        }
+      ],
       "learning_outcome": {
         "blind_prediction_status": "no_valid_blind_prediction",
         "detector_transfer_status": "active_transfer_failed_static_detector_overcount",
@@ -32,20 +433,38 @@
         "hidden_human_total": 4,
         "observed_minus_human_delta": 14,
         "registry_promotion_eligible": false,
+        "runtime_recovery_status": "app_path_counted_4_diagnostic_only",
         "training_eligible": false,
         "validation_truth_eligible": false
       },
       "manifest_path": "validation/test_cases/real_factory.json",
       "privacy_mode": "offline_local",
-      "recommended_next_actions": [
-        "review and lock the 4 true placement timestamps as a gold event ledger",
-        "preserve the wire_mesh diagnostic false events as hard-negative review candidates",
-        "assemble reviewed positive and negative real_factory training windows",
-        "train a real_factory-specific YOLO detector candidate",
-        "rerun the real app dashboard path at 1.0x only after detector diagnostics are plausible"
+      "readiness": {
+        "promotion": "blocked",
+        "runtime": "diagnostic_only",
+        "training": "blocked",
+        "validation": "blocked"
+      },
+      "related_cases": [
+        {
+          "case_id": "factory2_test_case_1",
+          "reason": "Factory2 is the high-count verified anchor for regression-testing event-rule changes.",
+          "relation": "compare_event_rule_regression"
+        }
       ],
-      "source_video_sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86",
-      "status": "failed_diagnostic"
+      "source_video": {
+        "artifact_copy": "/Users/thomas/FactoryVisionArtifacts/videos/raw/real_factory.MOV",
+        "duration_sec": 1770.48,
+        "path": "data/videos/from-pc/real_factory.MOV",
+        "sha256": "48b4aa0543ac65409b11ee4ab93fd13e5f132a218b4303096ff131da42fb9f86"
+      },
+      "status": "diagnostic_recovered",
+      "trust_boundaries": {
+        "promotion_eligible": false,
+        "runtime_observation_allowed": true,
+        "training_eligible": false,
+        "validation_truth_eligible": false
+      }
     }
   ],
   "created_at": "2026-05-03",
@@ -55,6 +474,6 @@
     "teacher_label_default_tier": "bronze_pending",
     "validation_truth_rule": "reviewed_gold_truth_required"
   },
-  "schema_version": "factory-vision-learning-registry-v1",
+  "schema_version": "factory-vision-learning-registry-v2",
   "updated_at": "2026-05-04"
 }

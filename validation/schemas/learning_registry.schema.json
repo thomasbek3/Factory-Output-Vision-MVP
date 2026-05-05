@@ -10,7 +10,7 @@
     "cases"
   ],
   "properties": {
-    "schema_version": { "const": "factory-vision-learning-registry-v1" },
+    "schema_version": { "const": "factory-vision-learning-registry-v2" },
     "created_at": { "type": "string" },
     "updated_at": { "type": "string" },
     "artifact_root": { "type": "string", "minLength": 1 },
@@ -35,27 +35,51 @@
         "type": "object",
         "required": [
           "case_id",
-          "source_video_sha256",
+          "aliases",
+          "source_video",
           "status",
           "privacy_mode",
           "manifest_path",
           "learning_outcome",
-          "recommended_next_actions"
+          "readiness",
+          "best_next_action",
+          "commands",
+          "do_not_trust",
+          "related_cases",
+          "evidence_refs",
+          "dataset_export",
+          "trust_boundaries",
+          "blocked_reasons"
         ],
         "properties": {
           "case_id": { "type": "string", "minLength": 1 },
-          "source_video_sha256": {
-            "type": "string",
-            "pattern": "^[a-f0-9]{64}$"
+          "aliases": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "source_video": {
+            "type": "object",
+            "required": ["path", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "artifact_copy": { "type": ["string", "null"] },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "duration_sec": { "type": ["number", "null"], "minimum": 0 }
+            }
           },
           "status": {
             "type": "string",
             "enum": [
               "learning_candidate",
-              "training_candidate",
-              "validated_candidate",
               "failed_diagnostic",
-              "verified_registry_case"
+              "diagnostic_recovered",
+              "training_candidate",
+              "verified_app_proof",
+              "promotion_blocked"
             ]
           },
           "privacy_mode": {
@@ -67,44 +91,150 @@
             ]
           },
           "manifest_path": { "type": "string", "minLength": 1 },
-          "artifact_paths": {
+          "learning_outcome": { "type": "object" },
+          "readiness": {
             "type": "object",
-            "additionalProperties": {
-              "type": ["string", "array", "object", "null"]
-            }
-          },
-          "learning_outcome": {
-            "type": "object",
-            "required": [
-              "blind_prediction_status",
-              "detector_transfer_status",
-              "registry_promotion_eligible"
-            ],
+            "required": ["runtime", "validation", "training", "promotion"],
             "properties": {
-              "blind_prediction_status": {
-                "type": "string",
-                "enum": [
-                  "not_started",
-                  "plausible_blind_estimate",
-                  "no_valid_blind_prediction",
-                  "matched_human_total_pending_event_review",
-                  "failed_total_comparison"
-                ]
-              },
-              "hidden_human_total": { "type": ["integer", "null"], "minimum": 0 },
-              "failed_diagnostic_total": { "type": ["integer", "null"], "minimum": 0 },
-              "observed_minus_human_delta": { "type": ["integer", "null"] },
-              "detector_transfer_status": { "type": "string", "minLength": 1 },
-              "registry_promotion_eligible": { "type": "boolean" },
-              "validation_truth_eligible": { "type": "boolean" },
-              "training_eligible": { "type": "boolean" }
+              "runtime": { "type": "string", "minLength": 1 },
+              "validation": { "type": "string", "minLength": 1 },
+              "training": { "type": "string", "minLength": 1 },
+              "promotion": { "type": "string", "minLength": 1 }
             }
           },
-          "recommended_next_actions": {
+          "best_next_action": { "type": "string", "minLength": 1 },
+          "commands": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/command_ref" }
+          },
+          "do_not_trust": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "related_cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["case_id", "relation", "reason"],
+              "properties": {
+                "case_id": { "type": "string", "minLength": 1 },
+                "relation": { "type": "string", "minLength": 1 },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/evidence_ref" }
+          },
+          "dataset_export": { "$ref": "#/$defs/dataset_export" },
+          "trust_boundaries": { "$ref": "#/$defs/trust_boundaries" },
+          "blocked_reasons": {
             "type": "array",
             "items": { "type": "string", "minLength": 1 }
           }
         }
+      }
+    }
+  },
+  "$defs": {
+    "artifact_affects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["runtime", "validation", "training", "promotion", "review", "dataset_export"]
+      }
+    },
+    "command_ref": {
+      "type": "object",
+      "required": ["label", "command", "prerequisites"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "required", "affects"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "required": { "type": "boolean" },
+              "affects": { "$ref": "#/$defs/artifact_affects" }
+            }
+          }
+        }
+      }
+    },
+    "dataset_export": {
+      "type": "object",
+      "required": ["state", "checks"],
+      "properties": {
+        "state": { "type": "string", "enum": ["ready", "blocked", "not_applicable"] },
+        "path": { "type": ["string", "null"] },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "status"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "enum": ["pass", "blocked", "not_applicable"] },
+              "reason": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "artifact_type",
+        "path",
+        "authority",
+        "runtime_observation_allowed",
+        "validation_truth_eligible",
+        "training_eligible",
+        "promotion_eligible",
+        "affects"
+      ],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "artifact_type": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "authority": {
+          "type": "string",
+          "enum": [
+            "canonical_proof",
+            "supporting_regression",
+            "diagnostic",
+            "review_scaffold",
+            "teacher_suggestion",
+            "training_artifact"
+          ]
+        },
+        "runtime_observation_allowed": { "type": "boolean" },
+        "validation_truth_eligible": { "type": "boolean" },
+        "training_eligible": { "type": "boolean" },
+        "promotion_eligible": { "type": "boolean" },
+        "must_exist": { "type": "boolean" },
+        "affects": { "$ref": "#/$defs/artifact_affects" },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "trust_boundaries": {
+      "type": "object",
+      "required": [
+        "runtime_observation_allowed",
+        "validation_truth_eligible",
+        "training_eligible",
+        "promotion_eligible"
+      ],
+      "properties": {
+        "runtime_observation_allowed": { "type": "boolean" },
+        "validation_truth_eligible": { "type": "boolean" },
+        "training_eligible": { "type": "boolean" },
+        "promotion_eligible": { "type": "boolean" }
       }
     }
   }

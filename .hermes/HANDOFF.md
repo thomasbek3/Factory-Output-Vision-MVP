@@ -4,6 +4,71 @@ Updated: 2026-05-04 EDT
 Repo: `/Users/thomas/Projects/Factory-Output-Vision-MVP`
 Branch: `codex/factory-vision-validation-foundation`
 
+## 2026-05-04: Learning Library v1 Registry Recommendation CLI
+
+Goal:
+
+```text
+Make the learning library usable as a registry-first "what do we trust / what next" command without mixing diagnostics, teacher suggestions, training artifacts, and validation proof.
+```
+
+Current status:
+
+```text
+IMPLEMENTED / FOCUSED TESTS PASS
+No UI, no auto-training, no embeddings, no runtime video rerun, and no real_factory validation promotion.
+```
+
+What changed:
+
+```text
+- Migrated validation/learning_registry.json in place to factory-vision-learning-registry-v2.
+- Added explicit artifact authority, trust boundaries, readiness, dataset-export gates, related cases, and command prerequisites.
+- Added factory2_test_case_1 with alias factory2 as the verified high-count app-proof anchor.
+- Kept real_factory_candidate with alias real_factory as diagnostic_recovered only, not validation truth and not training/promotion eligible.
+- Added scripts/factory_learn.py recommend --case-id ... --format text|json.
+- Added contract tests for Factory2 output, alias resolution, real_factory blockers, unknown cases, invalid trust claims, and missing-artifact readiness blocking.
+```
+
+Key command:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+```
+
+Current CLI result summary:
+
+```text
+factory2:
+  case_id=factory2_test_case_1
+  status=verified_app_proof
+  readiness runtime=verified validation=verified promotion=verified
+  artifact_warnings=[]
+
+real_factory:
+  case_id=real_factory_candidate
+  status=diagnostic_recovered
+  readiness runtime=blocked validation=blocked training=blocked promotion=blocked
+  warning=data/calibration/real_factory_placed_and_stayed_v1.json missing
+  do_not_trust includes failed 18 count, bronze anchors, and diagnostic count-4 recovery as validation proof.
+```
+
+Verification:
+
+```text
+.venv/bin/python -m pytest tests/test_learning_registry_schema.py tests/test_factory_learn_recommend.py tests/test_assess_blind_prediction_viability.py tests/test_build_failed_blind_run_learning_packet.py tests/test_validation_registry_schema.py tests/test_active_learning_validation_guard.py tests/test_active_learning_schemas.py -q
+23 passed
+
+.venv/bin/python -m py_compile scripts/factory_learn.py
+passed
+```
+
+Exact next command:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+```
+
 ## 2026-05-04: Factory2 Explicit Placed-And-Stayed Replay
 
 Goal:

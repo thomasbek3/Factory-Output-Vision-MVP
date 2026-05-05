@@ -120,6 +120,24 @@ Next useful work:
 4. Train a `real_factory`-specific detector.
 5. Rerun the real app path and compare against reviewed truth.
 
+## Learning Registry v2
+
+`validation/learning_registry.json` is the registry-first index for learning-library cases. Reports are evidence references only; they are not scraped as source of truth.
+
+Use the recommendation CLI to inspect the current safe next action:
+
+```bash
+.venv/bin/python scripts/factory_learn.py recommend --case-id real_factory_candidate --format text
+.venv/bin/python scripts/factory_learn.py recommend --case-id factory2 --format json
+```
+
+The CLI resolves aliases, checks required evidence/prerequisite artifacts, emits `artifact_warnings[]`, and blocks affected readiness fields when required artifacts are missing. It also fails closed on invalid trust claims, such as `promotion_eligible=true` without `validation_truth_eligible=true`.
+
+Current indexed cases:
+
+- `factory2_test_case_1` alias `factory2`: verified app-proof anchor, promotion eligible, useful as the high-count regression case.
+- `real_factory_candidate` alias `real_factory`: diagnostic runtime recovery only, not validation truth, not training eligible, and blocked on reviewed gold truth plus a real_factory placed-and-stayed calibration file.
+
 ## Cloud Teacher Policy
 
 Default mode is `offline_local`.
