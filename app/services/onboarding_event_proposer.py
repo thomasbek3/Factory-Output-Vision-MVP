@@ -20,6 +20,7 @@ def build_event_proposals(
     output_zone_polygon: list[list[float]] | None = None,
     proposal_mode: str = "full_frame_motion",
     zone_motion_threshold: float = 0.04,
+    min_flash_ratio: float | None = None,
     min_cluster_gap_sec: float = 1.0,
     window_before_sec: float = 4.0,
     window_after_sec: float = 4.0,
@@ -36,6 +37,7 @@ def build_event_proposals(
         motion_threshold=motion_threshold,
         proposal_mode=proposal_mode,
         zone_motion_threshold=zone_motion_threshold,
+        min_flash_ratio=min_flash_ratio,
         output_zone_polygon=output_zone_polygon,
         min_cluster_gap_sec=min_cluster_gap_sec,
         window_before_sec=window_before_sec,
@@ -47,6 +49,7 @@ def build_event_proposals(
     station_id = str(manifest["station_id"])
     proposals: list[dict[str, Any]] = []
     segment_summaries: list[dict[str, Any]] = []
+    dropped_low_flash_ratio = 0
     for segment in manifest["segments"]:
         if not segment.get("decode_ok"):
             segment_summaries.append(
@@ -55,6 +58,7 @@ def build_event_proposals(
                     "status": "skipped_decode_not_ok",
                     "proposal_count": 0,
                     "sample_count": 0,
+                    "dropped_low_flash_ratio": 0,
                 }
             )
             continue
@@ -65,18 +69,20 @@ def build_event_proposals(
             duration_sec=float(segment["duration_sec"]),
             output_zone_polygon=output_zone_polygon,
         )
-        segment_proposals = build_motion_event_proposals_from_samples(
+        segment_proposals, segment_dropped_low_flash_ratio = _build_motion_event_proposals_from_samples(
             station_id=station_id,
             segment=segment,
             samples=samples,
             motion_threshold=motion_threshold,
             proposal_mode=proposal_mode,
             zone_motion_threshold=zone_motion_threshold,
+            min_flash_ratio=min_flash_ratio,
             min_cluster_gap_sec=min_cluster_gap_sec,
             window_before_sec=window_before_sec,
             window_after_sec=window_after_sec,
             stable_negative_count=stable_negative_count,
         )
+        dropped_low_flash_ratio += segment_dropped_low_flash_ratio
         proposals.extend(segment_proposals)
         segment_summaries.append(
             {
@@ -95,6 +101,7 @@ def build_event_proposals(
                 ),
                 "sample_count": len(samples),
                 "max_motion_score": round(max((float(sample["motion_score"]) for sample in samples), default=0.0), 6),
+                "dropped_low_flash_ratio": segment_dropped_low_flash_ratio,
             }
         )
     return {
@@ -108,6 +115,7 @@ def build_event_proposals(
             "motion_threshold": float(motion_threshold),
             "proposal_mode": proposal_mode,
             "zone_motion_threshold": float(zone_motion_threshold),
+            "min_flash_ratio": None if min_flash_ratio is None else float(min_flash_ratio),
             "output_zone_polygon": output_zone_polygon,
             "min_cluster_gap_sec": float(min_cluster_gap_sec),
             "window_before_sec": float(window_before_sec),
@@ -126,6 +134,7 @@ def build_event_proposals(
             "stable_negative_count": len(
                 [proposal for proposal in proposals if proposal["candidate_type"] == "hard_negative_candidate"]
             ),
+            "dropped_low_flash_ratio": dropped_low_flash_ratio,
             "segments": segment_summaries,
         },
     }
@@ -139,11 +148,44 @@ def build_motion_event_proposals_from_samples(
     motion_threshold: float,
     proposal_mode: str = "full_frame_motion",
     zone_motion_threshold: float = 0.04,
+    min_flash_ratio: float | None = None,
     min_cluster_gap_sec: float = 1.0,
     window_before_sec: float = 4.0,
     window_after_sec: float = 4.0,
     stable_negative_count: int = 0,
 ) -> list[dict[str, Any]]:
+    proposals, _dropped_low_flash_ratio = _build_motion_event_proposals_from_samples(
+        station_id=station_id,
+        segment=segment,
+        samples=samples,
+        motion_threshold=motion_threshold,
+        proposal_mode=proposal_mode,
+        zone_motion_threshold=zone_motion_threshold,
+        min_flash_ratio=min_flash_ratio,
+        min_cluster_gap_sec=min_cluster_gap_sec,
+        window_before_sec=window_before_sec,
+        window_after_sec=window_after_sec,
+        stable_negative_count=stable_negative_count,
+    )
+    return proposals
+
+
+def _build_motion_event_proposals_from_samples(
+    *,
+    station_id: str,
+    segment: dict[str, Any],
+    samples: list[dict[str, Any]],
+    motion_threshold: float,
+    proposal_mode: str = "full_frame_motion",
+    zone_motion_threshold: float = 0.04,
+    min_flash_ratio: float | None = None,
+    min_cluster_gap_sec: float = 1.0,
+    window_before_sec: float = 4.0,
+    window_after_sec: float = 4.0,
+    stable_negative_count: int = 0,
+) -> tuple[list[dict[str, Any]], int]:
+    if min_flash_ratio is not None and min_flash_ratio <= 0:
+        raise ValueError("min_flash_ratio must be positive")
     duration_sec = _positive_float(segment.get("duration_sec"), name="duration_sec")
     score_key = _score_key_for_mode(proposal_mode)
     threshold = zone_motion_threshold if proposal_mode == "output_zone_motion" else motion_threshold
@@ -155,6 +197,7 @@ def build_motion_event_proposals_from_samples(
     )
     proposals: list[dict[str, Any]] = []
     occupied_windows: list[tuple[float, float]] = []
+    dropped_low_flash_ratio = 0
     for index, cluster in enumerate(clusters, start=1):
         peak = max(cluster, key=lambda sample: float(sample.get(score_key) or 0.0))
         center_sec = float(peak["timestamp_sec"])
@@ -176,6 +219,10 @@ def build_motion_event_proposals_from_samples(
             motion_summary={
                 "peak_motion_score": round(float(peak["motion_score"]), 6),
                 "peak_motion_score_output_zone": _rounded_optional(peak.get("motion_score_output_zone")),
+                "flash_ratio": _flash_ratio(
+                    full_frame_score=peak.get("motion_score"),
+                    output_zone_score=peak.get("motion_score_output_zone"),
+                ),
                 "cluster_start_sec": round(float(cluster[0]["timestamp_sec"]), 3),
                 "cluster_end_sec": round(float(cluster[-1]["timestamp_sec"]), 3),
                 "cluster_sample_count": len(cluster),
@@ -195,6 +242,11 @@ def build_motion_event_proposals_from_samples(
                 ),
             },
         )
+        if min_flash_ratio is not None:
+            flash_ratio = proposal.get("flash_ratio")
+            if flash_ratio is None or float(flash_ratio) < min_flash_ratio:
+                dropped_low_flash_ratio += 1
+                continue
         proposals.append(proposal)
         occupied_windows.append((float(proposal["start_offset_sec"]), float(proposal["end_offset_sec"])))
     proposals.extend(
@@ -211,7 +263,7 @@ def build_motion_event_proposals_from_samples(
             score_key=score_key,
         )
     )
-    return proposals
+    return proposals, dropped_low_flash_ratio
 
 
 def sample_segment_motion(
@@ -287,6 +339,7 @@ def _validate_config(
     motion_threshold: float,
     proposal_mode: str,
     zone_motion_threshold: float,
+    min_flash_ratio: float | None,
     output_zone_polygon: list[list[float]] | None,
     min_cluster_gap_sec: float,
     window_before_sec: float,
@@ -303,6 +356,11 @@ def _validate_config(
         raise ValueError("zone_motion_threshold must be positive")
     if proposal_mode == "output_zone_motion" and output_zone_polygon is None:
         raise ValueError("output_zone_motion mode requires output_zone_polygon")
+    if min_flash_ratio is not None:
+        if min_flash_ratio <= 0:
+            raise ValueError("min_flash_ratio must be positive")
+        if output_zone_polygon is None:
+            raise ValueError("min_flash_ratio requires output_zone_polygon")
     if output_zone_polygon is not None:
         _validate_polygon(output_zone_polygon, name="output_zone_polygon")
     if min_cluster_gap_sec <= 0:
@@ -403,6 +461,7 @@ def _build_proposal(
     prefix = "motion" if candidate_type == "event_candidate" else "stable_negative"
     peak_motion_score = motion_summary.get("peak_motion_score")
     peak_motion_score_output_zone = motion_summary.get("peak_motion_score_output_zone")
+    flash_ratio = motion_summary.get("flash_ratio")
     required_assets = [
         "event_clip",
         "before_full_frame",
@@ -436,6 +495,7 @@ def _build_proposal(
         "generated_by": GENERATED_BY,
         "peak_motion_score": peak_motion_score,
         "peak_motion_score_output_zone": peak_motion_score_output_zone,
+        "flash_ratio": flash_ratio,
         "teacher_task": "verify_candidate_event",
         "teacher_questions": [
             "Compare the stable before and after evidence. Did the output stack gain one countable finished part?",
@@ -573,3 +633,9 @@ def _rounded_optional(value: Any) -> float | None:
     if value is None:
         return None
     return round(float(value), 6)
+
+
+def _flash_ratio(*, full_frame_score: Any, output_zone_score: Any, epsilon: float = 1e-9) -> float | None:
+    if output_zone_score is None:
+        return None
+    return round(float(output_zone_score) / max(float(full_frame_score or 0.0), epsilon), 6)

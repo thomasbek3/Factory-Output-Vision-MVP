@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import app.services.onboarding_event_proposer as proposer_module
 from app.services.onboarding_event_proposer import (
     GENERATED_BY,
     SCHEMA_VERSION,
@@ -180,6 +181,110 @@ def test_output_zone_motion_mode_uses_zone_score_for_clusters() -> None:
     assert "output_zone_motion_above_threshold" in zone_proposals[0]["candidate_reasons"]
     assert "output_zone_crop_sequence" in zone_proposals[0]["required_evidence_packet_assets"]
     assert "stack_crop_sequence" not in zone_proposals[0]["required_evidence_packet_assets"]
+
+
+def test_flash_ratio_filter_drops_global_flash_and_keeps_zone_local_motion() -> None:
+    samples = [
+        {"timestamp_sec": 0.0, "motion_score": 0.0, "motion_score_output_zone": 0.0},
+        {"timestamp_sec": 1.0, "motion_score": 0.03, "motion_score_output_zone": 0.03},
+        {"timestamp_sec": 3.0, "motion_score": 0.05, "motion_score_output_zone": 0.15},
+    ]
+
+    all_proposals = build_motion_event_proposals_from_samples(
+        station_id="line-a",
+        segment=_segment(),
+        samples=samples,
+        motion_threshold=0.01,
+        proposal_mode="output_zone_motion",
+        zone_motion_threshold=0.02,
+        min_cluster_gap_sec=0.75,
+        window_before_sec=1.0,
+        window_after_sec=1.0,
+    )
+    filtered = build_motion_event_proposals_from_samples(
+        station_id="line-a",
+        segment=_segment(),
+        samples=samples,
+        motion_threshold=0.01,
+        proposal_mode="output_zone_motion",
+        zone_motion_threshold=0.02,
+        min_flash_ratio=1.5,
+        min_cluster_gap_sec=0.75,
+        window_before_sec=1.0,
+        window_after_sec=1.0,
+    )
+
+    assert [proposal["flash_ratio"] for proposal in all_proposals] == [1.0, 3.0]
+    assert [proposal["motion_summary"]["flash_ratio"] for proposal in all_proposals] == [1.0, 3.0]
+    assert [proposal["center_offset_sec"] for proposal in filtered] == [3.0]
+    assert filtered[0]["flash_ratio"] == 3.0
+
+
+def test_lower_zone_motion_threshold_yields_at_least_as_many_candidates() -> None:
+    samples = [
+        {"timestamp_sec": 0.0, "motion_score": 0.0, "motion_score_output_zone": 0.0},
+        {"timestamp_sec": 1.0, "motion_score": 0.03, "motion_score_output_zone": 0.03},
+        {"timestamp_sec": 3.0, "motion_score": 0.05, "motion_score_output_zone": 0.05},
+    ]
+
+    high_threshold = build_motion_event_proposals_from_samples(
+        station_id="line-a",
+        segment=_segment(),
+        samples=samples,
+        motion_threshold=0.01,
+        proposal_mode="output_zone_motion",
+        zone_motion_threshold=0.04,
+        min_cluster_gap_sec=0.75,
+    )
+    low_threshold = build_motion_event_proposals_from_samples(
+        station_id="line-a",
+        segment=_segment(),
+        samples=samples,
+        motion_threshold=0.01,
+        proposal_mode="output_zone_motion",
+        zone_motion_threshold=0.02,
+        min_cluster_gap_sec=0.75,
+    )
+
+    assert len(low_threshold) >= len(high_threshold)
+    assert len(low_threshold) == 2
+    assert len(high_threshold) == 1
+
+
+def test_build_event_proposals_records_flash_ratio_config_and_drop_summary(tmp_path: Path, monkeypatch) -> None:
+    samples = [
+        {"timestamp_sec": 0.0, "motion_score": 0.0, "motion_score_output_zone": 0.0},
+        {"timestamp_sec": 1.0, "motion_score": 0.03, "motion_score_output_zone": 0.03},
+        {"timestamp_sec": 3.0, "motion_score": 0.05, "motion_score_output_zone": 0.15},
+    ]
+    monkeypatch.setattr(proposer_module, "sample_segment_motion", lambda **_kwargs: samples)
+    manifest_path = tmp_path / "segment_manifest.json"
+    manifest = {
+        "schema_version": SEGMENT_SCHEMA_VERSION,
+        "station_id": "line-a",
+        "source_uri_hash": "source-hash",
+        "privacy_mode": "offline_local",
+        "segment_seconds": 6,
+        "retention_minutes": 30,
+        "segments": [_segment("/tmp/segment.mp4")],
+        "updated_at": "2026-06-09T00:00:06Z",
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    payload = build_event_proposals(
+        segment_manifest_path=manifest_path,
+        output_zone_polygon=[[0.5, 0.0], [1.0, 0.0], [1.0, 1.0], [0.5, 1.0]],
+        proposal_mode="output_zone_motion",
+        zone_motion_threshold=0.02,
+        min_flash_ratio=1.5,
+        stable_negative_count=0,
+    )
+
+    assert payload["config"]["min_flash_ratio"] == 1.5
+    assert payload["summary"]["event_proposal_count"] == 1
+    assert payload["summary"]["dropped_low_flash_ratio"] == 1
+    assert payload["summary"]["segments"][0]["dropped_low_flash_ratio"] == 1
+    assert payload["proposals"][0]["flash_ratio"] == 3.0
 
 
 def test_write_event_proposals_refuses_overwrite_without_force(tmp_path: Path) -> None:

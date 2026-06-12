@@ -23,6 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-polygon", default=None, help="normalized output polygon JSON string")
     parser.add_argument("--proposal-mode", choices=["full_frame_motion", "output_zone_motion"], default="full_frame_motion")
     parser.add_argument("--zone-motion-threshold", type=float, default=0.04)
+    parser.add_argument("--min-flash-ratio", type=float, default=None)
     parser.add_argument("--min-cluster-gap-sec", type=float, default=1.0)
     parser.add_argument("--window-before-sec", type=float, default=4.0)
     parser.add_argument("--window-after-sec", type=float, default=4.0)
@@ -42,6 +43,7 @@ def main(argv: list[str] | None = None) -> int:
             output_zone_polygon=output_zone_polygon,
             proposal_mode=args.proposal_mode,
             zone_motion_threshold=args.zone_motion_threshold,
+            min_flash_ratio=args.min_flash_ratio,
             min_cluster_gap_sec=args.min_cluster_gap_sec,
             window_before_sec=args.window_before_sec,
             window_after_sec=args.window_after_sec,
@@ -58,6 +60,7 @@ def main(argv: list[str] | None = None) -> int:
                 "proposal_count": payload["summary"]["proposal_count"],
                 "event_proposal_count": payload["summary"]["event_proposal_count"],
                 "stable_negative_count": payload["summary"]["stable_negative_count"],
+                "dropped_low_flash_ratio": payload["summary"]["dropped_low_flash_ratio"],
             },
             sort_keys=True,
         )

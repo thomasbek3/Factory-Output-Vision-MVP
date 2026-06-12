@@ -21,6 +21,8 @@ def split_recorder_manifest(
     segment_manifest_path: Path,
     work_dir: Path,
     holdout_fraction: float,
+    exclude_segments_after: str | None = None,
+    exclude_segments_before: str | None = None,
 ) -> dict[str, Path]:
     """Split a recorder manifest into a train-portion manifest and a concatenated holdout exam clip.
 
@@ -29,6 +31,11 @@ def split_recorder_manifest(
     human scrubs afterward to produce the answer key."""
     manifest = json.loads(segment_manifest_path.read_text(encoding="utf-8"))
     segments = sorted(manifest.get("segments") or [], key=lambda row: str(row.get("path")))
+    segments, excluded_segment_count = exclude_segments_by_filename_window(
+        segments,
+        exclude_segments_after=exclude_segments_after,
+        exclude_segments_before=exclude_segments_before,
+    )
     if len(segments) < 4:
         raise ValueError(f"only {len(segments)} segments; need at least 4 to split")
     holdout_count = max(1, round(len(segments) * holdout_fraction))
@@ -44,6 +51,9 @@ def split_recorder_manifest(
         "train_segments": len(train_segments),
         "holdout_segments": len(holdout_segments),
         "holdout_fraction": holdout_fraction,
+        "excluded_segment_count": excluded_segment_count,
+        "exclude_segments_after": exclude_segments_after,
+        "exclude_segments_before": exclude_segments_before,
     }
     train_manifest_path.write_text(json.dumps(train_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -75,6 +85,30 @@ def split_recorder_manifest(
     return {"train_manifest": train_manifest_path, "exam_clip": exam_clip, "holdout_count": len(holdout_segments)}
 
 
+def exclude_segments_by_filename_window(
+    segments: list[dict[str, Any]],
+    *,
+    exclude_segments_after: str | None,
+    exclude_segments_before: str | None,
+) -> tuple[list[dict[str, Any]], int]:
+    if exclude_segments_after is None and exclude_segments_before is None:
+        return segments, 0
+    if exclude_segments_after is None or exclude_segments_before is None:
+        raise ValueError("--exclude-segments-after and --exclude-segments-before must be supplied together")
+    if exclude_segments_after > exclude_segments_before:
+        raise ValueError("--exclude-segments-after must be <= --exclude-segments-before")
+
+    kept: list[dict[str, Any]] = []
+    dropped = 0
+    for segment in segments:
+        start_key = _segment_filename_start_key(segment)
+        if start_key is not None and exclude_segments_after <= start_key <= exclude_segments_before:
+            dropped += 1
+            continue
+        kept.append(segment)
+    return kept, dropped
+
+
 def cap_event_proposals(
     proposals_path: Path,
     *,
@@ -89,7 +123,7 @@ def cap_event_proposals(
     events = [row for row in rows if row.get("candidate_type") == "event_candidate"]
     negatives = [row for row in rows if row.get("candidate_type") != "event_candidate"]
     if proposal_mode == "output_zone_motion":
-        kept = _ranked_zone_event_cap(events=events, max_events=max_events, min_center_gap_sec=20.0)
+        kept = _ranked_zone_event_cap(events=events, max_events=max_events, min_center_gap_sec=12.0)
         sampling = "top_n_zone_score_time_dedup"
     else:
         kept = _even_stride(events, max_events)
@@ -192,6 +226,13 @@ def _cap_negatives(
     return kept, [row for row in negatives if id(row) not in kept_ids]
 
 
+def _segment_filename_start_key(segment: dict[str, Any]) -> str | None:
+    try:
+        return Path(str(segment["path"])).name.split("_", 1)[0]
+    except KeyError:
+        return None
+
+
 def _proposal_center_wall_time(proposal: dict[str, Any]) -> datetime | None:
     raw = proposal.get("source_start_wall_ts")
     if raw:
@@ -230,6 +271,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--teacher-batch-size", type=int, default=4)
     parser.add_argument("--station-calibration", type=Path, default=None)
     parser.add_argument("--proposal-mode", choices=sorted(PROPOSAL_MODES), default="full_frame_motion")
+    parser.add_argument("--zone-motion-threshold", type=float, default=0.04)
+    parser.add_argument("--min-flash-ratio", type=float, default=None)
+    parser.add_argument("--exclude-segments-after", default=None, help="drop segments with filename starts >= this YYYYmmddTHHMMSS")
+    parser.add_argument("--exclude-segments-before", default=None, help="drop segments with filename starts <= this YYYYmmddTHHMMSS")
     parser.add_argument("--teacher-negative-cap", type=int, default=30)
     parser.add_argument("--base-model", type=Path, default=Path("yolov8n.pt"))
     parser.add_argument("--epochs", type=int, default=80)
@@ -243,6 +288,8 @@ def main(argv: list[str] | None = None) -> int:
         segment_manifest_path=args.segment_manifest,
         work_dir=work,
         holdout_fraction=args.holdout_fraction,
+        exclude_segments_after=args.exclude_segments_after,
+        exclude_segments_before=args.exclude_segments_before,
     )
     print(json.dumps({"stage": "split", "status": "completed", "exam_clip": str(split["exam_clip"]), "holdout_segments": split["holdout_count"]}), flush=True)
     if args.split_only:
@@ -273,7 +320,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.allow_cloud:
         teacher_cmd.insert(4, "--allow-cloud")
 
-    proposal_cmd = [PYTHON, "scripts/propose_onboarding_events.py", "--segment-manifest", str(train_manifest), "--output", str(proposals), "--sample-fps", "2", "--motion-threshold", "0.01", "--proposal-mode", args.proposal_mode, "--min-cluster-gap-sec", "1.5", "--window-before-sec", "6", "--window-after-sec", "6", "--stable-negative-count", "3", "--force"]
+    proposal_cmd = [PYTHON, "scripts/propose_onboarding_events.py", "--segment-manifest", str(train_manifest), "--output", str(proposals), "--sample-fps", "2", "--motion-threshold", "0.01", "--proposal-mode", args.proposal_mode, "--zone-motion-threshold", str(args.zone_motion_threshold), "--min-cluster-gap-sec", "1.5", "--window-before-sec", "6", "--window-after-sec", "6", "--stable-negative-count", "3", "--force"]
+    if args.min_flash_ratio is not None:
+        proposal_cmd.extend(["--min-flash-ratio", str(args.min_flash_ratio)])
     packets_cmd = [PYTHON, "scripts/build_teacher_evidence_packets.py", "--event-proposals", str(proposals), "--output-dir", str(packets_dir), "--sequence-fps", "2", "--max-width", "960", "--force"]
     if args.station_calibration is not None:
         proposal_cmd.extend(["--station-calibration", str(args.station_calibration)])

@@ -1,3 +1,23 @@
+# Day-3 Wide-Net Miner - 2026-06-12
+
+## Objective
+
+Implement `docs/specs/day3_wide_net_miner_spec.md` exactly: widen the zone miner through CLI knobs, add flash-ratio filtering, add an exam-hour recall gate, and preserve day-2 behavior by default.
+
+## Milestones
+
+- [x] D3-1 Add proposer `min_flash_ratio` scoring/filtering and summary/config output.
+- [x] D3-2 Thread `--zone-motion-threshold`, `--min-flash-ratio`, and segment exclusion args through the day-1 pipeline.
+- [x] D3-3 Add `scripts/validate_miner_recall.py` for the 7-event held-out exam-hour gate.
+- [x] D3-4 Extend focused tests and keep the full backend suite green.
+
+## Review
+
+- Focused tests: `.venv/bin/python -m pytest tests/test_onboarding_event_proposer.py tests/test_validate_zone_mining.py tests/test_validate_miner_recall.py -q` -> `18 passed`.
+- Full suite: `.venv/bin/python -m pytest tests/ -q` -> `583 passed, 14 warnings`.
+- Real held-out exam-hour recall gate ran with the spec knobs and returned `4/7 FAIL` (`9` surviving candidates, `147` dropped by `min_flash_ratio`), so motion-only mining should escalate to the layer-2 state-change miner before teacher spend.
+- No recorder, manifest, dashboard, training-set, or gold-positive injection changes.
+
 # Autonomous Onboarding Rehearsal - 2026-06-09/10
 
 ## Objective
