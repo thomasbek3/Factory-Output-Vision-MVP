@@ -74,6 +74,7 @@ def test_motion_samples_cluster_into_event_and_stable_negative_proposals() -> No
         assert proposal["training_eligible"] is False
         assert proposal["teacher_task"] == "verify_candidate_event"
         assert "frame_diff_or_motion_heatmap" in proposal["required_evidence_packet_assets"]
+        assert "stack_crop_sequence" in proposal["required_evidence_packet_assets"]
 
 
 def test_build_event_proposals_reads_segment_manifest_and_refuses_truth_flags(tmp_path: Path) -> None:
@@ -177,6 +178,8 @@ def test_output_zone_motion_mode_uses_zone_score_for_clusters() -> None:
     assert [proposal["center_offset_sec"] for proposal in zone_proposals] == [2.0]
     assert zone_proposals[0]["peak_motion_score_output_zone"] == 0.09
     assert "output_zone_motion_above_threshold" in zone_proposals[0]["candidate_reasons"]
+    assert "output_zone_crop_sequence" in zone_proposals[0]["required_evidence_packet_assets"]
+    assert "stack_crop_sequence" not in zone_proposals[0]["required_evidence_packet_assets"]
 
 
 def test_write_event_proposals_refuses_overwrite_without_force(tmp_path: Path) -> None:

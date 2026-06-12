@@ -62,6 +62,26 @@ def test_validate_zone_mining_fails_when_stall_window_has_top_candidate(tmp_path
     assert report["summary"]["stall_window_count"] == 1
 
 
+def test_validate_zone_mining_uses_single_growth_window_as_heavy_growth(tmp_path: Path) -> None:
+    proposals_path = tmp_path / "proposals.json"
+    proposals_path.write_text(
+        json.dumps({"proposals": _events([("20260611T134700", index, 1.0 - (index * 0.01)) for index in range(10)])}),
+        encoding="utf-8",
+    )
+
+    report = build_zone_mining_validation(
+        proposals_path=proposals_path,
+        growth_windows=[["13:47", "16:27"]],
+        stall_windows=[["13:05", "13:47"]],
+        date_text="2026-06-11",
+        top_n=10,
+    )
+
+    assert report["verdict"] == "PASS"
+    assert report["summary"]["growth_window_count"] == 10
+    assert report["summary"]["heavy_growth_window_count"] == 10
+
+
 def test_zone_ranked_cap_keeps_top_scores_with_twenty_second_dedup(tmp_path: Path) -> None:
     proposals_path = tmp_path / "proposals.json"
     proposals_path.write_text(

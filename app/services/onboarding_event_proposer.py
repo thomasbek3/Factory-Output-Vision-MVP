@@ -172,6 +172,7 @@ def build_motion_event_proposals_from_samples(
             window_before_sec=window_before_sec,
             window_after_sec=window_after_sec,
             candidate_reasons=reasons,
+            include_stack_crop_sequence=proposal_mode != "output_zone_motion",
             motion_summary={
                 "peak_motion_score": round(float(peak["motion_score"]), 6),
                 "peak_motion_score_output_zone": _rounded_optional(peak.get("motion_score_output_zone")),
@@ -391,6 +392,7 @@ def _build_proposal(
     window_before_sec: float,
     window_after_sec: float,
     candidate_reasons: list[str],
+    include_stack_crop_sequence: bool,
     motion_summary: dict[str, Any],
 ) -> dict[str, Any]:
     start_sec = max(0.0, center_sec - window_before_sec)
@@ -401,6 +403,16 @@ def _build_proposal(
     prefix = "motion" if candidate_type == "event_candidate" else "stable_negative"
     peak_motion_score = motion_summary.get("peak_motion_score")
     peak_motion_score_output_zone = motion_summary.get("peak_motion_score_output_zone")
+    required_assets = [
+        "event_clip",
+        "before_full_frame",
+        "during_full_frame",
+        "after_full_frame",
+        "output_zone_crop_sequence",
+        "frame_diff_or_motion_heatmap",
+    ]
+    if include_stack_crop_sequence:
+        required_assets.insert(5, "stack_crop_sequence")
     return {
         "station_id": station_id,
         "candidate_id": f"{segment_id}_{prefix}_{index:04d}",
@@ -430,15 +442,7 @@ def _build_proposal(
             "If yes, what timestamp best represents the completed placement?",
             "Is this worker-only, static-stack, in-transit, duplicate, completed, or unclear?",
         ],
-        "required_evidence_packet_assets": [
-            "event_clip",
-            "before_full_frame",
-            "during_full_frame",
-            "after_full_frame",
-            "output_zone_crop_sequence",
-            "stack_crop_sequence",
-            "frame_diff_or_motion_heatmap",
-        ],
+        "required_evidence_packet_assets": required_assets,
         "motion_summary": motion_summary,
     }
 
@@ -481,6 +485,7 @@ def _stable_negative_proposals(
                 window_before_sec=window_before_sec,
                 window_after_sec=window_after_sec,
                 candidate_reasons=["low_motion_stable_sample"],
+                include_stack_crop_sequence=score_key != "motion_score_output_zone",
                 motion_summary={
                     "peak_motion_score": round(float(sample["motion_score"]), 6),
                     "peak_motion_score_output_zone": _rounded_optional(sample.get("motion_score_output_zone")),

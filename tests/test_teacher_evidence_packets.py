@@ -55,6 +55,7 @@ def test_build_teacher_evidence_packets_writes_assets_and_manifest(tmp_path: Pat
         "output_zone_crop_sequence",
         "stack_crop_sequence",
     } <= kinds
+    assert packet_manifest["crop_source"] == "full_frame_fallback"
     for asset in packet_manifest["assets"]:
         asset_path = Path(asset["path"])
         assert asset_path.exists()
@@ -92,6 +93,9 @@ def test_build_teacher_evidence_packets_uses_output_zone_crop(tmp_path: Path) ->
 
     packet_manifest = json.loads(Path(payload["packets"][0]["packet_manifest_path"]).read_text(encoding="utf-8"))
     assert packet_manifest["crop_source"] == "station_calibration_output_zone"
+    kinds = {asset["kind"] for asset in packet_manifest["assets"]}
+    assert "output_zone_crop_sequence" in kinds
+    assert "stack_crop_sequence" not in kinds
     crop_asset = next(asset for asset in packet_manifest["assets"] if asset["kind"] == "output_zone_crop_sequence")
     crop = cv2.imread(crop_asset["path"])
     assert crop is not None

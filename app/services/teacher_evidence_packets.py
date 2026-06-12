@@ -332,7 +332,8 @@ def _write_sequence_assets(
 ) -> list[dict[str, Any]]:
     assets: list[dict[str, Any]] = []
     timestamps = _sequence_timestamps(start_sec=start_sec, end_sec=end_sec, fps=sequence_fps)
-    for kind in ("output_zone_crop_sequence", "stack_crop_sequence"):
+    kinds = ("output_zone_crop_sequence",) if output_zone_polygon is not None else ("output_zone_crop_sequence", "stack_crop_sequence")
+    for kind in kinds:
         sequence_dir = packet_dir / kind
         for index, timestamp_sec in enumerate(timestamps):
             try:

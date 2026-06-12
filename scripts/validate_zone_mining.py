@@ -48,8 +48,13 @@ def build_zone_mining_validation(
             }
         )
     ranked = sorted(rows, key=lambda row: row["zone_score"], reverse=True)[:top_n]
+    heavy_growth_window = dated_growth_windows[-1] if dated_growth_windows else None
     growth_count = sum(1 for row in ranked if _in_any(row["wall_time"], dated_growth_windows))
-    heavy_growth_count = sum(1 for row in ranked if dated_growth_windows[1].contains(row["wall_time"]))
+    heavy_growth_count = (
+        sum(1 for row in ranked if heavy_growth_window.contains(row["wall_time"]))
+        if heavy_growth_window is not None
+        else 0
+    )
     stall_count = sum(1 for row in ranked if _in_any(row["wall_time"], dated_stall_windows))
     outside_count = len(ranked) - growth_count - stall_count
     bucket_counts = _bucket_counts(rows)
