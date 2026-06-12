@@ -10,6 +10,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.teacher_evidence_packets import build_teacher_evidence_packets
+from app.services.station_calibration import read_station_calibration
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -19,16 +20,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sequence-fps", type=float, default=2.0)
     parser.add_argument("--max-packets", type=int)
     parser.add_argument("--max-width", type=int, default=960)
+    parser.add_argument("--station-calibration", type=Path, default=None)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 
     try:
+        output_zone_polygon = None
+        if args.station_calibration is not None:
+            calibration = read_station_calibration(args.station_calibration)
+            output_polygons = calibration.get("output_polygons") or []
+            if not output_polygons:
+                raise ValueError("station calibration must include at least one output polygon")
+            output_zone_polygon = output_polygons[0]
         payload = build_teacher_evidence_packets(
             event_proposals_path=args.event_proposals,
             output_dir=args.output_dir,
             sequence_fps=args.sequence_fps,
             max_packets=args.max_packets,
             max_width=args.max_width,
+            output_zone_polygon=output_zone_polygon,
             force=args.force,
         )
     except Exception as exc:  # noqa: BLE001

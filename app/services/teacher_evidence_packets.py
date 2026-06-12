@@ -20,6 +20,7 @@ def build_teacher_evidence_packets(
     sequence_fps: float = 2.0,
     max_packets: int | None = None,
     max_width: int = 960,
+    output_zone_polygon: list[list[float]] | None = None,
     force: bool = False,
 ) -> dict[str, Any]:
     if sequence_fps <= 0:
@@ -40,6 +41,7 @@ def build_teacher_evidence_packets(
             output_root=output_dir,
             sequence_fps=sequence_fps,
             max_width=max_width,
+            output_zone_polygon=output_zone_polygon,
             force=force,
         )
         packets.append(packet)
@@ -68,6 +70,7 @@ def build_teacher_evidence_packet(
     output_root: Path,
     sequence_fps: float,
     max_width: int,
+    output_zone_polygon: list[list[float]] | None,
     force: bool,
 ) -> dict[str, Any]:
     try:
@@ -124,6 +127,7 @@ def build_teacher_evidence_packet(
         end_sec=end_sec,
         sequence_fps=sequence_fps,
         max_width=max_width,
+        output_zone_polygon=output_zone_polygon,
         force=force,
     )
     assets = [
@@ -166,7 +170,7 @@ def build_teacher_evidence_packet(
             "allowed_statuses": ["completed", "in_transit", "static_stack", "worker_only", "unclear"],
             "instruction": "Use the before/during/after frames, sequence crops, and diff heatmap. Do not infer validation truth.",
         },
-        "crop_mode": "full_frame_fallback_until_station_roi_packet_exists",
+        "crop_source": "station_calibration_output_zone" if output_zone_polygon is not None else "full_frame_fallback",
         "assets": assets,
         "label_authority_tier": "bronze",
         "evidence_role": "candidate_only_not_truth",
@@ -323,6 +327,7 @@ def _write_sequence_assets(
     end_sec: float,
     sequence_fps: float,
     max_width: int,
+    output_zone_polygon: list[list[float]] | None,
     force: bool,
 ) -> list[dict[str, Any]]:
     assets: list[dict[str, Any]] = []
@@ -335,11 +340,34 @@ def _write_sequence_assets(
             except RuntimeError:
                 # Trailing timestamps can sit past the last decodable frame of a segment; skip them.
                 continue
-            frame = _resize_to_width(cv2=cv2, frame=frame, max_width=max_width)
+            if output_zone_polygon is not None:
+                frame = _crop_polygon_bbox_with_margin(cv2=cv2, frame=frame, polygon=output_zone_polygon)
+                frame = _resize_to_width(cv2=cv2, frame=frame, max_width=max(max_width, 768))
+            else:
+                frame = _resize_to_width(cv2=cv2, frame=frame, max_width=max_width)
             frame_path = sequence_dir / f"frame_{index:03d}_{timestamp_sec:.3f}s.jpg"
             _write_frame(cv2=cv2, path=frame_path, frame=frame, force=force)
             assets.append(_asset(kind=kind, path=frame_path, timestamp_sec=timestamp_sec))
     return assets
+
+
+def _crop_polygon_bbox_with_margin(*, cv2: Any, frame: Any, polygon: list[list[float]], margin_fraction: float = 0.10) -> Any:
+    height, width = frame.shape[:2]
+    xs = [float(point[0]) * float(width - 1) for point in polygon]
+    ys = [float(point[1]) * float(height - 1) for point in polygon]
+    min_x = min(xs)
+    max_x = max(xs)
+    min_y = min(ys)
+    max_y = max(ys)
+    margin_x = (max_x - min_x) * margin_fraction
+    margin_y = (max_y - min_y) * margin_fraction
+    left = max(0, int(round(min_x - margin_x)))
+    right = min(width, int(round(max_x + margin_x)) + 1)
+    top = max(0, int(round(min_y - margin_y)))
+    bottom = min(height, int(round(max_y + margin_y)) + 1)
+    if right <= left or bottom <= top:
+        raise ValueError("output_zone_polygon produced an empty crop")
+    return frame[top:bottom, left:right]
 
 
 def _sequence_timestamps(*, start_sec: float, end_sec: float, fps: float) -> list[float]:

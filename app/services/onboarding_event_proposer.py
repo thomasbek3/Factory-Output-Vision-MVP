@@ -8,7 +8,8 @@ from app.services.stream_recorder import validate_segment_manifest
 
 
 SCHEMA_VERSION = "factory-vision-onboarding-event-proposals-v1"
-GENERATED_BY = "motion_event_proposer_v1"
+GENERATED_BY = "motion_event_proposer_v2"
+PROPOSAL_MODES = {"full_frame_motion", "output_zone_motion"}
 
 
 def build_event_proposals(
@@ -16,6 +17,9 @@ def build_event_proposals(
     segment_manifest_path: Path,
     sample_fps: float = 2.0,
     motion_threshold: float = 0.025,
+    output_zone_polygon: list[list[float]] | None = None,
+    proposal_mode: str = "full_frame_motion",
+    zone_motion_threshold: float = 0.04,
     min_cluster_gap_sec: float = 1.0,
     window_before_sec: float = 4.0,
     window_after_sec: float = 4.0,
@@ -30,6 +34,9 @@ def build_event_proposals(
     _validate_config(
         sample_fps=sample_fps,
         motion_threshold=motion_threshold,
+        proposal_mode=proposal_mode,
+        zone_motion_threshold=zone_motion_threshold,
+        output_zone_polygon=output_zone_polygon,
         min_cluster_gap_sec=min_cluster_gap_sec,
         window_before_sec=window_before_sec,
         window_after_sec=window_after_sec,
@@ -56,12 +63,15 @@ def build_event_proposals(
             video_path=segment_path,
             sample_fps=sample_fps,
             duration_sec=float(segment["duration_sec"]),
+            output_zone_polygon=output_zone_polygon,
         )
         segment_proposals = build_motion_event_proposals_from_samples(
             station_id=station_id,
             segment=segment,
             samples=samples,
             motion_threshold=motion_threshold,
+            proposal_mode=proposal_mode,
+            zone_motion_threshold=zone_motion_threshold,
             min_cluster_gap_sec=min_cluster_gap_sec,
             window_before_sec=window_before_sec,
             window_after_sec=window_after_sec,
@@ -96,6 +106,9 @@ def build_event_proposals(
         "config": {
             "sample_fps": float(sample_fps),
             "motion_threshold": float(motion_threshold),
+            "proposal_mode": proposal_mode,
+            "zone_motion_threshold": float(zone_motion_threshold),
+            "output_zone_polygon": output_zone_polygon,
             "min_cluster_gap_sec": float(min_cluster_gap_sec),
             "window_before_sec": float(window_before_sec),
             "window_after_sec": float(window_after_sec),
@@ -124,22 +137,30 @@ def build_motion_event_proposals_from_samples(
     segment: dict[str, Any],
     samples: list[dict[str, Any]],
     motion_threshold: float,
-    min_cluster_gap_sec: float,
-    window_before_sec: float,
-    window_after_sec: float,
+    proposal_mode: str = "full_frame_motion",
+    zone_motion_threshold: float = 0.04,
+    min_cluster_gap_sec: float = 1.0,
+    window_before_sec: float = 4.0,
+    window_after_sec: float = 4.0,
     stable_negative_count: int = 0,
 ) -> list[dict[str, Any]]:
     duration_sec = _positive_float(segment.get("duration_sec"), name="duration_sec")
+    score_key = _score_key_for_mode(proposal_mode)
+    threshold = zone_motion_threshold if proposal_mode == "output_zone_motion" else motion_threshold
     clusters = _motion_clusters(
         samples=samples,
-        motion_threshold=motion_threshold,
+        motion_threshold=threshold,
         min_cluster_gap_sec=min_cluster_gap_sec,
+        score_key=score_key,
     )
     proposals: list[dict[str, Any]] = []
     occupied_windows: list[tuple[float, float]] = []
     for index, cluster in enumerate(clusters, start=1):
-        peak = max(cluster, key=lambda sample: float(sample["motion_score"]))
+        peak = max(cluster, key=lambda sample: float(sample.get(score_key) or 0.0))
         center_sec = float(peak["timestamp_sec"])
+        reasons = ["frame_motion_above_threshold"]
+        if proposal_mode == "output_zone_motion":
+            reasons.append("output_zone_motion_above_threshold")
         proposal = _build_proposal(
             station_id=station_id,
             segment=segment,
@@ -150,9 +171,10 @@ def build_motion_event_proposals_from_samples(
             duration_sec=duration_sec,
             window_before_sec=window_before_sec,
             window_after_sec=window_after_sec,
-            candidate_reasons=["frame_motion_above_threshold"],
+            candidate_reasons=reasons,
             motion_summary={
                 "peak_motion_score": round(float(peak["motion_score"]), 6),
+                "peak_motion_score_output_zone": _rounded_optional(peak.get("motion_score_output_zone")),
                 "cluster_start_sec": round(float(cluster[0]["timestamp_sec"]), 3),
                 "cluster_end_sec": round(float(cluster[-1]["timestamp_sec"]), 3),
                 "cluster_sample_count": len(cluster),
@@ -160,13 +182,15 @@ def build_motion_event_proposals_from_samples(
                     samples=samples,
                     center_sec=center_sec,
                     direction="before",
-                    stable_threshold=motion_threshold * 0.5,
+                    stable_threshold=threshold * 0.5,
+                    score_key=score_key,
                 ),
                 "stable_after_sec": _nearest_stable_timestamp(
                     samples=samples,
                     center_sec=center_sec,
                     direction="after",
-                    stable_threshold=motion_threshold * 0.5,
+                    stable_threshold=threshold * 0.5,
+                    score_key=score_key,
                 ),
             },
         )
@@ -182,13 +206,20 @@ def build_motion_event_proposals_from_samples(
             duration_sec=duration_sec,
             window_before_sec=window_before_sec,
             window_after_sec=window_after_sec,
-            stable_threshold=motion_threshold * 0.5,
+            stable_threshold=threshold * 0.5,
+            score_key=score_key,
         )
     )
     return proposals
 
 
-def sample_segment_motion(*, video_path: Path, sample_fps: float, duration_sec: float) -> list[dict[str, Any]]:
+def sample_segment_motion(
+    *,
+    video_path: Path,
+    sample_fps: float,
+    duration_sec: float,
+    output_zone_polygon: list[list[float]] | None = None,
+) -> list[dict[str, Any]]:
     if sample_fps <= 0:
         raise ValueError("sample_fps must be positive")
     if duration_sec <= 0:
@@ -204,6 +235,8 @@ def sample_segment_motion(*, video_path: Path, sample_fps: float, duration_sec: 
         raise RuntimeError(f"could not open segment video: {video_path}")
     samples: list[dict[str, Any]] = []
     previous_gray: Any | None = None
+    mask: Any | None = None
+    zone_pixel_count: int | None = None
     try:
         for timestamp_sec in _sample_timestamps(duration_sec=duration_sec, sample_fps=sample_fps):
             capture.set(cv2.CAP_PROP_POS_MSEC, timestamp_sec * 1000.0)
@@ -211,17 +244,29 @@ def sample_segment_motion(*, video_path: Path, sample_fps: float, duration_sec: 
             if not ok or frame is None:
                 continue
             gray = cv2.cvtColor(_resize_for_motion(frame), cv2.COLOR_BGR2GRAY)
+            if output_zone_polygon is not None and mask is None:
+                mask = _build_polygon_mask(cv2=cv2, frame_shape=gray.shape, polygon=output_zone_polygon)
+                zone_pixel_count = int(cv2.countNonZero(mask))
+                if zone_pixel_count <= 0:
+                    raise ValueError("output_zone_polygon produced an empty mask")
             if previous_gray is None:
                 motion_score = 0.0
+                zone_motion_score = 0.0 if mask is not None else None
             else:
                 diff = cv2.absdiff(previous_gray, gray)
                 motion_score = float(diff.mean()) / 255.0
-            samples.append(
-                {
-                    "timestamp_sec": round(timestamp_sec, 3),
-                    "motion_score": round(motion_score, 6),
-                }
-            )
+                zone_motion_score = (
+                    float(cv2.sumElems(cv2.bitwise_and(diff, diff, mask=mask))[0]) / float(zone_pixel_count) / 255.0
+                    if mask is not None and zone_pixel_count
+                    else None
+                )
+            row = {
+                "timestamp_sec": round(timestamp_sec, 3),
+                "motion_score": round(motion_score, 6),
+            }
+            if zone_motion_score is not None:
+                row["motion_score_output_zone"] = round(zone_motion_score, 6)
+            samples.append(row)
             previous_gray = gray
     finally:
         capture.release()
@@ -239,6 +284,9 @@ def _validate_config(
     *,
     sample_fps: float,
     motion_threshold: float,
+    proposal_mode: str,
+    zone_motion_threshold: float,
+    output_zone_polygon: list[list[float]] | None,
     min_cluster_gap_sec: float,
     window_before_sec: float,
     window_after_sec: float,
@@ -248,6 +296,14 @@ def _validate_config(
         raise ValueError("sample_fps must be positive")
     if motion_threshold <= 0:
         raise ValueError("motion_threshold must be positive")
+    if proposal_mode not in PROPOSAL_MODES:
+        raise ValueError(f"proposal_mode must be one of {sorted(PROPOSAL_MODES)}")
+    if zone_motion_threshold <= 0:
+        raise ValueError("zone_motion_threshold must be positive")
+    if proposal_mode == "output_zone_motion" and output_zone_polygon is None:
+        raise ValueError("output_zone_motion mode requires output_zone_polygon")
+    if output_zone_polygon is not None:
+        _validate_polygon(output_zone_polygon, name="output_zone_polygon")
     if min_cluster_gap_sec <= 0:
         raise ValueError("min_cluster_gap_sec must be positive")
     if window_before_sec < 0:
@@ -303,12 +359,13 @@ def _motion_clusters(
     samples: list[dict[str, Any]],
     motion_threshold: float,
     min_cluster_gap_sec: float,
+    score_key: str = "motion_score",
 ) -> list[list[dict[str, Any]]]:
     clusters: list[list[dict[str, Any]]] = []
     current: list[dict[str, Any]] = []
     last_motion_ts: float | None = None
     for sample in samples:
-        score = float(sample["motion_score"])
+        score = float(sample.get(score_key) or 0.0)
         if score < motion_threshold:
             continue
         timestamp_sec = float(sample["timestamp_sec"])
@@ -342,6 +399,8 @@ def _build_proposal(
         end_sec = min(duration_sec, start_sec + max(window_before_sec, window_after_sec, 0.1))
     segment_id = str(segment["segment_id"])
     prefix = "motion" if candidate_type == "event_candidate" else "stable_negative"
+    peak_motion_score = motion_summary.get("peak_motion_score")
+    peak_motion_score_output_zone = motion_summary.get("peak_motion_score_output_zone")
     return {
         "station_id": station_id,
         "candidate_id": f"{segment_id}_{prefix}_{index:04d}",
@@ -363,6 +422,8 @@ def _build_proposal(
         "validation_truth_eligible": False,
         "training_eligible": False,
         "generated_by": GENERATED_BY,
+        "peak_motion_score": peak_motion_score,
+        "peak_motion_score_output_zone": peak_motion_score_output_zone,
         "teacher_task": "verify_candidate_event",
         "teacher_questions": [
             "Compare the stable before and after evidence. Did the output stack gain one countable finished part?",
@@ -393,13 +454,14 @@ def _stable_negative_proposals(
     window_before_sec: float,
     window_after_sec: float,
     stable_threshold: float,
+    score_key: str,
 ) -> list[dict[str, Any]]:
     if count <= 0:
         return []
     stable_samples = [
         sample
         for sample in samples
-        if float(sample["motion_score"]) <= stable_threshold
+        if float(sample.get(score_key) or 0.0) <= stable_threshold
         and not _timestamp_in_windows(float(sample["timestamp_sec"]), occupied_windows)
     ]
     if not stable_samples:
@@ -421,6 +483,7 @@ def _stable_negative_proposals(
                 candidate_reasons=["low_motion_stable_sample"],
                 motion_summary={
                     "peak_motion_score": round(float(sample["motion_score"]), 6),
+                    "peak_motion_score_output_zone": _rounded_optional(sample.get("motion_score_output_zone")),
                     "stable_before_sec": round(float(sample["timestamp_sec"]), 3),
                     "stable_after_sec": round(float(sample["timestamp_sec"]), 3),
                 },
@@ -452,6 +515,7 @@ def _nearest_stable_timestamp(
     center_sec: float,
     direction: str,
     stable_threshold: float,
+    score_key: str = "motion_score",
 ) -> float | None:
     if direction == "before":
         candidates = [sample for sample in samples if float(sample["timestamp_sec"]) < center_sec]
@@ -461,6 +525,46 @@ def _nearest_stable_timestamp(
     else:
         raise ValueError("direction must be before or after")
     for sample in candidates:
-        if float(sample["motion_score"]) <= stable_threshold:
+        if float(sample.get(score_key) or 0.0) <= stable_threshold:
             return round(float(sample["timestamp_sec"]), 3)
     return None
+
+
+def _score_key_for_mode(proposal_mode: str) -> str:
+    if proposal_mode == "full_frame_motion":
+        return "motion_score"
+    if proposal_mode == "output_zone_motion":
+        return "motion_score_output_zone"
+    raise ValueError(f"unsupported proposal_mode: {proposal_mode}")
+
+
+def _build_polygon_mask(*, cv2: Any, frame_shape: tuple[int, int], polygon: list[list[float]]) -> Any:
+    try:
+        import numpy as np  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError("zone motion proposal requires numpy; use the repo .venv") from exc
+    height, width = frame_shape[:2]
+    points = []
+    for x_norm, y_norm in polygon:
+        x = min(width - 1, max(0, int(round(float(x_norm) * float(width - 1)))))
+        y = min(height - 1, max(0, int(round(float(y_norm) * float(height - 1)))))
+        points.append([x, y])
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.fillPoly(mask, [np.array(points, dtype=np.int32)], 255)
+    return mask
+
+
+def _validate_polygon(polygon: list[list[float]], *, name: str) -> None:
+    if len(polygon) < 3:
+        raise ValueError(f"{name} must contain at least 3 points")
+    for index, point in enumerate(polygon):
+        if len(point) != 2:
+            raise ValueError(f"{name}[{index}] must be [x, y]")
+        float(point[0])
+        float(point[1])
+
+
+def _rounded_optional(value: Any) -> float | None:
+    if value is None:
+        return None
+    return round(float(value), 6)
