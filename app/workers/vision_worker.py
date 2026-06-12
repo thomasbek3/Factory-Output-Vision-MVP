@@ -53,6 +53,7 @@ from app.db.event_repo import log_event
 from app.db.health_repo import insert_health_sample
 from app.services.calibration import Box, box_center
 from app.services.counting import CentroidTracker, CounterState, EventBasedCounter, YoloObjectDetector, apply_roi_mask, count_dead_tracks, count_new_tracks, mark_all_tracks_counted, track_travel_px
+from app.services.dashboard_state import get_onboarding_dashboard_state
 from app.services.deterministic_demo_runner import DeterministicDemoRunner
 from app.services.perception_gate import GateDecision
 from app.services.person_detector import PersonDetector, point_in_polygon
@@ -183,10 +184,12 @@ class VisionWorker:
             self.counter_state.rollover_if_needed()
             self._rollover_completed_minute_if_needed()
             source_kind = self.video_runtime.current_source_kind()
+            onboarding_state = get_onboarding_dashboard_state(worker_state=self.state, source_kind=source_kind)
             demo_active = bool(source_kind == "demo" and (self.monitoring_enabled or self.calibrating) and not self.video_runtime.is_demo_finished())
             demo_elapsed = 0.0 if self._deterministic_demo_runner is None else round(self._deterministic_demo_runner.current_elapsed_sec(), 2)
             return {
                 "state": self.state,
+                "onboarding_state": onboarding_state,
                 "count_source": "vision",
                 "baseline_rate_per_min": self.baseline_rate_per_min,
                 "calibration_progress_pct": self._get_calibration_progress_pct(),
@@ -1325,12 +1328,14 @@ class VisionWorker:
         reader_status = self.video_runtime.reader.status()
         latest_error_message = self.last_error_message or reader_status.get("last_error")
         source_kind = self.video_runtime.current_source_kind()
+        onboarding_state = get_onboarding_dashboard_state(worker_state=self.state, source_kind=source_kind)
         demo_active = bool(source_kind == "demo" and (self.monitoring_enabled or self.calibrating) and not self.video_runtime.is_demo_finished())
         demo_elapsed = 0.0 if self._deterministic_demo_runner is None else round(self._deterministic_demo_runner.current_elapsed_sec(), 2)
         return {
             "app_version": "0.1.0",
             "uptime_sec": round(uptime_sec, 2),
             "current_state": self.state,
+            "onboarding_state": onboarding_state,
             "count_source": "vision",
             "last_frame_age_sec": None if self.last_frame_age_sec is None else round(self.last_frame_age_sec, 2),
             "reconnect_attempts_total": self.reconnect_attempts_total,

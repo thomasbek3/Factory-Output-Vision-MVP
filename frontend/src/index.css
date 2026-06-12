@@ -283,6 +283,23 @@ img {
   font-weight: 600;
 }
 
+.status-pill.compact {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.84rem;
+}
+
+.status-pill.green {
+  border-color: rgba(31, 157, 85, 0.35);
+}
+
+.status-pill.yellow {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.status-pill.red {
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
 .status-dot {
   width: 0.8rem;
   height: 0.8rem;
@@ -304,6 +321,24 @@ img {
 
 .status-dot.gray {
   background: #94a3b8;
+}
+
+.state-tag.green {
+  border: 1px solid;
+  border-color: rgba(31, 157, 85, 0.35);
+  background: rgba(31, 157, 85, 0.08);
+}
+
+.state-tag.yellow {
+  border: 1px solid;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.state-tag.red {
+  border: 1px solid;
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.08);
 }
 
 .content-grid {

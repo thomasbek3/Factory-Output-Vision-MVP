@@ -32,3 +32,4 @@ training_runs/*/val/
 snapshot_test.jpg
 /yolo11n.pt
 /yolo11n-cls.pt
+.gstack/

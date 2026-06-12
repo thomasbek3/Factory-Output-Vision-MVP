@@ -21,6 +21,8 @@ class DashboardContractTests(unittest.TestCase):
             with client.websocket_connect("/ws/metrics") as websocket:
                 payload = websocket.receive_json()
                 self.assertIn("state", payload)
+                self.assertIn("onboarding_state", payload)
+                self.assertIn(payload["onboarding_state"], ["onboarding", "live", "audit", "needs_review"])
                 self.assertIn("counts_this_minute", payload)
                 self.assertIn("rolling_rate_per_min", payload)
                 self.assertEqual(payload["count_source"], "vision")

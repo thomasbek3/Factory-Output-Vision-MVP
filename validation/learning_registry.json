@@ -16,12 +16,14 @@
             {
               "affects": ["runtime", "validation"],
               "path": "data/videos/from-pc/factory2.MOV",
-              "required": true
+              "required": true,
+              "warn_if_missing": false
             },
             {
               "affects": ["runtime", "validation"],
               "path": "data/calibration/factory2_ai_only_v1.json",
-              "required": true
+              "required": true,
+              "warn_if_missing": false
             }
           ]
         },

@@ -1,136 +1,150 @@
-# Factory Vision Output Counter (MVP)
-### Plug-and-Play Factory Output Monitoring using Reolink RLC-510WA + Ubuntu Edge PC
+# Factory Vision Output Counter
 
----
+Offline factory output counting for manual workstations.
 
-## What this is
-This is **not** "a computer vision project."
+Factory Vision is a local appliance that counts completed output placements from a camera feed. It is designed for a shop-floor station where material starts on one side, an operator and machine do the work in the middle, and completed units are placed in an output area.
 
-This is a **factory appliance** that must:
-- Start on boot
-- Heal itself when the camera stream drops
-- Explain problems in plain language
-- Be configurable by a shop owner in **under 15 minutes**
-- Require **no CLI after install**
-- Run fully offline on a LAN
+The product goal is practical: install on an edge machine, connect a camera, draw zones in a browser, and get an auditable runtime count without cloud services.
 
-If setup takes >15 minutes, it fails.
+## Current Status
 
----
+This repository contains a working MVP:
 
-## What it does (MVP)
-- User enters camera IP + login in a local web UI
-- User draws:
-  - Output ROI (polygon)
-  - Optional operator zone (polygon)
-- User clicks "Calibrate" to set baseline output rate
-- User clicks "Start Monitoring"
+- Python FastAPI backend
+- React/Vite/TypeScript frontend
+- SQLite persistence
+- OpenCV frame ingestion
+- YOLO/event-based counting
+- validation registry and app-vs-truth proof artifacts
+- offline-first active-learning and review tooling
 
-System automatically:
-- Counts parts/events in the output zone (per minute/hour)
-- Detects **Stop** (zero count for N minutes)
-- Detects **Drop** (rolling rate < 60% baseline for M minutes)
-- Optionally detects **Operator Absence** ONLY during drop
-- Displays a simple **Green / Yellow / Red** status
-- Logs events
-- Auto-reconnects RTSP if the stream drops
-- Exposes diagnostics and a support bundle endpoint
+Current evidence proves file-backed live counting through the real app path for promoted/verified cases in `validation/registry.json`. It does not yet prove live Reolink/RTSP field operation. See `docs/00_CURRENT_STATE.md` before making product claims.
 
----
+## Architecture
 
-## What it does NOT do (MVP)
-- No MES/ERP platform
-- No PLC integration required
-- No cloud required
-- No Docker
-- No YAML editing
-- No ML training required
+```text
+Camera or demo video
+  -> FrameReader / VideoRuntime
+  -> VisionWorker
+  -> YOLO detector
+  -> counting mode
+  -> runtime state and event history
+  -> FastAPI REST/WebSocket/MJPEG
+  -> React dashboard
+```
 
----
+Near-term architecture direction is to keep the current runtime as the system of record and add optional signal fusion, not rewrite around a new vendor stack. See `docs/09_PENNIES_AND_INCHES_STACK_RECOMMENDATION.md`.
 
-## Hardware assumptions
-- Camera: Reolink RLC-510WA
-- Edge compute: Ubuntu mini PC (CPU-only OK)
-- Network: Ethernet LAN
-- Browser: any device on LAN
+## Quick Start
 
----
+Use the existing virtual environment when present:
 
-## Repo documentation (current source of truth)
+```bash
+.venv/bin/pip install -r requirements.txt
+cd frontend && npm install
+```
+
+Run backend tests:
+
+```bash
+make test-backend
+```
+
+Run frontend checks:
+
+```bash
+make lint
+make build
+```
+
+Run the verified Factory2 demo stack:
+
+```bash
+make run-test-case-1
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/dashboard
+```
+
+Click `Start monitoring`. The verified Factory2 run should reach Runtime Total `23`.
+
+## Common Commands
+
+```bash
+make install
+make test-backend
+make test-frontend
+make validate-video CASE_ID=img3254_clean22_candidate
+make benchmark-onboarding
+make docs-check
+make hygiene
+```
+
+`make hygiene` is the full local confidence pass for routine repository work. It is intentionally conservative and does not delete artifacts.
+
+## Repository Map
+
+```text
+app/                  FastAPI backend, runtime workers, services, database repos
+frontend/             React/Vite dashboard, wizard, troubleshooting UI
+scripts/              validation, training, active-learning, artifact tooling
+tests/                backend and script tests
+validation/           validation registry, case manifests, JSON schemas
+docs/                 product, architecture, validation, governance docs
+docs/decisions/       architecture decision records
+INSTALL/              installer and deployment notes
+tasks/                working task logs and lessons
+data/                 local working cache and reports; mostly not source of truth
+models/               local model cache; promotion requires validation evidence
+```
+
+Heavy factory artifacts are local-first. Do not assume `data/` or `models/` is clean just because files are present. The durable artifact policy is in `docs/07_ARTIFACT_STORAGE.md`.
+
+## Source Of Truth
 
 Start here:
 
-- `docs/00_CURRENT_STATE.md` (verified cases, claim boundary, non-negotiables)
-- `docs/01_PRODUCT_SPEC.md` (current MVP product definition)
-- `docs/02_ARCHITECTURE.md` (short current architecture map)
-- `docs/03_VALIDATION_PIPELINE.md` (new-video validation workflow)
-- `docs/04_TEST_CASE_REGISTRY.md` (registry and manifest rules)
-- `docs/05_OPERATOR_RUNBOOK.md` (dashboard operator workflow)
-- `docs/06_DEVELOPER_RUNBOOK.md` (developer commands and guardrails)
-- `docs/KNOWN_LIMITATIONS.md` (honest product limits)
-
-Detailed references remain available in `docs/PROJECT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`, `docs/UX_SPEC.md`, `docs/TEST_PLAN.md`, and the specific Factory2/IMG workflow docs. Historical docs live under `docs/ARCHIVED_DONOTREAD/` and `docs/archived/`.
-
-Validation is now registry-backed:
-
+- `docs/README.md`
+- `docs/00_CURRENT_STATE.md`
+- `docs/01_PRODUCT_SPEC.md`
+- `docs/02_ARCHITECTURE.md`
+- `docs/03_VALIDATION_PIPELINE.md`
+- `docs/04_TEST_CASE_REGISTRY.md`
+- `docs/06_DEVELOPER_RUNBOOK.md`
+- `docs/09_PENNIES_AND_INCHES_STACK_RECOMMENDATION.md`
+- `docs/10_REPO_GOVERNANCE_AND_CLEANUP_PLAN.md`
+- `docs/11_RELEASE_AND_VALIDATION_CHECKLIST.md`
+- `docs/12_AI_ONBOARDING_BENCHMARK.md`
+- `docs/decisions/`
 - `validation/registry.json`
-- `validation/test_cases/factory2.json`
-- `validation/test_cases/img3262.json`
-- `validation/test_cases/img3254_clean22.json`
+- `validation/learning_registry.json`
 
----
+Historical docs remain for evidence, but current claims should route through the numbered current docs and decision records.
 
-## Verified Factory2 real-time demo
+## Non-Negotiables
 
-Alias: `Test Case 1`.
+- No cloud dependency in the runtime path.
+- No VLM or teacher model as live count authority.
+- No blob detection, frame differencing, count-line, or generic motion-counting proof paths.
+- No Reolink/RTSP field claim until validated on an actual live camera stream.
+- No promotion without reviewed truth, app-vs-truth comparison, and registry evidence.
+- No silent upload of factory footage or labels.
 
-Run the backend only:
+## Contributing
 
-```bash
-.venv/bin/python scripts/start_factory2_demo_app.py --port 8091
-```
+Read `CONTRIBUTING.md` before changing runtime, validation, models, artifacts, or product claims.
 
-Run backend + frontend dev stack:
+Every meaningful change should identify:
 
-```bash
-.venv/bin/python scripts/start_factory2_demo_stack.py --backend-port 8091 --frontend-port 5173
-```
+- proof boundary affected
+- validation commands run
+- artifact impact
+- offline/runtime impact
+- rollback path
 
-Open `http://127.0.0.1:5173/dashboard`, click `Start monitoring`, and verify Runtime Total climbs to `23`.
+## Security And Data
 
-Primary proof artifact:
-
-```text
-data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json
-```
-
-Expected result:
-
-```text
-matched_count: 23
-missing_truth_count: 0
-unexpected_observed_count: 0
-first_divergence: null
-```
-
----
-
-## Success criteria (must pass)
-- Setup wizard can complete in <15 minutes
-- RTSP drop triggers reconnect automatically (no user action)
-- Counting works in demo mode using a video file
-- Stop/Drop logic triggers correctly
-- Troubleshooting page explains failures clearly and offers actions
-- Support bundle exports logs + db + snapshot
-
----
-
-## Non-functional constraints
-- CPU-only, cap processing at 10 FPS
-- Reader ingest defaults to 12 FPS for smoother demo and operator validation
-- Dashboard/troubleshooting snapshot polling refreshes at 1-second intervals
-- No memory leaks in 8-hour run
-- No thread deadlocks on reconnect
-- Clear user-facing errors (no stack traces in UI)
-
----
+Factory footage, credentials, model weights, and customer artifacts are sensitive. Keep secrets out of Git, do not upload footage without explicit permission, and follow `SECURITY.md`.

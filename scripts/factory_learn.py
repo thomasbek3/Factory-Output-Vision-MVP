@@ -166,6 +166,8 @@ def build_recommendation(
             path = prereq["path"]
             if not resolve_artifact(path, repo_root=repo_root, artifact_root=artifact_root).exists():
                 output_command["exists"] = False
+                if not prereq.get("warn_if_missing", True):
+                    continue
                 _record_missing_artifact(
                     path=path,
                     affects=list(prereq.get("affects", [])),

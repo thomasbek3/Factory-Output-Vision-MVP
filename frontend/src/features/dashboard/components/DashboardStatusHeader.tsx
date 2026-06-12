@@ -1,6 +1,14 @@
 import type { DiagnosticsResponse, StatusResponse } from '../../../shared/api/types.ts'
 import { StatusPill } from '../../../shared/components/StatusPill.tsx'
-import { countSourceLabel, displayStateForContext, statusGuidance, statusLabel, statusTone } from '../../../shared/status.ts'
+import {
+  countSourceLabel,
+  displayStateForContext,
+  onboardingStateLabel,
+  onboardingStateTone,
+  statusGuidance,
+  statusLabel,
+  statusTone,
+} from '../../../shared/status.ts'
 
 type DashboardStatusHeaderProps = {
   busyAction: string | null
@@ -22,6 +30,7 @@ export function DashboardStatusHeader({
   onStopMonitoring,
 }: DashboardStatusHeaderProps) {
   const state = status?.state ?? diagnostics?.current_state ?? 'UNKNOWN'
+  const onboardingState = status?.onboarding_state ?? diagnostics?.onboarding_state ?? 'onboarding'
   const displayState = displayStateForContext(state, diagnostics)
   const tone = statusTone(displayState)
   const canRecalibrate = Boolean(status)
@@ -41,6 +50,9 @@ export function DashboardStatusHeader({
             <h1 className="hero-title">{statusLabel(displayState)}</h1>
             <p className="hero-copy">{statusGuidance(displayState)}</p>
             <div className="tag-row">
+              <span className={`tag state-tag ${onboardingStateTone(onboardingState)}`}>
+                Mode: {onboardingStateLabel(onboardingState)}
+              </span>
               <span className="tag">Counting: {countSourceLabel(status?.count_source ?? 'vision')}</span>
               <span className="tag">Source: {sourceLabel}</span>
               <span className="tag">Live feed: {websocketConnected ? 'Connected' : 'Reconnecting'}</span>
@@ -76,6 +88,15 @@ export function DashboardStatusHeader({
             <div className="detail-row">
               <span className="detail-label">Current state</span>
               <span className="detail-value">{status ? <StatusPill state={displayState} /> : '...'}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Onboarding state</span>
+              <span className="detail-value">
+                <span className={`status-pill compact ${onboardingStateTone(onboardingState)}`}>
+                  <span className={`status-dot ${onboardingStateTone(onboardingState)}`} />
+                  <span>{onboardingStateLabel(onboardingState)}</span>
+                </span>
+              </span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Reconnect attempts</span>

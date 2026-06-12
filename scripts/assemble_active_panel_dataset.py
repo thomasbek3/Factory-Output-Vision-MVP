@@ -70,8 +70,10 @@ def copy_asset(src: Path, dst: Path) -> None:
 
 def write_data_yaml(out_dir: Path) -> Path:
     path = out_dir / "data.yaml"
+    # Absolute dataset root: ultralytics resolves a relative `path:` against its global
+    # datasets_dir setting (not this yaml's directory), which breaks out-of-repo datasets.
     path.write_text(
-        "path: .\n"
+        f"path: {out_dir.resolve().as_posix()}\n"
         "train: images/train\n"
         "val: images/val\n"
         "names:\n"

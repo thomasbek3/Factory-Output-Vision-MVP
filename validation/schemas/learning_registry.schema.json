@@ -159,7 +159,8 @@
             "properties": {
               "path": { "type": "string", "minLength": 1 },
               "required": { "type": "boolean" },
-              "affects": { "$ref": "#/$defs/artifact_affects" }
+              "affects": { "$ref": "#/$defs/artifact_affects" },
+              "warn_if_missing": { "type": "boolean" }
             }
           }
         }

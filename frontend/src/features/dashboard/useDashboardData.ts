@@ -40,6 +40,7 @@ function prependEvent(existing: EventItem[], incoming: EventItem): EventItem[] {
 function statusFromMetricsPayload(payload: MetricsPayload): StatusResponse {
   return {
     state: payload.state,
+    onboarding_state: payload.onboarding_state,
     count_source: payload.count_source,
     baseline_rate_per_min: payload.baseline_rate_per_min,
     calibration_progress_pct: payload.calibration_progress_pct,

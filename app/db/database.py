@@ -68,6 +68,32 @@ CREATE TABLE IF NOT EXISTS health_samples (
     last_error_code TEXT,
     last_error_message TEXT
 );
+
+CREATE TABLE IF NOT EXISTS recorded_segments (
+    station_id TEXT NOT NULL,
+    segment_id TEXT NOT NULL,
+    path TEXT NOT NULL,
+    file_size_bytes INTEGER NOT NULL,
+    sha256 TEXT NOT NULL,
+    source_uri_hash TEXT NOT NULL,
+    start_wall_ts TEXT,
+    end_wall_ts TEXT,
+    duration_sec REAL,
+    codec TEXT,
+    container TEXT NOT NULL,
+    width INTEGER,
+    height INTEGER,
+    fps_estimate REAL,
+    decode_ok INTEGER NOT NULL,
+    frame_gaps_json TEXT NOT NULL DEFAULT '[]',
+    privacy_mode TEXT NOT NULL,
+    pinned_reason TEXT,
+    probe_error TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (station_id, segment_id),
+    UNIQUE (path)
+);
 """
 
 

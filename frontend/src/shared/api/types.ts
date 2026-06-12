@@ -1,4 +1,5 @@
 export type CountSource = 'vision' | 'beam'
+export type OnboardingState = 'onboarding' | 'live' | 'audit' | 'needs_review'
 
 export type Point = {
   x: number
@@ -29,6 +30,7 @@ export type OperatorZone = {
 
 export type StatusResponse = {
   state: string
+  onboarding_state: OnboardingState
   count_source: CountSource
   baseline_rate_per_min: number | null
   calibration_progress_pct: number
@@ -142,6 +144,7 @@ export type DiagnosticsResponse = {
   app_version: string
   uptime_sec: number
   current_state: string
+  onboarding_state: OnboardingState
   count_source: CountSource
   counting_mode: string
   last_frame_age_sec: number | null

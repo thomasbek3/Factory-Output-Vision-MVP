@@ -90,6 +90,7 @@ class ConfigResponse(BaseModel):
 
 class StatusResponse(BaseModel):
     state: str
+    onboarding_state: Literal["onboarding", "live", "audit", "needs_review"] = "onboarding"
     count_source: Literal["vision"] = "vision"
     baseline_rate_per_min: float | None = None
     calibration_progress_pct: int = 0
@@ -133,6 +134,7 @@ class DiagnosticsResponse(BaseModel):
     app_version: str
     uptime_sec: float
     current_state: str
+    onboarding_state: Literal["onboarding", "live", "audit", "needs_review"] = "onboarding"
     count_source: Literal["vision"] = "vision"
     last_frame_age_sec: float | None = None
     reconnect_attempts_total: int = 0

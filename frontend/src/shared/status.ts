@@ -1,4 +1,4 @@
-import type { ConfigResponse, DiagnosticsResponse, LineDirection, StatusResponse } from './api/types.ts'
+import type { ConfigResponse, DiagnosticsResponse, LineDirection, OnboardingState, StatusResponse } from './api/types.ts'
 
 export function statusTone(state: string): 'green' | 'yellow' | 'red' | 'gray' {
   if (state === 'RUNNING_GREEN' || state === 'DEMO_COMPLETE' || state === 'DEMO_READY') {
@@ -60,6 +60,35 @@ export function statusGuidance(state: string): string {
       return 'Finish setup in the wizard before monitoring.'
     default:
       return 'Status is updating from the backend.'
+  }
+}
+
+export function onboardingStateLabel(state: OnboardingState): string {
+  switch (state) {
+    case 'onboarding':
+      return 'Onboarding'
+    case 'live':
+      return 'Live'
+    case 'audit':
+      return 'Audit'
+    case 'needs_review':
+      return 'Needs review'
+    default:
+      return state
+  }
+}
+
+export function onboardingStateTone(state: OnboardingState): 'green' | 'yellow' | 'red' | 'gray' {
+  switch (state) {
+    case 'live':
+      return 'green'
+    case 'audit':
+    case 'onboarding':
+      return 'yellow'
+    case 'needs_review':
+      return 'red'
+    default:
+      return 'gray'
   }
 }
 

@@ -87,7 +87,9 @@ def test_assemble_dataset_writes_positive_and_empty_negative_labels(tmp_path: Pa
     assert Path(positive["label_path"]).read_text(encoding="utf-8") == "0 0.300000 0.300000 0.400000 0.400000\n"
     assert Path(negative["image_path"]).read_text(encoding="utf-8") == "negative-image"
     assert Path(negative["label_path"]).read_text(encoding="utf-8") == ""
-    assert (out_dir / "data.yaml").read_text(encoding="utf-8").startswith("path: .\ntrain: images/train")
+    data_yaml = (out_dir / "data.yaml").read_text(encoding="utf-8")
+    # absolute dataset root so ultralytics never resolves it against its global datasets_dir
+    assert data_yaml.startswith(f"path: {out_dir.resolve().as_posix()}\ntrain: images/train")
 
 
 def test_assemble_dataset_honors_positive_split_metadata(tmp_path: Path) -> None:

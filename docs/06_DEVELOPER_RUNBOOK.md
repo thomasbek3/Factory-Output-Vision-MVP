@@ -16,9 +16,14 @@ The existing `.venv` is normally already present on this machine.
 make test-backend
 make lint
 make build
+make docs-check
+make hygiene
 make run-test-case-1
 make validate-video CASE_ID=img3254_clean22_candidate
+make benchmark-onboarding
 ```
+
+`make docs-check` runs the lightweight repository hygiene check. `make hygiene` runs docs-check, backend tests, frontend lint, and frontend build.
 
 ## Test Case 1
 
@@ -79,6 +84,25 @@ Validation commands still use the manifest:
 .venv/bin/python scripts/register_test_case.py --manifest validation/test_cases/<case-id>.json --force
 ```
 
+## AI-Only Onboarding Benchmark
+
+Use this to test the blind onboarding artifact flow on prerecorded footage:
+
+```bash
+make benchmark-onboarding
+```
+
+For a specific video:
+
+```bash
+make benchmark-onboarding \
+  ONBOARDING_VIDEO=/path/to/video.mp4 \
+  STATION_ID=station-test-001 \
+  ONBOARDING_MINUTES=20
+```
+
+The default provider is `dry_run_fixture`; it should not claim success. See `docs/12_AI_ONBOARDING_BENCHMARK.md` before adding real VLM/teacher providers.
+
 ## Artifact Storage
 
 Heavy artifacts are local-first. The current local artifact root is:
@@ -105,3 +129,5 @@ Then record the artifact path and hash in the test-case manifest or `validation/
 - Do not present timestamp replay, deterministic reveal, or offline retrospective counting as app proof.
 - Do not claim RTSP/Reolink field validation until it has a real live-camera manifest and clean comparison.
 - Do not move research scripts without updating tests/imports in the same change.
+- Do not promote new detectors, hardware, or vendor workflows without an ADR and validation-registry proof.
+- Do not upload factory footage, labels, or model artifacts without explicit permission.

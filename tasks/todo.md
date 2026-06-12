@@ -1,3 +1,588 @@
+# Autonomous Onboarding Rehearsal - 2026-06-09/10
+
+## Objective
+
+Finish the missing 20% of the teacher loop so raw station footage can become a gate-passing
+per-station model with zero human box labeling: real subscription-CLI teachers, an auto-box
+lane, and a leakage-safe 4-station holdout rehearsal. Doctrine in
+`docs/15_AUTONOMOUS_ONBOARDING_REHEARSAL.md`.
+
+## Milestones
+
+- [x] A1/A2 real CLI teacher providers — `app/services/cloud_teacher_providers.py` (claude_cli via `claude -p`, codex_cli via `codex exec` stdin), registered in `verification_provider_for_name`, cloud refused by default, batching + split-retry + resume, parse failures degrade to `unclear`.
+- [x] A3/A4 grading harness — `app/services/teacher_grading.py` + `scripts/grade_teacher_labels_vs_truth.py` (`factory-vision-teacher-grade-vs-truth-v1`); segment offsets map by segment file index, NOT wall timestamps (file replays record faster than realtime; wall ordering is scrambled).
+- [x] A5 Factory2 bake-off on all 60 packets (5s tolerance): codex_cli precision 0.909 / recall 0.870 / mean timing error 0.78s; claude_cli precision 0.760 / recall 0.826 (the asymmetric high-recall prompt fixed Claude's manual-era 0.071 recall, but it over-asserts). Codex is primary. Grades: `teacher_grade.codex_cli_v1.json` / `teacher_grade.claude_cli_v1.json` in the factory2_20260609_0100 archive dir.
+- [x] B1-B4 auto-box lane — `app/services/box_autolabeler.py` (+ CLI): median composites erase the moving worker; the before/after diff locates the landing region; labels are PLACEMENT-ACT frames only (patch differs from both composites). Settled parts are never labeled: they are pixel-identical to the unlabeled stack and train to zero confidence (observed twice). Stable negatives via `scripts/export_onboarding_stable_negatives.py`; auto labels flow through the existing review gate and assembler unchanged (`data.yaml` now carries an absolute dataset root for ultralytics).
+- [x] C1 holdout split — `app/services/holdout_split.py` + `scripts/build_holdout_case.py`: keyframe-aligned ~70/30 cut, derived shifted truth ledger (`derived-holdout-human-truth-ledger-v1`), derived case manifest with STANDARD_EVENT_PARAMS; truth is touched only by split selection, the gate compare, and post-gate grading (unit-tested leakage assertion).
+- [x] C2/C3 orchestrator — `scripts/run_autonomous_onboarding_rehearsal.py` (idempotent stages, scoreboard `factory-vision-autonomous-onboarding-rehearsal-v1`), Makefile targets, docs/15. Hard-negative mining (`app/services/hard_negative_miner.py`) is OPT-IN only: at teacher recall ~0.87 it anti-trains the placements the teacher missed (observed: gate recall collapsed 7/9 -> 1/9). Auto-derived calibration zones (`app/services/auto_station_calibration.py`) exist but the gate stays model-only: the with-calibration runtime is a source->output state machine a landing-zone-trained detector cannot satisfy.
+- [ ] C4 four-station rehearsal scoreboard — `data/reports/onboarding/autonomous_onboarding_rehearsal.json` (running). Factory2 best so far: 7/9 holdout events matched with 13 unexpected (worker-transit false events), zero human labels.
+
+## Verifier evidence
+
+```bash
+.venv/bin/python -m pytest tests/ -q
+# 564 passed (includes test_cloud_teacher_providers, test_teacher_grading, test_box_autolabeler,
+# test_export_onboarding_stable_negatives, test_holdout_split, test_onboarding_rehearsal,
+# test_auto_station_calibration, test_hard_negative_miner)
+make docs-check  # passed
+cd frontend && npm run lint && npm run build  # passed
+```
+
+# Teacher Verification Event Loop - 2026-06-09
+
+## Objective
+
+Use the `agent-loop-designer` pattern to turn the Oracle/Fable recommendation into a self-verifying implementation loop:
+
+```text
+recorded RTSP/file segments
+  -> high-recall local event proposer
+  -> teacher verification evidence packets
+  -> asymmetric assert/refute teacher labels
+  -> state-diff reconciliation
+  -> gated silver training candidates
+  -> YOLO station training/eval
+  -> blind app-runtime replay gate
+  -> live activation only after proof
+```
+
+## Loop Contract
+
+- **Objective:** Build teacher-assisted onboarding that can mine and verify likely placement events from delayed video while preserving the existing YOLO/event runtime as the only live count authority.
+- **Inputs:** Local segment manifests, local segment videos, existing validation cases, current docs, dry-run/fake teachers by default, explicit Thomas/customer approval before any cloud teacher.
+- **State ledger:** This `tasks/todo.md` section plus durable doctrine in `docs/14_TEACHER_VERIFICATION_EVENT_LOOP.md`.
+- **Tick:** Inspect state, pick one bounded milestone, act, run deterministic verifiers, review at risk boundaries, record evidence, then continue or stop.
+- **Workers:** Codex implementation, deterministic OpenCV/ffmpeg scripts, fake/dry-run teachers, optional Codex/Fable/Oracle review.
+- **Verifiers:** Unit tests, CLI help/smoke, schema checks, benchmark reports, blind replay gates, dataset poisoning checks, targeted independent review.
+- **Budgets:** One milestone per tick; two retries for the same verifier root cause; no cloud calls by default; no runtime count-authority changes.
+- **Stop rules:** Stop for cloud permission, RTSP credentials, product semantics, count-authority changes, repeated verifier failure, or proof contradiction.
+
+## Milestones
+
+- [x] TVL0 loop plan/doc - `docs/14_TEACHER_VERIFICATION_EVENT_LOOP.md`
+- [x] TVL1 high-recall event proposer - motion/diff candidate proposals plus stable hard negatives
+- [x] TVL2 teacher evidence packet v2 - event clip, full-frame/crop before/during/after, stack crop, diff heatmap manifest
+- [x] TVL3 teacher verification contract - assert/refute/unclear labels, no cloud by default
+- [x] TVL4 state-diff reconciler - stable before/after output state balances candidate events
+- [x] TVL5 asymmetric fusion/promotion - high-recall teacher plus conservative refuter without AND-consensus recall collapse
+- [x] TVL6 benchmark/ablation gates - teacher pipeline must beat no-teacher baseline
+- [x] TVL7 Factory2 rebenchmark - final grading only after blind teacher run
+- [x] TVL8 unseen video benchmark - second materially different station/video
+- [ ] TVL9 RTSP soak - real camera stream proof before live field claims
+
+## Current Tick
+
+- TVL1 completed.
+- Added `app/services/onboarding_event_proposer.py`, `scripts/propose_onboarding_events.py`, focused tests, and `make propose-onboarding-events`.
+- Acceptance checks passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_onboarding_event_proposer.py tests/test_onboarding_cli_scripts.py -q
+.venv/bin/python -m py_compile app/services/onboarding_event_proposer.py scripts/propose_onboarding_events.py tests/test_onboarding_event_proposer.py
+.venv/bin/python scripts/check_repo_hygiene.py
+```
+
+- Real Factory2 recorded-segment smoke completed without revealing truth to the proposer:
+
+```bash
+.venv/bin/python scripts/propose_onboarding_events.py \
+  --segment-manifest "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/recordings/factory2-onboarding-smoke/segment_manifest.json" \
+  --output "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/factory2_event_proposals.motion_v1.json" \
+  --sample-fps 2 \
+  --motion-threshold 0.01 \
+  --min-cluster-gap-sec 1.5 \
+  --window-before-sec 4 \
+  --window-after-sec 4 \
+  --stable-negative-count 2 \
+  --force
+```
+
+Result: `56` motion event proposals plus `4` stable hard-negative proposals across `8` recorded Factory2 segments. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/factory2_event_proposals.motion_v1.json`.
+
+The event proposals are intentionally noisy/high-recall; they are not labels, not counts, not validation truth, and not training-eligible until later gated promotion.
+
+- TVL2 completed.
+- Added `app/services/teacher_evidence_packets.py`, `scripts/build_teacher_evidence_packets.py`, focused tests, and `make build-teacher-evidence-packets`.
+- Acceptance checks passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_teacher_evidence_packets.py tests/test_onboarding_event_proposer.py tests/test_onboarding_cli_scripts.py -q
+.venv/bin/python -m py_compile app/services/teacher_evidence_packets.py scripts/build_teacher_evidence_packets.py tests/test_teacher_evidence_packets.py app/services/onboarding_event_proposer.py scripts/propose_onboarding_events.py tests/test_onboarding_event_proposer.py
+.venv/bin/python -m pytest tests/ -q
+```
+
+- Real Factory2 TVL2 sample rendered from the TVL1 proposal manifest:
+
+```bash
+.venv/bin/python scripts/build_teacher_evidence_packets.py \
+  --event-proposals "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/factory2_event_proposals.motion_v1.json" \
+  --output-dir "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_evidence_packets_v2_sample" \
+  --sequence-fps 2 \
+  --max-packets 3 \
+  --max-width 960 \
+  --force
+```
+
+Result: `3` teacher evidence packets rendered. Each packet includes an event clip, before/during/after full frames, a before/after diff heatmap, output-zone crop sequence assets, stack-crop sequence assets, a packet manifest, and `validation_truth_eligible=false` / `training_eligible=false`. Manifest: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_evidence_packets_v2_sample/teacher_evidence_manifest.json`.
+
+Next state: TVL3 teacher verification contract. The next tick should adapt teacher labels from generic window statuses into assert/refute/unclear verification outputs over packet manifests, still with no cloud provider enabled by default.
+
+- TVL3 completed.
+- Added `app/services/teacher_verification.py` and `scripts/generate_teacher_verifications.py`.
+- Contract outputs `verification_decision` values of `assert_completed`, `refute_completed`, or `unclear` while keeping labels bronze/pending with `validation_truth_eligible=false` and `training_eligible=false`.
+- Cloud verification providers are refused by default.
+
+- TVL4 completed.
+- Added `app/services/state_diff_reconciler.py` and `scripts/reconcile_state_diff.py`.
+- The reconciler reads teacher packet manifests and compares before/after diff heatmap strength with teacher verification outputs. It emits reconciliation statuses such as `matched_asserted_change`, `matched_refuted_no_change`, `visible_change_without_teacher_assert`, and `asserted_without_visible_change`.
+
+- TVL5 completed.
+- Added `app/services/teacher_fusion.py` and `scripts/fuse_teacher_verifications.py`.
+- Fusion is asymmetric: teacher assertions plus visible state change can become silver training candidates; teacher refutations plus no visible change become hard-negative candidates; conflicts go to review. No artifact becomes validation truth.
+
+- TVL6 completed.
+- Added `app/services/teacher_loop_benchmark.py` and `scripts/run_teacher_loop_benchmark.py`.
+- The benchmark explicitly compares the teacher pipeline against the no-teacher baseline. Dry-run labels correctly produce `needs_real_teacher_or_more_evidence` and `teacher_beats_no_teacher_baseline=false`.
+- Acceptance checks passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_teacher_verification_contract.py tests/test_state_diff_reconciler.py tests/test_teacher_fusion.py tests/test_teacher_loop_benchmark.py tests/test_onboarding_cli_scripts.py -q
+.venv/bin/python -m py_compile app/services/teacher_verification.py scripts/generate_teacher_verifications.py app/services/state_diff_reconciler.py scripts/reconcile_state_diff.py app/services/teacher_fusion.py scripts/fuse_teacher_verifications.py app/services/teacher_loop_benchmark.py scripts/run_teacher_loop_benchmark.py tests/test_teacher_verification_contract.py tests/test_state_diff_reconciler.py tests/test_teacher_fusion.py tests/test_teacher_loop_benchmark.py
+```
+
+- Factory2 TVL7 dry-run sample ran through TVL3-TVL6:
+  - Teacher verifications: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_verifications.dry_run_v2_sample.json`
+  - State-diff reconciliation: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/state_diff_reconciliation.v2_sample.json`
+  - Fusion report: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_fusion.v2_sample.json`
+  - Silver dataset stub: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/silver_training_candidates.v2_sample.json`
+  - Benchmark report: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_loop_benchmark.v2_sample.json`
+  - Result: `3` dry-run labels, `3` visible changes, `3` needs-review, `0` silver candidates, benchmark status `needs_real_teacher_or_more_evidence`.
+
+- IMG_3254 TVL8 second-video local smoke completed:
+  - Raw source: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/videos/raw/IMG_3254.MOV`
+  - Segment manifest: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/recordings/img3254-tvl8-smoke/segment_manifest.json`
+  - Recorder result: `22` valid segments, `0` retention deletes.
+  - Event proposals: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/img3254_event_proposals.motion_v1.json`
+  - Proposal result: `157` motion event proposals plus `15` stable hard negatives.
+  - Teacher packet sample: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/teacher_evidence_packets_v2_sample/teacher_evidence_manifest.json`
+  - Teacher verifications: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/teacher_verifications.dry_run_v2_sample.json`
+  - State-diff reconciliation: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/state_diff_reconciliation.v2_sample.json`
+  - Fusion report: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/teacher_fusion.v2_sample.json`
+  - Benchmark report: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/teacher_loop_benchmark.v2_sample.json`
+  - Result: `3` dry-run labels, `3` visible changes, `3` needs-review, `0` silver candidates, benchmark status `needs_real_teacher_or_more_evidence`.
+
+- TVL9 is not complete because no real RTSP URL/credential/source was provided. This is the correct stop rule: do not claim live field operation from file replay. The local scaffold for TVL9 is ready through `record-stream`, `propose-onboarding-events`, `build-teacher-evidence-packets`, `generate-teacher-verifications`, `reconcile-state-diff`, `fuse-teacher-verifications`, and `run-teacher-loop-benchmark`.
+
+- Final verifier pass:
+
+```bash
+.venv/bin/python -m pytest tests/test_teacher_verification_contract.py tests/test_state_diff_reconciler.py tests/test_teacher_fusion.py tests/test_teacher_loop_benchmark.py tests/test_teacher_evidence_packets.py tests/test_onboarding_event_proposer.py tests/test_onboarding_cli_scripts.py -q
+# 19 passed
+
+.venv/bin/python scripts/check_dataset_poisoning.py \
+  --teacher-labels "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_verifications.dry_run_v2_sample.json" \
+  --teacher-labels "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/img3254_tvl8_20260609/teacher_verifications.dry_run_v2_sample.json"
+# ok=true
+
+make hygiene
+# Repo hygiene passed
+# 511 backend tests passed
+# frontend lint passed
+# frontend build passed
+```
+
+# Factory2 Onboarding Smoke Replay — 2026-06-09
+
+## Goal
+
+Exercise the new recorded-buffer onboarding loop against the actual Factory2 raw video, not only synthetic clips or dry-run validation commands.
+
+## Review
+
+- Raw video source was missing from the repo working path at `data/videos/from-pc/factory2.MOV`, but the archive copy existed at `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/videos/raw/factory2.MOV`.
+- Archive raw video SHA-256 matched the registry: `f9cd9dcc71cc9e02c0f5a5ba65094510f5ac4cfbe3a39a4eb1e9cae32e69c3d8`.
+- Run artifacts live under `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/`.
+- Recorder sidecar ran on the real Factory2 raw video:
+
+```bash
+.venv/bin/python scripts/record_stream_segments.py \
+  --source "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/videos/raw/factory2.MOV" \
+  --station-id factory2-onboarding-smoke \
+  --output-root "/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/recordings" \
+  --segment-seconds 60 \
+  --retention-minutes 10080 \
+  --container mkv
+# segment_count=8, new_valid_segment_count=8, retention.deleted_count=0
+```
+
+- Segment DB/manifest path was exercised with `FC_DB_PATH=/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/segments.db`; 8 rows were upserted and the first/last chunks were pinned as `onboarding_source` and `blind_replay_holdout`.
+- Candidate window extraction produced 24 clips from the recorded chunks: positive, idle, and hard-negative candidates. Manifest: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/extract_onboarding_windows.json`.
+- Dry-run teacher provider produced 24 advisory labels with `network_calls_made=false`; no VLM/cloud teacher was called. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_labels.dry_run.json`.
+- New station calibration artifact was created from the existing Factory2 AI-only calibration and validated. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/station_calibration.json`.
+- YOLO26 lane was exercised in dry-run mode against `data/labels/active_panel_dataset_with_hard_negatives_v1/data.yaml`; no model was trained and promotion remained disabled. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/yolo26_training_eval.dry_run.json`.
+- Blind replay gate ran through the actual app runtime using the verified Factory2 raw video, human truth ledger, speed-8 playback, and `placed_and_stayed` event rule:
+
+```text
+gate_report: /Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/factory2_blind_replay_gate.json
+validation_report: data/reports/factory2_onboarding_smoke_20260609_validation_report.validation_run.json
+observed_events: data/reports/factory2_onboarding_smoke_20260609_app_observed_events.validation_run.json
+comparison_report: data/reports/factory2_onboarding_smoke_20260609_app_vs_truth.validation_run.json
+
+observed_event_count=23
+matched_count=23
+missing_truth_count=0
+unexpected_observed_count=0
+first_divergence=null
+passed=true
+```
+
+- Periodic audit ran against the captured events plus dry-run teacher labels. It preserved Runtime Total: `runtime_total_before_audit=23`, `runtime_total_after_audit=23`, `runtime_total_mutation_allowed=false`. Because the teacher was dry-run/unclear, it created 24 disputes/retraining triggers by design.
+- Codex visual-teacher smoke used in-chat contact-sheet inspection of the 24 Factory2 candidate clips, including output-zone crops, to simulate the VLM teacher role without calling an unattended cloud provider. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_labels.codex_visual.json`.
+- Codex visual labels were advisory only and explicitly not validation truth or training-eligible. Label summary: 14 completed, 6 in-transit, 2 static-stack, 2 unclear.
+- Periodic audit ran against the captured events plus Codex visual labels. It preserved Runtime Total: `runtime_total_before_audit=23`, `runtime_total_after_audit=23`, `runtime_total_mutation_allowed=false`. It reduced dry-run noise from 24 disputes / 24 retraining triggers to 4 disputes / 18 retraining triggers. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/periodic_audit.codex_visual.json`.
+- Fable 5 was run through Claude CLI as a second independent visual teacher against the same contact sheets without Codex labels. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_labels.fable5_visual.json`.
+- Fable 5 labels were much more conservative: 0 completed, 2 in-transit, 16 static-stack, 6 worker-only. Its audit preserved Runtime Total and produced 22 disputes / 22 retraining triggers. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/periodic_audit.fable5_visual.json`.
+- Codex and Fable 5 had 0/24 exact label agreement. A two-teacher consensus rule would therefore fail closed on this contact-sheet evidence instead of training or activating. Comparison CSV: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_label_comparison.codex_vs_fable5.csv`.
+- First-pass grading against the Factory2 human truth ledger used the simple rule that a `completed` claim is a true positive only when at least one truth event timestamp falls inside that candidate window. Codex completed claims scored 14 true positives, 0 false positives, 8 false negatives, 2 true negatives; Fable completed claims scored 0 true positives, 0 false positives, 22 false negatives, 2 true negatives. Summary: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_label_grade_vs_factory2_truth.summary.json`.
+- Dense clip-level teacher evidence was generated for the same 24 windows, with one image sheet per candidate clip and roughly 1 FPS output-zone crop samples plus full-frame context. Manifest: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/clip_level_teacher_evidence/clip_level_evidence_manifest.json`.
+- Fable 5 reran on the dense clip sheets in smaller batches. Dense evidence changed Fable from zero completions to 2 completed events, but it remained highly conservative: 2 completed, 8 in-transit, 12 worker-only, 2 static-stack. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_labels.fable5_clip_level.json`.
+- Codex reran on the same dense clip sheets. Dense evidence made the visual call much stronger than the first contact-sheet pass: 21 completed windows, 22 completed event claims, 2 worker-only, 1 in-transit. Output: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_labels.codex_clip_level.json`.
+- Clip-level grading against the Factory2 truth ledger used event timestamp matching at 3s and 5s tolerances. At 5s tolerance, Codex dense labels scored 22 true-positive events, 0 false positives, 6 false negatives, precision 1.0, recall 0.786, mean matched timing error 1.60s. Fable dense labels scored 2 true-positive events, 0 false positives, 26 false negatives, precision 1.0, recall 0.071. Two-teacher consensus matched Fable's 2 events only, staying precise but missing most events. Summary: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/teacher_clip_level_grade_vs_factory2_truth.summary.json`.
+- Dense clip audit preserved Runtime Total for both teachers. Codex dense audit produced 2 disputes / 23 retraining triggers; Fable dense audit produced 14 disputes / 16 retraining triggers. Outputs: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/periodic_audit.codex_clip_level.json` and `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory2_20260609_0100/periodic_audit.fable5_clip_level.json`.
+- Live activation was not run because this smoke did not have real RTSP camera credentials and should not write fake camera config into the app DB.
+- Backend/frontend processes on ports `8193` and `5183` were cleaned up after the replay.
+
+# Factory Onboarding Autopilot Loop M2-M12
+
+## Goal
+
+Implement the recorded-buffer station onboarding loop without changing live count authority. Each milestone must ship with deterministic verifiers and recorded evidence before the next milestone can claim completion.
+
+## Loop Contract
+
+- **Objective:** Turn recorded RTSP/file segments into advisory onboarding artifacts, calibration candidates, optional station training data, blind replay reports, live activation state, and periodic audit outputs.
+- **Inputs:** Local segment manifests, local video segments, existing app runtime, existing validation cases, local-only teacher dry runs/fakes unless Thomas explicitly approves cloud use.
+- **State ledger:** This `tasks/todo.md` section plus milestone reports under `data/reports/onboarding/`.
+- **Tick:** Inspect current state, implement one bounded milestone slice, run verifier, record evidence, then continue or stop.
+- **Count authority:** `Runtime Total` remains owned only by the existing YOLO/event runtime. Teacher/audit/training outputs can advise, dispute, or trigger retraining, but never mutate the live count.
+- **Stop rules:** Stop for cloud teacher permission, real RTSP credentials, count-authority changes, repeated verifier failure, or product semantics that require Thomas.
+
+## Checklist
+
+- [x] M1 recorder sidecar — file input creates playable segments, manifest, and retention behavior
+- [x] M2 segment DB/manifest — schema tests pass; pinned chunks are never deleted
+- [x] M3 onboarding state machine — dry-run session moves through states and fails closed
+- [x] M4 candidate window extraction — segments produce positive/idle/hard-negative window artifacts
+- [x] M5 teacher provider contract — dry-run + fake teacher tests pass; no cloud by default
+- [x] M6 calibration artifact — `station_calibration.json` validates and app can load it
+- [x] M7 YOLO26 training runner — train/eval reports on positives and hard negatives
+- [x] M8 blind replay gate — held-out chunk runs through actual app runtime and writes pass/fail report
+- [x] M9 live activation — runtime config switches app into live mode without changing count authority
+- [x] M10 periodic audit loop — audit creates disputes/retraining triggers and never mutates Runtime Total
+- [x] M11 dashboard states — UI shows onboarding/live/audit/needs-review states
+- [x] M12 full regression — backend tests plus existing Factory2/IMG proof paths remain intact
+
+## Review
+
+- Started 2026-06-09 with `agent-loop-designer` and goal mode.
+- M1 already has passing recorder-sidecar tests and smoke evidence from the prior checkpoint. This loop starts implementation at M2.
+- Treat M7 as a training/evaluation lane only. YOLO26 can consume advisory labels and hard negatives; it cannot create validation truth or bypass M8.
+- M2 added `validation/schemas/stream_segment_manifest.schema.json`, manifest validation helpers, and `app/db/segment_repo.py` as a SQLite index for recorder segments. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_stream_recorder.py tests/test_segment_manifest_persistence.py -q
+# 24 passed
+
+.venv/bin/python -m py_compile app/services/stream_recorder.py app/db/database.py app/db/segment_repo.py tests/test_segment_manifest_persistence.py
+# passed
+```
+- M3 added `app/services/onboarding_state.py` with persisted session JSON, explicit artifact-gated transitions, and fail-closed readiness rules. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 30 passed
+
+.venv/bin/python -m py_compile app/services/onboarding_state.py tests/test_onboarding_state_machine.py
+# passed
+```
+- M4 added `app/services/onboarding_windows.py` and `scripts/extract_onboarding_windows.py`. The extractor creates fixed-offset candidate clips labeled `candidate_only_not_truth` for later teacher/review work; it does not count parts. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 33 passed
+
+.venv/bin/python -m py_compile app/services/onboarding_windows.py scripts/extract_onboarding_windows.py tests/test_onboarding_windows.py
+# passed
+```
+- M5 added `app/services/teacher_provider.py` and `scripts/generate_onboarding_teacher_labels.py`. Dry-run and fake providers emit advisory bronze/pending labels only; cloud providers are refused unless explicitly enabled and no cloud implementation is wired. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 38 passed
+
+.venv/bin/python -m py_compile app/services/teacher_provider.py scripts/generate_onboarding_teacher_labels.py tests/test_teacher_provider_contract.py
+# passed
+```
+- M6 added `app/services/station_calibration.py` and `validation/schemas/station_calibration.schema.json`. The artifact keeps runtime-compatible `source_polygons`/`output_polygons`/optional `gate` while carrying onboarding metadata and refusing validation truth. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 42 passed
+
+.venv/bin/python -m py_compile app/services/station_calibration.py tests/test_station_calibration.py
+# passed
+```
+- M7 added `app/services/yolo26_training_runner.py` and `scripts/run_yolo26_training_eval.py`. The runner defaults to dry-run, requires explicit `--execute-training` for real training, refuses promotion, and requires M8 blind replay before any live claim. Verifier passed with fake trainer/evaluators:
+
+```bash
+.venv/bin/python -m pytest tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 46 passed
+
+.venv/bin/python -m py_compile app/services/yolo26_training_runner.py scripts/run_yolo26_training_eval.py tests/test_yolo26_training_runner.py
+# passed
+```
+- M8 added `app/services/blind_replay_gate.py` and `scripts/run_blind_replay_gate.py`. The gate wraps the existing manifest-backed app validation runtime and only passes on clean matched truth, no missing truth, no unexpected observed events, and no divergence. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_blind_replay_gate.py tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 49 passed
+
+.venv/bin/python -m py_compile app/services/blind_replay_gate.py scripts/run_blind_replay_gate.py tests/test_blind_replay_gate.py
+# passed
+```
+
+- Actual app-runtime smoke passed on a synthetic 3-second held-out zero-event clip. It started the FastAPI runtime, captured diagnostics, compared against an empty truth ledger, wrote a pass/fail gate report, and shut the runtime down:
+
+```text
+/tmp/factory-blind-replay-m8-smoke/heldout_zero_blind_replay_gate.json
+observed_event_count=0
+matched_count=0
+passed=true
+```
+- M9 added `app/services/live_activation.py` and `scripts/apply_live_activation.py`. Activation requires a passed blind replay gate, writes a redacted activation report, updates camera config in SQLite, and emits env overrides for live mode without allowing runtime-total mutation. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_live_activation.py tests/test_blind_replay_gate.py tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 52 passed
+
+.venv/bin/python -m py_compile app/services/live_activation.py scripts/apply_live_activation.py tests/test_live_activation.py
+# passed
+```
+- M10 added `app/services/periodic_audit.py` and `scripts/run_periodic_audit.py`. Audit reports create dispute packets and retraining triggers only; `runtime_total_before_audit` and `runtime_total_after_audit` are identical and `runtime_total_mutation_allowed=false`. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_periodic_audit.py tests/test_live_activation.py tests/test_blind_replay_gate.py tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
+# 54 passed
+
+.venv/bin/python -m py_compile app/services/periodic_audit.py scripts/run_periodic_audit.py tests/test_periodic_audit.py
+# passed
+```
+- M11 added `onboarding_state` to status, diagnostics, and WebSocket metrics, plus dashboard rendering for onboarding/live/audit/needs-review. Verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_dashboard_state.py tests/test_dashboard_contract.py tests/test_api_smoke.py -q
+# 11 passed
+
+npm run lint && npm run build
+# passed
+
+.venv/bin/python -m py_compile app/services/dashboard_state.py app/workers/vision_worker.py app/api/schemas.py tests/test_dashboard_state.py
+# passed
+```
+
+- UI screenshot verification passed with the built frontend served by FastAPI:
+
+```text
+/tmp/factory-dashboard-m11-screenshot/dashboard.png
+```
+
+- M12 full regression passed. `make hygiene` ran docs hygiene, full backend tests, frontend lint, and frontend production build:
+
+```bash
+make hygiene
+# Repo hygiene check passed.
+# 487 passed, 14 warnings
+# npm run lint passed
+# npm run build passed
+```
+
+- Existing Factory2/IMG proof paths remain intact through the full backend suite. `tests/test_validation_registry_schema.py` checks the registry contains `factory2_test_case_1`, `img2628_candidate`, `img3262_candidate`, and `img3254_clean22_candidate`; confirms each manifest and proof artifact exists; and verifies matched totals, no missing truth, no unexpected observed events, and no first divergence.
+- Direct dry-run validation command generation passed for all current proof anchors:
+
+```bash
+.venv/bin/python scripts/validate_video.py --case-id factory2_test_case_1 --dry-run
+.venv/bin/python scripts/validate_video.py --case-id img3262_candidate --dry-run
+.venv/bin/python scripts/validate_video.py --case-id img3254_clean22_candidate --dry-run
+.venv/bin/python scripts/validate_video.py --case-id img2628_candidate --dry-run
+# all exited 0 and resolved manifests/output paths
+```
+
+- Codex review checkpoint accepted three concrete findings and they were fixed:
+  - New onboarding CLI scripts needed repo-root bootstrap before `app.*` imports.
+  - DB-level segment pins needed to propagate back to `segment_manifest.json` before recorder retention.
+  - `station_calibration` needed to reject gate `source_side` values outside `-1` or `1`.
+- Focused regression after those fixes passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_onboarding_cli_scripts.py tests/test_segment_manifest_persistence.py tests/test_station_calibration.py tests/test_stream_recorder.py tests/test_yolo26_training_runner.py tests/test_teacher_provider_contract.py tests/test_blind_replay_gate.py tests/test_live_activation.py tests/test_periodic_audit.py -q
+# 48 passed
+
+.venv/bin/python -m py_compile app/db/segment_repo.py app/services/station_calibration.py scripts/extract_onboarding_windows.py scripts/generate_onboarding_teacher_labels.py scripts/run_blind_replay_gate.py scripts/apply_live_activation.py scripts/run_periodic_audit.py scripts/run_yolo26_training_eval.py tests/test_onboarding_cli_scripts.py tests/test_segment_manifest_persistence.py tests/test_station_calibration.py
+# passed
+```
+
+- Codex review reruns accepted three more edge-case findings and they were fixed:
+  - `station_calibration` now requires explicit integer gate `source_side` and rejects bool/string/float/null values.
+  - Recorder manifests now store absolute paths when `output_root` is passed as a relative path, so DB pin propagation is cwd-safe.
+  - Recorder refresh now preserves `pinned_reason` from legacy relative-path manifests and migrates surviving rows to absolute paths before retention runs.
+- Final focused verifier passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_stream_recorder.py tests/test_segment_manifest_persistence.py -q
+# 27 passed
+
+.venv/bin/python -m py_compile app/services/stream_recorder.py tests/test_stream_recorder.py tests/test_segment_manifest_persistence.py
+# passed
+```
+
+- Final focused Codex review rerun reported the legacy relative-path pin issue covered with no remaining concrete bug in that patch. Log: `/tmp/factory-codex-review-onboarding-loop-rerun3-result.txt`.
+- Final M12 hygiene pass:
+
+```bash
+make hygiene
+# Repo hygiene check passed.
+# 493 passed, 14 warnings
+# npm run lint passed
+# npm run build passed
+```
+
+# Factory Onboarding Autopilot Loop And Recorder M1
+
+## Goal
+
+Create the repo loop spec and first recorder-sidecar milestone for recorded-buffer RTSP/file onboarding.
+
+## Checklist
+
+- [x] Add loop doctrine with milestone/verifier/checkpoint rules
+- [x] Add recorder sidecar service for ffmpeg segment recording
+- [x] Add CLI for RTSP/file segment recording
+- [x] Add segment manifest refresh, hashes, probe metadata, and source URI redaction
+- [x] Add retention behavior that keeps pinned chunks
+- [x] Run focused recorder tests and py_compile
+- [x] Run local prerecorded-video segment smoke test
+- [x] Run Codex review checkpoint after tests pass
+
+## Review
+
+- Started 2026-06-08.
+- Scope is additive M1 infrastructure only. `VisionWorker`, live `Runtime Total`, and validation proof rules remain unchanged.
+- Recorder artifacts default to `/Users/thomas/FactoryVisionArtifacts/recordings` and privacy mode `offline_local`.
+- Default segment container is MKV because short RTSP MP4 segments can be fragile around keyframes and reconnects; MP4 remains available from the CLI.
+- Focused verification passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_stream_recorder.py -q
+# 20 passed
+
+.venv/bin/python -m py_compile app/services/stream_recorder.py scripts/record_stream_segments.py tests/test_stream_recorder.py
+# passed
+```
+
+- Local smoke verification passed against generated prerecorded video; it wrote `/tmp/factory-stream-recorder-smoke/recorder-smoke/segment_manifest.json`, produced 6 MKV chunks, full-decoded all 6, reported `new_valid_segment_count: 6`, and kept the raw source path out of the manifest.
+- Bounded realtime-file stop verification passed with `exit=0`, `timed_out: true`, and new valid chunks.
+- Manual interrupt verification passed with `exit=0`, `interrupted: true`, and `new_valid_segment_count: 1`.
+- Bad local source and bad RTSP source checks exit non-zero; RTSP stderr redacts netloc credentials and query-token credentials.
+- Codex review checkpoints found and drove fixes for overwrite-safe names, live retention maintenance, stale timeout success, stderr draining, source-hash provenance, stale manifest rows, redacted ffmpeg stderr, stale top-level manifest settings, strict full-segment decode validation, no-valid-evidence CLI success, unchanged-row reuse, scaled decode timeout, and manual-interrupt success. Final code-only review result: `No concrete remaining bugs were identified in the recorder-sidecar diff.` Log: `/tmp/factory-codex-review-recorder-m1-code-final-clean2.txt`.
+
+# AI-Only Station Onboarding Benchmark Harness
+
+## Goal
+
+Create the first blind benchmark harness for AI-only station onboarding on prerecorded footage without letting held-out truth leak into onboarding stages.
+
+## Checklist
+
+- [x] Add `scripts/benchmark_ai_onboarding.py`
+- [x] Add focused tests for teacher consensus, truth redaction, and blind-boundary artifacts
+- [x] Add reusable `make benchmark-onboarding` target
+- [x] Document the benchmark contract in `docs/12_AI_ONBOARDING_BENCHMARK.md`
+- [x] Run the harness on `demo/demo_counter.mp4`
+
+## Review
+
+- Started 2026-06-04.
+- This is learning-library/benchmark tooling only, not product validation proof.
+- Default provider is `dry_run_fixture`; it makes no model/network calls and should produce `needs_real_teacher_or_more_footage`.
+- Held-out truth is accepted only for final grading and can be redacted from the report.
+- Demo run wrote `data/reports/onboarding/demo_counter_autopilot_v1_benchmark.json` and extracted 30 sampled frames under `data/reports/onboarding/demo_counter_autopilot_v1_work/`.
+- The demo report kept onboarding blind and redacted the held-out total; it did not produce training-ready consensus labels because no real teacher provider is connected yet.
+
+# YOLO26 Onboarding Evaluation Lane
+
+## Goal
+
+Try YOLO26 as a local detector/training candidate for Factory Vision onboarding without treating raw pretrained output as validation truth.
+
+## Checklist
+
+- [x] Confirm installed Ultralytics/YOLO26 runtime and model availability
+- [x] Run raw YOLO26 against existing positive and hard-negative Factory Vision frames
+- [x] Check whether a small YOLO26 fine-tune is feasible on the existing labeled Factory2-style dataset
+- [x] Evaluate the fine-tuned result against positives and hard negatives when training completes
+- [x] Record whether YOLO26 is useful for onboarding, runtime, both, or neither
+
+## Review
+
+- Started 2026-06-05.
+- Scope is evaluation only. Current app runtime and validation registry remain unchanged.
+- YOLO26 output can support training candidates or model comparison, but cannot become validation proof without the existing app-vs-truth gate.
+- Local runtime confirmed: Ultralytics 8.4.60, Torch 2.8.0, Apple MPS available, no CUDA.
+- Raw `yolo26n.pt` on `active_panel_dataset_with_hard_negatives_v1`: `0/8` positive labels matched, `3/16` hard-negative images with false positives. Raw pretrained YOLO26 is not useful for this factory part.
+- Fine-tuned `yolo26n.pt` on `active_panel_img3262_dataset_v2` with Apple MPS. Early-stopped at epoch 14; best epoch 9. Training artifact: `runs/detect/training_runs/yolo26n_img3262_eval_v1/weights/best.pt`.
+- Best validation summary from Ultralytics: precision `0.396`, recall `1.0`, mAP50 `0.697`, mAP50-95 `0.589`.
+- Manifest eval at confidence `0.25` on IMG_3262 family: `52/63` positives matched, `29` false-positive detections across `14/179` hard-negative images.
+- Confidence `0.50` reduces IMG_3262 false positives to `4` detections across `4/179` hard-negative images, but recall drops to `29/63`.
+- Cross-dataset Factory2-style eval at confidence `0.25`: `0/8` positives matched, `0/16` hard-negative images with false positives. This fine-tuned model is station/product-specific and does not transfer as a universal detector.
+- Current read: YOLO26 is feasible as a per-station fine-tuned runtime candidate, not a no-training teacher. For first-10-minute onboarding, YOLOE-26/open-vocabulary or Cosmos-style teacher labels are still the better bootstrap lane; YOLO26 should consume labels, not invent them.
+
+# Enterprise Repo Readiness Pass
+
+## Goal
+
+Make the repository present like a legitimate product/company repo without deleting validation history or changing runtime behavior.
+
+## Checklist
+
+- [x] Inspect current top-level structure, docs, Makefile, and contribution guidance
+- [x] Replace the top-level README with a current product/onboarding README
+- [x] Add a documentation index and architecture decision records
+- [x] Add repository governance, cleanup, release, and validation checklist docs
+- [x] Add PR template and security/data-handling policy
+- [x] Replace stale duplicated `CLAUDE.md` guidance with source-of-truth routing
+- [x] Add a non-destructive repo hygiene script and Make targets
+- [x] Run focused verification and record results
+
+## Review
+
+- Started 2026-06-04.
+- Scope is documentation/governance/tooling only.
+- Runtime code, validation truth, model files, and artifact locations are intentionally unchanged.
+- Heavy artifact cleanup is deferred to a dedicated classification pass because tracked `data/` and `models/` files may support historical validation evidence.
+- Added `warn_if_missing` support for learning-registry command prerequisites so missing rerun-only local assets do not downgrade canonical Factory2 proof readiness.
+- Verification passed:
+
+```bash
+.venv/bin/python -m pytest tests/test_factory_learn_recommend.py -q
+# 7 passed
+
+make docs-check
+# Repo hygiene check passed with warning: 246 tracked artifact/cache paths require classification, not blind deletion.
+
+make hygiene
+# 426 passed, frontend lint passed, frontend build passed
+```
+
 # Factory2 Real-Time Demo Counting
 
 # Learning Library v1 Registry Recommendation CLI

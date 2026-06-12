@@ -2,6 +2,10 @@
 
 This file provides repo-local guidance for AI coding assistants working in this repository. Keep it short: route durable doctrine to `docs/` and founder-brain/Obsidian rather than duplicating it here.
 
+## Communication Rule (Always)
+
+When explaining output, results, or concepts to Thomas, always include a plain-English explanation using non-technical metaphors a layman can understand. Technical detail is fine, but it must come WITH the layman version, not instead of it. Example: don't just say "teacher precision 0.91 / recall 0.87" — say "out of every 10 things the teacher flagged, 9 were real (precision), and it caught about 9 of every 10 real events (recall)."
+
 ## Current Source Of Truth
 
 Start with the concise current docs before relying on older task logs or research notes:
@@ -15,6 +19,14 @@ Start with the concise current docs before relying on older task logs or researc
 - `docs/06_AI_ONLY_ACTIVE_LEARNING_PIPELINE.md`
 - `docs/07_ARTIFACT_STORAGE.md`
 - `docs/08_LEARNING_LIBRARY_ARCHITECTURE.md`
+- `docs/09_PENNIES_AND_INCHES_STACK_RECOMMENDATION.md`
+- `docs/10_REPO_GOVERNANCE_AND_CLEANUP_PLAN.md`
+- `docs/11_RELEASE_AND_VALIDATION_CHECKLIST.md`
+- `docs/12_AI_ONBOARDING_BENCHMARK.md`
+- `docs/13_FACTORY_ONBOARDING_AUTOPILOT_LOOP.md`
+- `docs/14_TEACHER_VERIFICATION_EVENT_LOOP.md`
+- `docs/15_AUTONOMOUS_ONBOARDING_REHEARSAL.md`
+- `docs/decisions/`
 - `docs/KNOWN_LIMITATIONS.md`
 - `validation/registry.json`
 - `validation/learning_registry.json`
@@ -34,11 +46,27 @@ This file is a routing layer, not the project brain. Before changing behavior or
 
 Do not rely on older task logs, archived docs, chat memory, or stale AGENTS prose when a current doc or artifact exists.
 
+`CLAUDE.md` is intentionally only a pointer to this file. Keep all durable agent guidance here, not duplicated across assistant-specific files.
+
 ## Critical Claim Boundary
 
 Current app evidence proves file-backed live counting at real-time speed for promoted/verified cases listed in `docs/00_CURRENT_STATE.md`. It does **not** prove live Reolink/RTSP field operation until the same runtime path is validated on an actual live camera stream.
 
 Factory Vision project doctrine belongs in Obsidian/project docs, not Hermes always-loaded memory. This `AGENTS.md` should point agents to the right sources and commands only.
+
+## Data Locations (Mac mini)
+
+The Mac mini's internal disk is nearly full (~3.5GB free); never write heavy artifacts to it.
+Everything heavy lives on the attached Crucial X9 Pro SSD (1.8TB):
+
+- Repo working tree (and therefore all repo-relative `data/`, `models/`, `runs/` writes):
+  `/Volumes/Crucial X9 Pro For Mac/MacBook-space-offload/2026-05-16/Factory-Output-Vision-MVP/`
+- Durable artifact root (raw videos, onboarding runs, rehearsal work dirs, recordings):
+  `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/`
+- `~/FactoryVisionArtifacts` is a SYMLINK to that SSD artifact root (verified 2026-06-10), so
+  paths through the home directory also land on the SSD.
+- Live factory day-1 assets: `/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/onboarding/factory_live_day1/`
+- Only tiny helpers may live internal: `~/Library/LaunchAgents/com.factoryvision.record-day1.plist` and `/tmp` scratch (clean after use).
 
 ## Learning Library Routing
 
@@ -52,6 +80,17 @@ For failed runs, diagnostic recoveries, training candidates, and artifact trust 
 `factory2_test_case_1` alias `factory2` is the verified high-count app-proof anchor. `real_factory_candidate` alias `real_factory` is diagnostic-recovered only; it is not validation truth, not training eligible, and not registry-promotion eligible until reviewed gold truth, calibration, and clean app-vs-truth proof exist.
 
 ## Commands
+
+### Repo-Level Checks
+
+```bash
+make docs-check
+make test-backend
+make test-frontend
+make hygiene
+```
+
+Use `make hygiene` before a serious PR or release candidate.
 
 ### Backend (Python / FastAPI)
 
@@ -156,6 +195,7 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 ## Important Constraints
 
 - v1.0 is camera-only. Beam/serial/v1.5 features are deferred until after factory pilot.
+- Do not rewrite the current runtime around a new vendor stack.
 - CPU-only inference (no CUDA GPU), capped at 10 FPS processing. Training also CPU-only for now.
 - **No blob detection, no count lines, no frame differencing.** YOLO object detection is the only counting method. These alternatives were red-teamed and rejected (see `tasks/lessons.md`).
 - Custom YOLO model training per customer is a core part of the product, not an afterthought. Most factory parts are not in COCO.
@@ -163,7 +203,9 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - The `build/windows-installer/` directory contains a snapshot of the app payload for the Windows installer EXE at `dist/windows-installer/`. It is a copy, not the source of truth.
 - `docs/ARCHIVED_DONOTREAD/` contains superseded specs — ignore them.
 - Authoritative specs live in `docs/PROJECT_SPEC.md`, `docs/UX_SPEC.md`, and the other non-archived docs.
+- Do not delete or move artifacts without following `docs/10_REPO_GOVERNANCE_AND_CLEANUP_PLAN.md`.
 - Roboflow API keys and `.env` files are gitignored. Never commit credentials.
+- Do not upload factory footage, labels, or model artifacts without explicit permission.
 
 ## Workflow Orchestration
 

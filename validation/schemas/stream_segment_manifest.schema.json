@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factory-vision-stream-segment-manifest.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "station_id",
+    "source_uri_hash",
+    "privacy_mode",
+    "segment_seconds",
+    "retention_minutes",
+    "segments",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "factory-vision-stream-segment-manifest-v1" },
+    "station_id": { "type": "string", "minLength": 1 },
+    "source_uri_hash": { "type": "string", "minLength": 64, "maxLength": 64 },
+    "privacy_mode": { "type": "string", "minLength": 1 },
+    "segment_seconds": { "type": "integer", "minimum": 1 },
+    "retention_minutes": { "type": "integer", "minimum": 1 },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "station_id",
+          "segment_id",
+          "path",
+          "file_size_bytes",
+          "sha256",
+          "source_uri_hash",
+          "start_wall_ts",
+          "end_wall_ts",
+          "duration_sec",
+          "codec",
+          "container",
+          "width",
+          "height",
+          "fps_estimate",
+          "decode_ok",
+          "frame_gaps",
+          "privacy_mode",
+          "pinned_reason",
+          "probe_error"
+        ],
+        "properties": {
+          "station_id": { "type": "string", "minLength": 1 },
+          "segment_id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "file_size_bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "minLength": 64, "maxLength": 64 },
+          "source_uri_hash": { "type": "string", "minLength": 64, "maxLength": 64 },
+          "start_wall_ts": { "type": ["string", "null"] },
+          "end_wall_ts": { "type": ["string", "null"] },
+          "duration_sec": { "type": ["number", "null"] },
+          "codec": { "type": ["string", "null"] },
+          "container": { "type": "string", "minLength": 1 },
+          "width": { "type": ["integer", "null"] },
+          "height": { "type": ["integer", "null"] },
+          "fps_estimate": { "type": ["number", "null"] },
+          "decode_ok": { "type": "boolean" },
+          "frame_gaps": { "type": "array" },
+          "privacy_mode": { "type": "string", "minLength": 1 },
+          "pinned_reason": { "type": ["string", "null"] },
+          "probe_error": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "updated_at": { "type": "string", "minLength": 1 }
+  }
+}

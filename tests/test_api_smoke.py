@@ -38,6 +38,7 @@ class ApiSmokeTests(unittest.TestCase):
             self.assertEqual(diagnostics.status_code, 200)
             diagnostics_payload = diagnostics.json()
             self.assertEqual(diagnostics_payload["current_state"], "NOT_CONFIGURED")
+            self.assertEqual(diagnostics_payload["onboarding_state"], "onboarding")
             self.assertIn("db_path", diagnostics_payload)
             self.assertIn("log_directory", diagnostics_payload)
             self.assertIn("reader_last_sequence_index", diagnostics_payload)
