@@ -61,6 +61,44 @@ def test_build_teacher_evidence_packets_writes_assets_and_manifest(tmp_path: Pat
         assert asset_path.stat().st_size > 0
 
 
+def test_build_teacher_evidence_packets_uses_output_zone_crop(tmp_path: Path) -> None:
+    cv2 = pytest.importorskip("cv2")
+    np = pytest.importorskip("numpy")
+    segment_path = tmp_path / "segment.mp4"
+    _write_motion_video(segment_path, cv2=cv2, np=np)
+    proposals_path = tmp_path / "event_proposals.json"
+    proposals_path.write_text(
+        json.dumps(
+            {
+                "schema_version": EVENT_PROPOSAL_SCHEMA_VERSION,
+                "station_id": "line-a",
+                "privacy_mode": "offline_local",
+                "proposals": [_proposal(segment_path)],
+            }
+        ),
+        encoding="utf-8",
+    )
+    polygon = [[0.50, 0.25], [0.75, 0.25], [0.75, 0.75], [0.50, 0.75]]
+
+    payload = build_teacher_evidence_packets(
+        event_proposals_path=proposals_path,
+        output_dir=tmp_path / "packets",
+        sequence_fps=2.0,
+        max_packets=1,
+        max_width=320,
+        output_zone_polygon=polygon,
+        force=True,
+    )
+
+    packet_manifest = json.loads(Path(payload["packets"][0]["packet_manifest_path"]).read_text(encoding="utf-8"))
+    assert packet_manifest["crop_source"] == "station_calibration_output_zone"
+    crop_asset = next(asset for asset in packet_manifest["assets"] if asset["kind"] == "output_zone_crop_sequence")
+    crop = cv2.imread(crop_asset["path"])
+    assert crop is not None
+    expected_height, expected_width = _expected_crop_shape(width=160, height=120, polygon=polygon)
+    assert crop.shape[:2] == (expected_height, expected_width)
+
+
 def test_build_teacher_evidence_packets_refuses_overwrite_without_force(tmp_path: Path) -> None:
     cv2 = pytest.importorskip("cv2")
     np = pytest.importorskip("numpy")
@@ -152,3 +190,15 @@ def _write_motion_video(path: Path, *, cv2, np) -> None:
     writer.release()
     if not path.exists() or path.stat().st_size == 0:
         pytest.skip("OpenCV did not write a playable test video")
+
+
+def _expected_crop_shape(*, width: int, height: int, polygon: list[list[float]]) -> tuple[int, int]:
+    xs = [point[0] * float(width - 1) for point in polygon]
+    ys = [point[1] * float(height - 1) for point in polygon]
+    margin_x = (max(xs) - min(xs)) * 0.10
+    margin_y = (max(ys) - min(ys)) * 0.10
+    left = max(0, round(min(xs) - margin_x))
+    right = min(width, round(max(xs) + margin_x) + 1)
+    top = max(0, round(min(ys) - margin_y))
+    bottom = min(height, round(max(ys) + margin_y) + 1)
+    return bottom - top, right - left

@@ -10,6 +10,7 @@ from app.services.onboarding_event_proposer import (
     SCHEMA_VERSION,
     build_event_proposals,
     build_motion_event_proposals_from_samples,
+    sample_segment_motion,
     write_event_proposals,
 )
 from app.services.stream_recorder import SCHEMA_VERSION as SEGMENT_SCHEMA_VERSION
@@ -116,6 +117,68 @@ def test_build_event_proposals_reads_segment_manifest_and_refuses_truth_flags(tm
     assert all(proposal["validation_truth_eligible"] is False for proposal in payload["proposals"])
 
 
+def test_zone_motion_scores_only_motion_inside_output_polygon(tmp_path: Path) -> None:
+    cv2 = pytest.importorskip("cv2")
+    np = pytest.importorskip("numpy")
+    polygon = [[0.5, 0.0], [1.0, 0.0], [1.0, 1.0], [0.5, 1.0]]
+    outside_path = tmp_path / "outside.mp4"
+    inside_path = tmp_path / "inside.mp4"
+    _write_motion_video(outside_path, cv2=cv2, np=np, x_start=10)
+    _write_motion_video(inside_path, cv2=cv2, np=np, x_start=95)
+
+    outside_samples = sample_segment_motion(
+        video_path=outside_path,
+        sample_fps=5.0,
+        duration_sec=6.0,
+        output_zone_polygon=polygon,
+    )
+    inside_samples = sample_segment_motion(
+        video_path=inside_path,
+        sample_fps=5.0,
+        duration_sec=6.0,
+        output_zone_polygon=polygon,
+    )
+
+    assert max(float(sample["motion_score"]) for sample in outside_samples) > 0.005
+    assert max(float(sample["motion_score_output_zone"]) for sample in outside_samples) < 0.001
+    assert max(float(sample["motion_score_output_zone"]) for sample in inside_samples) > 0.005
+
+
+def test_output_zone_motion_mode_uses_zone_score_for_clusters() -> None:
+    samples = [
+        {"timestamp_sec": 0.0, "motion_score": 0.2, "motion_score_output_zone": 0.0},
+        {"timestamp_sec": 1.0, "motion_score": 0.2, "motion_score_output_zone": 0.0},
+        {"timestamp_sec": 2.0, "motion_score": 0.01, "motion_score_output_zone": 0.09},
+        {"timestamp_sec": 3.0, "motion_score": 0.01, "motion_score_output_zone": 0.0},
+    ]
+
+    default_proposals = build_motion_event_proposals_from_samples(
+        station_id="line-a",
+        segment=_segment(),
+        samples=samples,
+        motion_threshold=0.05,
+        min_cluster_gap_sec=0.75,
+        window_before_sec=1.0,
+        window_after_sec=1.0,
+    )
+    zone_proposals = build_motion_event_proposals_from_samples(
+        station_id="line-a",
+        segment=_segment(),
+        samples=samples,
+        motion_threshold=0.05,
+        proposal_mode="output_zone_motion",
+        zone_motion_threshold=0.04,
+        min_cluster_gap_sec=0.75,
+        window_before_sec=1.0,
+        window_after_sec=1.0,
+    )
+
+    assert [proposal["center_offset_sec"] for proposal in default_proposals] == [0.0, 1.0]
+    assert [proposal["center_offset_sec"] for proposal in zone_proposals] == [2.0]
+    assert zone_proposals[0]["peak_motion_score_output_zone"] == 0.09
+    assert "output_zone_motion_above_threshold" in zone_proposals[0]["candidate_reasons"]
+
+
 def test_write_event_proposals_refuses_overwrite_without_force(tmp_path: Path) -> None:
     output = tmp_path / "proposals.json"
     payload = {"schema_version": SCHEMA_VERSION, "summary": {}}
@@ -137,17 +200,17 @@ def test_propose_onboarding_events_cli_reports_errors(tmp_path: Path, capsys) ->
     assert "error:" in captured.err
 
 
-def _write_motion_video(path: Path, *, cv2, np) -> None:
+def _write_motion_video(path: Path, *, cv2, np, x_start: int = 20) -> None:
     writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), 5.0, (160, 120))
     if not writer.isOpened():
         pytest.skip("OpenCV cannot write mp4v test video")
     for frame_index in range(30):
         frame = np.zeros((120, 160, 3), dtype=np.uint8)
         if 8 <= frame_index <= 12:
-            x = 20 + ((frame_index - 8) * 8)
+            x = x_start + ((frame_index - 8) * 8)
             frame[45:75, x : x + 30] = 255
         elif frame_index > 12:
-            frame[45:75, 52:82] = 255
+            frame[45:75, x_start + 32 : x_start + 62] = 255
         writer.write(frame)
     writer.release()
     if not path.exists() or path.stat().st_size == 0:
