@@ -20,7 +20,18 @@ This repository contains a working MVP:
 
 Current evidence proves file-backed live counting through the real app path for promoted/verified cases in `validation/registry.json`. It does not yet prove live Reolink/RTSP field operation. See `docs/00_CURRENT_STATE.md` before making product claims.
 
+> **Two tracks (read `docs/00_CURRENT_STATE.md` first).** YOLO/event counting is
+> proven for *boxable* products (the test cases above). The **live overhead
+> wire-frame station** defeated YOLO (the product is unboxable from above), so it
+> pivoted to **camera-only action recognition** — a zone tripwire feeds short
+> clips to a small video model that judges "placement / not." That track is the
+> current focus; its tripwire recall is proven (7/7 on a held-out exam) and the
+> model is in a bake-off pending the exam gate. See ADR 0004 and
+> `docs/specs/day4_action_recognition_spec.md`.
+
 ## Architecture
+
+Track A — boxable products (proven runtime, system of record):
 
 ```text
 Camera or demo video
@@ -33,7 +44,20 @@ Camera or demo video
   -> React dashboard
 ```
 
-Near-term architecture direction is to keep the current runtime as the system of record and add optional signal fusion, not rewrite around a new vendor stack. See `docs/09_PENNIES_AND_INCHES_STACK_RECOMMENDATION.md`.
+Track B — live overhead wire-frame station (action recognition; unboxable product):
+
+```text
+Fixed camera
+  -> zone tripwire (cheap pixel change detector, high recall)
+  -> per-candidate clip (before / during / after of the output zone)
+  -> small video model: placement? yes / no
+  -> debounced state-machine counter
+```
+
+Near-term direction is to keep the current runtime as the system of record and
+extend it (optional signal fusion, the action-recognition lane for the live
+station), not rewrite around a new vendor stack. See ADR 0001, ADR 0004, and
+`docs/09_PENNIES_AND_INCHES_STACK_RECOMMENDATION.md`.
 
 ## Quick Start
 

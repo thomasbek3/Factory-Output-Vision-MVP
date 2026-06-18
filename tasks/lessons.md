@@ -1,5 +1,36 @@
 # Lessons Learned
 
+## 2026-06-13: Unboxable Product → Action Recognition, Not Object Detection
+
+1. **Object detection assumes the thing is boxable. Check that first.** The live
+   overhead station produces thin wire-lattice frames. YOLO died on it: 0/7 on the
+   blind exam and 0% recall on its own training images. Root cause was not labels
+   or hyperparameters — the product is genuinely unboxable from overhead (pile is
+   an indistinguishable lattice; the carried frame merges with the worker even
+   zoomed). Before committing to a detector, confirm a human can draw a consistent
+   box on the target in a single frame. If they can't, neither can the model.
+2. **When the thing is invisible but the *action* is clear, recognize the action.**
+   A human (and the Codex teacher) reads carry → place → leave perfectly from the
+   same footage that defeats a box detector, because the signal lives in time, not
+   in one frame. The fix was a clip action-recognition student (tripwire → small
+   video model → debounced counter), the approach Drishti productized for manual
+   stations. Count the *doing*, not the *thing*.
+3. **Validate recall against ground truth BEFORE committing weeks.** The original
+   YOLO path consumed months on a confident, untested default. The cheap insurance
+   is a held-out human-verified set (here: 7 placements) and a recall gate run
+   *before* any model training or teacher spend. The day-3 motion miner scored
+   4/7 on that gate (not ready); the corrected day-4 tripwire scored 7/7 (ready).
+   The number, not the argument, decides.
+4. **A "flash"/normalization filter must compare like-for-like regions.** The first
+   tripwire divided pallet-zone change by *whole-frame* motion, so welding at the
+   bench inflated the denominator and could drop a real placement as a "flash" — a
+   silent recall killer. Compare zone-local change to within-zone uniformity (or to
+   change strictly outside the zone), never to a region that contains unrelated
+   activity.
+5. **High candidate count is fine when recall is the goal.** The tripwire emits
+   ~300 candidates/hour (7 real). That is by design: tripwire = recall, model =
+   precision. Do not tighten the proposer to look clean — tighten the judge.
+
 ## 2026-05-04: real_factory Review-To-Training Boundary
 
 1. **Reviewed event timestamps are not positive detector boxes.** A filled `real_factory` worksheet can create a gold event ledger and reviewed positive/negative anchors, but a YOLO export still needs explicit positive bounding-box labels before detector training is ready.
