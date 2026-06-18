@@ -256,3 +256,31 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Only touch what's necessary. No side effects with new bugs.
+
+## Judging placement clips (the teacher role — READ BEFORE LABELING)
+
+This station counts finished wire frames placed on the output pallet. The product
+is thin wire lattice and is UNBOXABLE from overhead — do not attempt object
+detection or bounding boxes. The signal is the ACTION over time (carry -> place ->
+leave). Your job as teacher is to judge short clips, and those judgments become the
+training labels for a small video model that copies you.
+
+- **Your label IS the training data.** The student model learns only from your
+  assert/refute calls. A wrong label teaches the model the wrong thing. Accuracy
+  is the whole ballgame — judge every clip like it ships.
+- **The question, exactly:** in this clip of the output-pallet zone, did a worker
+  PLACE a finished frame onto the pallet/stack? Carry-in, set-down, and the worker
+  leaving it there = placement (assert). Walk-by with nothing placed, adjusting the
+  pile, a welding flash, or no change = not a placement (refute). A worker merely
+  standing at the pallet is NOT a placement unless a frame is deposited.
+- **Use the whole sequence, not one still.** The placement is proven by the motion
+  across frames, not by any single frame (the new frame is often invisible in the
+  pile and occluded mid-place). Reason over before -> during -> after.
+- **Ignore welding flashes.** A flash brightens the whole frame uniformly; a real
+  placement changes the zone locally. Refute flashes.
+- **If you genuinely cannot tell, say low confidence** rather than guessing.
+- **Output format:** JSON `{"clip": "<id>", "decision": "assert|refute",
+  "confidence": "high|medium|low", "note": "<carry/place/leave evidence or why
+  not>"}`. When asked for a 3-vote pass, judge independently; 2-of-3 wins.
+- Never label clips from the exam window — those 7 placements are the held-out
+  answer key and must never become training data.
