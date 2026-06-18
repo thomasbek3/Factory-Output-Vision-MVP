@@ -21,11 +21,12 @@ from app.services.zone_tripwire import (
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run Day-4 zone Tripwire v2 over a video or segment manifest.")
+    parser = argparse.ArgumentParser(description="Run Day-5 zone tripwire over a video or segment manifest.")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--segment-manifest", type=Path)
     source.add_argument("--video", type=Path)
     parser.add_argument("--station-calibration", type=Path, required=True)
+    parser.add_argument("--trigger", choices=["person_presence", "pixel"], default="person_presence")
     parser.add_argument("--sample-fps", type=float, default=10.0)
     parser.add_argument("--grid-size", type=int, default=8)
     parser.add_argument("--score-method", choices=["tiled_absdiff", "tiled_ssim", "tiled_edge"], default="tiled_absdiff")
@@ -35,10 +36,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--state-threshold", type=float, default=0.06)
     parser.add_argument("--min-flash-ratio", type=float, default=1.5)
     parser.add_argument("--bracket-sec", type=float, default=8.0)
+    parser.add_argument("--include-motion-burst", action="store_true")
+    parser.add_argument("--person-conf", type=float, default=0.35)
+    parser.add_argument("--person-model", default="yolov8m.pt")
+    parser.add_argument("--presence-gap-sec", type=float, default=8.0)
+    parser.add_argument("--episode-max-sec", type=float, default=60.0)
+    parser.add_argument("--trigger-zone-margin", type=float, default=0.15)
+    parser.add_argument("--episode-pad-sec", type=float, default=2.0)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
     config = TripwireConfig(
+        trigger=args.trigger,
         sample_fps=args.sample_fps,
         grid_size=args.grid_size,
         score_method=args.score_method,
@@ -48,6 +57,13 @@ def main(argv: list[str] | None = None) -> int:
         state_threshold=args.state_threshold,
         min_flash_ratio=args.min_flash_ratio,
         bracket_sec=args.bracket_sec,
+        include_motion_burst=args.include_motion_burst,
+        person_conf=args.person_conf,
+        person_model=args.person_model,
+        presence_gap_sec=args.presence_gap_sec,
+        episode_max_sec=args.episode_max_sec,
+        trigger_zone_margin=args.trigger_zone_margin,
+        episode_pad_sec=args.episode_pad_sec,
     )
     polygon = load_output_zone_polygon(args.station_calibration)
     if args.video is not None:

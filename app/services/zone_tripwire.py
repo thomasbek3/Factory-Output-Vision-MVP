@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -11,14 +12,17 @@ import numpy as np
 from app.services.stream_recorder import validate_segment_manifest
 
 ScoreMethod = Literal["tiled_absdiff", "tiled_ssim", "tiled_edge"]
-TriggerMode = Literal["motion_burst", "quiet_state_diff"]
+TriggerMode = Literal["motion_burst", "quiet_state_diff", "person_visit"]
+TripwireTrigger = Literal["person_presence", "pixel"]
 
 SCHEMA_VERSION = "factory-vision-zone-tripwire-v2"
 DEFAULT_GRID_SIZE = 8
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class TripwireConfig:
+    trigger: TripwireTrigger = "person_presence"
     sample_fps: float = 10.0
     grid_size: int = DEFAULT_GRID_SIZE
     score_method: ScoreMethod = "tiled_absdiff"
@@ -29,8 +33,17 @@ class TripwireConfig:
     min_flash_ratio: float = 1.5
     bracket_sec: float = 8.0
     min_cluster_gap_sec: float = 1.0
+    include_motion_burst: bool = False
+    person_conf: float = 0.35
+    person_model: str = "yolov8m.pt"
+    presence_gap_sec: float = 8.0
+    episode_max_sec: float = 60.0
+    trigger_zone_margin: float = 0.15
+    episode_pad_sec: float = 2.0
 
     def validate(self) -> None:
+        if self.trigger not in {"person_presence", "pixel"}:
+            raise ValueError("unsupported trigger")
         if self.sample_fps <= 0:
             raise ValueError("sample_fps must be positive")
         if self.grid_size <= 0:
@@ -51,6 +64,18 @@ class TripwireConfig:
             raise ValueError("bracket_sec must be positive")
         if self.min_cluster_gap_sec <= 0:
             raise ValueError("min_cluster_gap_sec must be positive")
+        if self.person_conf < 0 or self.person_conf > 1:
+            raise ValueError("person_conf must be between 0 and 1")
+        if not self.person_model:
+            raise ValueError("person_model must be non-empty")
+        if self.presence_gap_sec < 0:
+            raise ValueError("presence_gap_sec must be non-negative")
+        if self.episode_max_sec <= 0:
+            raise ValueError("episode_max_sec must be positive")
+        if self.trigger_zone_margin < 0:
+            raise ValueError("trigger_zone_margin must be non-negative")
+        if self.episode_pad_sec < 0:
+            raise ValueError("episode_pad_sec must be non-negative")
 
 
 @dataclass(frozen=True)
@@ -63,6 +88,8 @@ class TripwireCandidate:
     flash_ratio: float
     source: str | None = None
     candidate_id: str | None = None
+    episode_split_index: int | None = None
+    episode_split_count: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         row = asdict(self)
@@ -81,6 +108,35 @@ class TripwireSample:
     whole_zone_motion: float
     flash_reference_motion: float
     flash_ratio: float
+
+
+@dataclass(frozen=True)
+class PersonDetection:
+    xyxy: tuple[float, float, float, float]
+    confidence: float
+    class_id: int = 0
+
+
+@dataclass(frozen=True)
+class PersonOccupancySample:
+    timestamp_sec: float
+    confidence: float
+
+
+@dataclass(frozen=True)
+class VisitEpisode:
+    start_sec: float
+    end_sec: float
+    peak_confidence: float
+
+
+@dataclass(frozen=True)
+class PersonDetectorLoadResult:
+    detector: Any | None
+    status: str
+    requested_model: str
+    loaded_model: str | None
+    message: str
 
 
 class ZoneCropper:
@@ -111,12 +167,99 @@ class ZoneCropper:
         return masked[y : y + h, x : x + w]
 
 
+class UltralyticsPersonDetector:
+    def __init__(self, model: Any, *, model_name: str, conf: float) -> None:
+        self.model = model
+        self.model_name = model_name
+        self.conf = conf
+
+    def detect(self, frame: np.ndarray) -> list[PersonDetection]:
+        results = self.model.predict(frame, verbose=False, conf=self.conf, classes=[0])
+        detections: list[PersonDetection] = []
+        for result in results or []:
+            boxes = getattr(result, "boxes", None)
+            if boxes is None:
+                continue
+            xyxy_values = _as_list(getattr(boxes, "xyxy", []))
+            conf_values = _as_list(getattr(boxes, "conf", []))
+            cls_values = _as_list(getattr(boxes, "cls", []))
+            for index, xyxy in enumerate(xyxy_values):
+                if len(xyxy) != 4:
+                    continue
+                confidence = float(conf_values[index]) if index < len(conf_values) else 0.0
+                class_id = int(cls_values[index]) if index < len(cls_values) else 0
+                detections.append(
+                    PersonDetection(
+                        xyxy=(float(xyxy[0]), float(xyxy[1]), float(xyxy[2]), float(xyxy[3])),
+                        confidence=confidence,
+                        class_id=class_id,
+                    )
+                )
+        return detections
+
+
+def load_person_detector(config: TripwireConfig) -> PersonDetectorLoadResult:
+    try:
+        from ultralytics import YOLO  # type: ignore
+    except ImportError as exc:
+        message = f"person_presence skipped: ultralytics unavailable ({exc})"
+        LOGGER.warning(message)
+        return PersonDetectorLoadResult(
+            detector=None,
+            status="skipped",
+            requested_model=config.person_model,
+            loaded_model=None,
+            message=message,
+        )
+
+    candidates = [config.person_model]
+    if config.person_model != "yolov8n.pt":
+        candidates.append("yolov8n.pt")
+    errors: list[str] = []
+    for model_name in candidates:
+        try:
+            model = YOLO(model_name)
+            status = "loaded" if model_name == config.person_model else "fallback_loaded"
+            message = (
+                f"person_presence loaded {model_name}"
+                if status == "loaded"
+                else f"person_presence fell back to {model_name}; requested {config.person_model}"
+            )
+            if status == "fallback_loaded":
+                LOGGER.warning(message)
+            else:
+                LOGGER.info(message)
+            return PersonDetectorLoadResult(
+                detector=UltralyticsPersonDetector(model, model_name=model_name, conf=config.person_conf),
+                status=status,
+                requested_model=config.person_model,
+                loaded_model=model_name,
+                message=message,
+            )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{model_name}: {exc}")
+            if model_name == config.person_model and config.person_model != "yolov8n.pt":
+                LOGGER.warning("person_presence model %s unavailable (%s); trying yolov8n.pt", model_name, exc)
+
+    message = "person_presence skipped: no usable person model (" + "; ".join(errors) + ")"
+    LOGGER.warning(message)
+    return PersonDetectorLoadResult(
+        detector=None,
+        status="skipped",
+        requested_model=config.person_model,
+        loaded_model=None,
+        message=message,
+    )
+
+
 def run_tripwire_on_video(
     *,
     video_path: Path,
     output_zone_polygon: list[list[float]],
     config: TripwireConfig | None = None,
     source_label: str | None = None,
+    person_detector: Any | None = None,
+    person_detector_status: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     config = config or TripwireConfig()
     config.validate()
@@ -130,9 +273,37 @@ def run_tripwire_on_video(
     if not capture.isOpened():
         raise RuntimeError(f"could not open video: {video_path}")
 
+    detector = person_detector
+    detector_status = person_detector_status
+    if config.trigger == "person_presence":
+        if detector is not None:
+            detector_status = detector_status or {
+                "status": "loaded",
+                "requested_model": config.person_model,
+                "loaded_model": getattr(detector, "model_name", "injected"),
+                "message": "person_presence using injected detector",
+            }
+        elif detector_status is None:
+            loaded = load_person_detector(config)
+            detector = loaded.detector
+            detector_status = {
+                "status": loaded.status,
+                "requested_model": loaded.requested_model,
+                "loaded_model": loaded.loaded_model,
+                "message": loaded.message,
+            }
+    else:
+        detector_status = {
+            "status": "not_requested",
+            "requested_model": config.person_model,
+            "loaded_model": None,
+            "message": "person_presence not requested",
+        }
+
     samples: list[TripwireSample] = []
     burst_samples: list[TripwireSample] = []
     quiet_candidates: list[TripwireCandidate] = []
+    occupied_samples: list[PersonOccupancySample] = []
     dropped_flash = 0
     frame_count = float(capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0.0)
     source_fps = float(capture.get(cv2.CAP_PROP_FPS) or 0.0)
@@ -143,6 +314,7 @@ def run_tripwire_on_video(
     previous_calm_sec: float | None = None
     last_state_probe_sec = -math.inf
     cropper: ZoneCropper | None = None
+    trigger_bbox: tuple[float, float, float, float] | None = None
 
     try:
         for timestamp_sec, frame in iter_sampled_frames(
@@ -152,6 +324,23 @@ def run_tripwire_on_video(
         ):
             if cropper is None:
                 cropper = ZoneCropper(frame_shape=frame.shape, polygon=output_zone_polygon)
+                trigger_bbox = expand_zone(
+                    output_zone_polygon,
+                    margin=config.trigger_zone_margin,
+                    frame_w=int(frame.shape[1]),
+                    frame_h=int(frame.shape[0]),
+                )
+            if config.trigger == "person_presence" and detector is not None and trigger_bbox is not None:
+                occupancy = person_occupancy_for_frame(
+                    frame,
+                    detector=detector,
+                    trigger_bbox=trigger_bbox,
+                    person_conf=config.person_conf,
+                )
+                if occupancy is not None:
+                    occupied_samples.append(
+                        PersonOccupancySample(timestamp_sec=timestamp_sec, confidence=occupancy.confidence)
+                    )
             zone = cropper.crop(frame)
             zone_gray = cv2.cvtColor(zone, cv2.COLOR_BGR2GRAY)
             if previous_zone is None:
@@ -229,7 +418,32 @@ def run_tripwire_on_video(
         min_cluster_gap_sec=config.min_cluster_gap_sec,
         source=source_label or str(video_path),
     )
-    candidates = sorted(burst_candidates + quiet_candidates, key=lambda row: (row.center_sec, row.trigger_mode))
+    raw_pixel_candidate_count = len(burst_candidates) + len(quiet_candidates)
+    person_episodes: list[VisitEpisode] = []
+    person_candidates: list[TripwireCandidate] = []
+    backstop_dropped_in_episode = 0
+    if config.trigger == "person_presence" and detector is not None:
+        person_episodes = build_visit_episodes(occupied_samples, presence_gap_sec=config.presence_gap_sec)
+        person_candidates = visit_candidates_from_episodes(
+            person_episodes,
+            duration_sec=duration_sec,
+            episode_max_sec=config.episode_max_sec,
+            episode_pad_sec=config.episode_pad_sec,
+            source=source_label or str(video_path),
+        )
+        candidates, backstop_dropped_in_episode = merge_person_visits_with_backstop(
+            person_candidates,
+            quiet_candidates,
+        )
+        if config.include_motion_burst:
+            candidates.extend(burst_candidates)
+    elif config.trigger == "person_presence":
+        candidates = list(quiet_candidates)
+        if config.include_motion_burst:
+            candidates.extend(burst_candidates)
+    else:
+        candidates = list(quiet_candidates) + list(burst_candidates)
+    candidates = sorted(candidates, key=lambda row: (row.center_sec, row.trigger_mode))
     rows = []
     for index, candidate in enumerate(candidates, start=1):
         row = candidate.to_dict()
@@ -244,9 +458,17 @@ def run_tripwire_on_video(
             "candidate_count": len(rows),
             "motion_burst_count": len([row for row in rows if row["trigger_mode"] == "motion_burst"]),
             "quiet_state_diff_count": len([row for row in rows if row["trigger_mode"] == "quiet_state_diff"]),
+            "person_visit_count": len([row for row in rows if row["trigger_mode"] == "person_visit"]),
+            "raw_pixel_candidate_count": raw_pixel_candidate_count,
+            "candidate_count_before_dedup": raw_pixel_candidate_count,
+            "candidate_count_after_dedup": len(rows),
+            "person_occupied_frame_count": len(occupied_samples),
+            "person_visit_episode_count": len(person_episodes),
+            "backstop_dropped_in_episode_count": backstop_dropped_in_episode,
             "sample_count": len(samples),
             "dropped_flash_count": dropped_flash,
             "duration_sec": round(duration_sec, 3),
+            "person_detector": detector_status,
         },
         "candidates": rows,
     }
@@ -257,12 +479,33 @@ def run_tripwire_on_segment_manifest(
     segment_manifest_path: Path,
     output_zone_polygon: list[list[float]],
     config: TripwireConfig | None = None,
+    person_detector: Any | None = None,
 ) -> dict[str, Any]:
     config = config or TripwireConfig()
+    config.validate()
     manifest = json.loads(segment_manifest_path.read_text(encoding="utf-8"))
     validate_segment_manifest(manifest)
     all_candidates: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
+    detector = person_detector
+    detector_status: dict[str, Any] | None = None
+    if config.trigger == "person_presence":
+        if detector is None:
+            loaded = load_person_detector(config)
+            detector = loaded.detector
+            detector_status = {
+                "status": loaded.status,
+                "requested_model": loaded.requested_model,
+                "loaded_model": loaded.loaded_model,
+                "message": loaded.message,
+            }
+        else:
+            detector_status = {
+                "status": "loaded",
+                "requested_model": config.person_model,
+                "loaded_model": getattr(detector, "model_name", "injected"),
+                "message": "person_presence using injected detector",
+            }
     for segment in manifest.get("segments") or []:
         if not segment.get("decode_ok", True):
             continue
@@ -272,11 +515,15 @@ def run_tripwire_on_segment_manifest(
             output_zone_polygon=output_zone_polygon,
             config=config,
             source_label=str(segment_path),
+            person_detector=detector,
+            person_detector_status=detector_status,
         )
         for candidate in payload["candidates"]:
             row = dict(candidate)
             row["segment_id"] = segment.get("segment_id")
             row["segment_path"] = str(segment_path)
+            row["segment_start_wall_ts"] = segment.get("start_wall_ts")
+            row["segment_end_wall_ts"] = segment.get("end_wall_ts")
             row["center_offset_sec"] = row["center_sec"]
             row["start_offset_sec"] = row["start_sec"]
             row["end_offset_sec"] = row["end_sec"]
@@ -293,6 +540,20 @@ def run_tripwire_on_segment_manifest(
             "candidate_count": len(all_candidates),
             "motion_burst_count": len([row for row in all_candidates if row["trigger_mode"] == "motion_burst"]),
             "quiet_state_diff_count": len([row for row in all_candidates if row["trigger_mode"] == "quiet_state_diff"]),
+            "person_visit_count": len([row for row in all_candidates if row["trigger_mode"] == "person_visit"]),
+            "raw_pixel_candidate_count": sum(int(row.get("raw_pixel_candidate_count", 0)) for row in summaries),
+            "candidate_count_before_dedup": sum(int(row.get("candidate_count_before_dedup", 0)) for row in summaries),
+            "candidate_count_after_dedup": len(all_candidates),
+            "person_occupied_frame_count": sum(int(row.get("person_occupied_frame_count", 0)) for row in summaries),
+            "person_visit_episode_count": sum(int(row.get("person_visit_episode_count", 0)) for row in summaries),
+            "backstop_dropped_in_episode_count": sum(int(row.get("backstop_dropped_in_episode_count", 0)) for row in summaries),
+            "person_detector": detector_status
+            or {
+                "status": "not_requested",
+                "requested_model": config.person_model,
+                "loaded_model": None,
+                "message": "person_presence not requested",
+            },
             "segment_count": len(manifest.get("segments") or []),
             "processed_segment_count": len(summaries),
             "segments": summaries,
@@ -320,6 +581,218 @@ def build_candidate(
         flash_ratio=flash_ratio,
         source=source,
     )
+
+
+def build_visit_candidate(
+    *,
+    start_sec: float,
+    end_sec: float,
+    duration_sec: float,
+    peak_confidence: float,
+    episode_pad_sec: float,
+    source: str | None = None,
+    episode_split_index: int | None = None,
+    episode_split_count: int | None = None,
+) -> TripwireCandidate:
+    center_sec = (start_sec + end_sec) / 2.0
+    return TripwireCandidate(
+        center_sec=center_sec,
+        start_sec=max(0.0, start_sec - episode_pad_sec),
+        end_sec=min(duration_sec, end_sec + episode_pad_sec) if duration_sec > 0 else end_sec + episode_pad_sec,
+        trigger_mode="person_visit",
+        peak_tile_score=peak_confidence,
+        flash_ratio=math.inf,
+        source=source,
+        episode_split_index=episode_split_index,
+        episode_split_count=episode_split_count,
+    )
+
+
+def expand_zone(
+    polygon: list[list[float]],
+    *,
+    margin: float,
+    frame_w: int,
+    frame_h: int,
+) -> tuple[float, float, float, float]:
+    if margin < 0:
+        raise ValueError("margin must be non-negative")
+    points = polygon_to_pixels(polygon, width=frame_w, height=frame_h).astype(float)
+    min_x = float(np.min(points[:, 0]))
+    max_x = float(np.max(points[:, 0]))
+    min_y = float(np.min(points[:, 1]))
+    max_y = float(np.max(points[:, 1]))
+    width = max(0.0, max_x - min_x)
+    height = max(0.0, max_y - min_y)
+    pad_x = width * margin
+    pad_y = height * margin
+    return (
+        max(0.0, min_x - pad_x),
+        max(0.0, min_y - pad_y),
+        min(float(frame_w), max_x + pad_x),
+        min(float(frame_h), max_y + pad_y),
+    )
+
+
+def person_occupancy_for_frame(
+    frame: np.ndarray,
+    *,
+    detector: Any,
+    trigger_bbox: tuple[float, float, float, float],
+    person_conf: float,
+) -> PersonDetection | None:
+    best: PersonDetection | None = None
+    for raw in detector.detect(frame):
+        detection = coerce_person_detection(raw)
+        if detection.class_id != 0 or detection.confidence < person_conf:
+            continue
+        if not box_touches_trigger_zone(detection.xyxy, trigger_bbox):
+            continue
+        if best is None or detection.confidence > best.confidence:
+            best = detection
+    return best
+
+
+def coerce_person_detection(raw: Any) -> PersonDetection:
+    if isinstance(raw, PersonDetection):
+        return raw
+    if isinstance(raw, dict):
+        xyxy = raw.get("xyxy") or raw.get("box") or raw.get("bbox")
+        if xyxy is None:
+            raise ValueError("person detection dict must include xyxy, box, or bbox")
+        confidence = raw.get("confidence", raw.get("conf", 0.0))
+        class_id = raw.get("class_id", raw.get("cls", 0))
+        return PersonDetection(
+            xyxy=(float(xyxy[0]), float(xyxy[1]), float(xyxy[2]), float(xyxy[3])),
+            confidence=float(confidence),
+            class_id=int(class_id),
+        )
+    xyxy = getattr(raw, "xyxy")
+    return PersonDetection(
+        xyxy=(float(xyxy[0]), float(xyxy[1]), float(xyxy[2]), float(xyxy[3])),
+        confidence=float(getattr(raw, "confidence", getattr(raw, "conf", 0.0))),
+        class_id=int(getattr(raw, "class_id", getattr(raw, "cls", 0))),
+    )
+
+
+def box_touches_trigger_zone(
+    xyxy: tuple[float, float, float, float],
+    trigger_bbox: tuple[float, float, float, float],
+) -> bool:
+    x1, y1, x2, y2 = xyxy
+    tx1, ty1, tx2, ty2 = trigger_bbox
+    center_x = (x1 + x2) / 2.0
+    center_y = (y1 + y2) / 2.0
+    if tx1 <= center_x <= tx2 and ty1 <= center_y <= ty2:
+        return True
+    return bbox_iou(xyxy, trigger_bbox) > 0.0
+
+
+def bbox_iou(
+    a: tuple[float, float, float, float],
+    b: tuple[float, float, float, float],
+) -> float:
+    ax1, ay1, ax2, ay2 = a
+    bx1, by1, bx2, by2 = b
+    inter_w = max(0.0, min(ax2, bx2) - max(ax1, bx1))
+    inter_h = max(0.0, min(ay2, by2) - max(ay1, by1))
+    inter_area = inter_w * inter_h
+    if inter_area <= 0:
+        return 0.0
+    area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
+    area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
+    union = area_a + area_b - inter_area
+    if union <= 0:
+        return 0.0
+    return inter_area / union
+
+
+def build_visit_episodes(
+    occupied_samples: list[PersonOccupancySample],
+    *,
+    presence_gap_sec: float,
+) -> list[VisitEpisode]:
+    if presence_gap_sec < 0:
+        raise ValueError("presence_gap_sec must be non-negative")
+    if not occupied_samples:
+        return []
+    ordered = sorted(occupied_samples, key=lambda sample: sample.timestamp_sec)
+    episodes: list[VisitEpisode] = []
+    start_sec = ordered[0].timestamp_sec
+    last_sec = ordered[0].timestamp_sec
+    peak_confidence = ordered[0].confidence
+    for sample in ordered[1:]:
+        if sample.timestamp_sec - last_sec > presence_gap_sec:
+            episodes.append(VisitEpisode(start_sec=start_sec, end_sec=last_sec, peak_confidence=peak_confidence))
+            start_sec = sample.timestamp_sec
+            peak_confidence = sample.confidence
+        else:
+            peak_confidence = max(peak_confidence, sample.confidence)
+        last_sec = sample.timestamp_sec
+    episodes.append(VisitEpisode(start_sec=start_sec, end_sec=last_sec, peak_confidence=peak_confidence))
+    return episodes
+
+
+def visit_candidates_from_episodes(
+    episodes: list[VisitEpisode],
+    *,
+    duration_sec: float,
+    episode_max_sec: float,
+    episode_pad_sec: float,
+    source: str | None,
+) -> list[TripwireCandidate]:
+    candidates: list[TripwireCandidate] = []
+    for episode in episodes:
+        parts = split_visit_episode(episode, episode_max_sec=episode_max_sec)
+        split_count = len(parts)
+        for index, part in enumerate(parts, start=1):
+            candidates.append(
+                build_visit_candidate(
+                    start_sec=part.start_sec,
+                    end_sec=part.end_sec,
+                    duration_sec=duration_sec,
+                    peak_confidence=part.peak_confidence,
+                    episode_pad_sec=episode_pad_sec,
+                    source=source,
+                    episode_split_index=index if split_count > 1 else None,
+                    episode_split_count=split_count if split_count > 1 else None,
+                )
+            )
+    return candidates
+
+
+def split_visit_episode(episode: VisitEpisode, *, episode_max_sec: float) -> list[VisitEpisode]:
+    if episode_max_sec <= 0:
+        raise ValueError("episode_max_sec must be positive")
+    if episode.end_sec - episode.start_sec <= episode_max_sec:
+        return [episode]
+    parts: list[VisitEpisode] = []
+    current_start = episode.start_sec
+    while current_start < episode.end_sec:
+        current_end = min(episode.end_sec, current_start + episode_max_sec)
+        parts.append(
+            VisitEpisode(
+                start_sec=current_start,
+                end_sec=current_end,
+                peak_confidence=episode.peak_confidence,
+            )
+        )
+        current_start = current_end
+    return parts
+
+
+def merge_person_visits_with_backstop(
+    person_candidates: list[TripwireCandidate],
+    quiet_candidates: list[TripwireCandidate],
+) -> tuple[list[TripwireCandidate], int]:
+    merged = list(person_candidates)
+    dropped = 0
+    for candidate in quiet_candidates:
+        if any(person.start_sec <= candidate.center_sec <= person.end_sec for person in person_candidates):
+            dropped += 1
+            continue
+        merged.append(candidate)
+    return merged, dropped
 
 
 def burst_candidates_from_samples(
@@ -527,6 +1000,16 @@ def write_tripwire_payload(path: Path, payload: dict[str, Any], *, force: bool =
 def _resolve_segment_path(segment_manifest_path: Path, segment: dict[str, Any]) -> Path:
     raw = Path(str(segment["path"])).expanduser()
     return raw if raw.is_absolute() else (segment_manifest_path.parent / raw).resolve()
+
+
+def _as_list(value: Any) -> list[Any]:
+    if hasattr(value, "detach"):
+        value = value.detach()
+    if hasattr(value, "cpu"):
+        value = value.cpu()
+    if hasattr(value, "tolist"):
+        return value.tolist()
+    return list(value)
 
 
 def _round_flash_ratio(value: float) -> float | str:

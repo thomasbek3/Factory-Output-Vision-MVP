@@ -1,3 +1,25 @@
+# Day-5 Human-Presence Tripwire - 2026-06-17
+
+## Objective
+
+Implement `docs/specs/day5_human_trigger_spec.md` exactly on branch `day5-human-trigger`: add person-presence visit episodes, keep quiet pile-diff as recall backstop, demote motion bursts behind a flag, update recall reporting for both 7-event sets, and keep tests green.
+
+## Milestones
+
+- [x] D5-1 Add configurable person-presence trigger with clean missing-weights/library skip.
+- [x] D5-2 Add oversized trigger zone, visit episode grouping, episode splitting, and backstop merge.
+- [x] D5-3 Update `run_zone_tripwire.py` and `validate_tripwire_recall.py` CLI/reporting.
+- [x] D5-4 Add focused tests from the spec without requiring real YOLO weights.
+- [x] D5-5 Run `.venv/bin/python -m pytest tests/ -q` green and record verifier evidence.
+
+## Review
+
+- Focused tripwire tests: `.venv/bin/python -m pytest tests/test_zone_tripwire.py -q` -> `16 passed`.
+- Full Python suite: `.venv/bin/python -m pytest tests/ -q` -> `611 passed, 16 warnings in 17.02s`.
+- Real loader smoke: `load_person_detector(TripwireConfig(trigger="person_presence"))` loaded `yolov8m.pt`; Ultralytics downloaded it during the smoke, and the generated untracked weight was removed after verification.
+- Real outside-exam CLI smoke on PM segment `20260611T123842_20260611T160641Z_9b1c0b54.mkv` with `--trigger person_presence --person-model yolov8n.pt --sample-fps 1` wrote `/tmp/day5_person_presence_smoke.json`: `candidate_count_before_dedup=2`, `candidate_count_after_dedup=1`, `person_visit_count=1`, `backstop_dropped_in_episode_count=1`.
+- Dual-recall formatting smoke against existing PM-only Day-4 candidates reported PM `7/7 PASS` and exam `0/7 FAIL` because that artifact ends before the exam window; this was used only to verify PM wall-clock parsing and the new two-set table, not as a Day-5 recall claim.
+
 # Day-3 Wide-Net Miner - 2026-06-12
 
 ## Objective
