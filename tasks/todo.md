@@ -1287,6 +1287,53 @@ Convert event evidence plus advisory MD2/Moondream teacher labels into a reviewe
 
 ## Goal
 
+## Day-4 Action-Recognition Counter
+
+Implement `docs/specs/day4_action_recognition_spec.md` on branch `day4-action-recognition` without touching recorder, manifest persistence, dashboard, or real labels.
+
+### Checklist
+
+- [x] Read the full spec and `AGENTS.md` placement-judging rules
+- [x] Build Tripwire v2 and tripwire recall gate
+- [x] Build clip extractor with `stack3`, `clip`, and `flow` encodings
+- [x] Build labeling harness with Codex majority vote, human timestamp ingest, and exam-window guard
+- [x] Build clip-model bake-off with dependency-aware skips and synthetic 1-epoch smoke training
+- [x] Build exam scorer and quiet/placement/quiet debounce counter
+- [x] Add synthetic tests for all new components
+- [x] Run `.venv/bin/python -m pytest tests/ -q` and iterate to green
+- [x] Document files changed, available/skipped archs, CLI commands, and pytest result
+
+### Review
+
+- Implemented Day-4 action-recognition counter code only. No recorder, segment-manifest persistence, dashboard, or real-label files were edited.
+- New synthetic tests passed as part of the full suite: `.venv/bin/python -m pytest tests/ -q` -> `599 passed, 14 warnings in 11.34s`.
+- Synthetic bake-off CLI passed: `scripts/train_clip_student.py --arch all --synthetic-smoke`; `stack3_mobilenet` and `twostream` trained for 1 epoch, `video_x3d` skipped because `pytorchvideo` is missing, and `video_vmae` skipped because `transformers` and `timm` are missing.
+
+## Day-4 Round-2 Fixes
+
+Fix the tripwire recall bug, replace timestamp seeking with sequential frame-index sampling, and wire the now-installed video-model front-runners while keeping the full `tests/` suite green.
+
+### Checklist
+
+- [x] Fix flash filtering so pallet-zone local motion is no longer compared with whole-frame motion.
+- [x] Add synthetic flash tests: local zone placement plus outside-bench motion is kept; uniform brighten is still rejected.
+- [x] Replace per-sample `CAP_PROP_POS_MSEC` seeking with sequential frame-index sampling that preserves sampled timestamps.
+- [x] Add synthetic clip sampling coverage for approximate `sample_fps`.
+- [x] Replace the `video_x3d` dependency path with a torchvision video model and wire VideoMAE through transformers.
+- [x] Prove `--arch all --synthetic-smoke` trains `stack3_mobilenet`, `twostream`, `video_vmae`, and the torchvision 3D model.
+- [x] Run `.venv/bin/python -m pytest tests/ -q` until green and record results.
+
+### Review
+
+- Flash filtering now uses within-zone uniformity: compare the hottest pallet tile to average pallet-zone motion. A local placement stays high-ratio even if the bench moves outside the zone; a uniform brighten stays near 1.0 and is dropped as flash.
+- `run_tripwire_on_video` now reads frames sequentially and samples by source frame index instead of seeking with `CAP_PROP_POS_MSEC` for every timestamp.
+- `video_x3d` remains the public arch label but is backed by torchvision `r3d_18`; `video_vmae` uses transformers `VideoMAEForVideoClassification` with an `MCG-NJU/videomae-base` binary-head config.
+- Focused tests: `TMPDIR="$PWD/data/tmp_pytest" .venv/bin/python -m pytest tests/test_zone_tripwire.py tests/test_clip_models.py -q` -> `10 passed, 2 warnings`.
+- Synthetic bake-off CLI: `.venv/bin/python scripts/train_clip_student.py --arch all --synthetic-smoke --out-dir data/tmp_pytest/day4_round2_smoke --epochs 1 --batch-size 2 --device cpu` -> all four archs `trained`: `stack3_mobilenet`, `video_x3d`, `video_vmae`, `twostream`.
+- First full-suite attempt with `TMPDIR` inside the repo failed two unrelated path-format tests because repo-relative temp paths changed expectations; rerun used an SSD artifact temp root outside the repo.
+- Full suite: `TMPDIR="/Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts/tmp_pytest_codex" .venv/bin/python -m pytest tests/ -q` -> `602 passed, 16 warnings`.
+- Temporary smoke/pytest artifacts were removed after verification.
+
 Make `data/videos/from-pc/real_factory.MOV` count exactly `4` through the real local `live_reader_snapshot` + `event_based` app/runtime path, with evidence that does not treat the failed static diagnostic total or bronze draft anchors as validation truth.
 
 ## Checklist
