@@ -152,7 +152,7 @@ Historical docs remain for evidence, but current claims should route through the
 
 - No cloud dependency in the runtime path.
 - No VLM or teacher model as live count authority.
-- No blob detection, frame differencing, count-line, or generic motion-counting proof paths.
+- No blob detection, frame differencing, count-line, or generic motion-counting proof paths as Track A proof paths; Track B's tripwire is a sanctioned candidate trigger under `docs/decisions/0004-pivot-from-yolo-to-clip-action-recognition.md`.
 - No Reolink/RTSP field claim until validated on an actual live camera stream.
 - No promotion without reviewed truth, app-vs-truth comparison, and registry evidence.
 - No silent upload of factory footage or labels.

@@ -2,7 +2,7 @@
 
 This is the short current architecture map. The detailed component spec remains in `docs/ARCHITECTURE.md`.
 
-## Runtime Path
+## Track A Runtime Path
 
 ```text
 Camera or demo video
@@ -21,6 +21,25 @@ Camera or demo video
 - `event_based`: detection-cluster event counting for carried/placed-piece workflows.
 
 The verified Factory2, IMG_3262, and IMG_3254 app proofs use `event_based`.
+
+## Track B Action-Recognition Lane
+
+Track B is the current live overhead wire-frame station path. The product is
+unboxable from overhead, so the runtime candidate flow is action-based:
+
+```text
+fixed camera
+  -> app/services/zone_tripwire.py
+  -> scripts/extract_clip_dataset.py / app/services/clip_dataset.py
+  -> app/services/clip_models.py clip judge
+  -> app/services/placement_counter.py
+  -> runtime count after the blind exam gate
+```
+
+The six live Track B CLIs are `scripts/run_zone_tripwire.py`,
+`scripts/validate_tripwire_recall.py`, `scripts/extract_clip_dataset.py`,
+`scripts/label_clips.py`, `scripts/train_clip_student.py`, and
+`scripts/run_clip_exam.py`. See `scripts/CURRENT.md` for the script map.
 
 ## Backend
 

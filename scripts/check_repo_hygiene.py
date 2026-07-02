@@ -40,7 +40,8 @@ REQUIRED_DECISIONS = [
     "docs/decisions/0001-current-runtime-is-system-of-record.md",
     "docs/decisions/0002-validation-registry-is-promotion-gate.md",
     "docs/decisions/0003-detector-and-edge-stack-changes-are-evaluation-lanes.md",
-    "docs/decisions/0004-vlm-and-teacher-models-are-audit-only.md",
+    "docs/decisions/0004-pivot-from-yolo-to-clip-action-recognition.md",
+    "docs/decisions/0005-vlm-and-teacher-models-are-audit-only.md",
 ]
 
 FORBIDDEN_TRACKED_PATTERNS = [

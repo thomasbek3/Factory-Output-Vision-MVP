@@ -1,4 +1,4 @@
-# ADR 0004: VLM And Teacher Models Are Audit Only
+# ADR 0005: VLM And Teacher Models Are Audit Only
 
 Status: Accepted
 

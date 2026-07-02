@@ -16,8 +16,8 @@ Factory Vision Output Counter is an offline LAN appliance for factory operators.
 
 ## Counting Doctrine
 
-- YOLO object detection is the counting foundation.
-- Count lines, blob detection, frame differencing, and generic motion counting are rejected for the MVP.
+- Counting has two tracks: Track A uses YOLO object detection for boxable products, and Track B uses zone-tripwire candidate clips plus action recognition for the unboxable overhead wire-frame station.
+- Count lines, blob detection, frame differencing, and generic motion counting are rejected as Track A proof paths; Track B's tripwire is only a high-recall candidate trigger before the clip judge and blind exam.
 - Most customer parts require customer-specific detection data and model selection.
 - Operator correction controls are allowed as a safety net, not as proof that automated validation worked.
 

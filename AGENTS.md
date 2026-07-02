@@ -33,7 +33,7 @@ Start with the concise current docs before relying on older task logs or researc
 
 ## What This Is
 
-Factory Vision Output Counter — a plug-and-play factory appliance that counts parts in an output zone using a Reolink camera + YOLO object detection on an Ubuntu edge PC. Runs fully offline on LAN. No cloud, no Docker, no YAML. Setup must complete in <15 minutes via a web wizard.
+Factory Vision Output Counter — a plug-and-play factory appliance that counts completed output events from a Reolink camera on an Ubuntu edge PC. It now has two validated doctrine tracks: Track A uses YOLO detection for boxable products in the live app runtime, while Track B uses a zone tripwire plus clip-judge action recognition for the unboxable overhead wire-frame station, per `docs/decisions/0004-pivot-from-yolo-to-clip-action-recognition.md`. Runs fully offline on LAN. No cloud, no Docker, no YAML. Setup must complete in <15 minutes via a web wizard.
 
 ## Current Context Routing
 
@@ -153,12 +153,25 @@ npm run test:e2e:headed
 - `app/services/video_runtime.py` — Manages camera/demo video source lifecycle, reconnect with exponential backoff
 - `app/services/frame_reader.py` — OpenCV frame reading (RTSP or file)
 - `app/services/counting.py` — Count accumulator, centroid tracker, YOLO object detector, new-track counting logic. Excludes person class (class 0) from all counts
+- `app/services/zone_tripwire.py` — Track B high-recall output-zone change trigger for candidate placement clips
+- `app/services/clip_dataset.py` — Track B candidate clip extraction and manifest writing for teacher/student training
+- `app/services/clip_models.py` — Track B clip-student model training, architecture selection, and inference helpers
+- `app/services/placement_counter.py` — Track B debounced placement-count state machine fed by clip verdicts
 - `app/services/person_detector.py` — Optional YOLOv8 person detection (operator zone / person-ignore pixel masking). NOTE: should be disabled when using custom-trained models (custom models already exclude persons; pixel masking blacks out parts held by workers)
 - `app/services/camera_probe.py` — ffprobe-based RTSP stream validation
 - `app/services/video_source.py` — RTSP URL builder for Reolink cameras
 - `app/db/` — SQLite repos: `database.py` (init), `config_repo.py`, `count_repo.py`, `event_repo.py`, `health_repo.py`
 - `app/core/settings.py` — All config via `FC_*` environment variables (no .env file parsing, just `os.getenv`)
 - `app/core/logging.py` — Structured logging setup
+
+**Track B CLIs** (`scripts/`):
+
+- `run_zone_tripwire.py` — mine candidate moments from output-zone pixel changes
+- `validate_tripwire_recall.py` — prove tripwire recall against reviewed placement times
+- `extract_clip_dataset.py` — crop before/during/after candidate clips for labeling and training
+- `label_clips.py` — collect human/Codex teacher labels without touching held-out exam clips
+- `train_clip_student.py` — train the small live clip model from labeled clips
+- `run_clip_exam.py` — run the blind exam gate for Track B promotion
 
 **Frontend** (`frontend/src/`): React 19 + React Router + TypeScript + Vite
 
@@ -197,12 +210,12 @@ E2E tests use Playwright (`frontend/e2e/`), auto-starting the backend in demo mo
 - v1.0 is camera-only. Beam/serial/v1.5 features are deferred until after factory pilot.
 - Do not rewrite the current runtime around a new vendor stack.
 - CPU-only inference (no CUDA GPU), capped at 10 FPS processing. Training also CPU-only for now.
-- **No blob detection, no count lines, no frame differencing.** YOLO object detection is the only counting method. These alternatives were red-teamed and rejected (see `tasks/lessons.md`).
+- No counting path may be promoted without passing a blind human-verified exam. (This rule is what killed both the pixel-blob counter and YOLO-on-wire for the live station — see ADR `0004-pivot-from-yolo-to-clip-action-recognition.md`.)
 - Custom YOLO model training per customer is a core part of the product, not an afterthought. Most factory parts are not in COCO.
 - FastAPI serves the React build from `frontend/dist` — if missing, returns 503.
 - The `build/windows-installer/` directory contains a snapshot of the app payload for the Windows installer EXE at `dist/windows-installer/`. It is a copy, not the source of truth.
 - `docs/ARCHIVED_DONOTREAD/` contains superseded specs — ignore them.
-- Authoritative specs live in `docs/PROJECT_SPEC.md`, `docs/UX_SPEC.md`, and the other non-archived docs.
+- Authoritative specs start with `docs/00_CURRENT_STATE.md`, then the numbered docs in `docs/README.md`, then `docs/decisions/`; older specs are historical when they conflict.
 - Do not delete or move artifacts without following `docs/10_REPO_GOVERNANCE_AND_CLEANUP_PLAN.md`.
 - Roboflow API keys and `.env` files are gitignored. Never commit credentials.
 - Do not upload factory footage, labels, or model artifacts without explicit permission.
