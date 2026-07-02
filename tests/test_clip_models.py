@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -20,8 +21,20 @@ def test_arch_availability_reports_optional_dependency_skips() -> None:
     statuses = arch_availability()
 
     assert set(statuses) == set(ARCHES)
-    assert statuses["video_x3d"].available
-    assert statuses["video_vmae"].available
+    if importlib.util.find_spec("torch") and importlib.util.find_spec("torchvision"):
+        assert statuses["video_x3d"].available
+    else:
+        assert not statuses["video_x3d"].available
+        assert "requires" in statuses["video_x3d"].reason
+    if (
+        importlib.util.find_spec("torch")
+        and importlib.util.find_spec("transformers")
+        and importlib.util.find_spec("timm")
+    ):
+        assert statuses["video_vmae"].available
+    else:
+        assert not statuses["video_vmae"].available
+        assert "requires" in statuses["video_vmae"].reason
     for name, status in statuses.items():
         if not status.available:
             assert status.reason
