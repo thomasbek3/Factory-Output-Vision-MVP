@@ -8,9 +8,13 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "validation/learning_registry.json"
+ARTIFACT_ROOT = Path("/Users/thomas/FactoryVisionArtifacts")
+LOCAL_PROOF_SKIP_REASON = "requires local proof artifacts; data/ is gitignored and absent on clean clones"
 REQUIRED_OUTPUT_FIELDS = {
     "case_id",
     "status",
@@ -29,6 +33,34 @@ REQUIRED_OUTPUT_FIELDS = {
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _resolve_artifact(path_text: str) -> Path:
+    path = Path(path_text)
+    if path.is_absolute():
+        return path
+    repo_path = REPO_ROOT / path
+    if repo_path.exists():
+        return repo_path
+    return ARTIFACT_ROOT / path
+
+
+def _skip_if_required_artifacts_missing(case_id: str) -> None:
+    registry = _read_json(REGISTRY_PATH)
+    case = next(entry for entry in registry["cases"] if entry["case_id"] == case_id)
+    required_paths = [
+        evidence["path"]
+        for evidence in case.get("evidence_refs", [])
+        if evidence.get("must_exist", True)
+    ]
+    for command in case.get("commands", []):
+        required_paths.extend(
+            prereq["path"]
+            for prereq in command.get("prerequisites", [])
+            if prereq.get("required", True) and prereq.get("warn_if_missing", True)
+        )
+    if any(not _resolve_artifact(path).exists() for path in required_paths):
+        pytest.skip(LOCAL_PROOF_SKIP_REASON)
 
 
 def _run(args: list[str]) -> tuple[int, str, str]:
@@ -60,6 +92,8 @@ def _registry_with_case_update(case_id: str, updates: dict[str, Any], tmp_path: 
 
 
 def test_recommend_factory2_json_contains_required_contract_fields() -> None:
+    _skip_if_required_artifacts_missing("factory2_test_case_1")
+
     rc, stdout, stderr = _run(["recommend", "--case-id", "factory2_test_case_1", "--format", "json"])
 
     assert rc == 0, stderr
