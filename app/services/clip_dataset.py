@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Literal
 
@@ -20,7 +21,7 @@ def extract_clip_dataset(
     output_dir: Path,
     output_zone_polygon: list[list[float]],
     default_video_path: Path | None = None,
-    encoding: Encoding | Literal["all"] = "clip",
+    encoding: Encoding | Iterable[Encoding] | Literal["all"] = "clip",
     clip_fps: float = 6.0,
     clip_frame_count: int = 16,
 ) -> dict[str, Any]:
@@ -28,7 +29,7 @@ def extract_clip_dataset(
         raise ValueError("clip_fps must be positive")
     if clip_frame_count <= 1:
         raise ValueError("clip_frame_count must be greater than 1")
-    requested = list(ENCODINGS) if encoding == "all" else [encoding]
+    requested = requested_encodings(encoding)
     output_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
     for index, candidate in enumerate(candidates):
@@ -226,3 +227,16 @@ def _candidate_source_path(candidate: dict[str, Any], default_video_path: Path |
 
 def output_zone_from_calibration(path: Path) -> list[list[float]]:
     return load_output_zone_polygon(path)
+
+
+def requested_encodings(encoding: Encoding | Iterable[Encoding] | Literal["all"]) -> list[Encoding]:
+    if encoding == "all":
+        return list(ENCODINGS)
+    if isinstance(encoding, str):
+        requested = [encoding]
+    else:
+        requested = list(encoding)
+    unsupported = [item for item in requested if item not in ENCODINGS]
+    if unsupported:
+        raise ValueError(f"unsupported encoding: {unsupported[0]}")
+    return requested

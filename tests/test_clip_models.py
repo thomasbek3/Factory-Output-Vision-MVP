@@ -2,7 +2,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.services.clip_models import ARCHES, arch_availability, train_student, write_synthetic_clip_manifest
+import pytest
+
+from app.services.clip_models import (
+    ARCHES,
+    arch_availability,
+    create_model,
+    encodings_for_arch,
+    load_student_judge,
+    train_student,
+    write_synthetic_clip_manifest,
+)
 from scripts.train_clip_student import synthetic_smoke_image_size
 
 
@@ -24,6 +34,52 @@ def test_cli_synthetic_smoke_uses_video_sized_frames_for_video_archs() -> None:
     assert synthetic_smoke_image_size("video_x3d") == 64
     assert synthetic_smoke_image_size("video_vmae") == 64
     assert synthetic_smoke_image_size("all") == 64
+
+
+def test_exam_encoding_mapping_matches_student_arch_inputs() -> None:
+    assert encodings_for_arch("stack3_mobilenet") == ("stack3",)
+    assert encodings_for_arch("twostream") == ("stack3", "flow")
+    assert encodings_for_arch("video_x3d") == ("clip",)
+    assert encodings_for_arch("video_vmae") == ("clip",)
+
+
+def test_student_judge_missing_candidate_path_names_candidate_and_key(tmp_path: Path) -> None:
+    import torch
+
+    model_path = tmp_path / "stack3_mobilenet.pt"
+    model = create_model("stack3_mobilenet", pretrained=False)
+    torch.save(
+        {
+            "arch": "stack3_mobilenet",
+            "state_dict": model.state_dict(),
+            "flow_channels": 30,
+            "pretrained": False,
+        },
+        model_path,
+    )
+    judge = load_student_judge(model_path=model_path)
+
+    with pytest.raises(ValueError, match="candidate pathless-1 missing required path: stack3"):
+        judge({"candidate_id": "pathless-1"})
+
+
+def test_student_judge_uses_cli_arch_fallback_for_legacy_bundle(tmp_path: Path) -> None:
+    import torch
+
+    model_path = tmp_path / "legacy_stack3_mobilenet.pt"
+    model = create_model("stack3_mobilenet", pretrained=False)
+    torch.save(
+        {
+            "state_dict": model.state_dict(),
+            "flow_channels": 30,
+            "pretrained": False,
+        },
+        model_path,
+    )
+
+    judge = load_student_judge(model_path=model_path, arch="stack3_mobilenet")
+
+    assert callable(judge)
 
 
 def test_each_available_arch_runs_one_epoch_synthetic_smoke_train(tmp_path: Path) -> None:

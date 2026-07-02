@@ -11,6 +11,12 @@ import numpy as np
 
 ArchName = Literal["stack3_mobilenet", "video_x3d", "video_vmae", "twostream"]
 ARCHES: tuple[ArchName, ...] = ("stack3_mobilenet", "video_x3d", "video_vmae", "twostream")
+ARCH_ENCODINGS: dict[str, tuple[str, ...]] = {
+    "stack3_mobilenet": ("stack3",),
+    "twostream": ("stack3", "flow"),
+    "video_x3d": ("clip",),
+    "video_vmae": ("clip",),
+}
 LABEL_TO_INDEX = {"refute": 0, "assert": 1, 0: 0, 1: 1, False: 0, True: 1}
 LOGGER = logging.getLogger(__name__)
 VIDEOMAE_MODEL_NAME = "MCG-NJU/videomae-base"
@@ -54,6 +60,25 @@ def arch_availability() -> dict[str, ArchAvailability]:
 
 def available_arch_names() -> list[str]:
     return [name for name, status in arch_availability().items() if status.available]
+
+
+def encodings_for_arch(arch: str) -> tuple[str, ...]:
+    try:
+        return ARCH_ENCODINGS[arch]
+    except KeyError as exc:
+        raise ValueError(f"unsupported arch: {arch}") from exc
+
+
+def resolve_student_arch(*, model_path: Path, fallback_arch: str | None = None) -> str:
+    import torch
+
+    checkpoint = torch.load(model_path, map_location="cpu")
+    arch = checkpoint.get("arch") or fallback_arch
+    if not arch:
+        raise ValueError("student bundle missing arch; pass --arch for older checkpoints")
+    if arch not in ARCHES:
+        raise ValueError(f"unsupported arch: {arch}")
+    return str(arch)
 
 
 def create_model(
@@ -371,22 +396,26 @@ def evaluate_student(*, model: Any, rows: list[dict[str, Any]], arch: str, batch
     return {"accuracy": 0.0 if total == 0 else correct / total, "validation_samples": total}
 
 
-def load_student_judge(*, model_path: Path, arch: str) -> Any:
+def load_student_judge(*, model_path: Path, arch: str | None = None) -> Any:
     import torch
 
     checkpoint = torch.load(model_path, map_location="cpu")
+    arch = str(checkpoint.get("arch") or arch or "")
+    if not arch:
+        raise ValueError("student bundle missing arch; pass --arch for older checkpoints")
+    if arch not in ARCHES:
+        raise ValueError(f"unsupported arch: {arch}")
     model = create_model(arch, flow_channels=int(checkpoint.get("flow_channels", 30)), pretrained=False)
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
 
     def judge(candidate: dict[str, Any]) -> dict[str, Any]:
-        row = candidate if "paths" in candidate else {"paths": candidate.get("paths", {})}
         if arch == "twostream":
-            features = (load_stack3_tensor(row).unsqueeze(0), load_flow_tensor(row).unsqueeze(0))
+            features = (load_stack3_tensor(candidate).unsqueeze(0), load_flow_tensor(candidate).unsqueeze(0))
         elif arch == "stack3_mobilenet":
-            features = load_stack3_tensor(row).unsqueeze(0)
+            features = load_stack3_tensor(candidate).unsqueeze(0)
         else:
-            features = load_clip_tensor(row).unsqueeze(0)
+            features = load_clip_tensor(candidate).unsqueeze(0)
         with torch.no_grad():
             logits = model_logits(model, features, arch)
             probs = torch.softmax(logits, dim=1)[0]
@@ -399,7 +428,7 @@ def load_student_judge(*, model_path: Path, arch: str) -> Any:
 def load_stack3_tensor(row: dict[str, Any]) -> Any:
     import torch
 
-    path = Path(str(row["paths"]["stack3"]))
+    path = required_candidate_path(row, "stack3")
     array = np.load(path)["data"].astype(np.float32) / 255.0
     if array.shape[0] != 3 or array.shape[-1] != 3:
         raise ValueError("stack3 encoding must have shape 3,H,W,3")
@@ -410,7 +439,7 @@ def load_stack3_tensor(row: dict[str, Any]) -> Any:
 def load_clip_tensor(row: dict[str, Any]) -> Any:
     import torch
 
-    path = Path(str(row["paths"]["clip"]))
+    path = required_candidate_path(row, "clip")
     array = np.load(path)["data"].astype(np.float32) / 255.0
     if array.ndim != 4 or array.shape[-1] != 3:
         raise ValueError("clip encoding must have shape T,H,W,3")
@@ -421,12 +450,20 @@ def load_clip_tensor(row: dict[str, Any]) -> Any:
 def load_flow_tensor(row: dict[str, Any]) -> Any:
     import torch
 
-    path = Path(str(row["paths"]["flow"]))
+    path = required_candidate_path(row, "flow")
     array = np.load(path)["data"].astype(np.float32)
     if array.ndim != 4 or array.shape[-1] != 2:
         raise ValueError("flow encoding must have shape T,H,W,2")
     tensor = array.transpose(0, 3, 1, 2).reshape(array.shape[0] * 2, array.shape[1], array.shape[2])
     return torch.from_numpy(tensor)
+
+
+def required_candidate_path(row: dict[str, Any], key: str) -> Path:
+    candidate_id = str(row.get("candidate_id") or row.get("id") or "<unknown>")
+    paths = row.get("paths")
+    if not isinstance(paths, dict) or not paths.get(key):
+        raise ValueError(f"candidate {candidate_id} missing required path: {key}")
+    return Path(str(paths[key]))
 
 
 def label_to_index(label: Any) -> int:

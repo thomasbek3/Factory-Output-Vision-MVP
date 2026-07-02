@@ -62,6 +62,16 @@ class PlacementCounter:
         if self._state != "placement" or self._pending_start is None or self._pending_last is None:
             self._state = "quiet"
             return []
+        return self._emit_pending(end_sec=quiet_sec)
+
+    def finalize(self) -> list[PlacementCountEvent]:
+        if self._state != "placement" or self._pending_start is None or self._pending_last is None:
+            return []
+        return self._emit_pending(end_sec=self._pending_last)
+
+    def _emit_pending(self, *, end_sec: float) -> list[PlacementCountEvent]:
+        if self._pending_start is None or self._pending_last is None:
+            return []
         center_sec = (self._pending_start + self._pending_last) / 2.0
         if self._last_count_center is not None and center_sec - self._last_count_center <= self.debounce_sec:
             self._reset_pending()
@@ -71,7 +81,7 @@ class PlacementCounter:
             count=self.total_count,
             center_sec=center_sec,
             start_sec=self._pending_start,
-            end_sec=quiet_sec,
+            end_sec=end_sec,
             candidate_ids=list(self._pending_ids),
         )
         self._last_count_center = center_sec
@@ -85,9 +95,16 @@ class PlacementCounter:
         self._pending_ids = []
 
 
-def count_placements(verdicts: list[PlacementVerdict], *, debounce_sec: float = 25.0) -> list[PlacementCountEvent]:
+def count_placements(
+    verdicts: list[PlacementVerdict],
+    *,
+    debounce_sec: float = 25.0,
+    finalize_at_end: bool = False,
+) -> list[PlacementCountEvent]:
     counter = PlacementCounter(debounce_sec=debounce_sec)
     events: list[PlacementCountEvent] = []
     for verdict in sorted(verdicts, key=lambda row: row.center_sec):
         events.extend(counter.update(verdict))
+    if finalize_at_end:
+        events.extend(counter.finalize())
     return events

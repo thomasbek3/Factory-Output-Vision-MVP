@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
+import traceback
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
@@ -16,6 +19,13 @@ from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon,
 from scripts.validate_tripwire_recall import DEFAULT_EXAM_CLIP_OFFSETS_SEC, load_gold_clip_offsets
 
 StudentJudge = Callable[[dict[str, Any]], dict[str, Any]]
+LOGGER = logging.getLogger(__name__)
+STAGE_EXIT_CODES = {"tripwire": 20, "extract": 21, "judge": 22, "count": 23}
+
+
+@dataclass
+class StageFailure(Exception):
+    stage: str
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gold-positives", type=Path, required=True)
     parser.add_argument("--station-calibration", type=Path, required=True)
     parser.add_argument("--model", type=Path, required=True)
-    parser.add_argument("--arch", choices=["stack3_mobilenet", "video_x3d", "video_vmae", "twostream"], required=True)
+    parser.add_argument("--arch", choices=["stack3_mobilenet", "video_x3d", "video_vmae", "twostream"])
+    parser.add_argument("--clip-cache-dir", type=Path)
     parser.add_argument("--debounce-sec", type=float, default=25.0)
     parser.add_argument("--match-tolerance-sec", type=float, default=20.0)
     parser.add_argument("--out", type=Path, required=True)
@@ -36,13 +47,15 @@ def main(argv: list[str] | None = None) -> int:
             gold_positives_path=args.gold_positives,
             station_calibration_path=args.station_calibration,
             model_path=args.model,
+            clip_cache_dir=args.clip_cache_dir or args.out.parent / "clip_cache",
             arch=args.arch,
             debounce_sec=args.debounce_sec,
             match_tolerance_sec=args.match_tolerance_sec,
         )
-    except Exception as exc:  # noqa: BLE001
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
+    except StageFailure as exc:
+        print(f"{exc.stage} stage failed", file=sys.stderr)
+        traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
+        return STAGE_EXIT_CODES[exc.stage]
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, sort_keys=True))
@@ -55,28 +68,88 @@ def run_clip_exam(
     gold_positives_path: Path,
     station_calibration_path: Path,
     model_path: Path,
-    arch: str,
+    clip_cache_dir: Path,
+    arch: str | None,
     debounce_sec: float,
     match_tolerance_sec: float,
 ) -> dict[str, Any]:
-    from app.services.clip_models import load_student_judge
+    from app.services.clip_dataset import extract_clip_dataset
+    from app.services.clip_models import encodings_for_arch, load_student_judge, resolve_student_arch
 
-    tripwire_payload = run_tripwire_on_video(
-        video_path=video_path,
-        output_zone_polygon=load_output_zone_polygon(station_calibration_path),
-        config=TripwireConfig(),
+    resolved_arch = _run_stage("judge", lambda: resolve_student_arch(model_path=model_path, fallback_arch=arch))
+    output_zone_polygon = _run_stage("tripwire", lambda: load_output_zone_polygon(station_calibration_path))
+    config = TripwireConfig()
+    tripwire_payload = _run_stage(
+        "tripwire",
+        lambda: run_tripwire_on_video(
+            video_path=video_path,
+            output_zone_polygon=output_zone_polygon,
+            config=config,
+        ),
     )
-    judge = load_student_judge(model_path=model_path, arch=arch)
-    gold_payload = json.loads(gold_positives_path.read_text(encoding="utf-8"))
-    gold_offsets = [row["time"] for row in load_gold_clip_offsets(gold_payload)]
-    return run_exam_from_candidates(
-        candidates=tripwire_payload.get("candidates") or [],
-        gold_offsets=gold_offsets,
-        judge=judge,
-        debounce_sec=debounce_sec,
-        match_tolerance_sec=match_tolerance_sec,
-        model_name=arch,
+    candidates = tripwire_payload.get("candidates") or []
+    ready_candidates, edge_refutes = split_edge_truncated_candidates(
+        candidates=candidates,
+        duration_sec=float((tripwire_payload.get("summary") or {}).get("duration_sec", 0.0)),
+        bracket_sec=config.bracket_sec,
     )
+    extracted = _run_stage(
+        "extract",
+        lambda: extract_clip_dataset(
+            candidates=ready_candidates,
+            output_dir=clip_cache_dir,
+            output_zone_polygon=output_zone_polygon,
+            default_video_path=video_path,
+            encoding=encodings_for_arch(resolved_arch),
+        ),
+    )
+    judge = _run_stage("judge", lambda: load_student_judge(model_path=model_path, arch=resolved_arch))
+    gold_payload = _run_stage("count", lambda: json.loads(gold_positives_path.read_text(encoding="utf-8")))
+    gold_offsets = _run_stage("count", lambda: [row["time"] for row in load_gold_clip_offsets(gold_payload)])
+    return _run_stage(
+        "count",
+        lambda: run_exam_from_candidates(
+            candidates=[*extracted.get("samples", []), *edge_refutes],
+            gold_offsets=gold_offsets,
+            judge=judge,
+            debounce_sec=debounce_sec,
+            match_tolerance_sec=match_tolerance_sec,
+            model_name=resolved_arch,
+            finalize_at_end=True,
+        ),
+    )
+
+
+def _run_stage(stage: str, fn: Callable[[], Any]) -> Any:
+    try:
+        return fn()
+    except Exception as exc:  # noqa: BLE001
+        raise StageFailure(stage) from exc
+
+
+def split_edge_truncated_candidates(
+    *,
+    candidates: list[dict[str, Any]],
+    duration_sec: float,
+    bracket_sec: float,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    ready: list[dict[str, Any]] = []
+    refutes: list[dict[str, Any]] = []
+    expected_span = bracket_sec * 2.0
+    for candidate in candidates:
+        start_sec = float(candidate.get("start_sec", candidate.get("start_offset_sec", 0.0)))
+        end_sec = float(candidate.get("end_sec", candidate.get("end_offset_sec", start_sec)))
+        touches_edge = start_sec <= 0.0 or (duration_sec > 0 and end_sec >= duration_sec)
+        if touches_edge and end_sec - start_sec < expected_span - 1e-6:
+            candidate_id = str(candidate.get("candidate_id", ""))
+            reason = "clip window truncated at video edge"
+            LOGGER.warning("%s judged refute: %s", candidate_id or "<unknown>", reason)
+            refute = dict(candidate)
+            refute["skip_judge_reason"] = reason
+            refutes.append(refute)
+            continue
+        ready.append(candidate)
+    return ready, refutes
 
 
 def run_exam_from_candidates(
@@ -87,11 +160,15 @@ def run_exam_from_candidates(
     debounce_sec: float = 25.0,
     match_tolerance_sec: float = 20.0,
     model_name: str = "student",
+    finalize_at_end: bool = False,
 ) -> dict[str, Any]:
     gold_offsets = gold_offsets or list(DEFAULT_EXAM_CLIP_OFFSETS_SEC)
     verdicts = []
     for candidate in sorted(candidates, key=lambda row: float(row.get("center_sec", 0.0))):
-        judged = judge(candidate)
+        if candidate.get("skip_judge_reason"):
+            judged = {"decision": "refute", "score": 0.0}
+        else:
+            judged = judge(candidate)
         decision = str(judged.get("decision", "refute"))
         verdicts.append(
             PlacementVerdict(
@@ -101,7 +178,7 @@ def run_exam_from_candidates(
                 candidate_id=str(candidate.get("candidate_id", "")),
             )
         )
-    events = count_placements(verdicts, debounce_sec=debounce_sec)
+    events = count_placements(verdicts, debounce_sec=debounce_sec, finalize_at_end=finalize_at_end)
     count_times = [event.center_sec for event in events]
     score = score_counts_against_gold(
         count_times=count_times,
@@ -112,6 +189,16 @@ def run_exam_from_candidates(
         "schema_version": "factory-vision-clip-exam-v1",
         "model": model_name,
         "candidate_count": len(candidates),
+        "counts": [
+            {
+                "count": event.count,
+                "center_sec": round(event.center_sec, 3),
+                "start_sec": round(event.start_sec, 3),
+                "end_sec": round(event.end_sec, 3),
+                "candidate_ids": event.candidate_ids,
+            }
+            for event in events
+        ],
         "count_times": [round(value, 3) for value in count_times],
         "matched": score["matched"],
         "missed": score["missed"],
