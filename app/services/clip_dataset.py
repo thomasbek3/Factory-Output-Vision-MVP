@@ -32,6 +32,8 @@ def extract_clip_dataset(
     output_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
     for index, candidate in enumerate(candidates):
+        if candidate.get("training_eligible") is False:
+            raise ValueError("refusing to build training clips from training-ineligible candidate")
         candidate_id = str(candidate.get("candidate_id") or f"candidate-{index + 1:05d}")
         source_path = _candidate_source_path(candidate, default_video_path)
         start_sec = float(candidate.get("start_sec", candidate.get("start_offset_sec", 0.0)))

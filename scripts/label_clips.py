@@ -203,6 +203,8 @@ def guard_no_exam_rows(manifest: dict[str, Any]) -> None:
     for row in manifest.get("samples") or []:
         source = str(row.get("source", ""))
         candidate_id = str(row.get("candidate_id", ""))
+        if row.get("training_eligible") is False:
+            raise ValueError("refusing to label training-ineligible samples")
         if row.get("exam_only") is True or row.get("source_role") == "exam":
             raise ValueError("refusing to label exam window samples")
         lowered = f"{source} {candidate_id}".lower()

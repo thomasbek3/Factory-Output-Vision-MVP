@@ -20,8 +20,8 @@ Keep the pixel pile-diff as a recall backstop.
 ## Ground truth (reuse, never train on the exam 7)
 
 - Output-zone polygon (confirmed): `[[0.48,0.56],[1.0,0.56],[1.0,1.0],[0.48,1.0]]`.
-- Recall sets: exam 7 (`exam_gold_positives.json`, clip offsets 165/510/781/1104/
-  1475/1822/2172) and Thomas's PM 7 (`label_session/day1_pm_human_labels.txt`,
+- Recall sets: exam 7 (`validation/exam/exam_gold_positives.json`, clip offsets
+  165/510/781/1104/1475/1822/2172) and Thomas's PM 7 (`label_session/day1_pm_human_labels.txt`,
   camera wall-clock 12:39:22, 12:45:55, 12:52:54, 12:59:33, 13:05:18, 14:25:15,
   15:19:19).
 

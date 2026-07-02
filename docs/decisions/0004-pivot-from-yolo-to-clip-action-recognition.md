@@ -54,8 +54,9 @@ evaluation lane under ADR 0003.
   are preserved.
 - Labeling shifts from bounding boxes to whole-clip judgments. The teacher/advisory
   boundary is unchanged: teacher labels are bronze/pending, never live truth.
-- A new held-out truth artifact exists for this station: 7 human+Codex-verified
-  placements (`exam_gold_positives.json`) that must never enter any training set.
+- A tracked held-out truth artifact exists for this station: 7 human+Codex-verified
+  placements (`validation/exam/exam_gold_positives.json`) that must never enter
+  any training set.
 - Build artifacts live on branch `day4-action-recognition`; the implementation spec
   is `docs/specs/day4_action_recognition_spec.md`.
 - YOLO research/experiments for this station move to an evaluation lane (ADR 0003);

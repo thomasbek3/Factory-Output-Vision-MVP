@@ -1,0 +1,43 @@
+{
+  "counting_rule": "Human-reviewed placements scrubbed from the day-1 exam clip; times are seconds from clip start.",
+  "events": [
+    {
+      "count_total": 1,
+      "event_ts": 165.0,
+      "truth_event_id": "day1-exam-0001"
+    },
+    {
+      "count_total": 2,
+      "event_ts": 510.0,
+      "truth_event_id": "day1-exam-0002"
+    },
+    {
+      "count_total": 3,
+      "event_ts": 781.0,
+      "truth_event_id": "day1-exam-0003"
+    },
+    {
+      "count_total": 4,
+      "event_ts": 1104.0,
+      "truth_event_id": "day1-exam-0004"
+    },
+    {
+      "count_total": 5,
+      "event_ts": 1475.0,
+      "truth_event_id": "day1-exam-0005"
+    },
+    {
+      "count_total": 6,
+      "event_ts": 1822.0,
+      "truth_event_id": "day1-exam-0006"
+    },
+    {
+      "count_total": 7,
+      "event_ts": 2172.0,
+      "truth_event_id": "day1-exam-0007"
+    }
+  ],
+  "expected_human_total": 7,
+  "schema_version": "day1-human-exam-ledger-v1",
+  "source": "typed by human reviewer for exam_clip.mp4"
+}

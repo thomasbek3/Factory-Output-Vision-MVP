@@ -35,12 +35,12 @@ training set large enough to actually converge.
 - **Exam hour = HELD OUT, never used for training.** Day-1 window
   15:21:50–16:28:33 (the 63 holdout segments, seg starts `20260611T152150` …
   `20260611T162733`). Its 7 verified placements live at
-  `.../pipeline_day2_full/exam_gold_positives.json` and the exam ledger at
-  `.../pipeline_day2_full/exam_gate/day1_exam_truth_ledger.json`.
+  `validation/exam/exam_gold_positives.json` and the exam ledger at
+  `validation/exam/day1_exam_truth_ledger.json`.
 
 ## Gold-positives file (already written, do NOT regenerate)
 
-`.../pipeline_day2_full/exam_gold_positives.json`, schema `exam_gold_positives_v1`:
+`validation/exam/exam_gold_positives.json`, schema `exam_gold_positives_v1`:
 7 events, each `{id, place_wall_clock, segment_file, offset_in_segment_sec,
 verification}`. These are the recall-gate truth. They are TEST data — never inject
 them into any training dataset.
@@ -81,7 +81,7 @@ cheaply, preserving recall on real placements.
 Runs the proposer over ONLY the exam hour and measures how many of the 7 gold
 placements it catches. This is the go/no-go before any teacher spend.
 
-Argparse: `--segment-manifest`, `--gold-positives <exam_gold_positives.json>`,
+Argparse: `--segment-manifest`, `--gold-positives validation/exam/exam_gold_positives.json`,
 `--station-calibration`, `--proposal-mode output_zone_motion`,
 `--zone-motion-threshold 0.018`, `--min-flash-ratio 1.5`,
 `--match-tolerance-sec 20`, `--out <report.json>`.

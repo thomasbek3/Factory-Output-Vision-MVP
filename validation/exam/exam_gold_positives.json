@@ -1,0 +1,59 @@
+{
+  "schema": "exam_gold_positives_v1",
+  "source": "thomas_eyeball + codex_exec verification, all ASSERT high-conf",
+  "station_id": "factory-live-day1",
+  "events": [
+    {
+      "id": "exam-gold-01",
+      "place_wall_clock": "15:24:15",
+      "segment_file": "20260611T152349_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 26.0,
+      "verification": "codex_exec_assert_high"
+    },
+    {
+      "id": "exam-gold-02",
+      "place_wall_clock": "15:30:30",
+      "segment_file": "20260611T152949_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 41.0,
+      "verification": "codex_exec_assert_high"
+    },
+    {
+      "id": "exam-gold-03",
+      "place_wall_clock": "15:34:52",
+      "segment_file": "20260611T153449_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 3.0,
+      "verification": "codex_exec_assert_high"
+    },
+    {
+      "id": "exam-gold-04",
+      "place_wall_clock": "15:40:23",
+      "segment_file": "20260611T153949_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 34.0,
+      "verification": "codex_exec_assert_high"
+    },
+    {
+      "id": "exam-gold-05",
+      "place_wall_clock": "15:46:24",
+      "segment_file": "20260611T154549_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 35.0,
+      "verification": "codex_exec_assert_high"
+    },
+    {
+      "id": "exam-gold-06",
+      "place_wall_clock": "15:52:12",
+      "segment_file": "20260611T155149_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 23.0,
+      "verification": "codex_exec_assert_high"
+    },
+    {
+      "id": "exam-gold-07",
+      "place_wall_clock": "15:58:01",
+      "segment_file": "20260611T155752_20260611T174747Z_e22e5dca.mkv",
+      "offset_in_segment_sec": 9.0,
+      "verification": "codex_exec_assert_high"
+    }
+  ],
+  "training_eligible": false,
+  "role": "exam_answer_key_never_train",
+  "provenance": "copied 2026-07-01 from FactoryVisionArtifacts/onboarding/factory_live_day1/pipeline_day2_full/"
+}

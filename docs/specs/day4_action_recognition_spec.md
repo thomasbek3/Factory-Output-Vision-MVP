@@ -25,8 +25,8 @@ public benchmark; we hold ourselves to a higher bar).
 - Output-zone polygon: `[[0.48,0.56],[1.0,0.56],[1.0,1.0],[0.48,1.0]]`
 - Day-1 segments + segment_manifest under
   `.../onboarding/factory_live_day1/recordings/factory-live-day1/`
-- Exam clip + 7 gold placements: `.../pipeline_day2_full/exam_clip.mp4`,
-  `.../pipeline_day2_full/exam_gold_positives.json` (clip-offset placement secs
+- Exam clip + 7 gold placements: exam video remains outside the repo; tracked
+  gold lives at `validation/exam/exam_gold_positives.json` (clip-offset placement secs
   165, 510, 781, 1104, 1475, 1822, 2172). NEVER train on these — exam only.
 - Station calibration JSON already exists in the day1 onboarding dir.
 
