@@ -1,0 +1,6 @@
+# Track B model stack — pins captured on macOS-arm64 / Python 3.9; re-solve on other platforms
+torch==2.8.0
+torchvision==0.23.0
+transformers==4.57.6
+timm==1.0.27
+numpy==1.26.4

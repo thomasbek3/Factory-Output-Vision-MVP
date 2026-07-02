@@ -1,4 +1,4 @@
-.PHONY: install test test-backend test-frontend lint build docs-check hygiene run-backend run-frontend run-test-case-1 validate-video benchmark-onboarding record-stream propose-onboarding-events build-teacher-evidence-packets generate-teacher-verifications generate-teacher-verifications-cloud grade-teacher-labels propose-auto-boxes rehearse-autonomous-onboarding reconcile-state-diff fuse-teacher-verifications run-teacher-loop-benchmark register-test-cases
+.PHONY: install test test-backend test-frontend lint build docs-check hygiene check-trackb-env run-backend run-frontend run-test-case-1 validate-video benchmark-onboarding record-stream propose-onboarding-events build-teacher-evidence-packets generate-teacher-verifications generate-teacher-verifications-cloud grade-teacher-labels propose-auto-boxes rehearse-autonomous-onboarding reconcile-state-diff fuse-teacher-verifications run-teacher-loop-benchmark register-test-cases
 
 CASE_ID ?= img3254_clean22_candidate
 BACKEND_PORT ?= 8080
@@ -47,6 +47,9 @@ build:
 
 docs-check:
 	.venv/bin/python scripts/check_repo_hygiene.py
+
+check-trackb-env:
+	.venv/bin/python -c "import importlib.util, sys; from app.services.clip_models import arch_availability; statuses = arch_availability(); [print(f'{name}: {\"available\" if status.available else \"unavailable\"}{\"\" if status.available else \" - \" + str(status.reason)}') for name, status in statuses.items()]; missing = [name for name in ('torch', 'transformers', 'timm') if importlib.util.find_spec(name) is None]; sys.exit('missing packages for video_vmae: ' + ', '.join(missing) if not statuses['video_vmae'].available else 0)"
 
 hygiene: docs-check test-backend test-frontend
 
