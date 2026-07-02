@@ -2,6 +2,8 @@
 
 Updated: 2026-06-13
 
+Canonical branch: day5-human-trigger (day2..day4 branches are historical checkpoints; specs cite their rollback commits).
+
 Factory Vision Output Counter MVP: an offline FastAPI + React/Vite appliance that
 counts finished output placements from camera or file-backed video, with an
 auditable runtime count and no cloud dependency.
