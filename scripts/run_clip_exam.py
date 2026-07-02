@@ -15,12 +15,13 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.placement_counter import PlacementVerdict, count_placements
-from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_video
+from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_video, write_tripwire_payload
 from scripts.validate_tripwire_recall import DEFAULT_EXAM_CLIP_OFFSETS_SEC, load_gold_clip_offsets
 
 StudentJudge = Callable[[dict[str, Any]], dict[str, Any]]
 LOGGER = logging.getLogger(__name__)
-STAGE_EXIT_CODES = {"tripwire": 20, "extract": 21, "judge": 22, "count": 23}
+TRIPWIRE_CANDIDATES_SCHEMA = "tripwire-candidates-v1"
+STAGE_EXIT_CODES = {"tripwire": 20, "candidates": 24, "extract": 21, "judge": 22, "count": 23}
 
 
 @dataclass
@@ -36,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--arch", choices=["stack3_mobilenet", "video_x3d", "video_vmae", "twostream"])
     parser.add_argument("--clip-cache-dir", type=Path)
+    parser.add_argument("--write-candidates", type=Path)
+    parser.add_argument("--candidates", type=Path)
     parser.add_argument("--debounce-sec", type=float, default=25.0)
     parser.add_argument("--match-tolerance-sec", type=float, default=20.0)
     parser.add_argument("--out", type=Path, required=True)
@@ -51,6 +54,8 @@ def main(argv: list[str] | None = None) -> int:
             arch=args.arch,
             debounce_sec=args.debounce_sec,
             match_tolerance_sec=args.match_tolerance_sec,
+            write_candidates_path=args.write_candidates,
+            candidates_path=args.candidates,
         )
     except StageFailure as exc:
         print(f"{exc.stage} stage failed", file=sys.stderr)
@@ -72,6 +77,8 @@ def run_clip_exam(
     arch: str | None,
     debounce_sec: float,
     match_tolerance_sec: float,
+    write_candidates_path: Path | None = None,
+    candidates_path: Path | None = None,
 ) -> dict[str, Any]:
     from app.services.clip_dataset import extract_clip_dataset
     from app.services.clip_models import encodings_for_arch, load_student_judge, resolve_student_arch
@@ -79,14 +86,22 @@ def run_clip_exam(
     resolved_arch = _run_stage("judge", lambda: resolve_student_arch(model_path=model_path, fallback_arch=arch))
     output_zone_polygon = _run_stage("tripwire", lambda: load_output_zone_polygon(station_calibration_path))
     config = TripwireConfig()
-    tripwire_payload = _run_stage(
-        "tripwire",
-        lambda: run_tripwire_on_video(
-            video_path=video_path,
-            output_zone_polygon=output_zone_polygon,
-            config=config,
-        ),
-    )
+    if candidates_path is not None:
+        tripwire_payload = _run_stage("candidates", lambda: load_tripwire_candidates_payload(candidates_path))
+    else:
+        tripwire_payload = _run_stage(
+            "tripwire",
+            lambda: run_tripwire_on_video(
+                video_path=video_path,
+                output_zone_polygon=output_zone_polygon,
+                config=config,
+            ),
+        )
+        if write_candidates_path is not None:
+            _run_stage(
+                "candidates",
+                lambda: write_tripwire_candidates_payload(write_candidates_path, tripwire_payload),
+            )
     candidates = tripwire_payload.get("candidates") or []
     ready_candidates, edge_refutes = split_edge_truncated_candidates(
         candidates=candidates,
@@ -125,6 +140,20 @@ def _run_stage(stage: str, fn: Callable[[], Any]) -> Any:
         return fn()
     except Exception as exc:  # noqa: BLE001
         raise StageFailure(stage) from exc
+
+
+def write_tripwire_candidates_payload(path: Path, payload: dict[str, Any]) -> None:
+    cached_payload = dict(payload)
+    cached_payload["schema"] = TRIPWIRE_CANDIDATES_SCHEMA
+    write_tripwire_payload(path, cached_payload)
+
+
+def load_tripwire_candidates_payload(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    schema = payload.get("schema")
+    if schema != TRIPWIRE_CANDIDATES_SCHEMA:
+        raise ValueError(f"candidates schema must be {TRIPWIRE_CANDIDATES_SCHEMA!r}; got {schema!r}")
+    return payload
 
 
 def split_edge_truncated_candidates(

@@ -11,18 +11,87 @@ from scripts import run_clip_exam
 
 
 def test_run_clip_exam_cli_extracts_tripwire_candidates_and_counts(tmp_path: Path, monkeypatch) -> None:
-    video = tmp_path / "placement.mp4"
-    write_video(video, placement_frames(), fps=10)
-    calibration = tmp_path / "station_calibration.json"
-    calibration.write_text(
-        json.dumps({"output_polygons": [[[0.5, 0.5], [1.0, 0.5], [1.0, 1.0], [0.5, 1.0]]]}),
-        encoding="utf-8",
-    )
-    gold = tmp_path / "gold.json"
-    gold.write_text(json.dumps({"events": [{"id": "placement-1", "clip_offset_sec": 1.0}]}), encoding="utf-8")
+    monkeypatch_tripwire_config(monkeypatch)
+    paths = write_exam_inputs(tmp_path)
     model_path = train_asserting_stack3_student(tmp_path)
     out_path = tmp_path / "exam.json"
 
+    exit_code = run_exam_cli(paths=paths, model_path=model_path, out_path=out_path)
+
+    payload = json.loads(out_path.read_text(encoding="utf-8"))
+    assert exit_code == 0
+    assert payload["candidate_count"] >= 1
+    assert payload["counts"]
+    assert payload["count_times"]
+    assert payload["matched"] == 1
+    assert payload["false_counts"] == 0
+    assert payload["passed"] is True
+
+
+def test_run_clip_exam_can_write_and_reuse_tripwire_candidates(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch_tripwire_config(monkeypatch)
+    paths = write_exam_inputs(tmp_path)
+    model_path = train_asserting_stack3_student(tmp_path)
+    first_out_path = tmp_path / "exam_first.json"
+    second_out_path = tmp_path / "exam_second.json"
+    candidates_path = tmp_path / "tripwire_candidates.json"
+
+    first_exit_code = run_exam_cli(
+        paths=paths,
+        model_path=model_path,
+        out_path=first_out_path,
+        extra_args=["--write-candidates", str(candidates_path)],
+    )
+    first_payload = json.loads(first_out_path.read_text(encoding="utf-8"))
+    candidates_payload = json.loads(candidates_path.read_text(encoding="utf-8"))
+
+    assert first_exit_code == 0
+    assert candidates_payload["schema"] == run_clip_exam.TRIPWIRE_CANDIDATES_SCHEMA
+
+    def fail_tripwire(*args, **kwargs):
+        raise AssertionError("cached exam run must not invoke tripwire")
+
+    monkeypatch.setattr(run_clip_exam, "run_tripwire_on_video", fail_tripwire)
+
+    second_exit_code = run_exam_cli(
+        paths=paths,
+        model_path=model_path,
+        out_path=second_out_path,
+        extra_args=["--candidates", str(candidates_path)],
+    )
+    second_payload = json.loads(second_out_path.read_text(encoding="utf-8"))
+
+    assert second_exit_code == 0
+    assert second_payload["candidate_count"] == first_payload["candidate_count"]
+    assert second_payload["counts"] == first_payload["counts"]
+    assert second_payload["count_times"] == first_payload["count_times"]
+    assert second_payload["matched"] == first_payload["matched"]
+    assert second_payload["missed"] == first_payload["missed"]
+    assert second_payload["false_counts"] == first_payload["false_counts"]
+    assert second_payload["passed"] == first_payload["passed"]
+
+
+def test_run_clip_exam_rejects_wrong_candidates_schema(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch_tripwire_config(monkeypatch)
+    paths = write_exam_inputs(tmp_path)
+    model_path = train_asserting_stack3_student(tmp_path)
+    bad_candidates_path = tmp_path / "bad_candidates.json"
+    bad_candidates_path.write_text(json.dumps({"schema": "wrong", "candidates": []}), encoding="utf-8")
+
+    exit_code = run_exam_cli(
+        paths=paths,
+        model_path=model_path,
+        out_path=tmp_path / "exam.json",
+        extra_args=["--candidates", str(bad_candidates_path)],
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == run_clip_exam.STAGE_EXIT_CODES["candidates"]
+    assert "candidates stage failed" in captured.err
+    assert "tripwire-candidates-v1" in captured.err
+
+
+def monkeypatch_tripwire_config(monkeypatch) -> None:
     monkeypatch.setattr(
         run_clip_exam,
         "TripwireConfig",
@@ -38,14 +107,29 @@ def test_run_clip_exam_cli_extracts_tripwire_candidates_and_counts(tmp_path: Pat
         ),
     )
 
-    exit_code = run_clip_exam.main(
+
+def write_exam_inputs(tmp_path: Path) -> dict[str, Path]:
+    video = tmp_path / "placement.mp4"
+    write_video(video, placement_frames(), fps=10)
+    calibration = tmp_path / "station_calibration.json"
+    calibration.write_text(
+        json.dumps({"output_polygons": [[[0.5, 0.5], [1.0, 0.5], [1.0, 1.0], [0.5, 1.0]]]}),
+        encoding="utf-8",
+    )
+    gold = tmp_path / "gold.json"
+    gold.write_text(json.dumps({"events": [{"id": "placement-1", "clip_offset_sec": 1.0}]}), encoding="utf-8")
+    return {"video": video, "calibration": calibration, "gold": gold}
+
+
+def run_exam_cli(*, paths: dict[str, Path], model_path: Path, out_path: Path, extra_args: list[str] | None = None) -> int:
+    return run_clip_exam.main(
         [
             "--video",
-            str(video),
+            str(paths["video"]),
             "--gold-positives",
-            str(gold),
+            str(paths["gold"]),
             "--station-calibration",
-            str(calibration),
+            str(paths["calibration"]),
             "--model",
             str(model_path),
             "--arch",
@@ -56,17 +140,9 @@ def test_run_clip_exam_cli_extracts_tripwire_candidates_and_counts(tmp_path: Pat
             "1.0",
             "--out",
             str(out_path),
-        ]
+            *(extra_args or []),
+        ],
     )
-
-    payload = json.loads(out_path.read_text(encoding="utf-8"))
-    assert exit_code == 0
-    assert payload["candidate_count"] >= 1
-    assert payload["counts"]
-    assert payload["count_times"]
-    assert payload["matched"] == 1
-    assert payload["false_counts"] == 0
-    assert payload["passed"] is True
 
 
 def train_asserting_stack3_student(tmp_path: Path) -> Path:
