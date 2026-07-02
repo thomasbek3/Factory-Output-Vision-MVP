@@ -207,7 +207,7 @@ def create_videomae_classifier(*, pretrained: bool = False) -> Any:
     config = VideoMAEConfig(
         name_or_path=VIDEOMAE_MODEL_NAME,
         num_labels=2,
-        image_size=64,
+        image_size=224,
         num_frames=16,
         patch_size=16,
         tubelet_size=2,
@@ -469,8 +469,16 @@ def move_features(features: Any, device: str) -> Any:
 
 def model_logits(model: Any, features: Any, arch: str) -> Any:
     if arch == "video_vmae":
-        # VideoMAE expects B,T,C,H,W while the shared clip tensor is B,C,T,H,W.
-        result = model(pixel_values=features.permute(0, 2, 1, 3, 4))
+        import torch.nn.functional as F
+        # VideoMAE expects B,T,C,H,W at 224x224; the shared clip tensor is B,C,T,H,W
+        # at the native zone-crop size, so resize each frame to the model input.
+        vid = features.permute(0, 2, 1, 3, 4)
+        b, t, c, h, w = vid.shape
+        if (h, w) != (224, 224):
+            vid = F.interpolate(
+                vid.reshape(b * t, c, h, w), size=(224, 224), mode="bilinear", align_corners=False
+            ).reshape(b, t, c, 224, 224)
+        result = model(pixel_values=vid)
     else:
         result = model(features)
     return result.logits if hasattr(result, "logits") else result
