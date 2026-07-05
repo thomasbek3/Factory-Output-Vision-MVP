@@ -8,7 +8,7 @@ Quarantine superseded YOLO/factory2-era scripts so top-level `scripts/` only con
 
 - [x] C0 Fix receipt-validation tests so CI does not silently skip when offload weights are absent.
 - [x] C1 Move non-current top-level scripts into `scripts/research/factory2/`, update imports/docs, and keep backend/docs checks green.
-- [ ] C2 Add a compact repository layout map to `README.md`.
+- [x] C2 Add a compact repository layout map to `README.md`.
 
 ## Review
 
@@ -18,6 +18,7 @@ Quarantine superseded YOLO/factory2-era scripts so top-level `scripts/` only con
 - C1 import/path updates: `57` test import lines now point at `scripts.research.factory2`; no Makefile references point at quarantined scripts.
 - C1 full backend: `make test-backend` -> `625 passed, 16 warnings`.
 - C1 docs: `make docs-check` -> passed with the existing tracked artifact/cache warning.
+- C2 docs: `make docs-check` -> passed with the existing tracked artifact/cache warning.
 
 # Day-5 Human-Presence Tripwire - 2026-06-17
 

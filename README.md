@@ -29,6 +29,21 @@ Current evidence proves file-backed live counting through the real app path for 
 > model is in a bake-off pending the exam gate. See ADR 0004 and
 > `docs/specs/day4_action_recognition_spec.md`.
 
+## Repository layout
+
+```text
+app/                  FastAPI backend, runtime workers, services, database repos
+scripts/              Current CLIs; ops/, legacy/, and research/ hold operational or quarantined tools
+tests/                Backend, script, validation, and CLI contract tests
+docs/                 Current docs; decisions/ for ADRs and specs/ for implementation specs
+validation/           Registry, manifests, schemas, and exam/ held-outs; never train on exam data
+models/               Manifest/index only; large weights are artifact-managed outside Git
+data/                 Gitignored working data, reports, caches, and local run output
+demo/                 Small demo media and demo-mode fixtures
+frontend/             React/Vite dashboard, wizard, and troubleshooting UI
+INSTALL/              Installer and deployment notes
+```
+
 ## Architecture
 
 Track A — boxable products (proven runtime, system of record):
@@ -109,22 +124,6 @@ make hygiene
 ```
 
 `make hygiene` is the full local confidence pass for routine repository work. It is intentionally conservative and does not delete artifacts.
-
-## Repository Map
-
-```text
-app/                  FastAPI backend, runtime workers, services, database repos
-frontend/             React/Vite dashboard, wizard, troubleshooting UI
-scripts/              validation, training, active-learning, artifact tooling
-tests/                backend and script tests
-validation/           validation registry, case manifests, JSON schemas
-docs/                 product, architecture, validation, governance docs
-docs/decisions/       architecture decision records
-INSTALL/              installer and deployment notes
-tasks/                working task logs and lessons
-data/                 local working cache and reports; mostly not source of truth
-models/               local model cache; promotion requires validation evidence
-```
 
 Heavy factory artifacts are local-first. Do not assume `data/` or `models/` is clean just because files are present. The durable artifact policy is in `docs/07_ARTIFACT_STORAGE.md`.
 
