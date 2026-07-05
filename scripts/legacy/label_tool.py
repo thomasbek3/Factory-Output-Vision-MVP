@@ -2,7 +2,7 @@
 Local YOLO labeling tool with zoom/pan, display enhancement, and prelabel review.
 
 HOW TO USE:
-1. Run: python label_tool.py
+1. Run: python scripts/legacy/label_tool.py
 2. Each image appears in a window
 3. Left-click and drag to draw a box around the panel the worker is HOLDING
 4. Press ENTER to save and go to next image

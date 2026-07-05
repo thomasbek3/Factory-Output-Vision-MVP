@@ -4,7 +4,7 @@ Train a custom YOLOv8n model on the wire-mesh-panel dataset from Roboflow.
 USAGE:
   1. Export your Roboflow dataset as "YOLOv8" format
   2. Download and unzip to a folder (e.g., ./training_data/)
-  3. Run: python train_custom_model.py --data ./training_data/data.yaml
+  3. Run: python scripts/legacy/train_custom_model.py --data ./training_data/data.yaml
 
 The trained model will be saved to runs/detect/train/weights/best.pt
 Then set FC_YOLO_MODEL_PATH=runs/detect/train/weights/best.pt to use it.

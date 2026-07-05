@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-import train_custom_model
+from scripts.legacy import train_custom_model
 
 
 def test_validate_reviewed_label_gate_accepts_trainable_reviewed_labels(tmp_path):

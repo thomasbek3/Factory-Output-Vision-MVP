@@ -5,7 +5,7 @@ import types
 if "cv2" not in sys.modules:
     sys.modules["cv2"] = types.SimpleNamespace()
 
-import label_tool
+from scripts.legacy import label_tool
 
 
 def test_yolo_label_round_trip_with_custom_labels_dir(tmp_path, monkeypatch):
