@@ -1,3 +1,26 @@
+# Stage D1 Repo Cleanup - 2026-07-04
+
+## Objective
+
+Offload the remaining tracked YOLO training artifacts and Roboflow dataset stubs,
+then untrack local AI-session state without changing runtime behavior.
+
+## Milestones
+
+- [x] D1-1 Check references in `app/`, `scripts/`, `tests/`, `Makefile`, and `validation/` before removal.
+- [x] D1-2 Copy tracked `training_runs/`, `datasets/`, and `roboflow_dataset/` files to the local artifact store and verify SHA-256 for every copy.
+- [x] D1-3 Remove the copied artifacts from Git tracking, untrack `.context/claude-session-id` while keeping the local file, and update ignore rules plus artifact manifest.
+- [x] D1-4 Run `make test-backend` and `make docs-check`, then commit the cleanup.
+
+## Review
+
+- Reference scan: one hit, `scripts/check_repo_hygiene.py`, where `training_runs/` is listed as a forbidden tracked artifact prefix. No runtime/test read of the removed files was found.
+- Offload root: `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/`.
+- Copied and verified `76` files: `66` under `training_runs/`, `8` under `datasets/`, and `2` under `roboflow_dataset/`.
+- Checksum proof appended to `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/CHECKSUMS.txt`; the file grew from `50` to `126` lines.
+- `make test-backend` -> `625 passed, 16 warnings`.
+- `make docs-check` -> passed; warning count dropped to `156` remaining tracked artifact/cache paths.
+
 # Stage C Repo Cleanup - 2026-07-04
 
 ## Objective

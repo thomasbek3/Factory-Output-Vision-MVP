@@ -31,3 +31,15 @@ The checked-in repo keeps code, docs, validation manifests, and this index. To r
 | `yolov8n.pt` | Ultralytics COCO/base model cache; prefer the model name `yolov8n.pt` as an auto-download identifier | `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/yolov8n.pt` | `f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36` |
 | `yolo11n.pt` | Untracked Ultralytics person/base model cache copied for preservation | `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/yolo11n.pt` | `0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1` |
 | `yolo11n-cls.pt` | Untracked Ultralytics classifier/base model cache copied for preservation | `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/yolo11n-cls.pt` | `c62d41bf9625777760018bf914d2e6cd472420ccd01706d97a61cb6c82502bd7` |
+
+## Offloaded Training Artifacts And Dataset Stubs
+
+The remaining YOLO training artifacts and Roboflow dataset stubs were offloaded
+on 2026-07-04 and removed from Git tracking. The full per-file verification log
+is appended to `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/CHECKSUMS.txt`.
+
+| Repo path | File count | Offload path |
+| --- | ---: | --- |
+| `training_runs/` | 66 | `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/training_runs/` |
+| `datasets/` | 8 | `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/datasets/` |
+| `roboflow_dataset/` | 2 | `/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/roboflow_dataset/` |
