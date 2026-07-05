@@ -15,6 +15,9 @@ node_modules/
 data/
 build/
 dist/
+/runs/
+/models/*.pt
+/models/*.onnx
 *.MOV
 training_frames/
 training_frames_transit/
@@ -32,6 +35,7 @@ training_runs/*/val/
 snapshot_test.jpg
 /yolo11n.pt
 /yolo11n-cls.pt
+/yolov8n.pt
 /yolov8m.pt
 .context/
 .gstack/

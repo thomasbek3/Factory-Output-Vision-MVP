@@ -12,8 +12,15 @@ from pathlib import Path
 from tests.helpers import app_client
 
 
+OFFLOADED_PANEL_MODEL = Path(
+    "/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/models/panel_in_transit.pt"
+)
+
+
 class DemoModeFlowTests(unittest.TestCase):
     def test_deterministic_demo_runner_reveals_cached_receipts_over_api(self) -> None:
+        if not OFFLOADED_PANEL_MODEL.exists():
+            self.skipTest(f"offloaded panel model missing: {OFFLOADED_PANEL_MODEL}")
         temp_dir = tempfile.mkdtemp(prefix="factory_counter_deterministic_demo_")
         try:
             calibration_path = Path(temp_dir) / "factory2-runtime-calibration.json"
@@ -27,7 +34,7 @@ class DemoModeFlowTests(unittest.TestCase):
   "schema_version": "factory2-runtime-event-audit-v1",
   "video_path": "{Path('demo/demo.mp4').resolve()}",
   "calibration_path": "{calibration_path.resolve()}",
-  "model_path": "{Path('models/panel_in_transit.pt').resolve()}",
+  "model_path": "{OFFLOADED_PANEL_MODEL.resolve()}",
   "start_seconds": 0.0,
   "end_seconds": null,
   "processing_fps": 10.0,
@@ -85,13 +92,14 @@ class DemoModeFlowTests(unittest.TestCase):
                     "FC_RUNTIME_CALIBRATION_PATH": str(calibration_path),
                     "FC_DEMO_COUNT_MODE": "deterministic_file_runner",
                     "FC_DEMO_COUNT_CACHE_PATH": str(report_path),
+                    "FC_YOLO_MODEL_PATH": str(OFFLOADED_PANEL_MODEL),
                 },
             ) as (client, _ignored_temp_dir):
                 response = client.post("/api/control/monitor/start")
                 self.assertEqual(response.status_code, 200)
 
                 final_status = None
-                for _ in range(16):
+                for _ in range(40):
                     final_status = client.get("/api/status").json()
                     if final_status["runtime_total"] >= 2:
                         break

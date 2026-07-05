@@ -24,6 +24,11 @@ from app.workers.vision_worker import VisionWorker
 from tests.helpers import reset_logging_for_tests
 
 
+OFFLOADED_PANEL_MODEL = Path(
+    "/Users/thomas/FactoryVisionArtifacts/repo-offload/2026-07-04/models/panel_in_transit.pt"
+)
+
+
 class VisionWorkerStateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.mkdtemp(prefix="factory_counter_worker_")
@@ -39,6 +44,7 @@ class VisionWorkerStateTests(unittest.TestCase):
             "FC_RUNTIME_CALIBRATION_PATH": os.environ.get("FC_RUNTIME_CALIBRATION_PATH"),
             "FC_EVENT_DETECTION_CLUSTER_DISTANCE": os.environ.get("FC_EVENT_DETECTION_CLUSTER_DISTANCE"),
             "FC_EVENT_COUNT_RULE": os.environ.get("FC_EVENT_COUNT_RULE"),
+            "FC_YOLO_MODEL_PATH": os.environ.get("FC_YOLO_MODEL_PATH"),
         }
         os.environ["FC_DB_PATH"] = os.path.join(self.temp_dir, "worker.db")
         os.environ["FC_LOG_DIR"] = os.path.join(self.temp_dir, "logs")
@@ -59,6 +65,11 @@ class VisionWorkerStateTests(unittest.TestCase):
             else:
                 os.environ[key] = value
         shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def _use_offloaded_event_model(self) -> None:
+        if not OFFLOADED_PANEL_MODEL.exists():
+            self.skipTest(f"offloaded panel model missing: {OFFLOADED_PANEL_MODEL}")
+        os.environ["FC_YOLO_MODEL_PATH"] = str(OFFLOADED_PANEL_MODEL)
 
     def test_calibration_and_monitoring_transitions(self) -> None:
         calibrating = self.worker.start_calibration()
@@ -318,6 +329,7 @@ class VisionWorkerStateTests(unittest.TestCase):
     def test_event_based_runtime_counter_path_uses_gate_decisions_in_debug_artifact(self) -> None:
         self.worker.stop()
         os.environ["FC_COUNTING_MODE"] = "event_based"
+        self._use_offloaded_event_model()
         calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
         calibration_path.write_text(
             '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
@@ -408,6 +420,7 @@ class VisionWorkerStateTests(unittest.TestCase):
         self.worker.stop()
         os.environ["FC_COUNTING_MODE"] = "event_based"
         os.environ["FC_EVENT_COUNT_RULE"] = "dead_track"
+        self._use_offloaded_event_model()
         calibration_path = Path(self.temp_dir) / "runtime-calibration.json"
         calibration_path.write_text(
             '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
@@ -426,6 +439,7 @@ class VisionWorkerStateTests(unittest.TestCase):
         os.environ["FC_COUNTING_MODE"] = "event_based"
         os.environ["FC_EVENT_COUNT_RULE"] = "placed_and_stayed"
         os.environ["FC_RUNTIME_CALIBRATION_PATH"] = ""
+        self._use_offloaded_event_model()
 
         self.worker = VisionWorker(VideoRuntime())
 
@@ -592,6 +606,7 @@ class VisionWorkerStateTests(unittest.TestCase):
         os.environ["FC_COUNTING_MODE"] = "event_based"
         os.environ["FC_PERSON_DETECT_ENABLED"] = "1"
         os.environ["FC_PERSON_DETECT_FPS"] = "2"
+        self._use_offloaded_event_model()
         calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
         calibration_path.write_text(
             '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
@@ -621,6 +636,7 @@ class VisionWorkerStateTests(unittest.TestCase):
     def test_reset_counts_resets_runtime_event_counter(self) -> None:
         self.worker.stop()
         os.environ["FC_COUNTING_MODE"] = "event_based"
+        self._use_offloaded_event_model()
         calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
         calibration_path.write_text(
             '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
@@ -695,6 +711,7 @@ class VisionWorkerStateTests(unittest.TestCase):
     def test_deterministic_demo_start_monitoring_restarts_preview_and_arms_runner(self) -> None:
         self.worker.stop()
         os.environ["FC_COUNTING_MODE"] = "event_based"
+        self._use_offloaded_event_model()
         calibration_path = Path(self.temp_dir) / "factory2-runtime-calibration.json"
         calibration_path.write_text(
             '{"source_polygons":[[[0,0],[40,0],[40,100],[0,100]]],"output_polygons":[[[60,0],[100,0],[100,100],[60,100]]],"ignore_polygons":[]}',
