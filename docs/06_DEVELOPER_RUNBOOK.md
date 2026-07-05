@@ -18,12 +18,13 @@ make lint
 make build
 make docs-check
 make hygiene
+make check-trackb-env
 make run-test-case-1
 make validate-video CASE_ID=img3254_clean22_candidate
 make benchmark-onboarding
 ```
 
-`make docs-check` runs the lightweight repository hygiene check. `make hygiene` runs docs-check, backend tests, frontend lint, and frontend build.
+`make docs-check` runs the lightweight repository hygiene check. `make check-trackb-env` checks whether the optional Track B model packages are importable. `make hygiene` runs docs-check, backend tests, frontend lint, and frontend build.
 
 ## Test Case 1
 
@@ -38,6 +39,130 @@ http://127.0.0.1:5173/dashboard
 ```
 
 Expected result: Runtime Total reaches `23`; comparison artifact is `data/reports/factory2_app_vs_truth.run8104.visible_dashboard_v1.json`.
+
+## Track B: Overhead Wire-Frame Action Recognition
+
+Track B is the current live-station evaluation lane. It is for the overhead
+wire-frame station where YOLO cannot box the product. The workflow is:
+
+```text
+zone tripwire -> candidate clips -> teacher/human labels -> clip student -> blind exam
+```
+
+Install the optional ML packages before training or running VideoMAE/X3D model
+paths:
+
+```bash
+.venv/bin/pip install -r requirements-ml.txt
+make check-trackb-env
+```
+
+The held-out answer key lives under `validation/exam/`. Never train on those
+seven placements; they are the blind exam, like keeping the answer sheet sealed
+until grading.
+
+Tripwire candidate mining:
+
+```bash
+.venv/bin/python scripts/run_zone_tripwire.py \
+  --video /path/to/video.mp4 \
+  --station-calibration data/calibration/<station>.json \
+  --trigger person_presence \
+  --sample-fps 2 \
+  --score-method tiled_absdiff \
+  --out data/reports/trackb_candidates.json
+```
+
+Important flags: `--segment-manifest` can replace `--video`; `--trigger` is
+`person_presence` or `pixel`; tuning knobs include `--grid-size`,
+`--burst-threshold`, `--state-interval`, `--calm-threshold`,
+`--state-threshold`, `--min-flash-ratio`, `--bracket-sec`,
+`--include-motion-burst`, `--person-conf`, `--person-model`,
+`--presence-gap-sec`, `--episode-max-sec`, `--trigger-zone-margin`, and
+`--episode-pad-sec`.
+
+Tripwire recall check:
+
+```bash
+.venv/bin/python scripts/validate_tripwire_recall.py \
+  --tripwire-candidates data/reports/trackb_candidates.json \
+  --gold-positives validation/exam/exam_gold_positives.json \
+  --match-tolerance-sec 10 \
+  --out data/reports/trackb_tripwire_recall.json
+```
+
+Instead of `--tripwire-candidates`, this command can run directly from
+`--video` or `--segment-manifest`. It also accepts `--pm-gold-positives` and
+`--gold-wall-date` for plain wall-clock label files, plus the same tripwire
+tuning flags used by `run_zone_tripwire.py`.
+
+Clip extraction:
+
+```bash
+.venv/bin/python scripts/extract_clip_dataset.py \
+  --candidates data/reports/trackb_candidates.json \
+  --video /path/to/video.mp4 \
+  --station-calibration data/calibration/<station>.json \
+  --encoding all \
+  --clip-fps 4 \
+  --clip-frames 24 \
+  --out-dir data/trackb/clips \
+  --manifest-out data/trackb/clip_manifest.json \
+  --force
+```
+
+`--encoding` is `stack3`, `clip`, `flow`, or `all`. Use `--video` when the
+candidates file does not carry source paths.
+
+Clip labeling:
+
+```bash
+.venv/bin/python scripts/label_clips.py \
+  --manifest data/trackb/clip_manifest.json \
+  --out data/trackb/labeled_clips.json \
+  --labeler human \
+  --times data/trackb/human_times.csv \
+  --match-tolerance-sec 10 \
+  --review-html data/trackb/review.html
+```
+
+`--labeler` is `human` or `codex`; `--votes` supports multi-vote teacher passes.
+
+Student training:
+
+```bash
+.venv/bin/python scripts/train_clip_student.py \
+  --manifest data/trackb/labeled_clips.json \
+  --arch all \
+  --out-dir models/trackb_clip_student \
+  --epochs 10 \
+  --batch-size 4 \
+  --device cpu
+```
+
+`--arch` is `stack3_mobilenet`, `video_x3d`, `video_vmae`, `twostream`, or
+`all`. `--pretrained` tries pretrained backbones where available, and
+`--synthetic-smoke` creates a tiny smoke-test manifest without a real dataset.
+
+Blind exam:
+
+```bash
+.venv/bin/python scripts/run_clip_exam.py \
+  --video /path/to/exam_clip.mp4 \
+  --gold-positives validation/exam/exam_gold_positives.json \
+  --station-calibration data/calibration/<station>.json \
+  --model models/trackb_clip_student/model.pt \
+  --arch video_vmae \
+  --clip-cache-dir data/trackb/exam_clip_cache \
+  --write-candidates data/reports/trackb_exam_candidates.json \
+  --debounce-sec 30 \
+  --match-tolerance-sec 10 \
+  --out data/reports/trackb_clip_exam.json
+```
+
+If candidates were already mined, pass `--candidates` instead of
+`--write-candidates`. The exam report must match all seven held-out placements
+with zero false counts before Track B can be promoted.
 
 ## New Video Candidate
 

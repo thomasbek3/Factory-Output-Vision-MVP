@@ -1,6 +1,6 @@
 # Artifact Storage
 
-Updated: 2026-05-02
+Updated: 2026-07-04
 
 This project uses GitHub as the source of truth for the index, proof summaries, docs, scripts, and validation manifests. Heavy factory artifacts live outside normal Git.
 
@@ -11,6 +11,25 @@ The primary local artifact root on Thomas's Mac is:
 ```text
 /Users/thomas/FactoryVisionArtifacts
 ```
+
+That path is a symlink to the attached Crucial X9 Pro SSD:
+
+```text
+/Users/thomas/FactoryVisionArtifacts -> /Volumes/Crucial X9 Pro For Mac/Archive/FactoryVisionArtifacts
+```
+
+The repo checkout also lives on the same external SSD and is symlinked from the
+home Projects directory:
+
+```text
+/Users/thomas/Projects/Factory-Output-Vision-MVP -> /Volumes/Crucial X9 Pro For Mac/MacBook-space-offload/2026-05-16/Factory-Output-Vision-MVP
+```
+
+The drive intermittently unmounts and remounts. That is an accepted local
+operations risk for now; if paths vanish, wait for the SSD to remount and verify
+`git status` before continuing. Treat the SSD like the warehouse loading dock:
+when the dock door is closed, pause rather than writing heavy artifacts to the
+nearly full internal disk.
 
 Directory layout:
 

@@ -32,7 +32,26 @@ When docs conflict, prefer this order:
 | `13_FACTORY_ONBOARDING_AUTOPILOT_LOOP.md` | Recorder-first onboarding loop, milestones, and verifier gates |
 | `14_TEACHER_VERIFICATION_EVENT_LOOP.md` | Teacher-assisted event verification loop and gated milestones |
 | `15_AUTONOMOUS_ONBOARDING_REHEARSAL.md` | Real-teacher auto-box onboarding rehearsal with holdout gate |
+| `16_LIVE_RECORDING_RUNBOOK.md` | Live recording and artifact capture runbook |
 | `KNOWN_LIMITATIONS.md` | Honest current product limitations |
+
+## Specs
+
+These dated specs document the Track B pivot work by day. They are useful
+implementation references, but current claim boundaries still come from
+`00_CURRENT_STATE.md` first.
+
+| Spec | Purpose |
+| --- | --- |
+| `specs/day2_zone_miner_spec.md` | Day 2 zone-miner experiment |
+| `specs/day3_wide_net_miner_spec.md` | Day 3 wide-net miner experiment |
+| `specs/day4_action_recognition_spec.md` | Day 4 tripwire + clip action-recognition design |
+| `specs/day5_human_trigger_spec.md` | Day 5 human-trigger workflow |
+
+## Script Index
+
+See `../scripts/CURRENT.md` for the current Track B script surface. Most other
+scripts are older YOLO-era tooling kept for provenance or tests.
 
 ## Decision Records
 
