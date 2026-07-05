@@ -1,3 +1,20 @@
+# Stage C Repo Cleanup - 2026-07-04
+
+## Objective
+
+Quarantine superseded YOLO/factory2-era scripts so top-level `scripts/` only contains current, canonical, or actively imported entry points.
+
+## Milestones
+
+- [x] C0 Fix receipt-validation tests so CI does not silently skip when offload weights are absent.
+- [ ] C1 Move non-current top-level scripts into `scripts/research/factory2/`, update imports/docs, and keep backend/docs checks green.
+- [ ] C2 Add a compact repository layout map to `README.md`.
+
+## Review
+
+- C0 focused tests: `.venv/bin/python -m pytest tests/test_demo_mode_flow.py::DemoModeFlowTests::test_deterministic_demo_runner_reveals_cached_receipts_over_api tests/test_vision_worker_states.py::VisionWorkerStateTests::test_deterministic_demo_start_monitoring_restarts_preview_and_arms_runner -q` -> `2 passed`.
+- C0 fixture selected repo-local `yolov8n.pt`; `uses_offload=False`.
+
 # Day-5 Human-Presence Tripwire - 2026-06-17
 
 ## Objective
