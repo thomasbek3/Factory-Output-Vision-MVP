@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 from scripts.start_factory2_demo_app import build_demo_env, build_uvicorn_command
 from scripts.start_factory2_demo_stack import (
     _backend_command,
+    _ensure_demo_assets,
     _launch_process,
     build_frontend_command,
     build_frontend_env,
@@ -155,6 +156,22 @@ def test_stack_backend_command_can_disable_runtime_calibration() -> None:
 
     assert "--no-runtime-calibration" in command
     assert "--calibration" not in command
+
+
+def test_stack_precondition_names_missing_video_restore_command(tmp_path: Path) -> None:
+    missing_video = tmp_path / "missing_factory2.MOV"
+
+    try:
+        _ensure_demo_assets(video=missing_video, calibration=None)
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("missing Factory2 video should stop startup")
+
+    assert "Missing Factory2 demo video" in message
+    assert str(missing_video) in message
+    assert "cp -n /Users/thomas/FactoryVisionArtifacts/videos/raw/factory2.MOV" in message
+    assert str(missing_video) in message
 
 
 def test_stack_launcher_closes_child_stdin(tmp_path: Path) -> None:

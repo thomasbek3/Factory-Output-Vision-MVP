@@ -84,6 +84,7 @@ make build
 Run the verified Factory2 demo stack:
 
 ```bash
+mkdir -p data/videos/from-pc && cp -n /Users/thomas/FactoryVisionArtifacts/videos/raw/factory2.MOV data/videos/from-pc/factory2.MOV
 make run-test-case-1
 ```
 

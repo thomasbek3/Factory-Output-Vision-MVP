@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import signal
 import subprocess
 import time
@@ -15,6 +16,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LOG_DIR = REPO_ROOT / "data" / "logs"
+FACTORY2_RESTORE_SOURCE = Path("/Users/thomas/FactoryVisionArtifacts/videos/raw/factory2.MOV")
+DEFAULT_FACTORY2_VIDEO = Path("data/videos/from-pc/factory2.MOV")
+DEFAULT_FACTORY2_CALIBRATION = Path("data/calibration/factory2_ai_only_v1.json")
 
 
 def build_frontend_env(*, base_env: dict[str, str] | None = None, backend_port: int) -> dict[str, str]:
@@ -91,8 +95,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--backend-port", type=int, default=8091)
     parser.add_argument("--frontend-port", type=int, default=5173)
     parser.add_argument("--logs-dir", type=Path, default=DEFAULT_LOG_DIR)
-    parser.add_argument("--video", type=Path, default=Path("data/videos/from-pc/factory2.MOV"))
-    parser.add_argument("--calibration", type=Path, default=Path("data/calibration/factory2_ai_only_v1.json"))
+    parser.add_argument("--video", type=Path, default=DEFAULT_FACTORY2_VIDEO)
+    parser.add_argument("--calibration", type=Path, default=DEFAULT_FACTORY2_CALIBRATION)
     parser.add_argument("--no-runtime-calibration", action="store_true")
     parser.add_argument("--model", type=Path, default=None)
     parser.add_argument("--yolo-confidence", type=float, default=None)
@@ -110,6 +114,44 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-port-cleanup", action="store_true")
     parser.add_argument("--startup-timeout", type=float, default=90.0)
     return parser.parse_args()
+
+
+def _repo_path(path: Path) -> Path:
+    return path if path.is_absolute() else REPO_ROOT / path
+
+
+def _restore_command_for_video(video: Path) -> str:
+    target = video if video.is_absolute() else Path(video)
+    return (
+        f"mkdir -p {shlex.quote(str(target.parent))} && "
+        f"cp -n {shlex.quote(str(FACTORY2_RESTORE_SOURCE))} {shlex.quote(str(target))}"
+    )
+
+
+def _ensure_demo_assets(*, video: Path, calibration: Path | None) -> None:
+    video_path = _repo_path(video)
+    if not video_path.exists():
+        raise SystemExit(
+            "\n".join(
+                [
+                    f"Missing Factory2 demo video: {video}",
+                    "Restore the gitignored demo asset before running the stack:",
+                    f"  {_restore_command_for_video(video)}",
+                    f"Verified source: {FACTORY2_RESTORE_SOURCE}",
+                ]
+            )
+        )
+
+    if calibration is not None and not _repo_path(calibration).exists():
+        raise SystemExit(
+            "\n".join(
+                [
+                    f"Missing Factory2 runtime calibration: {calibration}",
+                    "That file is required unless you pass --no-runtime-calibration.",
+                    "It lives under gitignored data/, so restore it before running on a clean machine.",
+                ]
+            )
+        )
 
 
 def _pids_listening_on_port(port: int) -> list[int]:
@@ -185,6 +227,10 @@ def main() -> None:
     args = _parse_args()
     backend_port = args.backend_port
     frontend_port = args.frontend_port
+    _ensure_demo_assets(
+        video=args.video,
+        calibration=None if args.no_runtime_calibration else args.calibration,
+    )
 
     if not args.skip_port_cleanup:
         _terminate_processes_on_port(backend_port)
