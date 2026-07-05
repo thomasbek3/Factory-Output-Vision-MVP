@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.run_factory2_final_gap_search import run_final_gap_search
+from scripts.research.factory2.run_factory2_final_gap_search import run_final_gap_search
 
 
 def test_run_final_gap_search_writes_candidate_manifest_without_running_vision(tmp_path) -> None:

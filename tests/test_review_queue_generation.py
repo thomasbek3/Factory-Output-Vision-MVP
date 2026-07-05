@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.build_review_queue import build_review_queue
+from scripts.research.factory2.build_review_queue import build_review_queue
 
 
 def _write_fixture_files(tmp_path: Path) -> tuple[Path, Path]:

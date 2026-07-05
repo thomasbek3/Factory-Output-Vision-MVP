@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.freeze_factory2_diagnostics import freeze_diagnostics
+from scripts.research.factory2.freeze_factory2_diagnostics import freeze_diagnostics
 
 
 def _write_source_diagnostic(tmp_path: Path, name: str) -> Path:

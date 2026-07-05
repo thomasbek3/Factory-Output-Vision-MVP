@@ -15,7 +15,7 @@
 **Create**
 
 - `docs/superpowers/plans/2026-04-29-factory2-synthetic-lineage-convergence.md`
-- `scripts/build_factory2_synthetic_lineage_report.py`
+- `scripts/research/factory2/build_factory2_synthetic_lineage_report.py`
 - `tests/test_build_factory2_synthetic_lineage_report.py`
 
 **Likely modify if analysis supports a fix**
@@ -87,7 +87,7 @@ If any of those fail, do not “make proof say 23” and do not loosen threshold
 ### Task 1: Build A Synthetic-Lineage Analysis Report
 
 **Files:**
-- Create: `scripts/build_factory2_synthetic_lineage_report.py`
+- Create: `scripts/research/factory2/build_factory2_synthetic_lineage_report.py`
 - Create: `tests/test_build_factory2_synthetic_lineage_report.py`
 - Inputs:
   - `data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json`
@@ -101,7 +101,7 @@ If any of those fail, do not “make proof say 23” and do not loosen threshold
 ```python
 import json
 
-from scripts.build_factory2_synthetic_lineage_report import build_synthetic_lineage_report
+from scripts.research.factory2.build_factory2_synthetic_lineage_report import build_synthetic_lineage_report
 
 
 def test_build_synthetic_lineage_report_groups_events_by_provenance(tmp_path) -> None:
@@ -244,7 +244,7 @@ Expected: PASS
 Run:
 
 ```bash
-.venv/bin/python scripts/build_factory2_synthetic_lineage_report.py \
+.venv/bin/python scripts/research/factory2/build_factory2_synthetic_lineage_report.py \
   --runtime-audit /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json \
   --proof-report /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json \
   --divergence /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_proof_runtime_divergence.final_two_v2.json \
@@ -263,7 +263,7 @@ divergent_synthetic_count == 2
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/build_factory2_synthetic_lineage_report.py \
+git add scripts/research/factory2/build_factory2_synthetic_lineage_report.py \
   tests/test_build_factory2_synthetic_lineage_report.py \
   data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json
 git commit -m "feat: add factory2 synthetic lineage report"
@@ -580,7 +580,7 @@ git commit -m "feat: add guarded factory2 long-gap source lineage retention"
 ### Task 5: Rebuild Proof And Decide End State
 
 **Files:**
-- Modify if needed: `scripts/build_morning_proof_report.py`
+- Modify if needed: `scripts/research/factory2/build_morning_proof_report.py`
 - Modify: `.hermes/HANDOFF.md`
 - Modify: `AGENTS.md`
 - Modify: `CLAUDE.md`
@@ -591,13 +591,13 @@ git commit -m "feat: add guarded factory2 long-gap source lineage retention"
 Run:
 
 ```bash
-.venv/bin/python scripts/build_factory2_runtime_lineage_diagnostic.py \
+.venv/bin/python scripts/research/factory2/build_factory2_runtime_lineage_diagnostic.py \
   --runtime-audit /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_audit.lineage_0_430.v3.json \
   --event-ts 305.708 \
   --output-dir /Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0007-lineage-v3 \
   --force
 
-.venv/bin/python scripts/build_factory2_runtime_lineage_diagnostic.py \
+.venv/bin/python scripts/research/factory2/build_factory2_runtime_lineage_diagnostic.py \
   --runtime-audit /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_audit.lineage_0_430.v3.json \
   --event-ts 425.012 \
   --output-dir /Users/thomas/Projects/Factory-Output-Vision-MVP/data/diagnostics/runtime-proof/factory2-runtime-only-0008-lineage-v2 \
@@ -609,7 +609,7 @@ Then rebuild:
 ```bash
 .venv/bin/python - <<'PY'
 from pathlib import Path
-from scripts.build_morning_proof_report import build_morning_proof_report
+from scripts.research.factory2.build_morning_proof_report import build_morning_proof_report
 
 build_morning_proof_report(
     diagnostic_paths=[

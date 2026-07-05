@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from scripts.validate_miner_recall import build_recall_report, gold_event_wall_time
+from scripts.research.factory2.validate_miner_recall import build_recall_report, gold_event_wall_time
 
 
 def test_gold_wall_clock_derives_from_segment_file_and_offset() -> None:

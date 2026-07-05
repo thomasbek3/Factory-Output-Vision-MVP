@@ -67,7 +67,7 @@ wire vanished). Requirements:
 - CLI `scripts/run_zone_tripwire.py`: `--segment-manifest|--video`, `--station-calibration`,
   score/threshold flags, `--out candidates.json`.
 
-## Change 2 — Tripwire recall gate (extend `scripts/validate_miner_recall.py` OR new `scripts/validate_tripwire_recall.py`)
+## Change 2 — Tripwire recall gate (extend `scripts/research/factory2/validate_miner_recall.py` OR new `scripts/validate_tripwire_recall.py`)
 
 Run Tripwire v2 over the exam hour, score candidate recall vs the 7 gold
 placements (caught = a candidate center within `--match-tolerance-sec`, default 20,

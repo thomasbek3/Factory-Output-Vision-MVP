@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.build_factory2_runtime_lineage_diagnostic import build_runtime_lineage_diagnostic_from_capture
-from scripts.build_morning_proof_report import summarize_diagnostic
+from scripts.research.factory2.build_factory2_runtime_lineage_diagnostic import build_runtime_lineage_diagnostic_from_capture
+from scripts.research.factory2.build_morning_proof_report import summarize_diagnostic
 
 
 def _write_placeholder(path: Path, text: str) -> None:

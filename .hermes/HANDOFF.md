@@ -284,7 +284,7 @@ The failed static diagnostic total 18 remains invalid as a count prediction.
 What changed:
 
 ```text
-- Added scripts/build_real_factory_diagnostic_action_dataset.py.
+- Added scripts/research/factory2/build_real_factory_diagnostic_action_dataset.py.
 - Added tests/test_build_real_factory_diagnostic_action_dataset.py.
 - Built diagnostic dataset v2 with tighter action boxes and hard negatives.
 - Trained models/real_factory_diagnostic_action_v2.pt.
@@ -306,7 +306,7 @@ Verification:
 
 ```text
 .venv/bin/python -m json.tool data/reports/real_factory_runtime_count4_app_path_evidence_v1.json
-.venv/bin/python -m py_compile scripts/build_real_factory_diagnostic_action_dataset.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_real_factory_diagnostic_action_dataset.py
 .venv/bin/python -m pytest tests/test_build_real_factory_diagnostic_action_dataset.py -q
 5 passed
 .venv/bin/python -m pytest tests/test_capture_factory2_app_run_events.py tests/test_start_factory2_demo_app.py -q
@@ -367,7 +367,7 @@ Current worksheet remains fully pending: no reviewed event timestamps, no gold t
 New tooling:
 
 ```text
-Script: scripts/convert_failed_blind_run_review.py
+Script: scripts/research/factory2/convert_failed_blind_run_review.py
 Tests: tests/test_convert_failed_blind_run_review.py
 ```
 
@@ -447,7 +447,7 @@ Focused verification:
 Actual pending conversion command already run:
 
 ```bash
-.venv/bin/python scripts/convert_failed_blind_run_review.py \
+.venv/bin/python scripts/research/factory2/convert_failed_blind_run_review.py \
   --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv \
   --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json \
   --manifest validation/test_cases/real_factory.json \
@@ -463,7 +463,7 @@ Actual pending conversion command already run:
 Next command after Thomas fills the worksheet decisions and exactly 4 reviewed event timestamps:
 
 ```bash
-.venv/bin/python scripts/convert_failed_blind_run_review.py \
+.venv/bin/python scripts/research/factory2/convert_failed_blind_run_review.py \
   --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv \
   --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json \
   --manifest validation/test_cases/real_factory.json \
@@ -544,7 +544,7 @@ Result:
 Failed-run recovery packet:
 
 ```text
-Script: scripts/build_failed_blind_run_learning_packet.py
+Script: scripts/research/factory2/build_failed_blind_run_learning_packet.py
 JSON: data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json
 Worksheet: data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv
 HTML: data/reports/active_learning/real_factory_failed_blind_run_review_packet.v1.html
@@ -982,10 +982,10 @@ Focused event dispute packet:
 Reviewed-truth decision bridge:
 - data/reports/img2628_event_level_dispute_decisions.template_v1.csv
 - data/reports/img2628_event_level_dispute_decisions.README.md
-- scripts/apply_img2628_event_dispute_decisions.py
+- scripts/research/factory2/apply_img2628_event_dispute_decisions.py
 - tests/test_apply_img2628_event_dispute_decisions.py
 - The script fails closed while decisions are blank; verified with:
-  .venv/bin/python scripts/apply_img2628_event_dispute_decisions.py --base-truth data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv --decisions data/reports/img2628_event_level_dispute_decisions.template_v1.csv --disputes data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv --output /tmp/img2628_reviewed_truth_should_not_exist.csv --expected-total 25 --force
+  .venv/bin/python scripts/research/factory2/apply_img2628_event_dispute_decisions.py --base-truth data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv --decisions data/reports/img2628_event_level_dispute_decisions.template_v1.csv --disputes data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv --output /tmp/img2628_reviewed_truth_should_not_exist.csv --expected-total 25 --force
 - Focused test: .venv/bin/python -m pytest tests/test_apply_img2628_event_dispute_decisions.py -q
 
 Follow-up threshold search on port 8093:
@@ -999,7 +999,7 @@ Follow-up threshold search on port 8093:
 Reviewed truth commands used:
 
 ```bash
-.venv/bin/python scripts/apply_img2628_event_dispute_decisions.py \
+.venv/bin/python scripts/research/factory2/apply_img2628_event_dispute_decisions.py \
   --base-truth data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv \
   --decisions data/reports/img2628_event_level_dispute_decisions.reviewed_v1.csv \
   --disputes data/reports/img2628_event_level_dispute_review.visible_dashboard_candidate25_v1.csv \
@@ -1463,8 +1463,8 @@ Implemented the next honest Factory2 slice after the runtime/proof divergence au
 app/services/count_state_machine.py
 app/services/runtime_event_counter.py
 scripts/audit_factory2_runtime_events.py
-scripts/build_factory2_synthetic_lineage_report.py
-scripts/build_factory2_final_gap_search_plan.py
+scripts/research/factory2/build_factory2_synthetic_lineage_report.py
+scripts/research/factory2/build_factory2_final_gap_search_plan.py
 tests/test_count_state_machine.py
 tests/test_runtime_event_counter.py
 tests/test_audit_factory2_runtime_events.py
@@ -1562,12 +1562,12 @@ Commands run:
 ```bash
 .venv/bin/python -m pytest tests/test_build_factory2_synthetic_lineage_report.py -q
 .venv/bin/python -m pytest tests/test_build_factory2_final_gap_search_plan.py -q
-.venv/bin/python scripts/build_factory2_synthetic_lineage_report.py --runtime-audit data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json --proof-report data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json --divergence data/reports/factory2_proof_runtime_divergence.final_two_v2.json --output data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json --force
-.venv/bin/python scripts/build_factory2_final_gap_search_plan.py --packets data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json --lineage-report data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json --output data/reports/factory2_final_gap_search_plan.v2.json --lead-seconds 4 --lead-seconds 6 --lead-seconds 8 --lead-seconds 10 --lead-seconds 12 --tail-seconds 2 --tail-seconds 3 --tail-seconds 4 --tail-seconds 6 --fps 5 --fps 8 --fps 10 --force
-.venv/bin/python scripts/run_factory2_final_gap_search.py --plan data/reports/factory2_final_gap_search_plan.v2.json --output data/reports/factory2_final_gap_search_run.v2.event0007.json --event-id factory2-runtime-only-0007 --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --person-model yolo11n.pt --force
-.venv/bin/python scripts/build_factory2_final_gap_search_report.py --search-run data/reports/factory2_final_gap_search_run.v2.event0007.json --output data/reports/factory2_final_gap_search_report.v2.event0007.json --force
-.venv/bin/python scripts/run_factory2_final_gap_search.py --plan data/reports/factory2_final_gap_search_plan.v2.json --output data/reports/factory2_final_gap_search_run.v2.event0008.json --event-id factory2-runtime-only-0008 --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --person-model yolo11n.pt --force
-.venv/bin/python scripts/build_factory2_final_gap_search_report.py --search-run data/reports/factory2_final_gap_search_run.v2.event0008.json --output data/reports/factory2_final_gap_search_report.v2.event0008.json --force
+.venv/bin/python scripts/research/factory2/build_factory2_synthetic_lineage_report.py --runtime-audit data/reports/factory2_runtime_event_audit.lineage_0_430.v2.json --proof-report data/reports/factory2_morning_proof_report.optimized_plus_runtime_lineage_v2.json --divergence data/reports/factory2_proof_runtime_divergence.final_two_v2.json --output data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json --force
+.venv/bin/python scripts/research/factory2/build_factory2_final_gap_search_plan.py --packets data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json --lineage-report data/reports/factory2_synthetic_lineage_report.lineage_0_430.v1.json --output data/reports/factory2_final_gap_search_plan.v2.json --lead-seconds 4 --lead-seconds 6 --lead-seconds 8 --lead-seconds 10 --lead-seconds 12 --tail-seconds 2 --tail-seconds 3 --tail-seconds 4 --tail-seconds 6 --fps 5 --fps 8 --fps 10 --force
+.venv/bin/python scripts/research/factory2/run_factory2_final_gap_search.py --plan data/reports/factory2_final_gap_search_plan.v2.json --output data/reports/factory2_final_gap_search_run.v2.event0007.json --event-id factory2-runtime-only-0007 --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --person-model yolo11n.pt --force
+.venv/bin/python scripts/research/factory2/build_factory2_final_gap_search_report.py --search-run data/reports/factory2_final_gap_search_run.v2.event0007.json --output data/reports/factory2_final_gap_search_report.v2.event0007.json --force
+.venv/bin/python scripts/research/factory2/run_factory2_final_gap_search.py --plan data/reports/factory2_final_gap_search_plan.v2.json --output data/reports/factory2_final_gap_search_run.v2.event0008.json --event-id factory2-runtime-only-0008 --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --person-model yolo11n.pt --force
+.venv/bin/python scripts/research/factory2/build_factory2_final_gap_search_report.py --search-run data/reports/factory2_final_gap_search_run.v2.event0008.json --output data/reports/factory2_final_gap_search_report.v2.event0008.json --force
 .venv/bin/python -m pytest tests/test_count_state_machine.py tests/test_runtime_event_counter.py tests/test_audit_factory2_runtime_events.py tests/test_build_factory2_synthetic_lineage_report.py tests/test_build_factory2_final_gap_search_plan.py tests/test_run_factory2_final_gap_search.py tests/test_build_factory2_final_gap_search_report.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_morning_proof_report.py -q
 .venv/bin/python scripts/audit_factory2_runtime_events.py --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --output data/reports/factory2_runtime_event_audit.lineage_280_308.v4.json --start-seconds 280 --end-seconds 308 --processing-fps 10 --include-track-histories --force
 .venv/bin/python scripts/audit_factory2_runtime_events.py --video data/videos/from-pc/factory2.MOV --calibration data/calibration/factory2_ai_only_v1.json --model models/panel_in_transit.pt --output data/reports/factory2_runtime_event_audit.lineage_398_427.v4.json --start-seconds 398 --end-seconds 427 --processing-fps 10 --include-track-histories --force
@@ -1621,8 +1621,8 @@ Implemented the runtime-lineage audit path Oracle asked for and used it to settl
 app/services/count_state_machine.py
 app/services/runtime_event_counter.py
 scripts/audit_factory2_runtime_events.py
-scripts/build_factory2_runtime_lineage_diagnostic.py
-scripts/build_morning_proof_report.py
+scripts/research/factory2/build_factory2_runtime_lineage_diagnostic.py
+scripts/research/factory2/build_morning_proof_report.py
 tests/test_count_state_machine.py
 tests/test_audit_factory2_runtime_events.py
 tests/test_build_factory2_runtime_lineage_diagnostic.py
@@ -1729,8 +1729,8 @@ Do not spend more time on narrower proof windows. If the product needs proof and
 Implemented the next labeling/training slice:
 
 ```text
-scripts/package_factory2_crop_review.py
-scripts/build_factory2_crop_training_dataset.py
+scripts/research/factory2/package_factory2_crop_review.py
+scripts/research/factory2/build_factory2_crop_training_dataset.py
 tests/test_package_factory2_crop_review.py
 tests/test_build_factory2_crop_training_dataset.py
 docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md
@@ -1786,10 +1786,10 @@ Commands run:
 
 ```bash
 .venv/bin/python -m pytest tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py -q
-.venv/bin/python -m py_compile scripts/package_factory2_crop_review.py scripts/build_factory2_crop_training_dataset.py tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py
+.venv/bin/python -m py_compile scripts/research/factory2/package_factory2_crop_review.py scripts/research/factory2/build_factory2_crop_training_dataset.py tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py
 .venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_export_factory2_blocked_crops.py tests/test_package_factory2_crop_review.py tests/test_build_factory2_crop_training_dataset.py -q
-.venv/bin/python scripts/package_factory2_crop_review.py --crop-dataset-report data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json --output-report data/reports/factory2_crop_review_package.narrow_frozen_v2.json --package-dir data/datasets/factory2_crop_review_package_narrow_frozen_v2 --force
-.venv/bin/python scripts/build_factory2_crop_training_dataset.py --review-package-report data/reports/factory2_crop_review_package.narrow_frozen_v2.json --output-report data/reports/factory2_crop_training_dataset.narrow_frozen_v2.json --dataset-dir data/datasets/factory2_crop_training_dataset_narrow_frozen_v2 --force
+.venv/bin/python scripts/research/factory2/package_factory2_crop_review.py --crop-dataset-report data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json --output-report data/reports/factory2_crop_review_package.narrow_frozen_v2.json --package-dir data/datasets/factory2_crop_review_package_narrow_frozen_v2 --force
+.venv/bin/python scripts/research/factory2/build_factory2_crop_training_dataset.py --review-package-report data/reports/factory2_crop_review_package.narrow_frozen_v2.json --output-report data/reports/factory2_crop_training_dataset.narrow_frozen_v2.json --dataset-dir data/datasets/factory2_crop_training_dataset_narrow_frozen_v2 --force
 ```
 
 Verification:
@@ -1810,7 +1810,7 @@ The blocker is now externalized to label truth, not pipeline code. The repo need
 Exact next recommended step:
 
 ```text
-Open `data/datasets/factory2_crop_review_package_narrow_frozen_v2/review_labels.csv`, label the `p0_candidate_salvage` rows first as `carried_panel | worker_only | static_stack`, rerun `scripts/build_factory2_crop_training_dataset.py`, and do not start model training until `ready_for_training` flips true.
+Open `data/datasets/factory2_crop_review_package_narrow_frozen_v2/review_labels.csv`, label the `p0_candidate_salvage` rows first as `carried_panel | worker_only | static_stack`, rerun `scripts/research/factory2/build_factory2_crop_training_dataset.py`, and do not start model training until `ready_for_training` flips true.
 ```
 
 
@@ -1819,7 +1819,7 @@ Open `data/datasets/factory2_crop_review_package_narrow_frozen_v2/review_labels.
 Implemented the next recall-training slice:
 
 ```text
-scripts/export_factory2_blocked_crops.py
+scripts/research/factory2/export_factory2_blocked_crops.py
 tests/test_export_factory2_blocked_crops.py
 ```
 
@@ -1859,8 +1859,8 @@ Commands run:
 
 ```bash
 .venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_export_factory2_blocked_crops.py -q
-.venv/bin/python -m py_compile scripts/export_factory2_blocked_crops.py tests/test_export_factory2_blocked_crops.py
-.venv/bin/python scripts/export_factory2_blocked_crops.py --proof-report data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --output-report data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json --dataset-dir data/datasets/factory2_blocked_crops_narrow_frozen_v2 --force
+.venv/bin/python -m py_compile scripts/research/factory2/export_factory2_blocked_crops.py tests/test_export_factory2_blocked_crops.py
+.venv/bin/python scripts/research/factory2/export_factory2_blocked_crops.py --proof-report data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --output-report data/reports/factory2_blocked_crop_dataset.narrow_frozen_v2.json --dataset-dir data/datasets/factory2_blocked_crops_narrow_frozen_v2 --force
 ```
 
 Verification:
@@ -1891,9 +1891,9 @@ Implemented the next recall-proof slice:
 ```text
 AGENTS.md
 CLAUDE.md
-scripts/freeze_factory2_diagnostics.py
-scripts/build_morning_proof_report.py
-scripts/run_factory2_morning_proof.py
+scripts/research/factory2/freeze_factory2_diagnostics.py
+scripts/research/factory2/build_morning_proof_report.py
+scripts/research/factory2/run_factory2_morning_proof.py
 tests/test_freeze_factory2_diagnostics.py
 tests/test_build_morning_proof_report.py
 tests/test_run_factory2_morning_proof.py
@@ -1904,7 +1904,7 @@ What changed:
 
 ```text
 - Added `freeze_factory2_diagnostics.py` to copy selected diagnostic directories into an isolated frozen tree and rewrite all embedded JSON asset paths so merged proof runs stop mutating the shared source diagnostics.
-- Added `--freeze-diagnostics-dir` support to `scripts/run_factory2_morning_proof.py`, and the run summary now records both source diagnostics and frozen diagnostics.
+- Added `--freeze-diagnostics-dir` support to `scripts/research/factory2/run_factory2_morning_proof.py`, and the run summary now records both source diagnostics and frozen diagnostics.
 - Added report-layer accepted-receipt deduping: overlapping accepted receipts across windows now remain visible for audit, but only one canonical receipt per overlapping interval cluster contributes to the top-level `accepted_count`.
 ```
 
@@ -1957,9 +1957,9 @@ Commands run:
 
 ```bash
 .venv/bin/python -m pytest tests/test_build_morning_proof_report.py tests/test_freeze_factory2_diagnostics.py tests/test_run_factory2_morning_proof.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_build_factory2_recall_work_queue.py tests/test_runtime_event_counter.py tests/test_person_panel_gate_promotion.py -q
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py scripts/freeze_factory2_diagnostics.py scripts/run_factory2_morning_proof.py scripts/diagnose_event_window.py scripts/analyze_person_panel_separation.py scripts/build_factory2_recall_work_queue.py app/services/runtime_event_counter.py app/services/person_panel_gate_promotion.py tests/test_build_morning_proof_report.py tests/test_freeze_factory2_diagnostics.py tests/test_run_factory2_morning_proof.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_build_factory2_recall_work_queue.py tests/test_runtime_event_counter.py tests/test_person_panel_gate_promotion.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force --report-json data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --report-md data/reports/factory2_morning_proof_report.narrow_frozen_v2.md --run-summary-json data/reports/factory2_morning_proof_run_summary.narrow_frozen_v2.json --panel-crop-evidence-json data/reports/factory2_panel_crop_evidence.narrow_frozen_v2.json --transfer-review-packets-json data/reports/factory2_transfer_review_packets.narrow_frozen_v2.json --person-panel-separation-json data/reports/factory2_person_panel_separation.narrow_frozen_v2.json --freeze-diagnostics-dir data/diagnostics/frozen/factory2-narrow-merged-v2 --diagnostic data/diagnostics/event-windows/factory2-review-0014-000-030s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0012-145-185s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0002-222s-panel-v1/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0008-232-272s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0009-332-372s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0011-372-412s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0005-418s-panel-v1/diagnostic.json
-.venv/bin/python -m scripts.build_morning_proof_report --force --output data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --markdown-output data/reports/factory2_morning_proof_report.narrow_frozen_v2.md --fp-report data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf025.json --fp-report data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf010.json --positive-report data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf025_iou030.json --positive-report data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf010_iou030.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0014-000-030s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0012-145-185s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0002-222s-panel-v1/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0008-232-272s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0009-332-372s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0011-372-412s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0005-418s-panel-v1/diagnostic.json
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py scripts/research/factory2/freeze_factory2_diagnostics.py scripts/research/factory2/run_factory2_morning_proof.py scripts/research/factory2/diagnose_event_window.py scripts/analyze_person_panel_separation.py scripts/research/factory2/build_factory2_recall_work_queue.py app/services/runtime_event_counter.py app/services/person_panel_gate_promotion.py tests/test_build_morning_proof_report.py tests/test_freeze_factory2_diagnostics.py tests/test_run_factory2_morning_proof.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py tests/test_build_factory2_recall_work_queue.py tests/test_runtime_event_counter.py tests/test_person_panel_gate_promotion.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force --report-json data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --report-md data/reports/factory2_morning_proof_report.narrow_frozen_v2.md --run-summary-json data/reports/factory2_morning_proof_run_summary.narrow_frozen_v2.json --panel-crop-evidence-json data/reports/factory2_panel_crop_evidence.narrow_frozen_v2.json --transfer-review-packets-json data/reports/factory2_transfer_review_packets.narrow_frozen_v2.json --person-panel-separation-json data/reports/factory2_person_panel_separation.narrow_frozen_v2.json --freeze-diagnostics-dir data/diagnostics/frozen/factory2-narrow-merged-v2 --diagnostic data/diagnostics/event-windows/factory2-review-0014-000-030s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0012-145-185s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0002-222s-panel-v1/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0008-232-272s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0009-332-372s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0011-372-412s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/event-windows/factory2-review-0005-418s-panel-v1/diagnostic.json
+.venv/bin/python -m scripts.research.factory2.build_morning_proof_report --force --output data/reports/factory2_morning_proof_report.narrow_frozen_v2.json --markdown-output data/reports/factory2_morning_proof_report.narrow_frozen_v2.md --fp-report data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf025.json --fp-report data/eval/detector_false_positives/active_panel_hard_negatives_v1_panel_in_transit_conf010.json --positive-report data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf025_iou030.json --positive-report data/eval/detector_positives/active_panel_positives_v1_panel_in_transit_conf010_iou030.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0014-000-030s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-event0002-98s-panel-v4-protrusion-gated/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0012-145-185s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0002-222s-panel-v1/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0008-232-272s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0010-288-328s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0009-332-372s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0011-372-412s-panel-v1-5fps/diagnostic.json --diagnostic data/diagnostics/frozen/factory2-narrow-merged-v2/factory2-review-0005-418s-panel-v1/diagnostic.json
 ```
 
 Verification:
@@ -1982,7 +1982,7 @@ The immutable narrow proof set is now real and beats the old broad baseline, but
 Exact next recommended step:
 
 ```text
-Implement `scripts/export_factory2_blocked_crops.py` and `tests/test_export_factory2_blocked_crops.py`
+Implement `scripts/research/factory2/export_factory2_blocked_crops.py` and `tests/test_export_factory2_blocked_crops.py`
 against `data/reports/factory2_morning_proof_report.narrow_frozen_v2.json`, starting with the
 remaining worker-overlap receipts in the frozen merged set.
 ```
@@ -1998,8 +1998,8 @@ CLAUDE.md
 docs/PROJECT_SPEC.md
 docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md
 scripts/analyze_person_panel_separation.py
-scripts/build_factory2_recall_work_queue.py
-scripts/diagnose_event_window.py
+scripts/research/factory2/build_factory2_recall_work_queue.py
+scripts/research/factory2/diagnose_event_window.py
 tests/test_analyze_person_panel_separation.py
 tests/test_build_factory2_recall_work_queue.py
 tests/test_diagnose_event_window.py
@@ -2049,8 +2049,8 @@ Commands run:
 
 ```bash
 .venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py -q
-.venv/bin/python -m py_compile scripts/diagnose_event_window.py scripts/analyze_person_panel_separation.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py
-.venv/bin/python scripts/build_factory2_recall_work_queue.py --force
+.venv/bin/python -m py_compile scripts/research/factory2/diagnose_event_window.py scripts/analyze_person_panel_separation.py tests/test_diagnose_event_window.py tests/test_analyze_person_panel_separation.py
+.venv/bin/python scripts/research/factory2/build_factory2_recall_work_queue.py --force
 ```
 
 Verification:
@@ -2071,7 +2071,7 @@ Exact next recommended step:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/build_factory2_recall_work_queue.py --force
+.venv/bin/python scripts/research/factory2/build_factory2_recall_work_queue.py --force
 ```
 
 Then freeze/copy the finalized narrow diagnostic directories, build one merged proof artifact from those immutable copies, and only after that start the blocked-crop export path in `docs/PRD_FACTORY2_RECALL_AND_CROP_SEPARATION.md`.
@@ -2143,8 +2143,8 @@ Commands run:
 
 ```bash
 .venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_runtime_event_counter.py tests/test_count_state_machine_runtime_approval.py tests/test_count_state_machine.py tests/test_count_state_machine_adversarial.py tests/test_vision_worker_states.py tests/test_settings_runtime.py tests/test_api_smoke.py tests/test_dashboard_contract.py -q
-.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 env FC_DB_PATH=/tmp/factory2-runtime-api.db FC_LOG_DIR=/tmp/factory2-runtime-api-logs FC_DEMO_MODE=1 FC_DEMO_VIDEO_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV FC_DEMO_PLAYBACK_SPEED=4 FC_COUNTING_MODE=event_based FC_RUNTIME_CALIBRATION_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json FC_YOLO_MODEL_PATH=/Users/thomas/Projects/Factory-Output-Vision-MVP/models/panel_in_transit.pt FC_PERSON_DETECT_ENABLED=1 ./.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8090
 # then POST /api/control/monitor/start and poll GET /api/status until counts_this_hour becomes 1
 ```
@@ -2169,7 +2169,7 @@ Exact next recommended step:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Then add an opt-in slow regression harness that boots the app in demo mode on `factory2.MOV`, starts monitoring over HTTP, asserts `counts_this_hour == 1`, and verifies the count does not rise again across the later event window.
@@ -2181,9 +2181,9 @@ Implemented the final proof-path consistency work needed to make the Factory2 su
 
 ```text
 app/services/person_panel_gate_promotion.py
-scripts/build_morning_proof_report.py
-scripts/diagnose_event_window.py
-scripts/run_factory2_morning_proof.py
+scripts/research/factory2/build_morning_proof_report.py
+scripts/research/factory2/diagnose_event_window.py
+scripts/research/factory2/run_factory2_morning_proof.py
 tests/test_person_panel_gate_promotion.py
 tests/test_diagnose_event_window.py
 tests/test_run_factory2_morning_proof.py
@@ -2218,16 +2218,16 @@ event0006 diagnostic allowed tracks: []
 Why this matters:
 
 ```text
-This closes the prior proof-only gap. `scripts/run_factory2_morning_proof.py --force` now regenerates the base diagnostics, recomputes the packet/separation evidence, refreshes the on-disk diagnostic receipts, and lands on the same single accepted carried-panel count. The accepted `track-000005` receipt is now promoted by `strong_person_panel_separation` with `outside_person_ratio: 0.0`, which is exactly the auditable worker-overlap case the PRD was targeting.
+This closes the prior proof-only gap. `scripts/research/factory2/run_factory2_morning_proof.py --force` now regenerates the base diagnostics, recomputes the packet/separation evidence, refreshes the on-disk diagnostic receipts, and lands on the same single accepted carried-panel count. The accepted `track-000005` receipt is now promoted by `strong_person_panel_separation` with `outside_person_ratio: 0.0`, which is exactly the auditable worker-overlap case the PRD was targeting.
 ```
 
 Commands run:
 
 ```bash
 .venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_build_morning_proof_report.py tests/test_perception_gate.py tests/test_diagnose_event_window.py tests/test_person_panel_gate_promotion.py -q
-python -m py_compile app/services/person_panel_gate_promotion.py scripts/diagnose_event_window.py scripts/build_morning_proof_report.py scripts/run_factory2_morning_proof.py tests/test_person_panel_gate_promotion.py tests/test_diagnose_event_window.py tests/test_run_factory2_morning_proof.py
-.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile app/services/person_panel_gate_promotion.py scripts/research/factory2/diagnose_event_window.py scripts/research/factory2/build_morning_proof_report.py scripts/research/factory2/run_factory2_morning_proof.py tests/test_person_panel_gate_promotion.py tests/test_diagnose_event_window.py tests/test_run_factory2_morning_proof.py
+.venv/bin/python scripts/research/factory2/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Verification:
@@ -2251,7 +2251,7 @@ Exact next recommended step:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Then, if moving beyond the PRD, wire the same accepted-count receipt path into the broader counting/product entrypoint and add a held-out regression clip so future gate changes cannot reopen weak worker-overlap packets.
@@ -2263,8 +2263,8 @@ Implemented the first non-diagnostic promotion path for `factory2.MOV`:
 
 ```text
 app/services/perception_gate.py
-scripts/build_morning_proof_report.py
-scripts/run_factory2_morning_proof.py
+scripts/research/factory2/build_morning_proof_report.py
+scripts/research/factory2/run_factory2_morning_proof.py
 tests/test_perception_gate.py
 tests/test_build_morning_proof_report.py
 tests/test_run_factory2_morning_proof.py
@@ -2306,8 +2306,8 @@ Commands run:
 .venv/bin/python -m pytest tests/test_perception_gate.py tests/test_build_morning_proof_report.py -q
 .venv/bin/python -m pytest tests/test_run_factory2_morning_proof.py -q
 .venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_build_morning_proof_report.py tests/test_perception_gate.py -q
-python -m py_compile app/services/perception_gate.py scripts/build_morning_proof_report.py scripts/run_factory2_morning_proof.py tests/test_perception_gate.py tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile app/services/perception_gate.py scripts/research/factory2/build_morning_proof_report.py scripts/research/factory2/run_factory2_morning_proof.py tests/test_perception_gate.py tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Verification:
@@ -2327,7 +2327,7 @@ near-neighbor validation:
 Next blocker:
 
 ```text
-The proof now cracks one carried-panel case, and nearby weaker packets did not promote, but the gate still relies on legacy stored event-window gate rows plus proof-time rehydration. The remaining product risk is end-to-end consistency: push the same separation-aware gate logic down into `scripts/diagnose_event_window.py` / live diagnostic generation so fresh diagnostics and proof replay share the same promotion path.
+The proof now cracks one carried-panel case, and nearby weaker packets did not promote, but the gate still relies on legacy stored event-window gate rows plus proof-time rehydration. The remaining product risk is end-to-end consistency: push the same separation-aware gate logic down into `scripts/research/factory2/diagnose_event_window.py` / live diagnostic generation so fresh diagnostics and proof replay share the same promotion path.
 ```
 
 Exact next recommended step:
@@ -2337,7 +2337,7 @@ cd /Users/thomas/Projects/Factory-Output-Vision-MVP
 .venv/bin/python -m pytest tests/test_diagnose_event_window.py tests/test_perception_gate.py tests/test_run_factory2_morning_proof.py -q
 ```
 
-Then move the same separation-aware promotion rule into `scripts/diagnose_event_window.py` so regenerated event-window diagnostics can produce the accepted `track 5` count without relying on proof-time rehydration.
+Then move the same separation-aware promotion rule into `scripts/research/factory2/diagnose_event_window.py` so regenerated event-window diagnostics can produce the accepted `track 5` count without relying on proof-time rehydration.
 
 
 ## PRD Milestone 3 start — person/panel separation diagnostics — 2026-04-28 11:27 EDT
@@ -2395,9 +2395,9 @@ Commands run:
 .venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py -q
 python -m py_compile scripts/analyze_person_panel_separation.py tests/test_analyze_person_panel_separation.py
 .venv/bin/python -m py_compile scripts/analyze_person_panel_separation.py tests/test_analyze_person_panel_separation.py
-.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/research/factory2/build_panel_transfer_review_packets.py --force
 .venv/bin/python scripts/analyze_person_panel_separation.py --packet-id event0002-track000005 --force
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Verification / proof result:
@@ -2431,7 +2431,7 @@ Then compare those packet JSON/PNG receipts against `event0002 track 5` before t
 Implemented first PRD-backed code slice:
 
 ```text
-scripts/build_panel_transfer_review_packets.py
+scripts/research/factory2/build_panel_transfer_review_packets.py
 tests/test_build_panel_transfer_review_packets.py
 ```
 
@@ -2446,7 +2446,7 @@ factory2 morning proof report / diagnostic receipts
 Real run:
 
 ```bash
-.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
+.venv/bin/python scripts/research/factory2/build_panel_transfer_review_packets.py --force
 ```
 
 Generated:
@@ -2472,8 +2472,8 @@ Verification:
 ```bash
 python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_run_factory2_morning_proof.py tests/test_analyze_panel_crop_evidence.py -q
 # 10 passed
-python -m py_compile scripts/build_panel_transfer_review_packets.py tests/test_build_panel_transfer_review_packets.py
-.venv/bin/python -m py_compile scripts/build_panel_transfer_review_packets.py
+python -m py_compile scripts/research/factory2/build_panel_transfer_review_packets.py tests/test_build_panel_transfer_review_packets.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_panel_transfer_review_packets.py
 ```
 
 Next step from PRD:
@@ -2497,7 +2497,7 @@ docs/PRD_FACTORY2_CARRIED_PANEL_PERCEPTION.md
 Next code work should follow the PRD, starting with:
 
 ```text
-scripts/build_panel_transfer_review_packets.py
+scripts/research/factory2/build_panel_transfer_review_packets.py
 tests/test_build_panel_transfer_review_packets.py
 data/reports/factory2_transfer_review_packets.json
 ```
@@ -2516,15 +2516,15 @@ e40ea6f feat: add panel crop evidence probe
 
 What changed:
 
-- Added `scripts/analyze_panel_crop_evidence.py`, a bounded model-free crop texture probe for worker-entangled receipt crops. It scores raw crops for mesh-like balanced high-frequency edge texture; it is evidence only, not a count source.
-- Wired the probe into `scripts/run_factory2_morning_proof.py` so the one-command proof path now also writes `data/reports/factory2_panel_crop_evidence.json` and summarizes it in `factory2_morning_proof_run_summary.json`.
+- Added `scripts/research/factory2/analyze_panel_crop_evidence.py`, a bounded model-free crop texture probe for worker-entangled receipt crops. It scores raw crops for mesh-like balanced high-frequency edge texture; it is evidence only, not a count source.
+- Wired the probe into `scripts/research/factory2/run_factory2_morning_proof.py` so the one-command proof path now also writes `data/reports/factory2_panel_crop_evidence.json` and summarizes it in `factory2_morning_proof_run_summary.json`.
 - Added tests for synthetic wire-mesh vs solid worker/body crops and for proof-runner crop-evidence integration.
 
 Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2562,9 +2562,9 @@ Verification:
 python -m pytest tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 22 passed in 0.10s
 
-python -m py_compile scripts/analyze_panel_crop_evidence.py scripts/run_factory2_morning_proof.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py
-.venv/bin/python -m py_compile scripts/analyze_panel_crop_evidence.py scripts/run_factory2_morning_proof.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/analyze_panel_crop_evidence.py scripts/research/factory2/run_factory2_morning_proof.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py
+.venv/bin/python -m py_compile scripts/research/factory2/analyze_panel_crop_evidence.py scripts/research/factory2/run_factory2_morning_proof.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, unrelated dirty files untouched, generated report/eval artifacts left ignored/untracked.
@@ -2585,7 +2585,7 @@ Commit:
 
 What changed:
 
-- Added a top-level `evidence_gap_matrix` to `scripts/build_morning_proof_report.py` so the factory2 morning report now groups every non-counted receipt by the physical proof link that failed.
+- Added a top-level `evidence_gap_matrix` to `scripts/research/factory2/build_morning_proof_report.py` so the factory2 morning report now groups every non-counted receipt by the physical proof link that failed.
 - The matrix separates `panel_vs_worker_separation` from `output_entry_and_settle`, carries sample receipt paths, states why accepted count is zero, and repeats missing review asset counts.
 - Markdown reports now include an `Evidence gap matrix` section before the source-token work queue.
 - This is reporting only, not looser counting: raw detector detections and worker-entangled tracks still cannot count without perception-gate-approved source-token evidence.
@@ -2594,7 +2594,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2630,13 +2630,13 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.04s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
-Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only `scripts/build_morning_proof_report.py` plus `tests/test_build_morning_proof_report.py` were committed.
+Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only `scripts/research/factory2/build_morning_proof_report.py` plus `tests/test_build_morning_proof_report.py` were committed.
 
 Immediate next step:
 
@@ -2654,7 +2654,7 @@ bb5d3af feat: specify source token audit evidence
 
 What changed:
 
-- Added explicit `audit_question` and `evidence_requirements_to_allow_source_token` fields to each `source_token_work_queue.top_items[]` row in `scripts/build_morning_proof_report.py`.
+- Added explicit `audit_question` and `evidence_requirements_to_allow_source_token` fields to each `source_token_work_queue.top_items[]` row in `scripts/research/factory2/build_morning_proof_report.py`.
 - Markdown proof reports now show the audit question and evidence checklist for the highest-priority worker-entangled receipts.
 - This is still evidence bookkeeping, not looser counting: worker-overlap tracks remain suppressed/uncertain unless future perception evidence proves a valid active-panel source token.
 
@@ -2662,7 +2662,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2700,10 +2700,10 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.04s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only the proof-report source/test files were committed.
@@ -2724,7 +2724,7 @@ Commit:
 
 What changed:
 
-- Added a top-level `source_token_work_queue` to `scripts/build_morning_proof_report.py` so the morning report now ranks the worker-entangled receipts that are most worth attacking next.
+- Added a top-level `source_token_work_queue` to `scripts/research/factory2/build_morning_proof_report.py` so the morning report now ranks the worker-entangled receipts that are most worth attacking next.
 - The queue carries the JSON receipt, image card, raw crop paths, overlap ratios, and a recommended action per track.
 - This is still evidence bookkeeping, not looser counting: raw detections and worker-overlap tracks still do not mint source tokens.
 
@@ -2732,7 +2732,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2768,10 +2768,10 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.04s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only the proof-report source/test files were committed.
@@ -2792,7 +2792,7 @@ a9bc7eb feat: index proof decision receipts
 
 What changed:
 
-- Added a top-level `decision_receipt_index` to `scripts/build_morning_proof_report.py`, grouping every reviewed track into `accepted`, `suppressed`, and `uncertain` with direct JSON/card/raw-crop receipt paths.
+- Added a top-level `decision_receipt_index` to `scripts/research/factory2/build_morning_proof_report.py`, grouping every reviewed track into `accepted`, `suppressed`, and `uncertain` with direct JSON/card/raw-crop receipt paths.
 - Markdown reports now include a `Decision receipt index` and sample receipt links so the morning proof is easier to audit without digging through each diagnostic file.
 - This is bookkeeping, not looser counting: raw detector outputs still cannot count; only perception-gate-approved source tokens enter the accepted bucket.
 
@@ -2800,7 +2800,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2837,10 +2837,10 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.03s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only the proof-report source/test files were committed.
@@ -2861,7 +2861,7 @@ Commit:
 
 What changed:
 
-- Added `proof_readiness` to `scripts/build_morning_proof_report.py`, so the morning artifact now says whether the current blocker is detector safety, positive recall, or source-token gate evidence.
+- Added `proof_readiness` to `scripts/research/factory2/build_morning_proof_report.py`, so the morning artifact now says whether the current blocker is detector safety, positive recall, or source-token gate evidence.
 - The readiness classifier preserves the count doctrine: raw detector outputs still do not count; they only help determine whether the detector is good enough and whether the bottleneck has moved to worker/body source-token evidence.
 - Markdown reports now include a `Proof readiness` section with status, dominant failure link, detector pass/fail flags, and next action.
 
@@ -2869,7 +2869,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2910,10 +2910,10 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.03s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only the proof-report source/test files were committed.
@@ -2934,7 +2934,7 @@ Commit:
 
 What changed:
 
-- Updated `scripts/build_morning_proof_report.py` so the end-to-end proof report now chooses an advisory detector/model threshold from paired hard-negative and positive eval reports.
+- Updated `scripts/research/factory2/build_morning_proof_report.py` so the end-to-end proof report now chooses an advisory detector/model threshold from paired hard-negative and positive eval reports.
 - Selection rule is intentionally conservative: zero hard-negative false positives first, then highest positive-label recall. This does **not** allow raw detector detections to count; it only identifies the safest currently evaluated perception candidate.
 - The JSON report now includes `detector_selection` with all candidates, safe-candidate count, report paths, positive recall, and hard-negative FP evidence.
 - The Markdown morning report now has a `Detector selection` section so the morning artifact says which detector is best and why.
@@ -2943,7 +2943,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -2982,10 +2982,10 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.03s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only the proof-report source/test files were committed.
@@ -3006,7 +3006,7 @@ Commit:
 
 What changed:
 
-- Updated `scripts/build_morning_proof_report.py` so worker/body-overlap failures are no longer one blunt bucket.
+- Updated `scripts/research/factory2/build_morning_proof_report.py` so worker/body-overlap failures are no longer one blunt bucket.
 - Added `worker_overlap_detail_counts` at report and per-window level, with per-track `worker_overlap_detail` on each decision receipt.
 - New detail buckets distinguish `fully_entangled_with_worker`, `high_overlap_partial_outside_worker`, `protrusion_candidate_not_approved`, and `allowed_by_protrusion`.
 - This keeps the source-token doctrine intact: the report explains why tracks were suppressed/uncertain without letting raw detections increment counts.
@@ -3015,7 +3015,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -3052,10 +3052,10 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 19 passed in 0.03s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
-git diff --check -- scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
+git diff --check -- scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated report/eval artifacts left ignored/untracked, and only the proof-report source/test files were committed.
@@ -3076,7 +3076,7 @@ d167993 feat: classify proof report failure links
 
 What changed:
 
-- Updated `scripts/build_morning_proof_report.py` so the morning report now classifies each diagnostic track into a physical evidence failure link, not just a raw gate reason.
+- Updated `scripts/research/factory2/build_morning_proof_report.py` so the morning report now classifies each diagnostic track into a physical evidence failure link, not just a raw gate reason.
 - Added `failure_link_counts` at report and per-window level, with categories such as `worker_body_overlap`, `missing_output_settle`, `static_stack_or_resident_output`, and `insufficient_active_panel_evidence`.
 - Added `track_decision_receipts[]` entries that connect each track decision to its JSON receipt, image card, raw crop paths, gate reason, flags, and evidence summary.
 - This keeps count logic conservative: no raw detector or diagnostic row can increment counts without a perception-gate-approved source token.
@@ -3085,7 +3085,7 @@ Real proof rerun:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Updated artifacts:
@@ -3121,9 +3121,9 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_run_factory2_morning_proof.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 18 passed in 0.03s
 
-python -m py_compile scripts/build_morning_proof_report.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 git diff --check
 ```
 
@@ -3145,7 +3145,7 @@ Commit:
 
 What changed:
 
-- Added `scripts/run_factory2_morning_proof.py`, a one-command runner for the representative `factory2.MOV` proof path.
+- Added `scripts/research/factory2/run_factory2_morning_proof.py`, a one-command runner for the representative `factory2.MOV` proof path.
 - The runner reruns detector false-positive eval and detector positive eval across available models and confidence thresholds, then rebuilds the accepted/suppressed/uncertain morning proof report from diagnostic receipts.
 - It writes `data/reports/factory2_morning_proof_run_summary.json` alongside the existing JSON/Markdown proof report.
 - It explicitly keeps raw detector outputs as eval evidence only; counts still require perception-gate-approved source-token receipts.
@@ -3154,7 +3154,7 @@ One-command rerun path:
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Real artifacts from this run:
@@ -3191,9 +3191,9 @@ Verification:
 python -m pytest tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py tests/test_eval_detector_false_positives.py tests/test_eval_detector_positives.py -q
 # 18 passed in 0.04s
 
-python -m py_compile scripts/run_factory2_morning_proof.py tests/test_run_factory2_morning_proof.py
-.venv/bin/python -m py_compile scripts/run_factory2_morning_proof.py
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+python -m py_compile scripts/research/factory2/run_factory2_morning_proof.py tests/test_run_factory2_morning_proof.py
+.venv/bin/python -m py_compile scripts/research/factory2/run_factory2_morning_proof.py
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Scope guard held: no cron changes, no training run, no sensitive files read/staged, generated reports/eval artifacts left ignored/untracked, and only the new proof runner plus tests were committed.
@@ -3216,7 +3216,7 @@ What changed:
 
 - Added `scripts/eval_detector_positives.py`, a positive-side active-panel detector eval harness for reviewed YOLO positives.
 - It loads positives from the assembled dataset manifest or non-empty YOLO labels, runs detector inference, matches detections to labels by IoU, and writes receipt JSON with label recall, matched/missed labels, per-image detections, and no-overwrite protection.
-- Updated `scripts/build_morning_proof_report.py` so the morning report includes positive detector eval alongside hard-negative false-positive eval.
+- Updated `scripts/research/factory2/build_morning_proof_report.py` so the morning report includes positive detector eval alongside hard-negative false-positive eval.
 - Fixed the morning report FP summarizer to read the nested `summary` shape emitted by the FP harness.
 
 Real artifacts from this run:
@@ -3263,8 +3263,8 @@ Verification:
 python -m pytest tests/test_eval_detector_positives.py tests/test_build_morning_proof_report.py tests/test_eval_detector_false_positives.py tests/test_diagnose_event_window.py tests/test_run_clip_eval.py tests/test_perception_gate.py -q
 # 32 passed in 0.08s
 
-python -m py_compile scripts/eval_detector_positives.py scripts/build_morning_proof_report.py tests/test_eval_detector_positives.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/eval_detector_positives.py scripts/build_morning_proof_report.py
+python -m py_compile scripts/eval_detector_positives.py scripts/research/factory2/build_morning_proof_report.py tests/test_eval_detector_positives.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/eval_detector_positives.py scripts/research/factory2/build_morning_proof_report.py
 git diff --check
 ```
 
@@ -3286,7 +3286,7 @@ Commit:
 
 What changed:
 
-- Added `scripts/build_morning_proof_report.py`, a bounded end-to-end proof/report aggregator for the morning bar.
+- Added `scripts/research/factory2/build_morning_proof_report.py`, a bounded end-to-end proof/report aggregator for the morning bar.
 - It combines existing `factory2.MOV` diagnostic receipts, perception-gate decisions, hard-negative manifests, overlay paths, and detector false-positive eval reports.
 - It explicitly reports `accepted_count`, `suppressed_count`, `uncertain_count`, bottleneck, receipt paths, and detector FP totals without promoting raw unaudited detections into counts.
 - Added `tests/test_build_morning_proof_report.py` covering accepted/suppressed/uncertain separation, allowed source tokens, markdown receipt output, and CLI writes.
@@ -3335,8 +3335,8 @@ Verification:
 python -m pytest tests/test_build_morning_proof_report.py tests/test_eval_detector_false_positives.py tests/test_diagnose_event_window.py tests/test_run_clip_eval.py tests/test_perception_gate.py -q
 # 26 passed in 0.07s
 
-python -m py_compile scripts/build_morning_proof_report.py scripts/eval_detector_false_positives.py tests/test_build_morning_proof_report.py
-.venv/bin/python -m py_compile scripts/build_morning_proof_report.py scripts/eval_detector_false_positives.py
+python -m py_compile scripts/research/factory2/build_morning_proof_report.py scripts/eval_detector_false_positives.py tests/test_build_morning_proof_report.py
+.venv/bin/python -m py_compile scripts/research/factory2/build_morning_proof_report.py scripts/eval_detector_false_positives.py
 ```
 
 Scope guard held: no cron changes, no sensitive files read/staged, generated eval/report artifacts left untracked/ignored, and only the new source/test files were committed.
@@ -3385,7 +3385,7 @@ Verification:
 python -m pytest tests/test_eval_detector_false_positives.py tests/test_assemble_active_panel_dataset.py tests/test_export_hard_negatives.py -q
 # 14 passed in 0.02s
 
-python -m py_compile scripts/eval_detector_false_positives.py scripts/assemble_active_panel_dataset.py tests/test_eval_detector_false_positives.py
+python -m py_compile scripts/eval_detector_false_positives.py scripts/research/factory2/assemble_active_panel_dataset.py tests/test_eval_detector_false_positives.py
 .venv/bin/python -m py_compile scripts/eval_detector_false_positives.py
 
 .venv/bin/python scripts/eval_detector_false_positives.py \
@@ -3425,7 +3425,7 @@ Latest commit:
 Changed files:
 
 ```text
-scripts/assemble_active_panel_dataset.py
+scripts/research/factory2/assemble_active_panel_dataset.py
 tests/test_assemble_active_panel_dataset.py
 ```
 
@@ -3461,8 +3461,8 @@ Focused tests, compile, and real dataset assembly smoke:
 
 ```bash
 python -m pytest tests/test_assemble_active_panel_dataset.py tests/test_export_hard_negatives.py tests/test_train_custom_model_label_gate.py tests/test_review_labels_ai.py -q
-python -m py_compile scripts/assemble_active_panel_dataset.py scripts/export_hard_negatives.py train_custom_model.py
-python scripts/assemble_active_panel_dataset.py \
+python -m py_compile scripts/research/factory2/assemble_active_panel_dataset.py scripts/research/factory2/export_hard_negatives.py train_custom_model.py
+python scripts/research/factory2/assemble_active_panel_dataset.py \
   --reviewed-label-manifest data/labels/active_panel_reviewed_autopilot-v1_minconf050.json \
   --hard-negative-export data/labels/hard_negatives/factory2-v3-person-gated/hard_negative_export.json \
   --out-dir data/labels/active_panel_dataset_with_hard_negatives_v1 \
@@ -3678,7 +3678,7 @@ Example commands:
 Parallel next perception improvement remains: add stronger raw-crop-based panel-evidence features for the gate. The v4 smoke allowed zero source-token tracks, so do not loosen the count state machine.
 
 ```bash
-.venv/bin/python scripts/diagnose_event_window.py \
+.venv/bin/python scripts/research/factory2/diagnose_event_window.py \
   --video data/videos/from-pc/factory2.MOV \
   --calibration data/calibration/factory2_ai_only_v1_no_gate.json \
   --out-dir data/diagnostics/event-windows/factory2-event0002-98s-panel-v4-protrusion-gated \
@@ -3689,7 +3689,7 @@ Parallel next perception improvement remains: add stronger raw-crop-based panel-
   --tracker-match-distance 280 \
   --force
 
-.venv/bin/python scripts/diagnose_event_window.py \
+.venv/bin/python scripts/research/factory2/diagnose_event_window.py \
   --video data/videos/from-pc/factory2.MOV \
   --calibration data/calibration/factory2_ai_only_v1_no_gate.json \
   --out-dir data/diagnostics/event-windows/factory2-event0006-370s-panel-v4-protrusion-gated \
@@ -3781,7 +3781,7 @@ Stop doing:
 - Treating single-frame detections as high-value count candidates.
 
 Immediate implementation target:
-`scripts/build_panel_transfer_review_packets.py` plus tests, emitting `data/reports/factory2_transfer_review_packets.json` and per-track temporal packet artifacts.
+`scripts/research/factory2/build_panel_transfer_review_packets.py` plus tests, emitting `data/reports/factory2_transfer_review_packets.json` and per-track temporal packet artifacts.
 
 ---
 
@@ -3789,19 +3789,19 @@ Immediate implementation target:
 
 What changed in the working tree:
 - Added the track-label application helper:
-  - `scripts/apply_factory2_track_review_labels.py`
+  - `scripts/research/factory2/apply_factory2_track_review_labels.py`
   - `tests/test_apply_factory2_track_review_labels.py`
 - Added worker-reference negative export:
-  - `scripts/export_factory2_worker_reference_crops.py`
+  - `scripts/research/factory2/export_factory2_worker_reference_crops.py`
   - `tests/test_export_factory2_worker_reference_crops.py`
-- Extended `scripts/build_factory2_crop_training_dataset.py` so it can build binary `carried_panel|worker_only` datasets and emit a classification-friendly directory layout.
+- Extended `scripts/research/factory2/build_factory2_crop_training_dataset.py` so it can build binary `carried_panel|worker_only` datasets and emit a classification-friendly directory layout.
 - Added the second-stage crop classifier service:
   - `app/services/person_panel_crop_classifier.py`
   - `tests/test_person_panel_crop_classifier.py`
 - Wired crop-classifier evidence into:
   - `app/services/perception_gate.py`
   - `app/services/person_panel_gate_promotion.py`
-  - `scripts/diagnose_event_window.py`
+  - `scripts/research/factory2/diagnose_event_window.py`
   - `app/services/runtime_event_counter.py`
 - Copied trained weights to:
   - `models/factory2_person_panel_binary_manual_v1.pt`
@@ -3853,10 +3853,10 @@ Exact next step:
 
 What changed:
 - Added a runtime truth-gap analyzer:
-  - `scripts/analyze_factory2_runtime_truth_gap.py`
+  - `scripts/research/factory2/analyze_factory2_runtime_truth_gap.py`
   - `tests/test_analyze_factory2_runtime_truth_gap.py`
 - Added a truth-candidate reconstruction ledger builder:
-  - `scripts/reconstruct_factory2_truth_candidates.py`
+  - `scripts/research/factory2/reconstruct_factory2_truth_candidates.py`
   - `tests/test_reconstruct_factory2_truth_candidates.py`
 - Extended runtime predecessor stitching in `app/services/runtime_event_counter.py` so gate-side split-chain linking survives for the same lifetime as source tokens instead of dying after a short fixed gap.
 - Fixed `app/services/count_state_machine.py` so `approved_delivery_chain` no longer double-counts overlapping output residents, while still allowing later real deliveries into the same output area after a bounded recent-resident window.
@@ -3901,7 +3901,7 @@ Current blocker:
 
 Exact next step:
 1. Wait for `data/reports/factory2_runtime_event_audit.gap45_recentdedupe.json` to finish writing and record its `final_count`.
-2. Run `scripts/reconstruct_factory2_truth_candidates.py` against that audit output to produce a concrete reconciliation ledger.
+2. Run `scripts/research/factory2/reconstruct_factory2_truth_candidates.py` against that audit output to produce a concrete reconciliation ledger.
 3. Use the runtime-only reconciliation rows to identify the next missing delivery class, then patch chain recall again without loosening perception gates.
 
 ---
@@ -3910,9 +3910,9 @@ Exact next step:
 
 What changed:
 - Added proof-alignment helpers:
-  - `scripts/build_factory2_proof_alignment_queue.py`
-  - `scripts/build_factory2_runtime_backed_proof_set.py`
-  - `scripts/optimize_factory2_proof_set.py`
+  - `scripts/research/factory2/build_factory2_proof_alignment_queue.py`
+  - `scripts/research/factory2/build_factory2_runtime_backed_proof_set.py`
+  - `scripts/research/factory2/optimize_factory2_proof_set.py`
 - Added tests:
   - `tests/test_build_factory2_proof_alignment_queue.py`
   - `tests/test_build_factory2_runtime_backed_proof_set.py`
@@ -3993,11 +3993,11 @@ Exact next step:
 
 What changed:
 - Added proof-side source-lineage accounting in:
-  - `scripts/build_morning_proof_report.py`
+  - `scripts/research/factory2/build_morning_proof_report.py`
 - Added a runtime-event-centered packet builder for unresolved proof/runtime gaps:
-  - `scripts/build_factory2_runtime_event_receipt_packets.py`
+  - `scripts/research/factory2/build_factory2_runtime_event_receipt_packets.py`
 - Tightened proof-side predecessor stitching parity with runtime token lifetime in:
-  - `scripts/diagnose_event_window.py`
+  - `scripts/research/factory2/diagnose_event_window.py`
 - Added tests:
   - `tests/test_build_factory2_runtime_event_receipt_packets.py`
   - expanded `tests/test_build_morning_proof_report.py`
@@ -4014,9 +4014,9 @@ What was verified:
   - `tests/test_optimize_factory2_proof_set.py`
   - result: `37 passed`
 - `py_compile` passed for:
-  - `scripts/build_morning_proof_report.py`
-  - `scripts/build_factory2_runtime_event_receipt_packets.py`
-  - `scripts/diagnose_event_window.py`
+  - `scripts/research/factory2/build_morning_proof_report.py`
+  - `scripts/research/factory2/build_factory2_runtime_event_receipt_packets.py`
+  - `scripts/research/factory2/diagnose_event_window.py`
 - Built the new packet artifact on the committed `21`-count proof baseline:
   - `data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json`
 
@@ -4040,7 +4040,7 @@ What the new packet artifact proved:
 
 Important implementation notes:
 - Accepted-proof dedupe can no longer rely on overlapping receipt intervals alone.
-  - `scripts/build_morning_proof_report.py` now attaches:
+  - `scripts/research/factory2/build_morning_proof_report.py` now attaches:
     - `source_lineage_track_ids`
     - `source_lineage_receipt_paths`
     - `source_token_key`
@@ -4066,9 +4066,9 @@ Exact next step:
 
 What changed:
 - Added targeted final-gap search tooling:
-  - `scripts/build_factory2_final_gap_search_plan.py`
-  - `scripts/run_factory2_final_gap_search.py`
-  - `scripts/build_factory2_final_gap_search_report.py`
+  - `scripts/research/factory2/build_factory2_final_gap_search_plan.py`
+  - `scripts/research/factory2/run_factory2_final_gap_search.py`
+  - `scripts/research/factory2/build_factory2_final_gap_search_report.py`
 - Added tests:
   - `tests/test_build_factory2_final_gap_search_plan.py`
   - `tests/test_run_factory2_final_gap_search.py`
@@ -4232,7 +4232,7 @@ Exact next recommended step:
 
 What was built:
 - Added a new option-2 recovery tool:
-  - `scripts/build_factory2_divergent_chain_review.py`
+  - `scripts/research/factory2/build_factory2_divergent_chain_review.py`
   - `tests/test_build_factory2_divergent_chain_review.py`
 - Added the next-phase PRD:
   - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
@@ -4250,7 +4250,7 @@ What the package does:
 
 Commands run:
 - `.venv/bin/python -m pytest tests/test_build_factory2_divergent_chain_review.py -q`
-- `.venv/bin/python scripts/build_factory2_divergent_chain_review.py --force`
+- `.venv/bin/python scripts/research/factory2/build_factory2_divergent_chain_review.py --force`
 
 Results:
 - new focused test suite: `2 passed`
@@ -4290,10 +4290,10 @@ Exact next recommended step:
 
 What was built:
 - Added the static-resident reference exporter:
-  - `scripts/export_factory2_static_resident_reference_crops.py`
+  - `scripts/research/factory2/export_factory2_static_resident_reference_crops.py`
   - `tests/test_export_factory2_static_resident_reference_crops.py`
 - Added the final-two rescue-dataset builder:
-  - `scripts/build_factory2_final_two_rescue_dataset.py`
+  - `scripts/research/factory2/build_factory2_final_two_rescue_dataset.py`
   - `tests/test_build_factory2_final_two_rescue_dataset.py`
 - Updated the active PRD:
   - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
@@ -4415,10 +4415,10 @@ Current local review/dataset state:
 Commands run:
 - `.venv/bin/python -m pytest tests/test_export_factory2_static_resident_reference_crops.py tests/test_build_factory2_final_two_rescue_dataset.py -q`
 - `.venv/bin/python -m pytest tests/test_export_factory2_static_resident_reference_crops.py tests/test_build_factory2_final_two_rescue_dataset.py tests/test_build_factory2_divergent_chain_review.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_factory2_synthetic_lineage_report.py tests/test_build_factory2_runtime_event_receipt_packets.py -q`
-- `.venv/bin/python -m py_compile scripts/export_factory2_static_resident_reference_crops.py scripts/build_factory2_final_two_rescue_dataset.py`
-- `.venv/bin/python scripts/export_factory2_static_resident_reference_crops.py --force`
-- `.venv/bin/python scripts/build_factory2_final_two_rescue_dataset.py --force`
-- `.venv/bin/python scripts/build_factory2_final_two_rescue_dataset.py --static-reference-report data/reports/factory2_static_resident_reference_crops.v1.json --force`
+- `.venv/bin/python -m py_compile scripts/research/factory2/export_factory2_static_resident_reference_crops.py scripts/research/factory2/build_factory2_final_two_rescue_dataset.py`
+- `.venv/bin/python scripts/research/factory2/export_factory2_static_resident_reference_crops.py --force`
+- `.venv/bin/python scripts/research/factory2/build_factory2_final_two_rescue_dataset.py --force`
+- `.venv/bin/python scripts/research/factory2/build_factory2_final_two_rescue_dataset.py --static-reference-report data/reports/factory2_static_resident_reference_crops.v1.json --force`
 
 Verification:
 - focused affected suite: `15 passed`
@@ -4438,7 +4438,7 @@ Exact next recommended step:
 
 What was built:
 - Added the chain-level adjudicator Oracle recommended:
-  - `scripts/build_factory2_final_two_chain_adjudication.py`
+  - `scripts/research/factory2/build_factory2_final_two_chain_adjudication.py`
   - `tests/test_build_factory2_final_two_chain_adjudication.py`
 - Updated doctrine:
   - `docs/PRD_FACTORY2_FINAL_TWO_PROOF_CONVERGENCE.md`
@@ -4502,8 +4502,8 @@ What this means:
 Commands run:
 - `.venv/bin/python -m pytest tests/test_build_factory2_final_two_chain_adjudication.py -q`
 - `.venv/bin/python -m pytest tests/test_build_factory2_final_two_chain_adjudication.py tests/test_export_factory2_static_resident_reference_crops.py tests/test_build_factory2_final_two_rescue_dataset.py tests/test_build_factory2_divergent_chain_review.py tests/test_build_factory2_runtime_lineage_diagnostic.py tests/test_build_factory2_synthetic_lineage_report.py tests/test_build_factory2_runtime_event_receipt_packets.py -q`
-- `.venv/bin/python -m py_compile scripts/build_factory2_final_two_chain_adjudication.py scripts/build_factory2_final_two_rescue_dataset.py scripts/export_factory2_static_resident_reference_crops.py`
-- `.venv/bin/python scripts/build_factory2_final_two_chain_adjudication.py --force`
+- `.venv/bin/python -m py_compile scripts/research/factory2/build_factory2_final_two_chain_adjudication.py scripts/research/factory2/build_factory2_final_two_rescue_dataset.py scripts/research/factory2/export_factory2_static_resident_reference_crops.py`
+- `.venv/bin/python scripts/research/factory2/build_factory2_final_two_chain_adjudication.py --force`
 - local diagnostic baseline:
   - trained `YOLO11n-cls` on `data/datasets/factory2_final_two_rescue_dataset_v1`
 
@@ -4590,7 +4590,7 @@ What changed:
   - `app/services/frame_reader.py`
   - `app/workers/vision_worker.py`
 - Added/extended live app truth-comparison tooling:
-  - `scripts/build_factory2_human_truth_ledger.py`
+  - `scripts/research/factory2/build_factory2_human_truth_ledger.py`
   - `scripts/capture_factory2_app_run_events.py`
   - `scripts/compare_factory2_app_run_to_truth_ledger.py`
 - Added one-command investor demo launcher:

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import build_factory2_final_two_chain_adjudication as builder
+from scripts.research.factory2 import build_factory2_final_two_chain_adjudication as builder
 
 
 def _write_json(path: Path, payload: dict) -> Path:

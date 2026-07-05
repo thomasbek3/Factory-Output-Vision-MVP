@@ -12,7 +12,7 @@
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 ---
@@ -212,7 +212,7 @@ with no false-positive regression in the suppressed/static/worker-overlap bucket
 Create:
 
 ```text
-scripts/export_factory2_blocked_crops.py
+scripts/research/factory2/export_factory2_blocked_crops.py
 tests/test_export_factory2_blocked_crops.py
 ```
 
@@ -324,13 +324,13 @@ Minimum verification for this PRD:
 For proof-set work:
 
 ```bash
-.venv/bin/python scripts/run_factory2_morning_proof.py --force --diagnostic ...
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force --diagnostic ...
 ```
 
 For merged proof replacement:
 
 ```bash
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 only after the new default diagnostic set is intentionally updated.

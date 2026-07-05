@@ -11,7 +11,7 @@ from app.db.database import init_db
 from app.services.live_activation import apply_live_activation, build_live_activation_payload
 from app.services.station_calibration import build_station_calibration, write_station_calibration
 from app.services.video_source import get_active_source
-from scripts import apply_live_activation as apply_live_activation_cli
+from scripts.research.factory2 import apply_live_activation as apply_live_activation_cli
 
 
 SOURCE = [[[0, 0], [40, 0], [40, 100], [0, 100]]]

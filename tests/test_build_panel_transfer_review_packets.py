@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.build_panel_transfer_review_packets import build_transfer_review_packets
+from scripts.research.factory2.build_panel_transfer_review_packets import build_transfer_review_packets
 
 
 def _write_json(path: Path, data: dict) -> None:

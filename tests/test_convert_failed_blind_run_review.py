@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from scripts.check_dataset_poisoning import run_checks
-from scripts.convert_failed_blind_run_review import ReviewConversionError, convert_review
+from scripts.research.factory2.convert_failed_blind_run_review import ReviewConversionError, convert_review
 
 
 def _write_json(path: Path, payload: object) -> Path:

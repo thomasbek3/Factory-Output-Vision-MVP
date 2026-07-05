@@ -414,7 +414,7 @@ def _default_person_box_detector(repo_root: Path) -> PersonBoxDetector:
     def detector(frame_path: Path) -> List[Box]:
         if "model" not in model_cache:
             try:
-                from scripts.diagnose_event_window import detect_person_boxes, load_yolo_model
+                from scripts.research.factory2.diagnose_event_window import detect_person_boxes, load_yolo_model
             except Exception:
                 model_cache["model"] = None
                 model_cache["detect"] = None

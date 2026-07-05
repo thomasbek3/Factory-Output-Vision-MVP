@@ -9,6 +9,6 @@ These are the live Track B CLIs for the overhead wire-frame action-recognition l
 - `train_clip_student.py` — trains the small clip-student model used by the live Track B counter.
 - `run_clip_exam.py` — runs the blind Track B exam gate and reports placement-count pass/fail.
 
-LEGACY: most other scripts are superseded YOLO-era tooling kept for provenance.
+LEGACY: superseded YOLO-era tooling now lives in `scripts/research/factory2/`; older root tools live in `scripts/legacy/`.
 
-run_clip_eval.py is a dead YOLO-era relic — the current exam is run_clip_exam.py.
+`scripts/research/factory2/run_clip_eval.py` is a dead YOLO-era relic — the current exam is `run_clip_exam.py`.

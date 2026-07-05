@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from app.services.periodic_audit import SCHEMA_VERSION, build_periodic_audit_report
-from scripts import run_periodic_audit
+from scripts.research.factory2 import run_periodic_audit
 
 
 def _write_observed(path: Path) -> None:

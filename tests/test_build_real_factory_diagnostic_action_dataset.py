@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.build_real_factory_diagnostic_action_dataset import (
+from scripts.research.factory2.build_real_factory_diagnostic_action_dataset import (
     dedupe_negative_candidates,
     load_learning_negative_timestamps,
     scale_box_xyxy,

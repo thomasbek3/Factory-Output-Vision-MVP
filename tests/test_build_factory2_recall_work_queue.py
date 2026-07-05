@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts import build_factory2_recall_work_queue as queue
+from scripts.research.factory2 import build_factory2_recall_work_queue as queue
 
 
 def test_load_reviewed_accepts_filters_factory2_accepts(tmp_path: Path) -> None:

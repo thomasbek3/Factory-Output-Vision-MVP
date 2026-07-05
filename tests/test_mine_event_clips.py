@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import mine_event_clips as miner
+from scripts.research.factory2 import mine_event_clips as miner
 
 
 def test_score_motion_windows_prefers_zone_motion_and_applies_min_gap() -> None:

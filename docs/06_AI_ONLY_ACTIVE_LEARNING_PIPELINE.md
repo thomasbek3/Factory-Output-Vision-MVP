@@ -114,7 +114,7 @@ The Station provider is localhost-gated by default. It refuses nonlocal endpoint
 Teacher labels are raw advisory output. Convert them into a reviewer-ready queue before asking a human or VA to inspect frames:
 
 ```bash
-.venv/bin/python scripts/build_review_queue.py \
+.venv/bin/python scripts/research/factory2/build_review_queue.py \
   --evidence data/reports/active_learning/img3254_event_evidence.frames_v2.json \
   --teacher-labels data/reports/active_learning/img3254_moondream_audit.local_v2.json \
   --output data/reports/active_learning/img3254_review_queue.local_v1.json \
@@ -126,7 +126,7 @@ The queue ranks `unclear`, low-confidence, duplicate-risk, miss-risk, and hard-n
 Export a static contact sheet when the queue needs a quick human pass:
 
 ```bash
-.venv/bin/python scripts/export_review_queue_html.py \
+.venv/bin/python scripts/research/factory2/export_review_queue_html.py \
   --queue data/reports/active_learning/img3254_review_queue.local_v1.json \
   --output data/reports/active_learning/img3254_review_queue.local_v1.html \
   --force

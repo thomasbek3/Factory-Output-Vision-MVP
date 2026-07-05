@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.apply_img2628_event_dispute_decisions import apply_decisions
+from scripts.research.factory2.apply_img2628_event_dispute_decisions import apply_decisions
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str]) -> None:

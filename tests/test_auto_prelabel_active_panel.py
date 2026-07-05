@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import auto_prelabel_active_panel as prelabel
+from scripts.research.factory2 import auto_prelabel_active_panel as prelabel
 
 
 def test_parse_args_uses_requested_defaults():

@@ -8,7 +8,7 @@ import pytest
 
 from app.services.onboarding_windows import SCHEMA_VERSION, extract_candidate_windows
 from app.services.stream_recorder import StreamSegmentRecorder, ffprobe_segment
-from scripts import extract_onboarding_windows
+from scripts.research.factory2 import extract_onboarding_windows
 
 
 def _write_test_segment(path: Path) -> None:

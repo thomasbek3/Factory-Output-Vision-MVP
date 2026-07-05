@@ -7,18 +7,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ONBOARDING_CLI_SCRIPTS = [
-    "scripts/extract_onboarding_windows.py",
+    "scripts/research/factory2/extract_onboarding_windows.py",
     "scripts/propose_onboarding_events.py",
     "scripts/build_teacher_evidence_packets.py",
     "scripts/generate_teacher_verifications.py",
     "scripts/reconcile_state_diff.py",
     "scripts/fuse_teacher_verifications.py",
     "scripts/run_teacher_loop_benchmark.py",
-    "scripts/generate_onboarding_teacher_labels.py",
-    "scripts/run_blind_replay_gate.py",
-    "scripts/apply_live_activation.py",
-    "scripts/run_periodic_audit.py",
-    "scripts/run_yolo26_training_eval.py",
+    "scripts/research/factory2/generate_onboarding_teacher_labels.py",
+    "scripts/research/factory2/run_blind_replay_gate.py",
+    "scripts/research/factory2/apply_live_activation.py",
+    "scripts/research/factory2/run_periodic_audit.py",
+    "scripts/research/factory2/run_yolo26_training_eval.py",
 ]
 
 

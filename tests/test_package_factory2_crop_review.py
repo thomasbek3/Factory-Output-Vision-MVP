@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import package_factory2_crop_review as review_package
+from scripts.research.factory2 import package_factory2_crop_review as review_package
 
 
 def _write_json(path: Path, payload: dict) -> Path:

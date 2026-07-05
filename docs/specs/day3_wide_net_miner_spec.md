@@ -76,7 +76,7 @@ cheaply, preserving recall on real placements.
 - IMPORTANT: the filter must run AFTER scoring but BEFORE the ranked cap, so the
   cap fills with real candidates, not flashes.
 
-## Change 3 — Free recall gate (new `scripts/validate_miner_recall.py`)
+## Change 3 — Free recall gate (new `scripts/research/factory2/validate_miner_recall.py`)
 
 Runs the proposer over ONLY the exam hour and measures how many of the 7 gold
 placements it catches. This is the go/no-go before any teacher spend.
@@ -98,7 +98,7 @@ Argparse: `--segment-manifest`, `--gold-positives validation/exam/exam_gold_posi
   mining alone is insufficient and we escalate to the layer-2 state-change miner
   (out of scope tonight) — report says exactly that.
 
-## Change 4 — Pipeline: raise teacher budget + multi-day input (`scripts/run_factory_day1_pipeline.py`)
+## Change 4 — Pipeline: raise teacher budget + multi-day input (`scripts/research/factory2/run_factory_day1_pipeline.py`)
 
 - New/used CLI: `--zone-motion-threshold`, `--min-flash-ratio` (thread through to
   the proposer), and raise `--max-teacher-events` to 300 at call time (no default

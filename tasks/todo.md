@@ -7,13 +7,17 @@ Quarantine superseded YOLO/factory2-era scripts so top-level `scripts/` only con
 ## Milestones
 
 - [x] C0 Fix receipt-validation tests so CI does not silently skip when offload weights are absent.
-- [ ] C1 Move non-current top-level scripts into `scripts/research/factory2/`, update imports/docs, and keep backend/docs checks green.
+- [x] C1 Move non-current top-level scripts into `scripts/research/factory2/`, update imports/docs, and keep backend/docs checks green.
 - [ ] C2 Add a compact repository layout map to `README.md`.
 
 ## Review
 
 - C0 focused tests: `.venv/bin/python -m pytest tests/test_demo_mode_flow.py::DemoModeFlowTests::test_deterministic_demo_runner_reveals_cached_receipts_over_api tests/test_vision_worker_states.py::VisionWorkerStateTests::test_deterministic_demo_start_monitoring_restarts_preview_and_arms_runner -q` -> `2 passed`.
 - C0 fixture selected repo-local `yolov8n.pt`; `uses_offload=False`.
+- C1 moved `61` superseded scripts into `scripts/research/factory2/`; final top-level `scripts/*.py` count is `41`.
+- C1 import/path updates: `57` test import lines now point at `scripts.research.factory2`; no Makefile references point at quarantined scripts.
+- C1 full backend: `make test-backend` -> `625 passed, 16 warnings`.
+- C1 docs: `make docs-check` -> passed with the existing tracked artifact/cache warning.
 
 # Day-5 Human-Presence Tripwire - 2026-06-17
 
@@ -47,7 +51,7 @@ Implement `docs/specs/day3_wide_net_miner_spec.md` exactly: widen the zone miner
 
 - [x] D3-1 Add proposer `min_flash_ratio` scoring/filtering and summary/config output.
 - [x] D3-2 Thread `--zone-motion-threshold`, `--min-flash-ratio`, and segment exclusion args through the day-1 pipeline.
-- [x] D3-3 Add `scripts/validate_miner_recall.py` for the 7-event held-out exam-hour gate.
+- [x] D3-3 Add `scripts/research/factory2/validate_miner_recall.py` for the 7-event held-out exam-hour gate.
 - [x] D3-4 Extend focused tests and keep the full backend suite green.
 
 ## Review
@@ -71,8 +75,8 @@ lane, and a leakage-safe 4-station holdout rehearsal. Doctrine in
 - [x] A1/A2 real CLI teacher providers — `app/services/cloud_teacher_providers.py` (claude_cli via `claude -p`, codex_cli via `codex exec` stdin), registered in `verification_provider_for_name`, cloud refused by default, batching + split-retry + resume, parse failures degrade to `unclear`.
 - [x] A3/A4 grading harness — `app/services/teacher_grading.py` + `scripts/grade_teacher_labels_vs_truth.py` (`factory-vision-teacher-grade-vs-truth-v1`); segment offsets map by segment file index, NOT wall timestamps (file replays record faster than realtime; wall ordering is scrambled).
 - [x] A5 Factory2 bake-off on all 60 packets (5s tolerance): codex_cli precision 0.909 / recall 0.870 / mean timing error 0.78s; claude_cli precision 0.760 / recall 0.826 (the asymmetric high-recall prompt fixed Claude's manual-era 0.071 recall, but it over-asserts). Codex is primary. Grades: `teacher_grade.codex_cli_v1.json` / `teacher_grade.claude_cli_v1.json` in the factory2_20260609_0100 archive dir.
-- [x] B1-B4 auto-box lane — `app/services/box_autolabeler.py` (+ CLI): median composites erase the moving worker; the before/after diff locates the landing region; labels are PLACEMENT-ACT frames only (patch differs from both composites). Settled parts are never labeled: they are pixel-identical to the unlabeled stack and train to zero confidence (observed twice). Stable negatives via `scripts/export_onboarding_stable_negatives.py`; auto labels flow through the existing review gate and assembler unchanged (`data.yaml` now carries an absolute dataset root for ultralytics).
-- [x] C1 holdout split — `app/services/holdout_split.py` + `scripts/build_holdout_case.py`: keyframe-aligned ~70/30 cut, derived shifted truth ledger (`derived-holdout-human-truth-ledger-v1`), derived case manifest with STANDARD_EVENT_PARAMS; truth is touched only by split selection, the gate compare, and post-gate grading (unit-tested leakage assertion).
+- [x] B1-B4 auto-box lane — `app/services/box_autolabeler.py` (+ CLI): median composites erase the moving worker; the before/after diff locates the landing region; labels are PLACEMENT-ACT frames only (patch differs from both composites). Settled parts are never labeled: they are pixel-identical to the unlabeled stack and train to zero confidence (observed twice). Stable negatives via `scripts/research/factory2/export_onboarding_stable_negatives.py`; auto labels flow through the existing review gate and assembler unchanged (`data.yaml` now carries an absolute dataset root for ultralytics).
+- [x] C1 holdout split — `app/services/holdout_split.py` + `scripts/research/factory2/build_holdout_case.py`: keyframe-aligned ~70/30 cut, derived shifted truth ledger (`derived-holdout-human-truth-ledger-v1`), derived case manifest with STANDARD_EVENT_PARAMS; truth is touched only by split selection, the gate compare, and post-gate grading (unit-tested leakage assertion).
 - [x] C2/C3 orchestrator — `scripts/run_autonomous_onboarding_rehearsal.py` (idempotent stages, scoreboard `factory-vision-autonomous-onboarding-rehearsal-v1`), Makefile targets, docs/15. Hard-negative mining (`app/services/hard_negative_miner.py`) is OPT-IN only: at teacher recall ~0.87 it anti-trains the placements the teacher missed (observed: gate recall collapsed 7/9 -> 1/9). Auto-derived calibration zones (`app/services/auto_station_calibration.py`) exist but the gate stays model-only: the with-calibration runtime is a source->output state machine a landing-zone-trained detector cannot satisfy.
 - [ ] C4 four-station rehearsal scoreboard — `data/reports/onboarding/autonomous_onboarding_rehearsal.json` (running). Factory2 best so far: 7/9 holdout events matched with 13 unexpected (worker-transit false events), zero human labels.
 
@@ -364,22 +368,22 @@ Implement the recorded-buffer station onboarding loop without changing live coun
 .venv/bin/python -m py_compile app/services/onboarding_state.py tests/test_onboarding_state_machine.py
 # passed
 ```
-- M4 added `app/services/onboarding_windows.py` and `scripts/extract_onboarding_windows.py`. The extractor creates fixed-offset candidate clips labeled `candidate_only_not_truth` for later teacher/review work; it does not count parts. Verifier passed:
+- M4 added `app/services/onboarding_windows.py` and `scripts/research/factory2/extract_onboarding_windows.py`. The extractor creates fixed-offset candidate clips labeled `candidate_only_not_truth` for later teacher/review work; it does not count parts. Verifier passed:
 
 ```bash
 .venv/bin/python -m pytest tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
 # 33 passed
 
-.venv/bin/python -m py_compile app/services/onboarding_windows.py scripts/extract_onboarding_windows.py tests/test_onboarding_windows.py
+.venv/bin/python -m py_compile app/services/onboarding_windows.py scripts/research/factory2/extract_onboarding_windows.py tests/test_onboarding_windows.py
 # passed
 ```
-- M5 added `app/services/teacher_provider.py` and `scripts/generate_onboarding_teacher_labels.py`. Dry-run and fake providers emit advisory bronze/pending labels only; cloud providers are refused unless explicitly enabled and no cloud implementation is wired. Verifier passed:
+- M5 added `app/services/teacher_provider.py` and `scripts/research/factory2/generate_onboarding_teacher_labels.py`. Dry-run and fake providers emit advisory bronze/pending labels only; cloud providers are refused unless explicitly enabled and no cloud implementation is wired. Verifier passed:
 
 ```bash
 .venv/bin/python -m pytest tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
 # 38 passed
 
-.venv/bin/python -m py_compile app/services/teacher_provider.py scripts/generate_onboarding_teacher_labels.py tests/test_teacher_provider_contract.py
+.venv/bin/python -m py_compile app/services/teacher_provider.py scripts/research/factory2/generate_onboarding_teacher_labels.py tests/test_teacher_provider_contract.py
 # passed
 ```
 - M6 added `app/services/station_calibration.py` and `validation/schemas/station_calibration.schema.json`. The artifact keeps runtime-compatible `source_polygons`/`output_polygons`/optional `gate` while carrying onboarding metadata and refusing validation truth. Verifier passed:
@@ -391,22 +395,22 @@ Implement the recorded-buffer station onboarding loop without changing live coun
 .venv/bin/python -m py_compile app/services/station_calibration.py tests/test_station_calibration.py
 # passed
 ```
-- M7 added `app/services/yolo26_training_runner.py` and `scripts/run_yolo26_training_eval.py`. The runner defaults to dry-run, requires explicit `--execute-training` for real training, refuses promotion, and requires M8 blind replay before any live claim. Verifier passed with fake trainer/evaluators:
+- M7 added `app/services/yolo26_training_runner.py` and `scripts/research/factory2/run_yolo26_training_eval.py`. The runner defaults to dry-run, requires explicit `--execute-training` for real training, refuses promotion, and requires M8 blind replay before any live claim. Verifier passed with fake trainer/evaluators:
 
 ```bash
 .venv/bin/python -m pytest tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
 # 46 passed
 
-.venv/bin/python -m py_compile app/services/yolo26_training_runner.py scripts/run_yolo26_training_eval.py tests/test_yolo26_training_runner.py
+.venv/bin/python -m py_compile app/services/yolo26_training_runner.py scripts/research/factory2/run_yolo26_training_eval.py tests/test_yolo26_training_runner.py
 # passed
 ```
-- M8 added `app/services/blind_replay_gate.py` and `scripts/run_blind_replay_gate.py`. The gate wraps the existing manifest-backed app validation runtime and only passes on clean matched truth, no missing truth, no unexpected observed events, and no divergence. Verifier passed:
+- M8 added `app/services/blind_replay_gate.py` and `scripts/research/factory2/run_blind_replay_gate.py`. The gate wraps the existing manifest-backed app validation runtime and only passes on clean matched truth, no missing truth, no unexpected observed events, and no divergence. Verifier passed:
 
 ```bash
 .venv/bin/python -m pytest tests/test_blind_replay_gate.py tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
 # 49 passed
 
-.venv/bin/python -m py_compile app/services/blind_replay_gate.py scripts/run_blind_replay_gate.py tests/test_blind_replay_gate.py
+.venv/bin/python -m py_compile app/services/blind_replay_gate.py scripts/research/factory2/run_blind_replay_gate.py tests/test_blind_replay_gate.py
 # passed
 ```
 
@@ -418,22 +422,22 @@ observed_event_count=0
 matched_count=0
 passed=true
 ```
-- M9 added `app/services/live_activation.py` and `scripts/apply_live_activation.py`. Activation requires a passed blind replay gate, writes a redacted activation report, updates camera config in SQLite, and emits env overrides for live mode without allowing runtime-total mutation. Verifier passed:
+- M9 added `app/services/live_activation.py` and `scripts/research/factory2/apply_live_activation.py`. Activation requires a passed blind replay gate, writes a redacted activation report, updates camera config in SQLite, and emits env overrides for live mode without allowing runtime-total mutation. Verifier passed:
 
 ```bash
 .venv/bin/python -m pytest tests/test_live_activation.py tests/test_blind_replay_gate.py tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
 # 52 passed
 
-.venv/bin/python -m py_compile app/services/live_activation.py scripts/apply_live_activation.py tests/test_live_activation.py
+.venv/bin/python -m py_compile app/services/live_activation.py scripts/research/factory2/apply_live_activation.py tests/test_live_activation.py
 # passed
 ```
-- M10 added `app/services/periodic_audit.py` and `scripts/run_periodic_audit.py`. Audit reports create dispute packets and retraining triggers only; `runtime_total_before_audit` and `runtime_total_after_audit` are identical and `runtime_total_mutation_allowed=false`. Verifier passed:
+- M10 added `app/services/periodic_audit.py` and `scripts/research/factory2/run_periodic_audit.py`. Audit reports create dispute packets and retraining triggers only; `runtime_total_before_audit` and `runtime_total_after_audit` are identical and `runtime_total_mutation_allowed=false`. Verifier passed:
 
 ```bash
 .venv/bin/python -m pytest tests/test_periodic_audit.py tests/test_live_activation.py tests/test_blind_replay_gate.py tests/test_yolo26_training_runner.py tests/test_station_calibration.py tests/test_teacher_provider_contract.py tests/test_onboarding_windows.py tests/test_onboarding_state_machine.py tests/test_segment_manifest_persistence.py tests/test_stream_recorder.py -q
 # 54 passed
 
-.venv/bin/python -m py_compile app/services/periodic_audit.py scripts/run_periodic_audit.py tests/test_periodic_audit.py
+.venv/bin/python -m py_compile app/services/periodic_audit.py scripts/research/factory2/run_periodic_audit.py tests/test_periodic_audit.py
 # passed
 ```
 - M11 added `onboarding_state` to status, diagnostics, and WebSocket metrics, plus dashboard rendering for onboarding/live/audit/needs-review. Verifier passed:
@@ -486,7 +490,7 @@ make hygiene
 .venv/bin/python -m pytest tests/test_onboarding_cli_scripts.py tests/test_segment_manifest_persistence.py tests/test_station_calibration.py tests/test_stream_recorder.py tests/test_yolo26_training_runner.py tests/test_teacher_provider_contract.py tests/test_blind_replay_gate.py tests/test_live_activation.py tests/test_periodic_audit.py -q
 # 48 passed
 
-.venv/bin/python -m py_compile app/db/segment_repo.py app/services/station_calibration.py scripts/extract_onboarding_windows.py scripts/generate_onboarding_teacher_labels.py scripts/run_blind_replay_gate.py scripts/apply_live_activation.py scripts/run_periodic_audit.py scripts/run_yolo26_training_eval.py tests/test_onboarding_cli_scripts.py tests/test_segment_manifest_persistence.py tests/test_station_calibration.py
+.venv/bin/python -m py_compile app/db/segment_repo.py app/services/station_calibration.py scripts/research/factory2/extract_onboarding_windows.py scripts/research/factory2/generate_onboarding_teacher_labels.py scripts/research/factory2/run_blind_replay_gate.py scripts/research/factory2/apply_live_activation.py scripts/research/factory2/run_periodic_audit.py scripts/research/factory2/run_yolo26_training_eval.py tests/test_onboarding_cli_scripts.py tests/test_segment_manifest_persistence.py tests/test_station_calibration.py
 # passed
 ```
 
@@ -778,7 +782,7 @@ Turn the `real_factory.MOV` failed blind run into reviewed training/validation a
 - Current packet contents are still pending: 4 blank true-placement slots, 18 runtime false-positive / hard-negative candidates, and 60 motion-window candidates.
 - Converter must not create a reviewed truth ledger, gold labels, or training-eligible dataset until Thomas fills reviewed decisions and exactly 4 true-placement timestamps exist.
 - Converter tooling added:
-  - `scripts/convert_failed_blind_run_review.py`
+  - `scripts/research/factory2/convert_failed_blind_run_review.py`
   - `tests/test_convert_failed_blind_run_review.py`
 - Current pending conversion artifacts:
   - `data/reports/active_learning/real_factory_failed_blind_run_review_conversion.pending_v1.json`
@@ -795,7 +799,7 @@ Turn the `real_factory.MOV` failed blind run into reviewed training/validation a
 - The next reviewed conversion command, after the worksheet is filled, is:
 
 ```bash
-.venv/bin/python scripts/convert_failed_blind_run_review.py \
+.venv/bin/python scripts/research/factory2/convert_failed_blind_run_review.py \
   --worksheet data/reports/active_learning/real_factory_failed_blind_run_review_worksheet.v1.csv \
   --packet data/reports/active_learning/real_factory_failed_blind_run_learning_packet.v1.json \
   --manifest validation/test_cases/real_factory.json \
@@ -953,7 +957,7 @@ Validate `data/videos/from-pc/IMG_2628.MOV` through the real Factory Vision app 
   - `data/reports/img2628_human_truth_review_form.cv_motion_draft_v1.html` with the same 36 pending rows as an interactive local form that exports the worksheet CSV.
   - `data/videos/selected_frames/img2628_uniform_80/manifest.json`
   - `data/reports/img2628_human_truth_event_times.template.csv`
-- Worksheet conversion bridge added: `scripts/convert_truth_review_worksheet_to_csv.py`; interactive form exporter added: `scripts/export_truth_review_form_html.py`. Focused checks passed with `.venv/bin/python -m pytest tests/test_export_truth_review_form_html.py tests/test_convert_truth_review_worksheet_to_csv.py tests/test_build_human_truth_ledger_from_csv.py -q` (`10 passed`). Running the converter on the current worksheet correctly fails with `worksheet still has 36 pending row(s)`.
+- Worksheet conversion bridge added: `scripts/research/factory2/convert_truth_review_worksheet_to_csv.py`; interactive form exporter added: `scripts/research/factory2/export_truth_review_form_html.py`. Focused checks passed with `.venv/bin/python -m pytest tests/test_export_truth_review_form_html.py tests/test_convert_truth_review_worksheet_to_csv.py tests/test_build_human_truth_ledger_from_csv.py -q` (`10 passed`). Running the converter on the current worksheet correctly fails with `worksheet still has 36 pending row(s)`.
 - Codex visual review now exists to keep diagnostics moving without Moondream or immediate Thomas input:
   - `data/reports/img2628_codex_visual_review_worksheet.draft_v1.csv`
   - `data/reports/img2628_codex_visual_truth_event_times.draft_v1.csv`
@@ -999,7 +1003,7 @@ Validate `data/videos/from-pc/IMG_2628.MOV` through the real Factory Vision app 
   - Reviewed-truth decision bridge added:
     - `data/reports/img2628_event_level_dispute_decisions.template_v1.csv`
     - `data/reports/img2628_event_level_dispute_decisions.README.md`
-    - `scripts/apply_img2628_event_dispute_decisions.py`
+    - `scripts/research/factory2/apply_img2628_event_dispute_decisions.py`
     - Guard verified: blank template fails closed instead of producing a reviewed ledger; focused tests passed with `.venv/bin/python -m pytest tests/test_apply_img2628_event_dispute_decisions.py -q` (`3 passed`).
   - Follow-up threshold search on separate backend port `8093` preserved the visible dashboard stack and confirmed a simple event-lifetime/debounce tweak is not enough:
     - `data/reports/img2628_app_observed_events.run8093.worksheet_conf076_fps5_age20_min6_debounce60_speed16_diag_v1.json`: `16` events, draft comparison `14` matched / `11` missing / `2` unexpected.
@@ -1309,8 +1313,8 @@ Convert event evidence plus advisory MD2/Moondream teacher labels into a reviewe
 
 ### Review
 
-- Added `scripts/build_review_queue.py`, which joins evidence windows to advisory teacher labels and emits a sorted `factory-vision-review-queue-v1` artifact.
-- Added `scripts/export_review_queue_html.py`, which renders the review queue as an offline static contact sheet with relative frame links and an in-page advisory-only warning.
+- Added `scripts/research/factory2/build_review_queue.py`, which joins evidence windows to advisory teacher labels and emits a sorted `factory-vision-review-queue-v1` artifact.
+- Added `scripts/research/factory2/export_review_queue_html.py`, which renders the review queue as an offline static contact sheet with relative frame links and an in-page advisory-only warning.
 - Queue entries carry primary/all frame assets, time/frame windows, teacher status/risk/rationale, candidate use, review reasons, and count-event evidence while staying `bronze`, `pending`, `validation_truth_eligible=false`, and `training_eligible=false`.
 - Added `tests/test_review_queue_generation.py` for queue ranking, hard-negative candidate handling, frame asset carry-through, and safety flags.
 - Added `tests/test_review_queue_html_export.py` for the contact-sheet safety boundary and relative image paths.
@@ -1417,7 +1421,7 @@ Make `data/videos/from-pc/real_factory.MOV` count exactly `4` through the real l
   - Work continued locally without asking Thomas for credentials.
 - Verification passed:
   - `.venv/bin/python -m json.tool data/reports/real_factory_runtime_count4_app_path_evidence_v1.json`
-  - `.venv/bin/python -m py_compile scripts/build_real_factory_diagnostic_action_dataset.py`
+  - `.venv/bin/python -m py_compile scripts/research/factory2/build_real_factory_diagnostic_action_dataset.py`
   - `.venv/bin/python -m pytest tests/test_build_real_factory_diagnostic_action_dataset.py -q` (`5 passed`)
   - `.venv/bin/python -m pytest tests/test_capture_factory2_app_run_events.py tests/test_start_factory2_demo_app.py -q` (`11 passed`)
   - `.venv/bin/python -m pytest tests/test_validation_registry_schema.py tests/test_learning_registry_schema.py -q` (`6 passed`)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import json
 
-from scripts.export_truth_review_form_html import build_html, main
+from scripts.research.factory2.export_truth_review_form_html import build_html, main
 
 
 FIELDNAMES = [

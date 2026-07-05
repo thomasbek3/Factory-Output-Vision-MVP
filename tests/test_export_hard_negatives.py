@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import export_hard_negatives as exporter
+from scripts.research.factory2 import export_hard_negatives as exporter
 
 
 def _write_manifest(tmp_path: Path, *, label: str = "hard_negative", asset_name: str = "track.jpg", raw_crop: bool = False) -> Path:

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import assemble_active_panel_dataset as assembler
+from scripts.research.factory2 import assemble_active_panel_dataset as assembler
 
 
 def _write_reviewed_manifest(tmp_path: Path) -> Path:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts import optimize_factory2_proof_set as optimizer
+from scripts.research.factory2 import optimize_factory2_proof_set as optimizer
 
 
 def test_accepted_cluster_intervals_merge_duplicate_receipts() -> None:

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
-from scripts.export_hard_negatives import load_hard_negative_manifest
-from scripts.export_onboarding_stable_negatives import build_stable_negative_manifest, main
+from scripts.research.factory2.export_hard_negatives import load_hard_negative_manifest
+from scripts.research.factory2.export_onboarding_stable_negatives import build_stable_negative_manifest, main
 
 
 def _proposals_file(tmp_path: Path) -> Path:
@@ -87,7 +87,7 @@ def test_unreadable_negative_is_skipped(tmp_path: Path) -> None:
 
 def test_cli_end_to_end_produces_yolo_export(tmp_path: Path, capsys, monkeypatch) -> None:
     proposals = _proposals_file(tmp_path)
-    import scripts.export_onboarding_stable_negatives as module
+    import scripts.research.factory2.export_onboarding_stable_negatives as module
 
     monkeypatch.setattr(module, "_default_frame_provider", lambda: _frame_provider())
     exit_code = main(

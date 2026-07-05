@@ -10,7 +10,7 @@
 
 ```bash
 cd /Users/thomas/Projects/Factory-Output-Vision-MVP
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 ---
@@ -247,7 +247,7 @@ same source-token panel enters output zone, settles into output stack, or disapp
 Create:
 
 ```text
-scripts/build_panel_transfer_review_packets.py
+scripts/research/factory2/build_panel_transfer_review_packets.py
 tests/test_build_panel_transfer_review_packets.py
 ```
 
@@ -280,8 +280,8 @@ Verification:
 
 ```bash
 python -m pytest tests/test_build_panel_transfer_review_packets.py -q
-python -m py_compile scripts/build_panel_transfer_review_packets.py tests/test_build_panel_transfer_review_packets.py
-.venv/bin/python scripts/build_panel_transfer_review_packets.py --force
+python -m py_compile scripts/research/factory2/build_panel_transfer_review_packets.py tests/test_build_panel_transfer_review_packets.py
+.venv/bin/python scripts/research/factory2/build_panel_transfer_review_packets.py --force
 ```
 
 ### Milestone 2 — Packet audit pass
@@ -338,7 +338,7 @@ Canonical verification:
 
 ```bash
 python -m pytest tests/test_perception_gate.py tests/test_run_factory2_morning_proof.py tests/test_build_morning_proof_report.py -q
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 ---

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts import export_factory2_static_resident_reference_crops as exporter
+from scripts.research.factory2 import export_factory2_static_resident_reference_crops as exporter
 
 
 def _write_json(path: Path, payload: dict) -> Path:

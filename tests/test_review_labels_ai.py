@@ -1,6 +1,6 @@
 import json
 
-from scripts import review_labels_ai
+from scripts.research.factory2 import review_labels_ai
 
 
 def test_review_labels_manifest_separates_decision_buckets(tmp_path):

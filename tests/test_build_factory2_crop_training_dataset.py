@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import build_factory2_crop_training_dataset as builder
+from scripts.research.factory2 import build_factory2_crop_training_dataset as builder
 
 
 def _write_json(path: Path, payload: dict) -> Path:

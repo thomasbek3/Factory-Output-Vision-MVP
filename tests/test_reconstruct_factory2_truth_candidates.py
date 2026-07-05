@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.reconstruct_factory2_truth_candidates import (
+from scripts.research.factory2.reconstruct_factory2_truth_candidates import (
     build_truth_reconstruction,
     collapse_manual_track_candidates,
     load_proof_confirmed_events,

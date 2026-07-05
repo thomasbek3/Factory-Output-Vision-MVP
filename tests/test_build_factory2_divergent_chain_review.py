@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import pytest
 
-from scripts import build_factory2_divergent_chain_review as chain_review
+from scripts.research.factory2 import build_factory2_divergent_chain_review as chain_review
 
 
 def _write_json(path: Path, payload: dict) -> Path:

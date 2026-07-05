@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import diagnose_event_window as diag
+from scripts.research.factory2 import diagnose_event_window as diag
 
 
 def _track_receipt_payload(

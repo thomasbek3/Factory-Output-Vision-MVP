@@ -13,7 +13,7 @@
 ### Task 1: Build The Proof-Alignment Queue
 
 **Files:**
-- Create: `scripts/build_factory2_proof_alignment_queue.py`
+- Create: `scripts/research/factory2/build_factory2_proof_alignment_queue.py`
 - Create: `tests/test_build_factory2_proof_alignment_queue.py`
 - Input reports:
   - `data/reports/factory2_truth_reconstruction.gap45_recentdedupe.v0.json`
@@ -106,7 +106,7 @@ Expected: PASS
 Run:
 
 ```bash
-.venv/bin/python -m scripts.build_factory2_proof_alignment_queue \
+.venv/bin/python -m scripts.research.factory2.build_factory2_proof_alignment_queue \
   --reconstruction /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_truth_reconstruction.gap45_recentdedupe.v0.json \
   --output /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_proof_alignment_queue.gap45_recentdedupe.json \
   --force
@@ -117,7 +117,7 @@ Expected: `queue_count == 8`
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/build_factory2_proof_alignment_queue.py tests/test_build_factory2_proof_alignment_queue.py \
+git add scripts/research/factory2/build_factory2_proof_alignment_queue.py tests/test_build_factory2_proof_alignment_queue.py \
   data/reports/factory2_proof_alignment_queue.gap45_recentdedupe.json
 git commit -m "feat: add factory2 proof alignment queue"
 ```
@@ -128,7 +128,7 @@ git commit -m "feat: add factory2 proof alignment queue"
 - Create: `scripts/build_factory2_runtime_backed_diagnostics.py`
 - Create: `tests/test_build_factory2_runtime_backed_diagnostics.py`
 - Reuse:
-  - `scripts/diagnose_event_window.py`
+  - `scripts/research/factory2/diagnose_event_window.py`
   - `data/reports/factory2_proof_alignment_queue.gap45_recentdedupe.json`
 - Output root:
   - `data/diagnostics/event-windows/factory2-runtime-proof-*`
@@ -200,7 +200,7 @@ Expected: PASS
 Run:
 
 ```bash
-.venv/bin/python -m scripts.diagnose_event_window \
+.venv/bin/python -m scripts.research.factory2.diagnose_event_window \
   --video /Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV \
   --calibration /Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json \
   --model /Users/thomas/Projects/Factory-Output-Vision-MVP/models/panel_in_transit.pt \
@@ -248,8 +248,8 @@ git commit -m "feat: add runtime-backed proof diagnostics"
 ### Task 3: Refresh The Proof Set To Match Runtime
 
 **Files:**
-- Modify: `scripts/build_morning_proof_report.py`
-- Modify: `scripts/run_factory2_morning_proof.py`
+- Modify: `scripts/research/factory2/build_morning_proof_report.py`
+- Modify: `scripts/research/factory2/run_factory2_morning_proof.py`
 - Modify: `.hermes/HANDOFF.md`
 - Test:
   - `tests/test_run_factory2_morning_proof.py`
@@ -283,7 +283,7 @@ DEFAULT_DIAGNOSTICS = LEGACY_DIAGNOSTICS + RUNTIME_BACKED_DIAGNOSTICS
 Run:
 
 ```bash
-.venv/bin/python -m scripts.run_factory2_morning_proof --force \
+.venv/bin/python -m scripts.research.factory2.run_factory2_morning_proof --force \
   --report-json /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_report.runtime_backed.json \
   --report-md /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_report.runtime_backed.md \
   --run-summary-json /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_run_summary.runtime_backed.json
@@ -296,7 +296,7 @@ Expected: accepted proof count increases from `15`, and the proof report exposes
 Run:
 
 ```bash
-.venv/bin/python -m scripts.reconstruct_factory2_truth_candidates \
+.venv/bin/python -m scripts.research.factory2.reconstruct_factory2_truth_candidates \
   --proof-report /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_report.runtime_backed.json \
   --runtime-audit /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_audit.gap45_recentdedupe.json \
   --manual-labels /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_track_labels.manual_v1.json \
@@ -310,7 +310,7 @@ Expected: `runtime_only_count` trends to `0`.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/build_morning_proof_report.py scripts/run_factory2_morning_proof.py .hermes/HANDOFF.md \
+git add scripts/research/factory2/build_morning_proof_report.py scripts/research/factory2/run_factory2_morning_proof.py .hermes/HANDOFF.md \
   data/reports/factory2_morning_proof_report.runtime_backed.json \
   data/reports/factory2_truth_reconstruction.runtime_backed.json
 git commit -m "feat: align factory2 proof with runtime audit"

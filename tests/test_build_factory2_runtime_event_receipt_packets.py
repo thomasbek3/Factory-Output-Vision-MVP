@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.build_factory2_runtime_event_receipt_packets import build_runtime_event_receipt_packets
+from scripts.research.factory2.build_factory2_runtime_event_receipt_packets import build_runtime_event_receipt_packets
 
 
 def test_build_runtime_event_receipt_packets_marks_prior_receipt_plus_stub_as_shared_source_risk(tmp_path: Path) -> None:

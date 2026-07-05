@@ -39,7 +39,7 @@ excluding the wheeled cart at lower-left and the welding table above:
 `write_station_calibration`, `read_station_calibration`, `validate_station_calibration`.
 Do NOT write a new schema.
 
-- Add a small CLI `scripts/write_station_calibration.py` (argparse: `--station-id`,
+- Add a small CLI `scripts/research/factory2/write_station_calibration.py` (argparse: `--station-id`,
   `--output-polygon` as JSON string, `--source-polygon` optional, `--out` path,
   `--force`) that calls the existing builder/writer.
 - Produce the day-1 file at
@@ -79,7 +79,7 @@ Implementation:
 - Schema: bump `GENERATED_BY` to `motion_event_proposer_v2`; `SCHEMA_VERSION`
   unchanged (fields are additive).
 
-## Change 3 — Ranked cap replaces even-stride (`scripts/run_factory_day1_pipeline.py`)
+## Change 3 — Ranked cap replaces even-stride (`scripts/research/factory2/run_factory_day1_pipeline.py`)
 
 - New CLI args: `--station-calibration <path>` (reads polygon via
   `read_station_calibration`, first entry of `output_polygons`) and
@@ -106,7 +106,7 @@ Current behavior is marked `full_frame_fallback_until_station_roi_packet_exists`
 - Replace the fallback marker with `"crop_source": "station_calibration_output_zone"`
   vs `"crop_source": "full_frame_fallback"` so packets self-describe.
 
-## Change 5 — Teacher negative budget (`scripts/run_factory_day1_pipeline.py` + packet builder)
+## Change 5 — Teacher negative budget (`scripts/research/factory2/run_factory_day1_pipeline.py` + packet builder)
 
 - New CLI arg `--teacher-negative-cap` (default 30). Stable negatives are
   diversity-sampled by time-of-day (even stride across the day — stride is fine
@@ -118,7 +118,7 @@ Current behavior is marked `full_frame_fallback_until_station_roi_packet_exists`
   `label_authority_tier: "bronze"`, `training_eligible` per existing fusion
   rules for negatives.
 
-## Change 6 — Free validation harness (new `scripts/validate_zone_mining.py`)
+## Change 6 — Free validation harness (new `scripts/research/factory2/validate_zone_mining.py`)
 
 Argparse: `--proposals <event_proposals.json>`, `--growth-windows` (JSON, default
 `[["12:26","13:05"],["13:47","16:27"]]`), `--stall-windows` (default
@@ -156,7 +156,7 @@ Argparse: `--proposals <event_proposals.json>`, `--growth-windows` (JSON, defaul
 ## Acceptance checklist
 
 1. `pytest` green.
-2. `scripts/write_station_calibration.py` produced the day-1 calibration file.
+2. `scripts/research/factory2/write_station_calibration.py` produced the day-1 calibration file.
 3. Proposer dry-run on 3 real segments (e.g. the 14:0x chunks) emits zone scores.
 4. Commit(s) on `day2-zone-miner` only — surgical, no drive-by edits to
    unrelated files.

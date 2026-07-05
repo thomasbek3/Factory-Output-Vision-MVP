@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.build_factory2_human_truth_ledger import build_human_truth_ledger
+from scripts.research.factory2.build_factory2_human_truth_ledger import build_human_truth_ledger
 
 
 def test_build_human_truth_ledger_merges_runtime_reconstruction_and_authority(tmp_path: Path) -> None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.build_factory2_proof_alignment_queue import build_proof_alignment_queue
+from scripts.research.factory2.build_factory2_proof_alignment_queue import build_proof_alignment_queue
 
 
 def test_build_proof_alignment_queue_maps_runtime_only_events_to_covering_diagnostics(tmp_path) -> None:

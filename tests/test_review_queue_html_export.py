@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.export_review_queue_html import build_review_queue_html
+from scripts.research.factory2.export_review_queue_html import build_review_queue_html
 
 
 def _write_queue(path: Path, frame_path: Path) -> None:

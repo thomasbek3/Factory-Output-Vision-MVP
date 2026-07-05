@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.run_factory_day1_pipeline import cap_event_proposals, exclude_segments_by_filename_window
-from scripts.validate_zone_mining import build_zone_mining_validation, proposal_wall_time
+from scripts.research.factory2.run_factory_day1_pipeline import cap_event_proposals, exclude_segments_by_filename_window
+from scripts.research.factory2.validate_zone_mining import build_zone_mining_validation, proposal_wall_time
 
 
 def test_proposal_wall_time_uses_segment_filename_start() -> None:

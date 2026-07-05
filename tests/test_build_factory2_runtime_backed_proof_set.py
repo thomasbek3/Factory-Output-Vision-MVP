@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.build_factory2_runtime_backed_proof_set import build_runtime_backed_proof_set
+from scripts.research.factory2.build_factory2_runtime_backed_proof_set import build_runtime_backed_proof_set
 
 
 def test_build_runtime_backed_proof_set_appends_preferred_runtime_only_diagnostics(tmp_path) -> None:

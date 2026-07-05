@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.analyze_factory2_runtime_truth_gap import (
+from scripts.research.factory2.analyze_factory2_runtime_truth_gap import (
     ReviewedTrack,
     build_truth_gap_report,
     collapse_truth_intervals,

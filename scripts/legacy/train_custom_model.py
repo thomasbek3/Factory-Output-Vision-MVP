@@ -23,7 +23,7 @@ from pathlib import Path
 def validate_reviewed_label_gate(manifest_path: Path) -> dict[str, int]:
     """Validate that training is fed by the AI-reviewed label gate.
 
-    The reviewed manifest is produced by ``scripts/review_labels_ai.py``. Only
+    The reviewed manifest is produced by ``scripts/research/factory2/review_labels_ai.py``. Only
     ACCEPT/FIX labels appear in ``trainable_labels``; REJECT/UNCERTAIN rows are
     counted as blocked and must not be exported into the training dataset.
     """
@@ -48,7 +48,7 @@ def resolve_reviewed_label_gate(
         if allow_unreviewed_labels:
             return None
         raise ValueError(
-            "AI label QA manifest is required. Run scripts/review_labels_ai.py first, "
+            "AI label QA manifest is required. Run scripts/research/factory2/review_labels_ai.py first, "
             "or pass --allow-unreviewed-labels to bypass deliberately."
         )
     return validate_reviewed_label_gate(Path(reviewed_label_manifest))
@@ -66,7 +66,7 @@ def main():
         "--reviewed-label-manifest",
         type=str,
         default=None,
-        help="Reviewed manifest from scripts/review_labels_ai.py; gates training to AI-approved labels",
+        help="Reviewed manifest from scripts/research/factory2/review_labels_ai.py; gates training to AI-approved labels",
     )
     parser.add_argument(
         "--allow-unreviewed-labels",

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from scripts import export_factory2_worker_reference_crops as exporter
+from scripts.research.factory2 import export_factory2_worker_reference_crops as exporter
 
 
 def _write_json(path: Path, payload: dict) -> Path:

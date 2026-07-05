@@ -64,10 +64,10 @@ The human-built baseline models (validation/registry.json) are the comparison re
 - Optional backend `yolo_world` (open-vocabulary, ultralytics) behind explicit
   `--yolo-world-model`/`--allow-model-download` flags.
 - Output rows are shape-compatible with the existing deterministic review gate
-  (`scripts/review_labels_ai.py` -> `label-quality-reviewed-v1`) and assembler
-  (`scripts/assemble_active_panel_dataset.py`); `metadata.split` carries the deterministic
+  (`scripts/research/factory2/review_labels_ai.py` -> `label-quality-reviewed-v1`) and assembler
+  (`scripts/research/factory2/assemble_active_panel_dataset.py`); `metadata.split` carries the deterministic
   event-granular train/val split (all frames of one event share a split).
-- Hard negatives: `scripts/export_onboarding_stable_negatives.py` turns stable low-motion
+- Hard negatives: `scripts/research/factory2/export_onboarding_stable_negatives.py` turns stable low-motion
   proposals into `factory-hard-negative-export-v1` empty-label images.
 - A teacher crop-verification stage (accept/reject each proposed box crop) is designed but not
   built; it is the next lever if box quality ever blocks the gate.
@@ -99,7 +99,7 @@ part of what the rehearsal measures.
 
 ## Holdout split and leakage rule
 
-`scripts/build_holdout_case.py` cuts each source video at a keyframe near the 70% mark
+`scripts/research/factory2/build_holdout_case.py` cuts each source video at a keyframe near the 70% mark
 (stream-copy, exact alignment), guarantees >=3 truth events in the holdout tail (walking the
 split earlier when needed), never splits within 5s of a truth event, derives a shifted/renumbered
 holdout truth ledger (`derived-holdout-human-truth-ledger-v1`, passes the validation truth

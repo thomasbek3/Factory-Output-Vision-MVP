@@ -11,7 +11,7 @@ from app.services.teacher_provider import (
     build_teacher_labels_from_windows,
     provider_for_name,
 )
-from scripts import generate_onboarding_teacher_labels
+from scripts.research.factory2 import generate_onboarding_teacher_labels
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

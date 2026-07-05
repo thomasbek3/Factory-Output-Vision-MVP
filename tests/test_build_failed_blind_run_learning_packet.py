@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.build_failed_blind_run_learning_packet import build_html, build_packet
+from scripts.research.factory2.build_failed_blind_run_learning_packet import build_html, build_packet
 
 
 def _write_json(path: Path, text: str) -> None:

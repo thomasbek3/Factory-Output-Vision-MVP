@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.build_morning_proof_report import build_report, main, render_markdown, source_token_key
+from scripts.research.factory2.build_morning_proof_report import build_report, main, render_markdown, source_token_key
 
 
 def write_json(path: Path, payload: str) -> Path:

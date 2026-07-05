@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from app.services.yolo26_training_runner import SCHEMA_VERSION, run_yolo26_training_eval
-from scripts import run_yolo26_training_eval as run_yolo26_training_eval_cli
+from scripts.research.factory2 import run_yolo26_training_eval as run_yolo26_training_eval_cli
 
 
 def _write_data_yaml(path: Path) -> None:

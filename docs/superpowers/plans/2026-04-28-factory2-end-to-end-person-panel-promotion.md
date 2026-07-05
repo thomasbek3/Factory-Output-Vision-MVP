@@ -27,7 +27,7 @@ Run: `.venv/bin/python -m pytest tests/test_build_morning_proof_report.py -q`
 
 - [ ] **Step 3: Implement the shared helper**
 
-Move the sidecar-path loading, separation-feature extraction, and `evaluate_track(...)` re-run logic out of `scripts/build_morning_proof_report.py` into `app/services/person_panel_gate_promotion.py` so other diagnostic code can reuse the exact same rule.
+Move the sidecar-path loading, separation-feature extraction, and `evaluate_track(...)` re-run logic out of `scripts/research/factory2/build_morning_proof_report.py` into `app/services/person_panel_gate_promotion.py` so other diagnostic code can reuse the exact same rule.
 
 - [ ] **Step 4: Run the focused tests and verify green**
 
@@ -41,7 +41,7 @@ Commit message: `refactor: share person panel gate promotion`
 ### Task 2: Diagnostic Receipt Refresh
 
 **Files:**
-- Modify: `scripts/diagnose_event_window.py`
+- Modify: `scripts/research/factory2/diagnose_event_window.py`
 - Modify: `tests/test_diagnose_event_window.py`
 - Test: `tests/test_diagnose_event_window.py`
 
@@ -59,7 +59,7 @@ Run: `.venv/bin/python -m pytest tests/test_diagnose_event_window.py -q`
 
 - [ ] **Step 3: Implement the refresh path**
 
-Add a helper in `scripts/diagnose_event_window.py` that reads an existing diagnostic directory, rebuilds gate decisions from track evidence plus any sibling person/panel separation receipts, rewrites `track_receipts/*.json`, rewrites `hard_negative_manifest.json`, and updates `diagnostic.json`.
+Add a helper in `scripts/research/factory2/diagnose_event_window.py` that reads an existing diagnostic directory, rebuilds gate decisions from track evidence plus any sibling person/panel separation receipts, rewrites `track_receipts/*.json`, rewrites `hard_negative_manifest.json`, and updates `diagnostic.json`.
 
 - [ ] **Step 4: Run the focused tests and verify green**
 
@@ -73,7 +73,7 @@ Commit message: `feat: refresh diagnostic gate receipts from person panel eviden
 ### Task 3: Canonical Proof Consistency
 
 **Files:**
-- Modify: `scripts/run_factory2_morning_proof.py`
+- Modify: `scripts/research/factory2/run_factory2_morning_proof.py`
 - Modify: `tests/test_run_factory2_morning_proof.py`
 - Modify: `.hermes/HANDOFF.md`
 - Test: `tests/test_run_factory2_morning_proof.py`
@@ -94,8 +94,8 @@ After building `factory2_person_panel_separation.json`, call the diagnostic refr
 
 Run:
 - `.venv/bin/python -m pytest tests/test_build_panel_transfer_review_packets.py tests/test_analyze_panel_crop_evidence.py tests/test_run_factory2_morning_proof.py tests/test_analyze_person_panel_separation.py tests/test_build_morning_proof_report.py tests/test_perception_gate.py tests/test_diagnose_event_window.py -q`
-- `.venv/bin/python scripts/build_panel_transfer_review_packets.py --force`
-- `.venv/bin/python scripts/run_factory2_morning_proof.py --force`
+- `.venv/bin/python scripts/research/factory2/build_panel_transfer_review_packets.py --force`
+- `.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force`
 
 - [ ] **Step 5: Update handoff and commit**
 

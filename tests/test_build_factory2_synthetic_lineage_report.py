@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.build_factory2_synthetic_lineage_report import build_synthetic_lineage_report
+from scripts.research.factory2.build_factory2_synthetic_lineage_report import build_synthetic_lineage_report
 
 
 def test_build_synthetic_lineage_report_groups_events_by_provenance(tmp_path) -> None:

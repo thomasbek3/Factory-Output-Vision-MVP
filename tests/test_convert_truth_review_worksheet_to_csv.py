@@ -4,7 +4,7 @@ import csv
 
 import pytest
 
-from scripts.convert_truth_review_worksheet_to_csv import main, read_accepted_events, write_truth_csv
+from scripts.research.factory2.convert_truth_review_worksheet_to_csv import main, read_accepted_events, write_truth_csv
 
 
 FIELDNAMES = [

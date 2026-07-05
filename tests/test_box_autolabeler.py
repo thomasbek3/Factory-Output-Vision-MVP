@@ -12,8 +12,8 @@ from app.services.box_autolabeler import (
     write_auto_box_manifest,
 )
 from scripts import propose_auto_boxes as propose_auto_boxes_cli
-from scripts.assemble_active_panel_dataset import assemble_dataset
-from scripts.review_labels_ai import review_manifest
+from scripts.research.factory2.assemble_active_panel_dataset import assemble_dataset
+from scripts.research.factory2.review_labels_ai import review_manifest
 
 WIDTH, HEIGHT = 320, 240
 BOX = (80, 60, 180, 140)  # x1, y1, x2, y2 of the synthetic placed part

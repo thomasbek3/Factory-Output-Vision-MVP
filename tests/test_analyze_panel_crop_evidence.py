@@ -1,6 +1,6 @@
 import numpy as np
 
-from scripts.analyze_panel_crop_evidence import (
+from scripts.research.factory2.analyze_panel_crop_evidence import (
     analyze_crop_array,
     analyze_receipt,
     analyze_work_queue_report,

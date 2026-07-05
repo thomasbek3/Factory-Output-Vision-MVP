@@ -140,7 +140,7 @@ def build_station_stages(
             "artifact": str(holdout_manifest),
             "command": [
                 python,
-                "scripts/build_holdout_case.py",
+                "scripts/research/factory2/build_holdout_case.py",
                 "--video",
                 video,
                 "--truth-ledger",
@@ -287,7 +287,7 @@ def build_station_stages(
             "artifact": str(reviewed),
             "command": [
                 python,
-                "scripts/review_labels_ai.py",
+                "scripts/research/factory2/review_labels_ai.py",
                 str(auto_boxes),
                 "--output",
                 str(reviewed),
@@ -298,7 +298,7 @@ def build_station_stages(
             "artifact": str(auto_calibration),
             "command": [
                 python,
-                "scripts/derive_auto_station_calibration.py",
+                "scripts/research/factory2/derive_auto_station_calibration.py",
                 "--auto-boxes",
                 str(auto_boxes),
                 "--train-clip",
@@ -313,7 +313,7 @@ def build_station_stages(
             "artifact": str(hard_negatives),
             "command": [
                 python,
-                "scripts/export_onboarding_stable_negatives.py",
+                "scripts/research/factory2/export_onboarding_stable_negatives.py",
                 "--event-proposals",
                 str(proposals),
                 "--work-dir",
@@ -328,7 +328,7 @@ def build_station_stages(
             "artifact": str(dataset_manifest),
             "command": [
                 python,
-                "scripts/assemble_active_panel_dataset.py",
+                "scripts/research/factory2/assemble_active_panel_dataset.py",
                 "--reviewed-label-manifest",
                 str(reviewed),
                 "--hard-negative-export",
@@ -344,7 +344,7 @@ def build_station_stages(
             "retry_device_cpu": True,
             "command": [
                 python,
-                "scripts/run_yolo26_training_eval.py",
+                "scripts/research/factory2/run_yolo26_training_eval.py",
                 "--data-yaml",
                 str(dataset_dir / "data.yaml"),
                 "--dataset-manifest",
@@ -372,7 +372,7 @@ def build_station_stages(
             # state-diff-confirmed negative windows become extra empty-label hard negatives.
             "command": [
                 python,
-                "scripts/mine_hard_negative_frames.py",
+                "scripts/research/factory2/mine_hard_negative_frames.py",
                 "--model-report",
                 str(training_report),
                 "--teacher-labels",
@@ -400,7 +400,7 @@ def build_station_stages(
             "artifact": str(dataset_v2_manifest),
             "command": [
                 python,
-                "scripts/assemble_active_panel_dataset.py",
+                "scripts/research/factory2/assemble_active_panel_dataset.py",
                 "--reviewed-label-manifest",
                 str(reviewed),
                 "--hard-negative-export",
@@ -416,7 +416,7 @@ def build_station_stages(
             "retry_device_cpu": True,
             "command": [
                 python,
-                "scripts/run_yolo26_training_eval.py",
+                "scripts/research/factory2/run_yolo26_training_eval.py",
                 "--data-yaml",
                 str(dataset_v2_dir / "data.yaml"),
                 "--dataset-manifest",
@@ -462,7 +462,7 @@ def build_station_stages(
             "artifact": str(gate_report),
             "command": [
                 python,
-                "scripts/run_blind_replay_gate.py",
+                "scripts/research/factory2/run_blind_replay_gate.py",
                 "--manifest",
                 str(holdout_manifest),
                 "--output",

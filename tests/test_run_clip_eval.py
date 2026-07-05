@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import run_clip_eval
+from scripts.research.factory2 import run_clip_eval
 
 
 def write_manifest(path: Path, rows: list[dict]) -> None:
@@ -216,7 +216,7 @@ def test_run_clip_eval_script_help_works_when_invoked_by_path() -> None:
     repo_root = Path(__file__).resolve().parents[1]
 
     result = subprocess.run(
-        [sys.executable, "scripts/run_clip_eval.py", "--help"],
+        [sys.executable, "scripts/research/factory2/run_clip_eval.py", "--help"],
         cwd=repo_root,
         text=True,
         capture_output=True,

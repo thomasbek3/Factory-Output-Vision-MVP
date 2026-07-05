@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import apply_factory2_track_review_labels as applier
+from scripts.research.factory2 import apply_factory2_track_review_labels as applier
 
 
 def _write_json(path: Path, payload: dict) -> Path:

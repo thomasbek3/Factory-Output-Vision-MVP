@@ -14,14 +14,14 @@
 
 **Plan-owned files**
 
-- Create: `scripts/build_factory2_final_gap_search_plan.py`
-- Create: `scripts/run_factory2_final_gap_search.py`
-- Create: `scripts/build_factory2_final_gap_search_report.py`
+- Create: `scripts/research/factory2/build_factory2_final_gap_search_plan.py`
+- Create: `scripts/research/factory2/run_factory2_final_gap_search.py`
+- Create: `scripts/research/factory2/build_factory2_final_gap_search_report.py`
 - Create: `tests/test_build_factory2_final_gap_search_plan.py`
 - Create: `tests/test_run_factory2_final_gap_search.py`
 - Create: `tests/test_build_factory2_final_gap_search_report.py`
-- Modify: `scripts/build_factory2_runtime_event_receipt_packets.py`
-- Modify: `scripts/build_morning_proof_report.py` only if the scorer needs one more audit field
+- Modify: `scripts/research/factory2/build_factory2_runtime_event_receipt_packets.py`
+- Modify: `scripts/research/factory2/build_morning_proof_report.py` only if the scorer needs one more audit field
 - Modify: `.hermes/HANDOFF.md`
 - Modify: `tasks/lessons.md`
 
@@ -46,10 +46,10 @@
 ### Task 1: Build The Final-Gap Search Plan
 
 **Files:**
-- Create: `scripts/build_factory2_final_gap_search_plan.py`
+- Create: `scripts/research/factory2/build_factory2_final_gap_search_plan.py`
 - Create: `tests/test_build_factory2_final_gap_search_plan.py`
 - Reuse:
-  - `scripts/build_factory2_runtime_event_receipt_packets.py`
+  - `scripts/research/factory2/build_factory2_runtime_event_receipt_packets.py`
   - `data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json`
 - Output:
   - `data/reports/factory2_final_gap_search_plan.v1.json`
@@ -155,7 +155,7 @@ Expected: PASS
 Run:
 
 ```bash
-.venv/bin/python scripts/build_factory2_final_gap_search_plan.py \
+.venv/bin/python scripts/research/factory2/build_factory2_final_gap_search_plan.py \
   --packets /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json \
   --output /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_final_gap_search_plan.v1.json \
   --lead-seconds 4 --lead-seconds 6 --lead-seconds 8 --lead-seconds 10 --lead-seconds 12 \
@@ -169,7 +169,7 @@ Expected: candidates for exactly the two unresolved events, concentrated around 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/build_factory2_final_gap_search_plan.py tests/test_build_factory2_final_gap_search_plan.py \
+git add scripts/research/factory2/build_factory2_final_gap_search_plan.py tests/test_build_factory2_final_gap_search_plan.py \
   data/reports/factory2_final_gap_search_plan.v1.json
 git commit -m "feat: add factory2 final-gap search plan"
 ```
@@ -177,12 +177,12 @@ git commit -m "feat: add factory2 final-gap search plan"
 ### Task 2: Run The Diagnostic Search Sweep
 
 **Files:**
-- Create: `scripts/run_factory2_final_gap_search.py`
+- Create: `scripts/research/factory2/run_factory2_final_gap_search.py`
 - Create: `tests/test_run_factory2_final_gap_search.py`
 - Reuse:
-  - `scripts/diagnose_event_window.py`
-  - `scripts/build_morning_proof_report.py`
-  - `scripts/build_factory2_runtime_event_receipt_packets.py`
+  - `scripts/research/factory2/diagnose_event_window.py`
+  - `scripts/research/factory2/build_morning_proof_report.py`
+  - `scripts/research/factory2/build_factory2_runtime_event_receipt_packets.py`
 - Output root:
   - `data/diagnostics/event-windows/factory2-final-gap-search-*`
 
@@ -278,7 +278,7 @@ Expected: PASS
 Run:
 
 ```bash
-.venv/bin/python scripts/run_factory2_final_gap_search.py \
+.venv/bin/python scripts/research/factory2/run_factory2_final_gap_search.py \
   --plan /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_final_gap_search_plan.v1.json \
   --video /Users/thomas/Projects/Factory-Output-Vision-MVP/data/videos/from-pc/factory2.MOV \
   --calibration /Users/thomas/Projects/Factory-Output-Vision-MVP/data/calibration/factory2_ai_only_v1.json \
@@ -293,7 +293,7 @@ Expected: a bounded set of search diagnostics under `data/diagnostics/event-wind
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/run_factory2_final_gap_search.py tests/test_run_factory2_final_gap_search.py \
+git add scripts/research/factory2/run_factory2_final_gap_search.py tests/test_run_factory2_final_gap_search.py \
   data/reports/factory2_final_gap_search_run.v1.json data/diagnostics/event-windows/factory2-final-gap-search-*
 git commit -m "feat: run factory2 final-gap diagnostic search"
 ```
@@ -301,11 +301,11 @@ git commit -m "feat: run factory2 final-gap diagnostic search"
 ### Task 3: Score Search Results Against Fresh Source Lineage
 
 **Files:**
-- Create: `scripts/build_factory2_final_gap_search_report.py`
+- Create: `scripts/research/factory2/build_factory2_final_gap_search_report.py`
 - Create: `tests/test_build_factory2_final_gap_search_report.py`
 - Reuse:
-  - `scripts/build_morning_proof_report.py`
-  - `scripts/build_factory2_runtime_event_receipt_packets.py`
+  - `scripts/research/factory2/build_morning_proof_report.py`
+  - `scripts/research/factory2/build_factory2_runtime_event_receipt_packets.py`
   - `data/reports/factory2_morning_proof_report.optimized_plus_0016_0019_v1.json`
 - Output:
   - `data/reports/factory2_final_gap_search_report.v1.json`
@@ -416,7 +416,7 @@ Expected: PASS
 Run:
 
 ```bash
-.venv/bin/python scripts/build_factory2_final_gap_search_report.py \
+.venv/bin/python scripts/research/factory2/build_factory2_final_gap_search_report.py \
   --search-run /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_final_gap_search_run.v1.json \
   --proof-baseline /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_morning_proof_report.optimized_plus_0016_0019_v1.json \
   --packets /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_event_receipt_packets.optimized_plus_0016_0019_v1.json \
@@ -431,7 +431,7 @@ Expected:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/build_factory2_final_gap_search_report.py tests/test_build_factory2_final_gap_search_report.py \
+git add scripts/research/factory2/build_factory2_final_gap_search_report.py tests/test_build_factory2_final_gap_search_report.py \
   data/reports/factory2_final_gap_search_report.v1.json
 git commit -m "feat: score factory2 final-gap diagnostic search"
 ```
@@ -442,9 +442,9 @@ git commit -m "feat: score factory2 final-gap diagnostic search"
 - Modify: `.hermes/HANDOFF.md`
 - Modify: `tasks/lessons.md`
 - Optionally modify:
-  - `scripts/build_factory2_runtime_backed_proof_set.py`
-  - `scripts/optimize_factory2_proof_set.py`
-  - `scripts/run_factory2_morning_proof.py`
+  - `scripts/research/factory2/build_factory2_runtime_backed_proof_set.py`
+  - `scripts/research/factory2/optimize_factory2_proof_set.py`
+  - `scripts/research/factory2/run_factory2_morning_proof.py`
 
 - [ ] **Step 1: If fresh lineage exists, write the failing proof update test**
 
@@ -483,7 +483,7 @@ def test_runtime_backed_proof_set_adds_fresh_final_gap_diagnostic(tmp_path) -> N
 Run:
 
 ```bash
-.venv/bin/python scripts/build_factory2_runtime_backed_proof_set.py \
+.venv/bin/python scripts/research/factory2/build_factory2_runtime_backed_proof_set.py \
   --queue /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_proof_alignment_queue.gap45_recentdedupe.json \
   --output /Users/thomas/Projects/Factory-Output-Vision-MVP/data/reports/factory2_runtime_backed_proof_set.final_gap_v1.json \
   --force
@@ -492,7 +492,7 @@ Run:
 Then rerun:
 
 ```bash
-.venv/bin/python scripts/run_factory2_morning_proof.py --force
+.venv/bin/python scripts/research/factory2/run_factory2_morning_proof.py --force
 ```
 
 Expected: proof rises above `21` only if a diagnostic truly contributes fresh lineage.

@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from app.services.hard_negative_miner import mine_hard_negative_frames
-from scripts.assemble_active_panel_dataset import load_hard_negative_rows
+from scripts.research.factory2.assemble_active_panel_dataset import load_hard_negative_rows
 
 
 def _fixtures(tmp_path: Path) -> tuple[Path, Path]:

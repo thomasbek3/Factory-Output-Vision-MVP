@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.build_factory2_final_gap_search_plan import build_final_gap_search_plan
+from scripts.research.factory2.build_factory2_final_gap_search_plan import build_final_gap_search_plan
 
 
 def test_build_final_gap_search_plan_generates_window_grid_for_unresolved_events(tmp_path) -> None:

@@ -121,7 +121,7 @@ data/datasets/factory2_divergent_chain_review_v1/
 Built by:
 
 ```bash
-.venv/bin/python scripts/build_factory2_divergent_chain_review.py --force
+.venv/bin/python scripts/research/factory2/build_factory2_divergent_chain_review.py --force
 ```
 
 What it contains:
@@ -141,7 +141,7 @@ Status: **Done**
 
 Deliverables:
 
-- `scripts/build_factory2_divergent_chain_review.py`
+- `scripts/research/factory2/build_factory2_divergent_chain_review.py`
 - `tests/test_build_factory2_divergent_chain_review.py`
 - `data/reports/factory2_divergent_chain_review.v1.json`
 - `data/datasets/factory2_divergent_chain_review_v1/`
@@ -247,7 +247,7 @@ Current result:
 First bounded Milestone 4 deliverable:
 
 ```text
-scripts/build_factory2_final_two_chain_adjudication.py
+scripts/research/factory2/build_factory2_final_two_chain_adjudication.py
 data/reports/factory2_final_two_chain_adjudication.v1.json
 data/datasets/factory2_final_two_chain_adjudication_v1/
 tests/test_build_factory2_final_two_chain_adjudication.py

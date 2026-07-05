@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.build_factory2_final_gap_search_report import build_final_gap_search_report
+from scripts.research.factory2.build_factory2_final_gap_search_report import build_final_gap_search_report
 
 
 def test_build_final_gap_search_report_marks_restated_lineage_as_nonrecovering(tmp_path) -> None:

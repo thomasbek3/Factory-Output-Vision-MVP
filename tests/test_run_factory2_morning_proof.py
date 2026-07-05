@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.run_factory2_morning_proof import (
+from scripts.research.factory2.run_factory2_morning_proof import (
     default_fp_output,
     default_positive_output,
     run_factory2_morning_proof,
