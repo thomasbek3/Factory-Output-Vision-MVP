@@ -1,10 +1,15 @@
 # AI-Only Active Learning Pipeline
 
-Updated: 2026-05-02
+Updated: 2026-07-04
 
 ## Purpose
 
-Factory Vision counts live with AI only. The authoritative live runtime path remains YOLO/event-based counting in the app. VLMs, teacher models, Moondream, Moondream Lens, and human/VA reviewers are offline helpers for evidence review, labeling, audits, troubleshooting, and future model promotion.
+Factory Vision counts live with AI only. The authoritative live runtime path is
+the configured app counter: Track A YOLO/event-based counting for boxable
+products, or the Track B clip-student counter only after it passes its blind
+exam gate. VLMs, teacher models, Moondream, Moondream Lens, and human/VA
+reviewers are offline helpers for evidence review, labeling, audits,
+troubleshooting, and future model promotion.
 
 Product pitch:
 
@@ -19,7 +24,7 @@ Live counting must not block on a human or cloud model. During a shift, Runtime 
 ```text
 camera or file-backed source
   -> ordered frames
-  -> YOLO/event-based counting
+  -> configured app counter (Track A YOLO/event or promoted Track B clip student)
   -> runtime count event
   -> dashboard Runtime Total
 ```
@@ -169,7 +174,9 @@ Moondream Station is the preferred first Moondream integration because it keeps 
 
 ## Model Promotion Gate
 
-New model/settings candidates must pass the registry validation set and any customer-specific cases before promotion. Promotion requires:
+New model/settings candidates must pass the relevant gate before promotion:
+registry validation for Track A and the blind seven-placement exam for Track B.
+Promotion requires:
 
 - no runtime code path that depends on VLM or human approval
 - clean registry case results through `scripts/validate_video.py` or equivalent real-app proof

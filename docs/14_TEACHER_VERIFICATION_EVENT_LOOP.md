@@ -1,16 +1,17 @@
 # Teacher Verification Event Loop
 
-Updated: 2026-06-09
+Updated: 2026-07-04
 
 ## Objective
 
 Produce a self-verifying onboarding loop that turns delayed RTSP/file segments
-into station-specific training and audit candidates while the existing
-YOLO/event runtime remains the only count authority.
+into station-specific training and audit candidates while the configured app
+runtime remains the only count authority: Track A YOLO/event counting for
+boxable products, or Track B clip-student counting after the blind exam gate.
 
 Success means a new station can run in observe-only mode, mine likely placement
 events, ask teacher VLMs to verify bounded evidence packets, train/evaluate a
-station detector, and pass a blind app-runtime replay gate before live
+station detector or action-recognition model, and pass a blind app-runtime replay gate before live
 activation. Teacher labels must never mutate `Runtime Total` or become
 validation truth automatically.
 

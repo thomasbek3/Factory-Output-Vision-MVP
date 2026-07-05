@@ -1,5 +1,11 @@
 # Custom Model Training — Per-Customer YOLO Fine-Tuning
 
+*Track A guide — use this for boxable products that can be labeled with
+bounding boxes. The live overhead thin-wire station is the known exception: YOLO
+scored 0/7 there and the current path is Track B tripwire + clip action
+recognition. See `docs/00_CURRENT_STATE.md` and ADR 0004 before applying this to
+wire-frame overhead footage.*
+
 ## Why custom training is needed
 YOLOv8n ships pre-trained on COCO (80 common object classes: people, cars, bottles, etc.).
 Factory-specific parts (wire mesh panels, stamped brackets, molded parts) are NOT in COCO.

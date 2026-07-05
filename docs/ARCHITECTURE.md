@@ -1,5 +1,11 @@
 # ARCHITECTURE — Components, Data Flow, State Machine
 
+*Current orientation (2026-07-04) — this detailed component map primarily
+describes Track A YOLO/event counting. For the current two-track source of truth,
+read `docs/00_CURRENT_STATE.md` and `docs/02_ARCHITECTURE.md` first. Track B for
+the live overhead wire-frame station uses tripwire + clip action recognition,
+not object detection.*
+
 ---
 
 ## 1) Component diagram (text)

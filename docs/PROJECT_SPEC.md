@@ -1,5 +1,10 @@
 # PROJECT_SPEC — Factory Vision Output Counter (v1.0 Camera-Only MVP)
-This is the single source of truth for behavior. Do not implement features not defined here.
+*Historical detailed spec — see `docs/00_CURRENT_STATE.md` and the numbered docs
+in `docs/README.md` for the current source of truth. This file is useful for
+early product intent and Factory2 evidence doctrine, but it predates the Track B
+tripwire+clip action-recognition pivot.*
+
+Do not implement features not defined in the current numbered docs.
 
 See ROADMAP.md for v1.5 (beam), v2.0 (OEE/intelligence), and beyond.
 

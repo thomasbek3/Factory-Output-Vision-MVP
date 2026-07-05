@@ -1,6 +1,11 @@
 # CODEX_RUNBOOK — Exact step-by-step Codex workflow
 
-> 2026-05-01 note: this runbook includes early MVP prompts from before the YOLO/event-based output-zone pipeline converged. Treat background subtraction, contours, and count-line crossing prompts as historical context. The current verified Factory2 path is documented in `docs/FACTORY2_REALTIME_APP_VALIDATION.md`.
+> 2026-07-04 note: this runbook includes early MVP prompts from before the
+> YOLO/event-based output-zone pipeline converged and before the Track B
+> tripwire+clip action-recognition pivot. Treat background subtraction,
+> contours, and count-line crossing prompts as historical context. Current claim
+> boundaries live in `docs/00_CURRENT_STATE.md`; the verified Factory2 Track A
+> path is documented in `docs/FACTORY2_REALTIME_APP_VALIDATION.md`.
 
 This is the only process you follow. Do not improvise.
 

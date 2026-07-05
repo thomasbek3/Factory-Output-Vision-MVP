@@ -13,8 +13,8 @@ Current execution status as of 2026-03-11:
 - legacy template/static cleanup completed
 - current implementation focus is incremental stabilization and broader regression coverage
 
-2026-05-01 update:
-- The current counting doctrine is YOLO/event-based output-zone counting, not background subtraction, contours, or count-line crossing.
+2026-07-04 update:
+- The current counting doctrine is Track A YOLO/event-based output-zone counting for boxable products, and Track B tripwire + clip action recognition for the unboxable overhead wire-frame station. It is not background subtraction, contours, or count-line crossing.
 - The Factory2 real-time app path is verified in `docs/FACTORY2_REALTIME_APP_VALIDATION.md`.
 - Older line-crossing milestones below are retained as historical build-plan context, not current implementation guidance.
 

@@ -1,6 +1,6 @@
 # Autonomous Onboarding Rehearsal
 
-Updated: 2026-06-09
+Updated: 2026-07-04
 
 This document defines the autonomous station-onboarding rehearsal: an offline, end-to-end proof
 that raw station footage can become a gate-passing per-station model with zero human box labeling.
@@ -151,7 +151,9 @@ result with playback speed, the human-baseline proof summary, and diagnostic tea
 
 ## Claim boundary
 
-- Live `Runtime Total` authority stays with the existing YOLO/event runtime; nothing here mutates it.
+- Live `Runtime Total` authority stays with the configured app runtime: Track A
+  YOLO/event counting for boxable products, or Track B clip-student counting
+  after the blind exam gate. Nothing here mutates it.
 - Teacher labels, silver candidates, auto boxes, and trained models are never validation truth.
 - A passing rehearsal station is evidence the autonomous onboarding pipeline works on recorded
   footage; it is not a live RTSP field claim (that remains TVL9) and not registry promotion.

@@ -26,6 +26,7 @@ Classify every meaningful change before editing:
 | Class | Examples | Required gate |
 | --- | --- | --- |
 | Runtime count | `VisionWorker`, counters, detector behavior | focused tests + registry regressions |
+| Track B action recognition | tripwire, clip dataset, clip student, placement counter, exam scorer | focused tests + blind exam gate before promotion |
 | Validation | manifests, registry, truth comparison scripts | schema tests + dry-run validation |
 | Frontend | dashboard, wizard, troubleshooting | lint + build + relevant e2e/manual check |
 | Artifacts | `data/`, `models/`, training outputs | artifact policy review |
@@ -80,11 +81,16 @@ wall/source pacing near 1.0
 
 File-backed app proof is not live RTSP field proof.
 
+Track B action-recognition promotion additionally requires the blind exam gate:
+all seven held-out placements matched, zero false counts, and no training on
+`validation/exam/`. That exam is the sealed answer key, not training material.
+
 ## Runtime Authority
 
 Allowed count authority:
 
-- current app runtime path
+- current app runtime path: Track A YOLO/event counting for boxable products
+- promoted Track B clip-student counting after the blind exam gate
 - promoted future fusion policy after validation
 
 Not allowed:

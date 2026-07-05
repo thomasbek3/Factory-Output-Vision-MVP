@@ -12,7 +12,9 @@ June 2026 stack options include RF-DETR, YOLO26, YOLOE-26, Roboflow Inference/Wo
 
 New detectors, trackers, vendor runtimes, and hardware platforms belong in evaluation lanes until promoted.
 
-The production baseline remains the current Ultralytics-compatible YOLO/event path until a candidate beats it under the validation gate.
+The Track A production baseline remains the current Ultralytics-compatible
+YOLO/event path until a candidate beats it under the validation gate. Track B is
+separately governed by ADR 0004 for the live overhead wire-frame station.
 
 ## Consequences
 

@@ -14,6 +14,10 @@ The Pennies & Inches architecture note introduced newer stack options such as Ro
 
 The existing Factory Vision runtime remains the system of record.
 
+ADR 0004 adds the scoped Track B path for the live overhead wire-frame station:
+tripwire + clip action recognition plugs into the app/validation contracts
+rather than replacing the product with a vendor workflow.
+
 New architecture work should extend the current runtime through narrow interfaces such as:
 
 - `MachineCycleDetector`

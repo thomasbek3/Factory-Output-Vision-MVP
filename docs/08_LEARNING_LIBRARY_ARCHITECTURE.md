@@ -1,12 +1,12 @@
 # Learning Library Architecture
 
-Updated: 2026-05-03
+Updated: 2026-07-04
 
 ## Purpose
 
 Factory Vision must improve from every factory run without confusing diagnostic output, teacher labels, training labels, and validation proof.
 
-The learning library is the productized path for turning videos, failed diagnostics, reviewed events, labels, datasets, detector experiments, and app proof runs into reusable assets. It does not change the live counting authority: Runtime Total still comes only from the configured YOLO/event app path.
+The learning library is the productized path for turning videos, failed diagnostics, reviewed events, labels, datasets, detector/action-recognition experiments, and app proof runs into reusable assets. It does not change the live counting authority: Runtime Total still comes only from the configured app path: Track A YOLO/event counting, or Track B clip-student counting after that lane passes its blind exam gate.
 
 ## Storage Model
 
@@ -62,6 +62,7 @@ Use distinct artifact names because each class has a different authority boundar
 | Artifact | Meaning | Validation Truth? | Training Eligible? |
 | --- | --- | --- | --- |
 | `detector_transfer_screen` | Existing detectors sampled on a candidate video | No | No |
+| `tripwire_candidates` / `clip_dataset` | Track B candidate moments and action clips | No | No by itself |
 | `runtime_diagnostic_run` / `observed_events` | App attempted with candidate settings | No by itself | No by itself |
 | `candidate_windows` / `event_evidence` | Review windows around events, misses, or hard negatives | No | No by itself |
 | `teacher_labels` | VLM/frontier/local teacher suggestions | No | Bronze only |
@@ -84,9 +85,9 @@ Use this sequence for every new or failed factory video:
 5. `teacher_label_run`: optional local or explicitly approved cloud teacher suggestions.
 6. `human_review_batch`: human/VA/reconciler approves, edits, rejects, or marks unclear.
 7. `gold_label_set`: reviewed event ledger, boxes, and window labels.
-8. `dataset_assembly`: split frames/windows by source event/video with leakage checks.
-9. `model_train_run`: train or fine-tune a detector candidate.
-10. `model_eval_run`: evaluate on held-out frames/windows/videos.
+8. `dataset_assembly`: split frames/windows/clips by source event/video with leakage checks.
+9. `model_train_run`: train or fine-tune a detector or clip-student candidate.
+10. `model_eval_run`: evaluate on held-out frames/windows/videos or the Track B blind exam.
 11. `app_proof_run`: run the real dashboard path at `1.0x`.
 12. `model_promotion`: update detector cards/registry only after clean proof.
 
@@ -137,6 +138,9 @@ Current indexed cases:
 
 - `factory2_test_case_1` alias `factory2`: verified app-proof anchor, promotion eligible, useful as the high-count regression case.
 - `real_factory_candidate` alias `real_factory`: diagnostic runtime recovery only, not validation truth, not training eligible, and blocked on reviewed gold truth plus a real_factory placed-and-stayed calibration file.
+- Track B live overhead wire-frame station: current action-recognition evaluation
+  lane; do not train on `validation/exam/`, and do not promote until the blind
+  exam matches all seven held-out placements with zero false counts.
 
 ## Cloud Teacher Policy
 

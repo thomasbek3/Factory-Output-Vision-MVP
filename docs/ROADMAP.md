@@ -1,5 +1,10 @@
 # ROADMAP — Factory Vision Output Counter → Factory Intelligence Platform
 
+*Historical roadmap orientation — see `docs/00_CURRENT_STATE.md` for current
+validated claims. v1.0 now has two doctrine tracks: Track A YOLO/event counting
+for boxable products, and Track B tripwire + clip action recognition for the
+unboxable overhead wire-frame station.*
+
 This is the master product roadmap from MVP to full autonomous factory management.
 
 ---
@@ -59,7 +64,7 @@ v11.0  "The factory runs itself."
 **Goal:** Prove that vision-based counting works on real factory lines, including representative source→output delivery workflows where parts can be picked up, repositioned, and partially occluded by workers.
 
 **What it does:**
-- Camera watches conveyor, counts parts crossing a line
+- Camera watches an output area and counts completed output placements
 - Detects stops (zero output), drops (rate decline), operator absent (optional)
 - Local web UI, 15-minute setup, no CLI
 - Runs on $200 Ubuntu edge PC + Reolink IP camera

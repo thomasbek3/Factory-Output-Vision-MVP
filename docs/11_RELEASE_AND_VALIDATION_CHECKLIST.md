@@ -1,6 +1,6 @@
 # Release And Validation Checklist
 
-Updated: 2026-06-04
+Updated: 2026-07-04
 
 Use this before claiming a demo, release, validation proof, or production readiness.
 
@@ -86,7 +86,8 @@ File-backed proof is not live RTSP proof.
 Allowed:
 
 - configured app counting path
-- YOLO/event-based runtime
+- Track A YOLO/event-based runtime for boxable products
+- Track B clip-student runtime after the blind exam gate
 - future promoted fusion policy
 
 Not allowed:
@@ -97,13 +98,13 @@ Not allowed:
 - offline retrospective count as live proof
 - fake UI count updates
 
-## Model Or Detector Promotion
+## Model, Detector, Or Action-Recognition Promotion
 
-Before promoting any model or detector:
+Before promoting any model, detector, or Track B action-recognition counter:
 
 - record model file path and hash
 - record training/eval data lineage
-- run registry cases
+- run registry cases for Track A or the blind seven-placement exam for Track B
 - compare timing and event alignment
 - check offline appliance compatibility
 - check commercial licensing
