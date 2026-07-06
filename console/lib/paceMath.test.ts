@@ -109,15 +109,56 @@ describe("paceMath", () => {
     expect(selectMoneyStripTotal(snapshots)).toBeCloseTo(532, 0);
   });
 
-  it("writes ahead, behind, and overdue job-card sentences", () => {
+  it("writes an ahead sentence with the finish-day driver", () => {
     const now = new Date("2026-06-26T12:00:00-07:00");
     const ahead = evaluateJobPace(fixtureJob, 60, now, labor);
+
+    expect(jobPaceSentence(fixtureJob, ahead, now)).toMatch(
+      /^60 of 100 done — ahead\. Finishes Friday morning\.$/,
+    );
+  });
+
+  it("writes a behind-pace sentence with needed and actual rates", () => {
+    const now = new Date("2026-06-26T12:00:00-07:00");
     const behind = evaluateJobPace(fixtureJob, 35, now, labor);
+
+    expect(jobPaceSentence(fixtureJob, behind, now)).toBe(
+      "35 of 100 done - needs 137/day, doing 74. Watch it tomorrow.",
+    );
+  });
+
+  it("writes a losing-money labor-overrun sentence when the job is still on pace", () => {
+    const now = new Date("2026-06-26T12:00:00-07:00");
+    const onPace = evaluateJobPace(fixtureJob, 55, now, labor);
+    const laborOverrun = {
+      ...onPace,
+      verdict: "LOSING MONEY" as const,
+      pace_delta: 0,
+      projected_labor_usd: fixtureJob.labor_budget_usd + 143,
+    };
+
+    expect(jobPaceSentence(fixtureJob, laborOverrun, now)).toBe(
+      "55 of 100 done - on pace, but labor is eating the margin — projected $143 over budget.",
+    );
+  });
+
+  it("writes an overdue sentence with the margin warning", () => {
     const overdue = evaluateJobPace(fixtureJob, 80, new Date("2026-06-26T18:00:00-07:00"), labor);
 
-    expect(jobPaceSentence(fixtureJob, ahead, now)).toContain("Finishes Monday morning.");
-    expect(jobPaceSentence(fixtureJob, behind, now)).toContain("Needs");
-    expect(jobPaceSentence(fixtureJob, overdue, new Date("2026-06-26T18:00:00-07:00"))).toContain("overdue");
+    expect(jobPaceSentence(fixtureJob, overdue, new Date("2026-06-26T18:00:00-07:00"))).toBe(
+      "80 of 100 done - Overdue — at this pace labor eats the whole margin.",
+    );
+  });
+
+  it("writes three different verdict-explaining sentences for the demo jobs", () => {
+    const now = new Date(demoNowIso);
+    const snapshots = selectRunningJobSnapshots(now, jobs);
+    const sentences = snapshots.map(({ job, snapshot }) => jobPaceSentence(job, snapshot, now));
+
+    expect(new Set(sentences).size).toBe(3);
+    expect(sentences.some((sentence) => sentence.includes("ahead. Finishes"))).toBe(true);
+    expect(sentences.some((sentence) => sentence.includes("labor is tightening the margin"))).toBe(true);
+    expect(sentences.some((sentence) => sentence.includes("labor is eating the margin"))).toBe(true);
   });
 
   it("validates new-job form input as a pure function", () => {

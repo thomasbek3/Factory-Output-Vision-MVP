@@ -1,3 +1,55 @@
+# Console App CP4 - 2026-07-05
+
+## Objective
+
+Build checkpoint 4 of the FactoryVision console app in `console/`: make job-card
+sentences explain the verdict driver, and complete the REPLAY tab with station/day
+controls, video seeking, placement diamonds, chapters, speeds, and ClipDrawer entry
+points.
+
+## Milestones
+
+- [x] CP4-1 Fix job sentence branches for ahead, behind pace, labor-overrun losing,
+  and overdue; add Vitest coverage and prove the three demo jobs differ.
+- [x] CP4-2 Build REPLAY station/date/jump controls and wire query params for
+  `/replay?station=X&t=HH:MM`.
+- [x] CP4-3 Build viewer playback, speed pills, event caption, timeline heat band,
+  diamonds, NOW needle, synthetic demo gap rendering, and legend.
+- [x] CP4-4 Build 15-minute chapter cards with thumbnails, active state, 15x loading,
+  and ClipDrawer event invocations.
+- [x] CP4-5 Run lint, build, vitest, docs-check, HTTP/deep-link smoke, credential
+  gate, self-review diff, and commit without pushing.
+
+## Review
+
+- `cd console && npm run lint` -> passed.
+- `cd console && npm test` -> `12 passed` for `lib/paceMath.test.ts`.
+- `cd console && npm run build` -> passed; `/replay` is dynamic and builds at
+  `12.2 kB / 144 kB first-load JS`.
+- `make docs-check` -> passed with the existing `156 tracked artifact/cache paths`
+  warning.
+- HTTP smoke after a clean dev-server restart:
+  `/replay?station=gate-line&t=10:25` returned `200 text/html; charset=utf-8`;
+  SSR contained `data-replay-route="ready"`, `data-selected-station="gate-line"`,
+  `Thu Jun 26`, `Gate line`, `PLACEMENT #`, and active `15×` markup.
+- Rendered screenshot captured with Playwright CLI:
+  `/tmp/factoryvision-cp4-replay.png`.
+- Sentence proof at demo now:
+  Ramirez Fencing -> `208 of 400 done — ahead. Finishes Friday morning.`;
+  Delgado HVAC -> `172 of 600 done - on pace, but labor is tightening the margin — projected $58 over budget.`;
+  Alvarez Gates -> `65 of 120 done - on pace, but labor is eating the margin — projected $655 over budget.`
+- Speed implementation: `1×`, `4×`, and `15×` use native `playbackRate`; `60×`
+  uses native `16×` plus a small seek-skip interval while playing, because CP4 has
+  only the 60-second demo bucket MP4s and no prerendered 60× rendition.
+- Credential grep over added/changed CP4 lines and new replay component -> `0`.
+- Browser automation note: Playwright CLI screenshot worked; direct Playwright
+  module automation was unavailable from local `node_modules`, and the Node REPL
+  MCP failed before running due sandbox cwd metadata. Static HTTP/SSR proof and
+  rendered screenshot were completed.
+- Dev server on `127.0.0.1:3002` was killed after smoke.
+- No root `app/`, Python `tests/`, `.claude/`, `.agents/`, `.claude/skills/`, or
+  `agents/` files were touched.
+
 # Console App CP3 - 2026-07-05
 
 ## Objective
