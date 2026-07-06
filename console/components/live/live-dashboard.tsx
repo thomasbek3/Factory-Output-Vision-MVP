@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type Hls from "hls.js";
 import { AlertTriangle, Clock3, MoreHorizontal, Play, WifiOff } from "lucide-react";
 import { AreaSpark } from "@/components/charts/AreaSpark";
 import { Panel } from "@/components/ui/panel";
@@ -13,6 +14,7 @@ import { useConsoleJobs } from "@/components/jobs/use-console-jobs";
 import {
   countEventsThrough,
   lastFridayBaselineUnits,
+  liveUrlForStation,
   mediaPosterUrlForStation,
   mediaUrlForStation,
   stationEventsThrough,
@@ -63,36 +65,182 @@ function cameraSparkValues(events: StationCountSnapshot["events"], isBehind: boo
 }
 
 /**
- * Live camera feed. Autoplays muted+playsInline and shows the poster before it
- * plays. If the media errors (dead feed through the tunnel), it swaps to a
- * "reconnecting…" card instead of a black void and retries the source on a
- * backoff, so a transient blip self-heals.
+ * Camera feed source-of-truth. "live" = the factory HLS relay is up and this
+ * tile is playing the real camera; "replay" = no live stream, so we fall back to
+ * the demo-day loop and the pill/chip must say so honestly.
+ */
+export type FeedMode = "live" | "replay";
+
+/** Quick reachability probe for a station's live HLS playlist. */
+async function probeLivePlaylist(url: string, timeoutMs = 2500): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+/**
+ * Live camera feed with an honest fallback.
+ *
+ * On mount it probes the station's HLS playlist (served by /api/live/... off the
+ * RTSP→HLS relay). If it's up, it plays the real camera via hls.js (or native
+ * HLS on Safari), keeps the red LIVE pill genuine, and auto-recovers from
+ * transient tunnel drops with a backoff retry loop showing "Reconnecting…". If
+ * the playlist is absent (factory path down, or CI), it falls back to the
+ * demo-day loop, flips the pill to a neutral 'REPLAY' chip via onModeChange, and
+ * re-probes every 60s so the tile upgrades to live automatically when the path
+ * returns.
  */
 function LiveVideo({
-  src,
+  liveUrl,
+  demoSrc,
   poster,
   className,
+  onModeChange,
 }: {
-  src: string;
+  liveUrl: string;
+  demoSrc: string;
   poster: string;
   className?: string;
+  onModeChange?: (mode: FeedMode) => void;
 }) {
-  const [errored, setErrored] = useState(false);
-  const [cacheBust, setCacheBust] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  const [mode, setMode] = useState<FeedMode>("replay");
+  // Live-only transient error → show reconnecting overlay while hls.js recovers.
+  const [reconnecting, setReconnecting] = useState(false);
+  // Demo-loop retry (matches the old transient-blip self-heal behaviour).
+  const [demoCacheBust, setDemoCacheBust] = useState(0);
+  const [demoErrored, setDemoErrored] = useState(false);
 
-  // On error, retry the source after a short delay (up to a few attempts).
   useEffect(() => {
-    if (!errored || cacheBust >= 3) return;
+    onModeChange?.(mode);
+  }, [mode, onModeChange]);
+
+  // Probe for the live playlist on mount, and keep re-probing every 60s while in
+  // replay mode so tiles upgrade to live when the factory path comes back.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkOnce() {
+      const up = await probeLivePlaylist(liveUrl);
+      if (!cancelled) setMode(up ? "live" : "replay");
+    }
+
+    void checkOnce();
+    const poll = window.setInterval(() => {
+      // Only re-probe while we're on the fallback; once live, hls.js owns recovery.
+      setMode((current) => {
+        if (current === "replay") void checkOnce();
+        return current;
+      });
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+    };
+  }, [liveUrl]);
+
+  // Attach hls.js (or native HLS) when live. Auto-recovers on fatal errors.
+  useEffect(() => {
+    if (mode !== "live") return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    let disposed = false;
+    let retryTimer = 0;
+
+    // Safari plays HLS natively — no hls.js needed.
+    const canNative = video.canPlayType("application/vnd.apple.mpegurl") !== "";
+
+    async function attach() {
+      const video = videoRef.current;
+      if (!video || disposed) return;
+
+      if (canNative) {
+        video.src = liveUrl;
+        video.load();
+        void video.play().catch(() => {});
+        return;
+      }
+
+      const mod = await import("hls.js");
+      if (disposed) return;
+      const HlsCtor = mod.default;
+      if (!HlsCtor.isSupported()) {
+        // No MSE and no native HLS — give up on live, fall back honestly.
+        setMode("replay");
+        return;
+      }
+      const hls = new HlsCtor({ enableWorker: true, lowLatencyMode: true });
+      hlsRef.current = hls;
+      hls.loadSource(liveUrl);
+      hls.attachMedia(video);
+      hls.on(HlsCtor.Events.MANIFEST_PARSED, () => {
+        setReconnecting(false);
+        void video.play().catch(() => {});
+      });
+      hls.on(HlsCtor.Events.ERROR, (_evt, data) => {
+        if (!data.fatal) return;
+        setReconnecting(true);
+        // Try in-place recovery first; if the stream is truly gone, re-probe.
+        if (data.type === mod.default.ErrorTypes.NETWORK_ERROR) {
+          hls.startLoad();
+        } else if (data.type === mod.default.ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError();
+        } else {
+          hls.destroy();
+          hlsRef.current = null;
+          retryTimer = window.setTimeout(() => {
+            void probeLivePlaylist(liveUrl).then((up) => {
+              if (disposed) return;
+              if (up) void attach();
+              else setMode("replay");
+            });
+          }, 5000);
+        }
+      });
+    }
+
+    void attach();
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(retryTimer);
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      // Use the element captured when the effect ran, not the live ref.
+      if (canNative) {
+        video.removeAttribute("src");
+        video.load();
+      }
+    };
+  }, [mode, liveUrl]);
+
+  // Demo-loop transient retry (only relevant in replay mode).
+  useEffect(() => {
+    if (mode !== "replay" || !demoErrored || demoCacheBust >= 3) return;
     const timer = window.setTimeout(() => {
-      setErrored(false);
-      setCacheBust((n) => n + 1);
+      setDemoErrored(false);
+      setDemoCacheBust((n) => n + 1);
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [errored, cacheBust]);
+  }, [mode, demoErrored, demoCacheBust]);
 
-  const resolvedSrc = cacheBust > 0 ? `${src}?r=${cacheBust}` : src;
-
-  if (errored) {
+  if (mode === "replay" && demoErrored) {
     return (
       <div
         data-camera-state="reconnecting"
@@ -110,22 +258,66 @@ function LiveVideo({
     );
   }
 
+  const demoResolvedSrc = demoCacheBust > 0 ? `${demoSrc}?r=${demoCacheBust}` : demoSrc;
+
   return (
-    <video
-      key={resolvedSrc}
-      src={resolvedSrc}
-      poster={poster}
-      data-camera-state="live"
+    <div className={cn("relative", className)}>
+      <video
+        ref={videoRef}
+        // Remount the <video> when switching feed source so the browser cleanly
+        // rebinds. In replay mode we drive it with the demo loop; in live mode
+        // the effect above attaches HLS and leaves src unset here.
+        key={mode === "live" ? "live" : demoResolvedSrc}
+        src={mode === "replay" ? demoResolvedSrc : undefined}
+        poster={poster}
+        data-camera-state="live"
+        data-feed-mode={mode}
+        className="aspect-video w-full rounded-lg bg-black object-cover ring-1 ring-[var(--border-soft)]"
+        autoPlay
+        muted
+        loop={mode === "replay"}
+        playsInline
+        onError={() => {
+          if (mode === "replay") setDemoErrored(true);
+        }}
+      />
+      {mode === "live" && reconnecting ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
+          <div className="flex flex-col items-center gap-2 rounded-lg bg-black/60 px-4 py-3 text-[var(--text-mut)]">
+            <WifiOff className="h-5 w-5 animate-pulse text-[var(--warn)]" strokeWidth={1.75} />
+            <span className="text-[12px] font-semibold">Reconnecting…</span>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Live/replay status pill shown top-right of a camera card. */
+function FeedPill({ mode, scale = "normal" }: { mode: FeedMode; scale?: "normal" | "tv" }) {
+  if (mode === "live") {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-full bg-[var(--bad-tint)] px-2 py-1 text-[11px] font-bold text-[var(--bad)]",
+          scale === "tv" && "px-3 py-1.5 text-[16px]",
+        )}
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--bad)] shadow-[0_0_10px_rgba(229,72,77,.7)]" />
+        LIVE
+      </span>
+    );
+  }
+  return (
+    <span
       className={cn(
-        "aspect-video w-full rounded-lg bg-black object-cover ring-1 ring-[var(--border-soft)]",
-        className,
+        "inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1 text-[11px] font-bold text-[var(--text-dim)]",
+        scale === "tv" && "px-3 py-1.5 text-[16px]",
       )}
-      autoPlay
-      muted
-      loop
-      playsInline
-      onError={() => setErrored(true)}
-    />
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-dim)]" />
+      REPLAY · JUN 26
+    </span>
   );
 }
 
@@ -268,6 +460,7 @@ export function CameraCard({
   const latest = events.at(-1);
   const isBehind = snapshot.pace_delta < 0;
   const sparkValues = cameraSparkValues(events, isBehind);
+  const [feedMode, setFeedMode] = useState<FeedMode>("replay");
 
   return (
     <Panel className={cn("p-5", scale === "tv" && "p-8")}>
@@ -279,10 +472,7 @@ export function CameraCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bad-tint)] px-2 py-1 text-[11px] font-bold text-[var(--bad)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--bad)] shadow-[0_0_10px_rgba(229,72,77,.7)]" />
-            LIVE
-          </span>
+          <FeedPill mode={feedMode} scale={scale} />
           {scale !== "tv" && onHide ? (
             <CameraTileMenu
               stationId={station.id}
@@ -295,9 +485,10 @@ export function CameraCard({
       </div>
 
       <LiveVideo
-        key={mediaUrlForStation(station.id, now)}
-        src={mediaUrlForStation(station.id, now)}
+        liveUrl={liveUrlForStation(station.id)}
+        demoSrc={mediaUrlForStation(station.id, now)}
         poster={mediaPosterUrlForStation(station.id, now)}
+        onModeChange={setFeedMode}
       />
 
       <div className={cn("mt-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-[minmax(116px,.7fr)_minmax(140px,1fr)_auto]", scale === "tv" && "sm:grid-cols-[minmax(220px,.7fr)_minmax(220px,1fr)_auto]")}>
@@ -463,6 +654,10 @@ export function LiveDashboard() {
           );
         })}
       </section>
+
+      <p className="px-1 text-[12px] text-[var(--text-dim)]">
+        counts from pilot day · Thu Jun 26
+      </p>
 
       <AlertsRail alerts={alerts} />
     </div>

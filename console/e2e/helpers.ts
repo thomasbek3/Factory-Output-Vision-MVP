@@ -15,6 +15,11 @@ const IGNORED_ERROR_SUBSTRINGS = [
   "AbortError",
   // Next.js dev-only hydration hints never fire in prod, but keep the harness robust.
   "Download the React DevTools",
+  // Expected: the live-HLS probe requests the relay playlist, which 404s when no
+  // stream exists (CI, or factory path down). That 404 is the honest signal to
+  // fall back to the demo loop — Chromium logs it as a generic failed-resource
+  // console error with no URL, so we tolerate the 404 resource message here.
+  "Failed to load resource: the server responded with a status of 404",
 ];
 
 export function collectConsoleErrors(page: Page): string[] {

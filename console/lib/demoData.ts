@@ -211,3 +211,14 @@ export function mediaPosterUrlForStation(stationId: string, now: Date) {
   const slug = station?.mediaSlug ?? stationId;
   return `/api/media/${slug}/${mediaBucketBase(now)}.jpg`;
 }
+
+/**
+ * Live HLS playlist for a station, served off the RTSP→HLS relay. The frontend
+ * probes this; when it's up the tile plays the real factory camera, otherwise it
+ * falls back to the demo loop above. The slug matches the DB Station id.
+ */
+export function liveUrlForStation(stationId: string) {
+  const station = stations.find((candidate) => candidate.id === stationId);
+  const slug = station?.mediaSlug ?? stationId;
+  return `/api/live/${slug}/stream.m3u8`;
+}

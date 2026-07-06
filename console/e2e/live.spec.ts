@@ -57,6 +57,32 @@ test.describe("/ (Live)", () => {
     await expect(page).toHaveURL(/\/replay\?station=/);
   });
 
+  test("live playlist route 404s cleanly when no relay stream exists", async ({ page }) => {
+    // No relay is running in CI, so the playlist is absent → clean 404 (not 500),
+    // which is what lets the tile fall back to the demo loop.
+    const res = await page.request.get("/api/live/pallet-a/stream.m3u8");
+    expect(res.status()).toBe(404);
+
+    // Unknown station is rejected by the allowlist, also 404.
+    const bad = await page.request.get("/api/live/ghost-line/stream.m3u8");
+    expect(bad.status()).toBe(404);
+  });
+
+  test("with no live stream, tiles fall back to demo loop and show the REPLAY chip", async ({ page }) => {
+    await page.goto("/");
+
+    // The camera video element is present and playing the demo loop.
+    const videos = page.locator('video[data-camera-state="live"]');
+    await expect(videos).toHaveCount(2);
+    // In fallback mode the demo loop is the src and the feed mode is "replay".
+    await expect(videos.first()).toHaveAttribute("data-feed-mode", "replay");
+
+    // The pill is the honest neutral REPLAY chip, not a red LIVE pill.
+    await expect(page.getByText(/REPLAY · JUN 26/).first()).toBeVisible();
+    // And the honest counts caption is present.
+    await expect(page.getByText(/counts from pilot day · Thu Jun 26/).first()).toBeVisible();
+  });
+
   test("dev time controls (60x) advance the live count", async ({ page }) => {
     await page.goto("/");
     const count = page.getByTestId("station-count").first();

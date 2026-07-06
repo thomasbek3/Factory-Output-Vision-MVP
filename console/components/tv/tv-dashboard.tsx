@@ -70,6 +70,9 @@ function TvSurface() {
             );
           })}
         </div>
+        <p className="mt-4 text-[16px] text-[var(--text-dim)]">
+          counts from pilot day · Thu Jun 26
+        </p>
       </section>
 
       <section className={cn(view === "money" ? "block" : "hidden")}>
