@@ -1,4 +1,5 @@
 import demoEvents from "@/demo/demo_events.json";
+import demoEvents20260625 from "@/demo/demo_events_20260625.json";
 
 export type DemoEventRecord = {
   wall_clock: string;
@@ -32,12 +33,20 @@ type DemoEventsFile = {
   station: string;
   source_day: string;
   clip_start_wall: string;
+  derived_from?: string;
   events: DemoEventRecord[];
 };
 
 const demo = demoEvents as DemoEventsFile;
+const demoByDay: Record<string, DemoEventsFile> = {
+  [(demoEvents as DemoEventsFile).source_day]: demoEvents as DemoEventsFile,
+  [(demoEvents20260625 as DemoEventsFile).source_day]: demoEvents20260625 as DemoEventsFile,
+};
 
 export const demoSourceDay = demo.source_day;
+
+/** Recorded days that have footage + events, newest first. Drives the Tapes archive. */
+export const demoAvailableDays: string[] = Object.keys(demoByDay).sort((a, b) => b.localeCompare(a));
 
 function jobIdForRawEvent(event: DemoEventRecord, stationId: string) {
   if (stationId === "gate-line" && event.wall_clock < "12:00:00") {
@@ -62,11 +71,13 @@ function unitQuantityForJobEvent(jobId: string, sequence: number) {
   return 1;
 }
 
-export function loadDemoCountEvents(): CountEventShape[] {
+/** Expand a day's raw records into unit-level CountEvents. Defaults to the primary demo day. */
+export function loadDemoCountEvents(day: string = demoSourceDay): CountEventShape[] {
+  const file = demoByDay[day] ?? demo;
   const jobSequences = new Map<string, number>();
 
-  return demo.events.flatMap((event) => {
-    const stationId = event.station ?? demo.station;
+  return file.events.flatMap((event) => {
+    const stationId = event.station ?? file.station;
     const jobId = jobIdForRawEvent(event, stationId);
     const sequence = (jobSequences.get(jobId) ?? 0) + 1;
     jobSequences.set(jobId, sequence);
@@ -76,12 +87,12 @@ export function loadDemoCountEvents(): CountEventShape[] {
       id: `${event.candidate_id}-u${String(unitIndex + 1).padStart(2, "0")}`,
       station_id: stationId,
       job_id: jobId,
-      ts: `${demo.source_day}T${event.wall_clock}-07:00`,
+      ts: `${file.source_day}T${event.wall_clock}-07:00`,
       clip_id: `clip-${event.candidate_id}`,
       source: "tripwire",
       verdict: "placed",
       verified_by: "demo-seed",
-      verified_at: `${demo.source_day}T${event.wall_clock}-07:00`,
+      verified_at: `${file.source_day}T${event.wall_clock}-07:00`,
       demo_offset_sec: event.offset_sec,
       model_verdict: {
         verdict: "placed",
@@ -90,6 +101,11 @@ export function loadDemoCountEvents(): CountEventShape[] {
       disputed: false,
     }));
   });
+}
+
+/** Every day's events, unit-expanded — used for cross-day clip lookups. */
+export function loadAllDemoCountEvents(): CountEventShape[] {
+  return demoAvailableDays.flatMap((day) => loadDemoCountEvents(day));
 }
 
 export function demoEventSummary() {

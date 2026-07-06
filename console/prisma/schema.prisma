@@ -145,3 +145,14 @@ model LaborConfig {
   hourly_rate_usd     Int
   workers_per_station Int
 }
+
+model SavedClip {
+  id         String   @id @default(cuid())
+  eventId    String
+  stationId  String
+  ts         DateTime
+  note       String?
+  savedAt    DateTime @default(now())
+
+  @@index([savedAt])
+}

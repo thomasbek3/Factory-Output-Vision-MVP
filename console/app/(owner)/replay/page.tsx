@@ -4,6 +4,7 @@ type ReplayPageProps = {
   searchParams: Promise<{
     station?: string;
     t?: string;
+    d?: string;
   }>;
 };
 
@@ -13,7 +14,11 @@ export default async function ReplayPage({ searchParams }: ReplayPageProps) {
 
   return (
     <div data-replay-route="ready" data-selected-station={station}>
-      <ReplayDashboard initialStation={station} initialTime={params.t ?? null} />
+      <ReplayDashboard
+        initialStation={station}
+        initialTime={params.t ?? null}
+        initialDay={params.d ?? null}
+      />
     </div>
   );
 }

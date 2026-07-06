@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Film, Search } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import {
   finishedJobs,
@@ -12,7 +13,7 @@ import {
   type FinishedJob,
   type FinishedJobGrade,
 } from "@/lib/historyRecords";
-import type { JobSeed } from "@/lib/demoData";
+import { stations, type JobSeed } from "@/lib/demoData";
 import { cn } from "@/lib/utils";
 
 function money(value: number) {
@@ -133,9 +134,29 @@ function ExpandedHistoryRow({ job }: { job: FinishedJob }) {
             {money(nextTime.delta)} margin
           </span>
         </div>
+        <Link
+          href={replayHrefForJob(job)}
+          className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:underline"
+        >
+          <Film className="h-4 w-4" strokeWidth={1.75} />
+          View footage →
+        </Link>
       </div>
     </div>
   );
+}
+
+/** Deep-link from a finished job to its Replay footage (station + finished day). */
+function replayHrefForJob(job: FinishedJob) {
+  const stationName = job.stations[0] ?? "";
+  const station = stations.find((candidate) => candidate.name === stationName)?.id ?? "pallet-a";
+  const day = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(job.finishedAt));
+  return `/replay?station=${station}&d=${day}`;
 }
 
 export function HistoryDashboard() {

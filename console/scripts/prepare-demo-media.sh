@@ -7,6 +7,16 @@ OUT_DIR="${ROOT_DIR}/demo-media"
 PALLET_ROOT="/Users/thomas/FactoryVisionArtifacts/onboarding/factory-live-20260626"
 GATE_ROOT="/Users/thomas/FactoryVisionArtifacts/onboarding/factory-live-cam2-20260626"
 
+# --- Jun 25 (the "yesterday" tape in the Replay archive) --------------------
+# Real footage, cut from a second recorded day so day-navigation shows genuinely
+# different video. The Jun 25 pallet+gate capture is split across the artifacts
+# store (late morning → mid afternoon) and a local-recordings fallback that holds
+# the later afternoon segments, so find_segment searches both roots.
+PALLET_ROOT_0625="/Users/thomas/FactoryVisionArtifacts/onboarding/factory-live-20260625"
+GATE_ROOT_0625="/Users/thomas/FactoryVisionArtifacts/onboarding/factory-live-cam2-20260625"
+PALLET_ROOT_0625_FALLBACK="/Users/thomas/factory_local_recordings/onboarding/factory-live-20260625"
+GATE_ROOT_0625_FALLBACK="/Users/thomas/factory_local_recordings/onboarding/factory-live-cam2-20260625"
+
 if [[ ! -x "${FFMPEG}" ]]; then
   echo "ffmpeg not found at ${FFMPEG}" >&2
   exit 1
@@ -14,25 +24,33 @@ fi
 
 mkdir -p "${OUT_DIR}/pallet-a" "${OUT_DIR}/gate-line"
 
+# find_segment <date:YYYYMMDD> <hour:HH> <root> [fallback_root...]
+# Returns the first readable segment whose filename matches <date>T<hour>. Searches
+# each root in order so a day whose footage is split across stores still resolves.
 find_segment() {
-  local root="$1"
+  local date="$1"
   local hour="$2"
-  local attempt path
+  shift 2
+  local roots=("$@")
+  local attempt root path
 
   for attempt in 1 2 3; do
-    path="$(
-      find "${root}" -path "*/segments/*" -type f \( -iname "*.mkv" -o -iname "*.mp4" -o -iname "*.mov" \) 2>/dev/null \
-        | sort \
-        | awk -v pattern="20260626T${hour}" 'index($0, pattern) { print; exit }'
-    )"
-    if [[ -n "${path}" && -r "${path}" ]]; then
-      printf '%s\n' "${path}"
-      return 0
-    fi
+    for root in "${roots[@]}"; do
+      [[ -d "${root}" ]] || continue
+      path="$(
+        find "${root}" -path "*/segments/*" -type f \( -iname "*.mkv" -o -iname "*.mp4" -o -iname "*.mov" \) 2>/dev/null \
+          | sort \
+          | awk -v pattern="${date}T${hour}" 'index($0, pattern) { print; exit }'
+      )"
+      if [[ -n "${path}" && -r "${path}" ]]; then
+        printf '%s\n' "${path}"
+        return 0
+      fi
+    done
     sleep 2
   done
 
-  echo "No readable segment found under ${root} for hour ${hour}" >&2
+  echo "No readable segment found for ${date} hour ${hour} under: ${roots[*]}" >&2
   return 1
 }
 
@@ -79,37 +97,50 @@ extract_poster() {
   return 1
 }
 
-prepare_station() {
-  local label="$1"
-  local root="$2"
-  local slug="$3"
-  shift 3
-  local buckets=("$@")
-  local bucket src dest
+# prepare_station_day <label> <slug> <date:YYYYMMDD> <prefix> <buckets...> "--" <roots...>
+# <prefix> is prepended to the output basename ("" for the primary day, "20260625-"
+# for archived days). Everything after "--" is the ordered root search list.
+prepare_station_day() {
+  local label="$1" slug="$2" date="$3" prefix="$4"
+  shift 4
+  local buckets=() roots=() reading_roots=0 arg
+  for arg in "$@"; do
+    if [[ "${arg}" == "--" ]]; then reading_roots=1; continue; fi
+    if [[ "${reading_roots}" -eq 1 ]]; then roots+=("${arg}"); else buckets+=("${arg}"); fi
+  done
 
+  local bucket src dest base
   for bucket in "${buckets[@]}"; do
-    src="$(find_segment "${root}" "${bucket%%:*}")"
-    dest="${OUT_DIR}/${slug}/${bucket#*:}.mp4"
-    echo "${label}: ${src} -> ${dest}"
+    src="$(find_segment "${date}" "${bucket%%:*}" "${roots[@]}")"
+    base="${prefix}${bucket#*:}"
+    dest="${OUT_DIR}/${slug}/${base}.mp4"
+    echo "${label} ${date}: ${src} -> ${dest}"
     transcode "${src}" "${dest}"
-    extract_poster "${dest}" "${OUT_DIR}/${slug}/${bucket#*:}.jpg"
+    extract_poster "${dest}" "${OUT_DIR}/${slug}/${base}.jpg"
   done
 }
 
-prepare_station "Pallet A" "${PALLET_ROOT}" "pallet-a" \
-  "10:morning" \
-  "13:midday" \
-  "16:afternoon"
+# Primary demo day (2026-06-26) — flat basenames.
+prepare_station_day "Pallet A" "pallet-a" "20260626" "" \
+  "10:morning" "13:midday" "16:afternoon" -- "${PALLET_ROOT}"
+prepare_station_day "Gate line" "gate-line" "20260626" "" \
+  "10:morning" "13:midday" "16:afternoon" -- "${GATE_ROOT}"
 
-prepare_station "Gate line" "${GATE_ROOT}" "gate-line" \
-  "10:morning" \
-  "13:midday" \
-  "16:afternoon"
+# Archived day (2026-06-25) — date-namespaced basenames; footage is split across
+# the artifacts store and a local-recordings fallback (afternoon segments). Jun 25
+# capture started ~11:00 on pallet, so the "morning" bucket uses hour 11.
+prepare_station_day "Pallet A" "pallet-a" "20260625" "20260625-" \
+  "11:morning" "13:midday" "16:afternoon" -- "${PALLET_ROOT_0625}" "${PALLET_ROOT_0625_FALLBACK}"
+prepare_station_day "Gate line" "gate-line" "20260625" "20260625-" \
+  "11:morning" "13:midday" "16:afternoon" -- "${GATE_ROOT_0625}" "${GATE_ROOT_0625_FALLBACK}"
 
 cat > "${OUT_DIR}/README.md" <<'README'
 # Demo Media
 
-Generated by `console/scripts/prepare-demo-media.sh` from local 2026-06-26 factory recordings. MP4 loops and JPG posters are ignored and are served in development through `/api/media/...`.
+Generated by `console/scripts/prepare-demo-media.sh` from local factory recordings
+(2026-06-26 primary + 2026-06-25 archive). MP4 loops and JPG posters are gitignored
+and served in development through `/api/media/...`. Primary-day files are flat
+(`morning.mp4`); archived days are date-namespaced (`20260625-morning.mp4`).
 README
 
 echo "Demo media ready in ${OUT_DIR}"

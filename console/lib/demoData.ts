@@ -1,4 +1,9 @@
-import { demoSourceDay, loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
+import {
+  demoSourceDay,
+  loadAllDemoCountEvents,
+  loadDemoCountEvents,
+  type CountEventShape,
+} from "@/lib/demoEvents";
 
 export type StationSeed = {
   id: string;
@@ -144,7 +149,7 @@ export function eventsForStation(stationId: string): CountEventShape[] {
 }
 
 export function findEventByClipId(clipId: string) {
-  return loadDemoCountEvents().find((event) => event.clip_id === clipId || event.id === clipId);
+  return loadAllDemoCountEvents().find((event) => event.clip_id === clipId || event.id === clipId);
 }
 
 export function jobForStation(stationId: string) {
@@ -174,14 +179,35 @@ export function mediaBucketForTime(date: Date) {
   return "afternoon";
 }
 
+/** LA calendar day (YYYY-MM-DD) for a Date, used to pick the day's media bucket. */
+export function mediaDayForDate(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/**
+ * Bucket file base. The primary demo day keeps its flat name (morning.mp4) so
+ * existing media stays valid; other recorded days are namespaced by date
+ * (20260625-morning.mp4) as cut by prepare-demo-media.sh.
+ */
+function mediaBucketBase(now: Date) {
+  const day = mediaDayForDate(now);
+  const bucket = mediaBucketForTime(now);
+  return day === demoSourceDay ? bucket : `${day.replace(/-/g, "")}-${bucket}`;
+}
+
 export function mediaUrlForStation(stationId: string, now: Date) {
   const station = stations.find((candidate) => candidate.id === stationId);
   const slug = station?.mediaSlug ?? stationId;
-  return `/api/media/${slug}/${mediaBucketForTime(now)}.mp4`;
+  return `/api/media/${slug}/${mediaBucketBase(now)}.mp4`;
 }
 
 export function mediaPosterUrlForStation(stationId: string, now: Date) {
   const station = stations.find((candidate) => candidate.id === stationId);
   const slug = station?.mediaSlug ?? stationId;
-  return `/api/media/${slug}/${mediaBucketForTime(now)}.jpg`;
+  return `/api/media/${slug}/${mediaBucketBase(now)}.jpg`;
 }

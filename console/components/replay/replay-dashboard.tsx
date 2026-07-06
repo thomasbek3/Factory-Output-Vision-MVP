@@ -2,23 +2,30 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  BadgeCheck,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  Play,
-} from "lucide-react";
+import { BadgeCheck, Clock3, Play } from "lucide-react";
 import { useClipDrawer } from "@/components/live/clip-drawer-provider";
 import { useTime } from "@/components/providers/time-provider";
+import { useToast } from "@/components/providers/toast-provider";
 import { Panel } from "@/components/ui/panel";
+import {
+  ClipActions,
+  CountedMoments,
+  DayPicker,
+  SavedClipsShelf,
+} from "@/components/replay/replay-archive";
+import { useSavedClips } from "@/components/replay/use-saved-clips";
 import {
   demoDay,
   mediaPosterUrlForStation,
   mediaUrlForStation,
   stations,
 } from "@/lib/demoData";
-import { loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
+import {
+  demoAvailableDays,
+  demoSourceDay,
+  loadDemoCountEvents,
+  type CountEventShape,
+} from "@/lib/demoEvents";
 import {
   DIAMOND_CLUSTER_THRESHOLD,
   buildReplayChapters,
@@ -49,6 +56,7 @@ type TimelineMarker =
 type ReplayDashboardProps = {
   initialStation: string;
   initialTime: string | null;
+  initialDay?: string | null;
 };
 
 const workStart = 7 * 60;
@@ -66,10 +74,10 @@ function parseClockToMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function dateForMinutes(minutes: number) {
+function dateForMinutes(minutes: number, day: string = demoDay) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return new Date(`${demoDay}T${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00-07:00`);
+  return new Date(`${day}T${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00-07:00`);
 }
 
 function minutesForDate(date: Date) {
@@ -95,10 +103,6 @@ function formatClock(date: Date, withSeconds = false) {
     second: withSeconds ? "2-digit" : undefined,
     hourCycle: "h23",
   }).format(date);
-}
-
-function formatDateLabel() {
-  return "Thu Jun 26";
 }
 
 function positionPct(minutes: number) {
@@ -128,11 +132,14 @@ function timeParamToClock(value: string | null) {
   return formatClock(date);
 }
 
-export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboardProps) {
+export function ReplayDashboard({ initialStation, initialTime, initialDay }: ReplayDashboardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const skipTimerRef = useRef<number | null>(null);
   const { now } = useTime();
   const { openClip } = useClipDrawer();
+  const [selectedDay, setSelectedDay] = useState<string>(() =>
+    initialDay && demoAvailableDays.includes(initialDay) ? initialDay : demoSourceDay,
+  );
   const [selectedStation, setSelectedStation] = useState<ReplayStation>(() =>
     normalizeInitialStation(initialStation),
   );
@@ -145,11 +152,11 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
   const [paused, setPaused] = useState(true);
 
   const selectedDate = useMemo(
-    () => dateForMinutes(parseClockToMinutes(selectedTime) ?? 14 * 60 + 32),
-    [selectedTime],
+    () => dateForMinutes(parseClockToMinutes(selectedTime) ?? 14 * 60 + 32, selectedDay),
+    [selectedTime, selectedDay],
   );
 
-  const allEvents = useMemo(() => loadDemoCountEvents(), []);
+  const allEvents = useMemo(() => loadDemoCountEvents(selectedDay), [selectedDay]);
   const filteredEvents = useMemo(
     () =>
       selectedStation === "all"
@@ -181,36 +188,78 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
     ? placements.findIndex((event) => event.clip_id === nearEvent.clip_id) + 1
     : 0;
 
+  const focusedEvent = nearEvent ?? nearestPlacement ?? placements[0] ?? null;
+  const { showToast } = useToast();
+  const { clips: savedClips, saveClip } = useSavedClips();
+  const [savingClip, setSavingClip] = useState(false);
+
+  async function handleSaveClip() {
+    if (!focusedEvent) return;
+    setSavingClip(true);
+    try {
+      await saveClip(focusedEvent.clip_id);
+      // Trigger the ffmpeg extraction download too.
+      window.location.assign(`/api/clip/${encodeURIComponent(focusedEvent.clip_id)}/download`);
+      showToast("Clip saved to your shelf.");
+    } catch {
+      showToast("Could not save that clip.");
+    } finally {
+      setSavingClip(false);
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!focusedEvent) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("clip", focusedEvent.clip_id);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      showToast("Link copied to clipboard.");
+    } catch {
+      showToast("Could not copy the link.");
+    }
+  }
+
   const chapters = useMemo(() => buildReplayChapters(filteredEvents), [filteredEvents]);
 
   const activeChapterIndex = Math.floor((clampMinutes(selectedMinutes) - workStart) / chapterMinutes);
   const nowMinutes = minutesForDate(now());
 
-  const updateUrl = useCallback((station: ReplayStation, clock: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("station", station);
-    url.searchParams.set("t", clock);
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-  }, []);
+  const updateUrl = useCallback(
+    (station: ReplayStation, clock: string, day: string) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("station", station);
+      url.searchParams.set("t", clock);
+      if (day === demoSourceDay) url.searchParams.delete("d");
+      else url.searchParams.set("d", day);
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    },
+    [],
+  );
 
   const seekToClock = useCallback(
     (clock: string) => {
       const minutes = parseClockToMinutes(clock);
       if (minutes === null) return;
       const clamped = clampMinutes(minutes);
-      const nextClock = formatClock(dateForMinutes(clamped));
+      const nextClock = formatClock(dateForMinutes(clamped, selectedDay));
       setSelectedTime(nextClock);
       setJumpValue(nextClock);
-      updateUrl(selectedStation, nextClock);
+      updateUrl(selectedStation, nextClock, selectedDay);
       const video = videoRef.current;
       if (video) video.currentTime = Math.max(0, (clamped - workStart) % 60);
     },
-    [selectedStation, updateUrl],
+    [selectedStation, selectedDay, updateUrl],
   );
 
   function setStation(next: ReplayStation) {
     setSelectedStation(next);
-    updateUrl(next, selectedTime);
+    updateUrl(next, selectedTime, selectedDay);
+  }
+
+  function setDay(next: string) {
+    setSelectedDay(next);
+    updateUrl(selectedStation, selectedTime, next);
   }
 
   useEffect(() => {
@@ -263,27 +312,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
               {stationId === "all" ? "All" : stationLabel(stationId)}
             </button>
           ))}
-          <div className="flex h-9 items-center overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel-2)]">
-            <button
-              type="button"
-              className="flex h-full w-9 items-center justify-center text-[var(--text-dim)] disabled:opacity-40"
-              disabled
-              title="Only Thu Jun 26 has footage right now."
-            >
-              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-            <div className="border-x border-[var(--border)] px-3 text-[13px] font-semibold text-[var(--text)]">
-              {formatDateLabel()}
-            </div>
-            <button
-              type="button"
-              className="flex h-full w-9 items-center justify-center text-[var(--text-dim)] disabled:opacity-40"
-              disabled
-              title="Only Thu Jun 26 has footage right now."
-            >
-              <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-          </div>
+          <DayPicker days={demoAvailableDays} selectedDay={selectedDay} onSelect={setDay} />
           <form
             className="flex h-9 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-2"
             onSubmit={(event) => {
@@ -357,24 +386,44 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
             </div>
           </div>
 
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[12px] text-[var(--text-dim)]">
+              {focusedEvent
+                ? `Focused on ${formatClock(new Date(focusedEvent.ts), true)} · ${stationLabel(focusedEvent.station_id)}`
+                : "Scrub to a placement to save its clip."}
+            </div>
+            <ClipActions
+              event={focusedEvent}
+              saving={savingClip}
+              onSave={handleSaveClip}
+              onCopyLink={handleCopyLink}
+            />
+          </div>
+
           <DayTimeline
             chapters={chapters}
             nowMinutes={nowMinutes}
             selectedMinutes={selectedMinutes}
-            onSeek={(minutes) => seekToClock(formatClock(dateForMinutes(minutes)))}
+            onSeek={(minutes) => seekToClock(formatClock(dateForMinutes(minutes, selectedDay)))}
             onOpenClip={openClip}
           />
         </Panel>
 
-        <ChaptersGrid
-          chapters={chapters}
-          activeIndex={activeChapterIndex}
-          selectedStation={viewerStation}
-          onOpenClip={openClip}
-          onSelect={(minutes) => {
-            seekToClock(formatClock(dateForMinutes(minutes)));
-          }}
-        />
+        <SavedClipsShelf clips={savedClips} onOpen={openClip} />
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,.7fr)]">
+          <ChaptersGrid
+            chapters={chapters}
+            activeIndex={activeChapterIndex}
+            selectedStation={viewerStation}
+            selectedDay={selectedDay}
+            onOpenClip={openClip}
+            onSelect={(minutes) => {
+              seekToClock(formatClock(dateForMinutes(minutes, selectedDay)));
+            }}
+          />
+          <CountedMoments placements={placements} onOpen={openClip} />
+        </div>
       </section>
     </div>
   );
@@ -514,12 +563,14 @@ function ChaptersGrid({
   chapters,
   activeIndex,
   selectedStation,
+  selectedDay,
   onOpenClip,
   onSelect,
 }: {
   chapters: ReplayChapter[];
   activeIndex: number;
   selectedStation: string;
+  selectedDay: string;
   onOpenClip: (clipId: string) => void;
   onSelect: (minutes: number) => void;
 }) {
@@ -538,7 +589,7 @@ function ChaptersGrid({
         {chapters.map((chapter, index) => {
           const count = chapter.placementCount;
           const firstEvent = chapter.placements[0];
-          const thumbnailDate = dateForMinutes(chapter.start);
+          const thumbnailDate = dateForMinutes(chapter.start, selectedDay);
           return (
             <div
               key={chapter.start}
