@@ -110,17 +110,19 @@ Layout per approved render.
 
 ---
 
-## 2. REVIEWER CONSOLE (`/review`)
+## 2. REVIEWER CONSOLE (`/review`) — TALLY MODE (v1 primary, per Thomas 2026-07-05)
 
-Purpose: verify candidate events FAST; every decision = a verified count for owners AND a training label. Target ≤3s/decision, event→verified latency <2 min during covered shifts.
+Purpose: workers watch delayed recordings at speed and tally placements with one button. Every click = a verified CountEvent for owners AND a timestamped training label. Deliberately dead-simple: trainable in 5 minutes.
 
-- **Layout**: single-column focus. Header: queue depth, today's reviewed count, session rate/hr, "caught up ✓" state. Body: **auto-playing looped clip** (the candidate window, 2–6s, zone-cropped large + full-frame toggle `f`). Context line: station, wall-clock, factory. NO model verdict shown before decision (anchoring bias); shown after as "model agreed/disagreed" toast.
-- **Decision keys**: `Y` = PLACED · `N` = NOT PLACED · `U` = UNSURE (escalates to senior queue). Giant on-screen buttons for mouse/touch parity. `Z` = undo last (10s window). Auto-advance on decision.
-- Every decision writes: CountEvent(verdict, verified_by, verified_at) + appends to the training-labels manifest (respecting the exam firewall — clips inside exam windows are NEVER served to the queue; enforced server-side by the existing `training_eligible`/guard logic).
-- **Dispute queue**: owner-disputed events re-enter at top, flagged, served to a different reviewer; second verdict wins, ops sees disagreements.
-- **Fairness/quality**: golden clips (known answers) injected ~2% for accuracy scoring; per-reviewer accuracy visible only in ops.
-- Empty state: "Queue clear — next candidates arrive automatically." with live listener.
-- Chrome: same tokens, minimal; must run well on a cheap laptop + spotty connection (clips preloaded n+2 ahead).
+- **Unit of work: the 15-minute chunk.** Recordings are auto-cut into per-station 15-min chunks with a 10× rendition (pipeline job). Chunks become servable after a configurable delay (default 60 min behind live). Queue serves the oldest unprocessed chunk for the reviewer's assigned stations; chunk LOCKING prevents double-counting (lease with timeout).
+- **Layout**: full-width video playing the chunk at 10× (speed options 5×/10×/15×; pause; back-10s `←`). Header: station + time range ("Pallet A · 12:30–12:45"), chunk-lag indicator, session stats (chunks done, clicks, chunks/hr). Below the video: ONE GIANT orange button **"+1 COUNT"** (hotkey: spacebar) + small Undo (`Z`, removes last click). Running tally huge beside the button.
+- Each click records video-time → wall-clock timestamp; on chunk confirm it becomes CountEvent(verdict=placed, source=human_tally, verified_by, verified_at) + a training label.
+- **End-of-chunk review**: summary — "You counted 4 in 12:30–12:45" with each click listed (tap = replay ±5s for self-check) → CONFIRM (writes events, marks chunk processed) or REDO. Next chunk auto-loads on confirm (preloaded during current).
+- **Quality**: golden chunks (known counts) injected ~2%; per-reviewer accuracy visible only in ops. Owner-disputed events re-queue their chunk segment to a DIFFERENT reviewer; second count wins; disagreements surface in ops.
+- Exam firewall: chunks overlapping exam windows are never served; enforced server-side.
+- Chrome: same tokens, minimal, no nav; cheap-laptop + weak-connection friendly.
+- **Latency model (honest)**: owner counts update in ~15-min batches, ~60–75 min behind live; live video tiles remain real-time. The model shadow-counts in real time; as agreement rises, model counts can lead and human tallies become the audit layer — the path to real-time without changing any UI.
+- v2 (deferred): candidate-clip adjudication queue (Y/N/U on tripwire clips) as a "fast lane" for near-real-time counts on high-value stations.
 
 ---
 
