@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/chrome/placeholder-page";
+import { LiveDashboard } from "@/components/live/live-dashboard";
 
 export default function LivePage() {
-  return <PlaceholderPage title="Live" />;
+  return <LiveDashboard />;
 }

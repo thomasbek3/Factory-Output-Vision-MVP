@@ -18,6 +18,7 @@ export type CountEventShape = {
   verdict: "placed";
   verified_by: "demo-seed";
   verified_at: string;
+  demo_offset_sec: number;
   model_verdict: {
     verdict: "placed";
     confidence: number;
@@ -50,6 +51,7 @@ export function loadDemoCountEvents(): CountEventShape[] {
       verdict: "placed",
       verified_by: "demo-seed",
       verified_at: `${demo.source_day}T${event.wall_clock}-07:00`,
+      demo_offset_sec: event.offset_sec,
       model_verdict: {
         verdict: "placed",
         confidence: event.confidence,

@@ -1,3 +1,31 @@
+# Console App CP2 - 2026-07-05
+
+## Objective
+
+Build checkpoint 2 of the FactoryVision console app in `console/`: LIVE tab, demo video media, centralized pace math, alerts, and global ClipDrawer.
+
+## Milestones
+
+- [x] CP2-1 Add demo-media preparation script, ignored output directory, README note, and media Range route.
+- [x] CP2-2 Add `lib/paceMath.ts` with Vitest coverage for spec math and boundaries.
+- [x] CP2-3 Replace LIVE placeholder with money strip, camera wall, alerts rail, and demo time controls.
+- [x] CP2-4 Add global ClipDrawer with URL deep-linking, keyboard controls, dispute state, and all LIVE invocation points.
+- [x] CP2-5 Run media prep, lint, build, tests, Range proof, docs-check, credential grep, and commit explicit paths only.
+
+## Review
+
+- `console/scripts/prepare-demo-media.sh` generated six ignored MP4 loops from the local 2026-06-26 recordings: Pallet A and Gate line, morning/midday/afternoon.
+- `curl -H 'Range: bytes=0-100' http://127.0.0.1:3000/api/media/pallet-a/midday.mp4` -> `206 Partial Content`, `Content-Range: bytes 0-100/1160576`, 101-byte body.
+- `cd console && npm run lint` -> passed.
+- `cd console && npm run build` -> passed; `/api/media/[...path]` is dynamic and owner routes prerender.
+- `cd console && npm test` -> `5 passed` for `lib/paceMath.test.ts`.
+- `make docs-check` -> passed with the existing tracked artifact/cache warning.
+- Dev server: `cd console && npm run dev -- --hostname 127.0.0.1 --port 3000`.
+- Playwright smoke at `http://127.0.0.1:3000/?clip=clip-pa-082` -> LIVE rendered, ClipDrawer rendered, `3` videos loaded; wall videos were playing at readyState `4`, 960x720, and console messages were clean. Screenshot: `/tmp/factoryvision-cp2-live.png`.
+- Credential grep over changed non-lock files -> no matches.
+- No `app/`, `tests/`, `agents/openai.yaml`, `.claude/`, `.agents/`, or `agents/` paths changed.
+- Known v0 deviation: ClipDrawer video uses the station's 60s demo MP4 bucket and seeks to the event offset ±5s, as requested for v0 approximation; browser autoplay leaves the drawer video paused until user play, while wall videos autoplay.
+
 # Console App CP1 - 2026-07-05
 
 ## Objective

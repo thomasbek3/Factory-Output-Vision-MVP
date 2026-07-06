@@ -4,10 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { demoNowIso } from "@/lib/demoData";
 
 type Speed = 1 | 60;
 
@@ -18,12 +20,19 @@ type TimeContextValue = {
   jumpTo: (next: Date | string) => void;
 };
 
-const demoStart = new Date("2026-06-26T10:15:44-07:00");
+const demoStart = new Date(demoNowIso);
 const TimeContext = createContext<TimeContextValue | null>(null);
 
 export function TimeProvider({ children }: { children: ReactNode }) {
   const [virtualNow, setVirtualNow] = useState<Date>(demoStart);
   const [speed, setSpeed] = useState<Speed>(1);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setVirtualNow((current) => new Date(current.getTime() + 1000 * speed));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [speed]);
 
   const jumpTo = useCallback((next: Date | string) => {
     setVirtualNow(next instanceof Date ? next : new Date(next));

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { RoleSwitcher } from "@/components/providers/role-switcher";
 import { TimeProvider } from "@/components/providers/time-provider";
+import { ClipDrawerProvider } from "@/components/live/clip-drawer-provider";
 import { TrustLine } from "@/components/chrome/trust-line";
 import { Wordmark } from "@/components/chrome/wordmark";
 import { cn } from "@/lib/utils";
@@ -129,10 +130,12 @@ export function OwnerChrome({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-6 py-6">
-            <div className="flex-1">{children}</div>
-          </main>
-          <TrustLine />
+          <ClipDrawerProvider>
+            <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-6 py-6">
+              <div className="flex-1">{children}</div>
+            </main>
+            <TrustLine />
+          </ClipDrawerProvider>
         </div>
       </div>
     </TimeProvider>

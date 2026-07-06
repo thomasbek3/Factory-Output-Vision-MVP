@@ -15,6 +15,11 @@ dev.db
 
 # testing
 /coverage
+/.playwright-cli/
+
+# local demo footage generated from factory recordings
+/demo-media/*
+!/demo-media/README.md
 
 # next.js
 /.next/
