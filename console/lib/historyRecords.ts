@@ -146,6 +146,69 @@ export const finishedJobs: FinishedJob[] = [
   },
 ].sort((a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime());
 
+type FinishableJobSeed = {
+  id: string;
+  client: string;
+  title: string;
+  units_required: number;
+  quote_usd: number;
+  cogs_usd: number;
+  labor_budget_usd: number;
+  created_at: string;
+  deadline: string;
+  station_ids: string[];
+  status: "active" | "paused" | "finished";
+  finished_at?: string | null;
+};
+
+const STATION_LABELS: Record<string, string> = {
+  "pallet-a": "Pallet A",
+  "gate-line": "Gate line",
+};
+
+function stationLabel(id: string) {
+  return STATION_LABELS[id] ?? id;
+}
+
+function daysBetween(startIso: string, endIso: string) {
+  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+  return roundHalf(Math.max(0.5, ms / 86_400_000));
+}
+
+/**
+ * Best-effort conversion of a DB-persisted finished Job into a FinishedJob row
+ * for the History view. Planned margin comes from quote − cogs − labor budget;
+ * we don't have per-day actuals for real jobs yet, so real margin is assumed to
+ * match plan and the daily-output chart is derived from units_required. This is
+ * what wires "Mark finished" in /jobs through to /history.
+ */
+export function finishedJobFromSeed(job: FinishableJobSeed): FinishedJob {
+  const finishedAt = job.finished_at ?? job.deadline;
+  const quotedDays = daysBetween(job.created_at, job.deadline);
+  const actualDays = daysBetween(job.created_at, finishedAt);
+  const plannedMarginUsd = job.quote_usd - job.cogs_usd - job.labor_budget_usd;
+  const stations = job.station_ids.map(stationLabel);
+  const perStation = Math.round(job.units_required / Math.max(stations.length, 1));
+
+  return {
+    id: job.id,
+    client: job.client,
+    product: job.title,
+    spec: `${job.title} · ${stations.join(" + ") || "Unassigned"}`,
+    finishedAt,
+    stations,
+    quotedDays,
+    actualDays,
+    plannedMarginUsd,
+    realMarginUsd: plannedMarginUsd,
+    plannedLaborUsd: job.labor_budget_usd,
+    actualLaborUsd: job.labor_budget_usd,
+    dailyOutput: [{ day: "Total", units: job.units_required }],
+    stationContribution: stations.map((station) => ({ station, units: perStation })),
+    bottleneckStation: stations[0] ?? "Unassigned",
+  };
+}
+
 export function historyAggregates(records: FinishedJob[] = finishedJobs) {
   const avgQuoteErrorPct =
     records.reduce((total, job) => total + Math.abs(job.actualDays - job.quotedDays) / job.quotedDays, 0) /

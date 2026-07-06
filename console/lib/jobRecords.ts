@@ -14,5 +14,6 @@ export function jobSeedFromRecord(job: Job): JobSeed {
     station_ids: Array.isArray(job.station_ids) ? job.station_ids.map(String) : [],
     status: job.status,
     created_at: job.created_at.toISOString(),
+    finished_at: job.finished_at ? job.finished_at.toISOString() : null,
   };
 }

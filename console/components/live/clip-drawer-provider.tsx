@@ -28,7 +28,7 @@ import {
   stationForEvent,
 } from "@/lib/demoData";
 import { loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
-import { cn } from "@/lib/utils";
+import { cn, isTypingTarget } from "@/lib/utils";
 
 type ClipDrawerContextValue = {
   openClip: (clipId: string) => void;
@@ -128,6 +128,7 @@ export function ClipDrawerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!activeEvent) return;
+      if (isTypingTarget(event.target)) return;
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         move(-1);

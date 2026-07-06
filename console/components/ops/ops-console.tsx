@@ -60,12 +60,30 @@ export function OpsConsole() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
-      const response = await fetch("/api/ops/snapshot", { cache: "no-store" });
-      setSnapshot((await response.json()) as OpsSnapshot);
+      try {
+        const response = await fetch("/api/ops/snapshot", { cache: "no-store" });
+        if (!response.ok) throw new Error(`snapshot ${response.status}`);
+        const data = (await response.json()) as OpsSnapshot;
+        if (!cancelled) setSnapshot(data);
+      } catch (error) {
+        console.error("GET /api/ops/snapshot failed:", error);
+        if (!cancelled) setToast("Could not load ops snapshot.");
+      }
     }
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  // Auto-clear the export/error toast so stale feedback doesn't linger forever.
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const cards = useMemo(() => {
     if (!snapshot) return [];

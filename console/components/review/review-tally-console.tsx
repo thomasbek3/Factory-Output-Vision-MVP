@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, SkipBack, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReviewChunk, TallyClick } from "@/lib/reviewChunks";
-import { cn } from "@/lib/utils";
+import { cn, isTypingTarget } from "@/lib/utils";
 
 type NextChunkResponse = {
   chunk: ReviewChunk;
@@ -102,6 +102,7 @@ export function ReviewTallyConsole() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (isTypingTarget(event.target)) return;
       if (event.code === "Space") {
         event.preventDefault();
         addCount();

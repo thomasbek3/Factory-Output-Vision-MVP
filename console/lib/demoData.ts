@@ -22,6 +22,7 @@ export type JobSeed = {
   deadline: string;
   station_ids: string[];
   status: "active" | "paused" | "finished";
+  finished_at?: string | null;
 };
 
 export type WorkDayKey =

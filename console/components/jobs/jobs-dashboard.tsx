@@ -185,9 +185,6 @@ function JobCard({
             <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
           </summary>
           <div className="absolute bottom-10 right-0 z-20 w-48 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)] p-1 shadow-[0_18px_42px_rgba(0,0,0,.55)]">
-            <button type="button" className="block w-full rounded-md px-3 py-2 text-left text-[13px] text-[var(--text-mut)] hover:bg-white/[.04]">
-              Edit
-            </button>
             {job.status === "paused" ? (
               <button type="button" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--text)] hover:bg-white/[.04]" onClick={() => onResume(job.id)}>
                 <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
@@ -354,9 +351,9 @@ export function JobsDashboard() {
   const [toast, setToast] = useState<string | null>(null);
 
   async function finish(jobId: string) {
-    if (!window.confirm("Mark this job finished? It will move to History in CP5.")) return;
+    if (!window.confirm("Mark this job finished? It will move to History.")) return;
     await finishJob(jobId);
-    setToast("Finished. History link stub ready for CP5.");
+    setToast("Finished — moved to History.");
   }
 
   return (

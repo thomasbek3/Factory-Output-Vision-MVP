@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "e2e": "playwright test",
     "seed": "prisma db seed"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "4.3.2",
     "@types/node": "20.19.43",
     "@types/react": "18.3.27",
@@ -37,6 +39,7 @@
     "eslint": "9.39.4",
     "eslint-config-next": "15.5.20",
     "eslint-plugin-react-hooks": "7.0.1",
+    "playwright": "^1.61.1",
     "prisma": "7.8.0",
     "shadcn": "4.13.0",
     "tailwindcss": "4.3.2",

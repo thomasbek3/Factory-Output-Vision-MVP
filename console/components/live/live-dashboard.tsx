@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Clock3, MoreHorizontal, Play } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, Clock3, MoreHorizontal, Play, WifiOff } from "lucide-react";
 import { AreaSpark } from "@/components/charts/AreaSpark";
 import { Panel } from "@/components/ui/panel";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useConsoleJobs } from "@/components/jobs/use-console-jobs";
 import {
   countEventsThrough,
   lastFridayBaselineUnits,
+  mediaPosterUrlForStation,
   mediaUrlForStation,
   stationEventsThrough,
   stations,
@@ -57,6 +59,73 @@ function cameraSparkValues(events: StationCountSnapshot["events"], isBehind: boo
   if (!isBehind) return values;
   const max = Math.max(...values, 1);
   return values.map((value, index) => Math.max(0, max - index * 1.6 - value * 0.12));
+}
+
+/**
+ * Live camera feed. Autoplays muted+playsInline and shows the poster before it
+ * plays. If the media errors (dead feed through the tunnel), it swaps to a
+ * "reconnecting…" card instead of a black void and retries the source on a
+ * backoff, so a transient blip self-heals.
+ */
+function LiveVideo({
+  src,
+  poster,
+  className,
+}: {
+  src: string;
+  poster: string;
+  className?: string;
+}) {
+  const [errored, setErrored] = useState(false);
+  const [cacheBust, setCacheBust] = useState(0);
+
+  // On error, retry the source after a short delay (up to a few attempts).
+  useEffect(() => {
+    if (!errored || cacheBust >= 3) return;
+    const timer = window.setTimeout(() => {
+      setErrored(false);
+      setCacheBust((n) => n + 1);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [errored, cacheBust]);
+
+  const resolvedSrc = cacheBust > 0 ? `${src}?r=${cacheBust}` : src;
+
+  if (errored) {
+    return (
+      <div
+        data-camera-state="reconnecting"
+        className={cn(
+          "flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg bg-black text-[var(--text-mut)] ring-1 ring-[var(--border-soft)]",
+          className,
+        )}
+        style={{ backgroundImage: `url(${poster})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      >
+        <div className="flex flex-col items-center gap-2 rounded-lg bg-black/60 px-4 py-3">
+          <WifiOff className="h-5 w-5 animate-pulse text-[var(--warn)]" strokeWidth={1.75} />
+          <span className="text-[12px] font-semibold">Reconnecting…</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      key={resolvedSrc}
+      src={resolvedSrc}
+      poster={poster}
+      data-camera-state="live"
+      className={cn(
+        "aspect-video w-full rounded-lg bg-black object-cover ring-1 ring-[var(--border-soft)]",
+        className,
+      )}
+      autoPlay
+      muted
+      loop
+      playsInline
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 function PacePill({
@@ -221,19 +290,18 @@ export function CameraCard({
         </div>
       </div>
 
-      <video
+      <LiveVideo
+        key={mediaUrlForStation(station.id, now)}
         src={mediaUrlForStation(station.id, now)}
-        className="aspect-video w-full rounded-lg bg-black object-cover ring-1 ring-[var(--border-soft)]"
-        autoPlay
-        muted
-        loop
-        playsInline
+        poster={mediaPosterUrlForStation(station.id, now)}
       />
 
       <div className={cn("mt-4 grid grid-cols-[minmax(116px,.7fr)_minmax(140px,1fr)_auto] items-center gap-4", scale === "tv" && "grid-cols-[minmax(220px,.7fr)_minmax(220px,1fr)_auto]")}>
         <div>
           <button
             type="button"
+            data-testid="station-count"
+            data-station={station.id}
             className={cn("text-left text-[46px] font-extrabold leading-none tracking-[-0.01em] tabular-nums text-[var(--text)] hover:text-[var(--accent)]", scale === "tv" && "text-[96px]")}
             style={{ fontSize: scale === "tv" ? 96 : 46, fontWeight: 800, lineHeight: scale === "tv" ? 0.9 : 1 }}
             onClick={() => latest && openClip(latest.clip_id)}

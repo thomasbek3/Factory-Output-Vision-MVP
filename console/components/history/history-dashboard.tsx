@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import {
   finishedJobs,
+  finishedJobFromSeed,
   gradeFinishedJob,
   historyAggregates,
   nextTimeSuggestion,
   type FinishedJob,
   type FinishedJobGrade,
 } from "@/lib/historyRecords";
+import type { JobSeed } from "@/lib/demoData";
 import { cn } from "@/lib/utils";
 
 function money(value: number) {
@@ -138,14 +140,45 @@ function ExpandedHistoryRow({ job }: { job: FinishedJob }) {
 
 export function HistoryDashboard() {
   const [query, setQuery] = useState("");
+  const [dbFinished, setDbFinished] = useState<FinishedJob[]>([]);
+
+  // Wire jobs marked finished in /jobs (persisted in the DB) through to History.
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const response = await fetch("/api/jobs", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { jobs: JobSeed[] };
+        const finished = data.jobs
+          .filter((job) => job.status === "finished")
+          .map(finishedJobFromSeed);
+        if (!cancelled) setDbFinished(finished);
+      } catch (error) {
+        console.error("History: could not load finished jobs:", error);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const allJobs = useMemo(() => {
+    const seen = new Set<string>();
+    return [...dbFinished, ...finishedJobs]
+      .filter((job) => (seen.has(job.id) ? false : (seen.add(job.id), true)))
+      .sort((a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime());
+  }, [dbFinished]);
+
   const [expandedId, setExpandedId] = useState(finishedJobs[0]?.id ?? "");
-  const aggregates = historyAggregates();
+  const aggregates = historyAggregates(allJobs);
   const normalizedQuery = query.trim().toLowerCase();
   const filteredJobs = normalizedQuery
-    ? finishedJobs.filter((job) =>
+    ? allJobs.filter((job) =>
         `${job.client} ${job.product} ${job.spec}`.toLowerCase().includes(normalizedQuery),
       )
-    : finishedJobs;
+    : allJobs;
 
   return (
     <div className="space-y-5" data-history-route="ready">
