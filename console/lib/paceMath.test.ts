@@ -13,6 +13,7 @@ import {
   selectMoneyStripTotal,
   selectRunningJobSnapshots,
 } from "@/lib/jobSelectors";
+import { selectStationCountSnapshots } from "@/lib/stationSelectors";
 import type { JobSeed, LaborConfigSeed } from "@/lib/demoData";
 
 const labor: LaborConfigSeed = {
@@ -103,8 +104,11 @@ describe("paceMath", () => {
   });
 
   it("holds the demo-day 14:32 narrative exactly", () => {
-    const snapshots = selectRunningJobSnapshots(new Date(demoNowIso), jobs);
+    const now = new Date(demoNowIso);
+    const snapshots = selectRunningJobSnapshots(now, jobs);
     const byClient = new Map(snapshots.map((snapshot) => [snapshot.job.client, snapshot]));
+    const stationSnapshots = selectStationCountSnapshots(now, jobs);
+    const byStation = new Map(stationSnapshots.map((snapshot) => [snapshot.station.name, snapshot]));
 
     expect(snapshots).toHaveLength(3);
     expect(byClient.get("Ramirez Fencing")?.snapshot.verdict).toBe("IN THE GREEN");
@@ -113,6 +117,10 @@ describe("paceMath", () => {
     expect(byClient.get("Ramirez Fencing")?.unitsDone).toBe(208);
     expect(Math.round(byClient.get("Ramirez Fencing")?.snapshot.expected_units_by_now ?? 0)).toBe(208);
     expect(byClient.get("Alvarez Gates")?.snapshot.projected_margin).toBeLessThan(0);
+    expect(byStation.get("Pallet A")?.unitsToday).toBe(142);
+    expect(pacePillLabel(byStation.get("Pallet A")?.pace.pace_delta ?? 0)).toBe("18 AHEAD");
+    expect(byStation.get("Gate line")?.unitsToday).toBe(58);
+    expect(pacePillLabel(byStation.get("Gate line")?.pace.pace_delta ?? 0)).toBe("21 BEHIND");
     expect(selectMoneyStripTotal(snapshots)).toBeCloseTo(532, 0);
   });
 

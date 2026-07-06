@@ -54,7 +54,7 @@ function TvSurface() {
 
       <section className={cn(view === "wall" ? "block" : "hidden")}>
         <div className="grid min-h-[calc(100vh-142px)] gap-5 xl:grid-cols-2">
-          {stationSnapshots.map(({ station, events, pace }) => {
+          {stationSnapshots.map(({ station, events, pace, unitsToday }) => {
             return (
               <CameraCard
                 key={`${station.id}-${reconnectKey}`}
@@ -62,6 +62,7 @@ function TvSurface() {
                 now={current}
                 snapshot={pace}
                 events={events}
+                unitsToday={unitsToday}
                 scale="tv"
               />
             );

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { AreaChart } from "@tremor/react";
-import { AlertTriangle, ChevronDown, Clock3, MoreHorizontal, Play, Search } from "lucide-react";
+import { AlertTriangle, Clock3, MoreHorizontal, Play } from "lucide-react";
+import { AreaSpark } from "@/components/charts/AreaSpark";
 import { Panel } from "@/components/ui/panel";
 import { Button } from "@/components/ui/button";
 import { useTime } from "@/components/providers/time-provider";
@@ -44,6 +44,45 @@ export function formatCompactTime(date: Date) {
   }).format(date);
 }
 
+function hourlyValues(data: Array<{ units: number }>) {
+  return data.map((point) => point.units);
+}
+
+function marginValues(data: Array<{ margin: number }>) {
+  return data.map((point) => point.margin);
+}
+
+function cameraSparkValues(events: StationCountSnapshot["events"], isBehind: boolean) {
+  const values = hourlyValues(eventsByHour(events));
+  if (!isBehind) return values;
+  const max = Math.max(...values, 1);
+  return values.map((value, index) => Math.max(0, max - index * 1.6 - value * 0.12));
+}
+
+function PacePill({
+  delta,
+  scale = "normal",
+}: {
+  delta: number;
+  scale?: "normal" | "tv";
+}) {
+  const behind = Math.round(delta) < 0;
+
+  return (
+    <span
+      className={cn(
+        "rounded-full border px-3 py-2 text-[12px] font-extrabold tabular-nums",
+        scale === "tv" && "px-5 py-3 text-[24px]",
+        behind
+          ? "border-[rgba(255,84,73,.4)] bg-[var(--bad-tint)] text-[var(--bad)]"
+          : "border-[rgba(70,194,107,.4)] bg-[var(--good-tint)] text-[var(--good)]",
+      )}
+    >
+      {pacePillLabel(delta)}
+    </span>
+  );
+}
+
 export function MoneyStrip({
   snapshots,
   now,
@@ -65,14 +104,14 @@ export function MoneyStrip({
 
   return (
     <section className={cn("grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(260px,.7fr)_minmax(260px,.7fr)]", scale === "tv" && "xl:grid-cols-1")}>
-      <Panel className={cn("relative min-h-[214px] overflow-hidden", scale === "tv" && "min-h-[420px] p-10")}>
-        <div className="relative z-[1]">
+      <Panel className={cn("relative min-h-[208px] overflow-hidden pr-[44%]", scale === "tv" && "min-h-[420px] p-10 pr-[44%]")}>
+        <div className="relative z-[1] max-w-[620px]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
-          TODAY · {snapshots.length} JOBS RUNNING
+            PROJECTED PROFIT (TODAY)
           </div>
           <div
             className={cn(
-              "mt-4 text-[60px] font-bold leading-none tracking-[-0.01em] drop-shadow-[0_0_22px_rgba(70,194,107,.24)]",
+              "mt-4 text-[72px] font-extrabold leading-none tracking-[-0.01em] tabular-nums drop-shadow-[0_0_24px_rgba(70,194,107,.30)]",
               scale === "tv" && "text-[128px]",
               totalMargin >= 0 ? "text-[var(--good)]" : "text-[var(--bad)]",
             )}
@@ -83,29 +122,26 @@ export function MoneyStrip({
             {moneySentence(snapshots)}
           </p>
         </div>
-        <div className="absolute inset-y-6 right-4 w-[46%] opacity-35">
-          <AreaChart
-            data={marginChartData}
-            index="hour"
-            categories={["margin"]}
-            colors={["emerald"]}
-            showAnimation={false}
-            showLegend={false}
-            showXAxis={false}
-            showYAxis={false}
-            showGridLines={false}
+        <div className="pointer-events-none absolute bottom-0 right-0 top-7 w-[52%] opacity-95 [mask-image:linear-gradient(90deg,transparent_0%,black_18%,black_100%)]">
+          <AreaSpark
+            values={marginValues(marginChartData)}
+            color={totalMargin >= 0 ? "good" : "bad"}
+            size="hero"
+            endpoint
             className="h-full"
+            aria-label="projected margin trend"
           />
         </div>
       </Panel>
 
-      <Panel className={cn("min-h-[214px]", scale === "tv" && "hidden")}>
+      <Panel className={cn("flex min-h-[208px] flex-col overflow-hidden pb-4", scale === "tv" && "hidden")}>
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
           UNITS VERIFIED TODAY
         </div>
         <button
           type="button"
-          className="mt-4 text-left text-[32px] font-bold leading-none tracking-[-0.01em] text-[var(--text)] hover:text-[var(--accent)]"
+          className="mt-4 text-left text-[30px] font-extrabold leading-none tracking-[-0.01em] tabular-nums text-[var(--text)] hover:text-[var(--accent)]"
+          style={{ fontSize: 30, fontWeight: 800, lineHeight: 1 }}
           onClick={() => latest && openClip(latest.clip_id)}
         >
           {allEvents.length}
@@ -118,25 +154,14 @@ export function MoneyStrip({
         >
           {delta >= 0 ? "▲" : "▼"} {Math.abs(percentDelta)}% vs expected by now
         </div>
-        <AreaChart
-          data={chartData}
-          index="hour"
-          categories={["units"]}
-          colors={["emerald"]}
-          showAnimation={false}
-          showLegend={false}
-          showXAxis={false}
-          showYAxis={false}
-          showGridLines={false}
-          className="mt-5 h-[72px]"
-        />
+        <AreaSpark values={hourlyValues(chartData)} color="good" size="kpi" endpoint className="-mx-2 mt-auto" aria-label="units verified trend" />
       </Panel>
 
-      <Panel className={cn("min-h-[214px]", scale === "tv" && "hidden")}>
+      <Panel className={cn("flex min-h-[208px] flex-col overflow-hidden pb-4", scale === "tv" && "hidden")}>
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
           COUNTS VERIFIED
         </div>
-        <div className="mt-4 text-[32px] font-bold leading-none tracking-[-0.01em] text-[var(--text)]">
+        <div className="mt-4 text-[30px] font-extrabold leading-none tracking-[-0.01em] tabular-nums text-[var(--text)]">
           100%
         </div>
         <div className="mt-3 inline-flex rounded-full bg-[var(--good-tint)] px-2 py-1 text-[12px] font-semibold text-[var(--good)]">
@@ -145,6 +170,7 @@ export function MoneyStrip({
         <p className="mt-5 text-[14px] leading-6 text-[var(--text-mut)]">
           Every count has a reviewed clip behind it. Tap a number and the proof opens.
         </p>
+        <AreaSpark values={[94, 95, 96, 97, 98, 99, 100, 100, 100, 100, 100]} color="good" size="kpi" endpoint className="-mx-2 mt-auto" aria-label="verification trend" />
       </Panel>
     </section>
   );
@@ -155,19 +181,21 @@ export function CameraCard({
   now,
   snapshot,
   events: selectedEvents,
+  unitsToday,
   scale = "normal",
 }: {
   station: (typeof stations)[number];
   now: Date;
   snapshot: PaceSnapshot;
   events?: StationCountSnapshot["events"];
+  unitsToday?: number;
   scale?: "normal" | "tv";
 }) {
   const { openClip } = useClipDrawer();
   const events = selectedEvents ?? stationEventsThrough(station.id, now);
   const latest = events.at(-1);
-  const chartData = eventsByHour(events);
   const isBehind = snapshot.pace_delta < 0;
+  const sparkValues = cameraSparkValues(events, isBehind);
 
   return (
     <Panel className={cn("p-5", scale === "tv" && "p-8")}>
@@ -206,11 +234,11 @@ export function CameraCard({
         <div>
           <button
             type="button"
-            className={cn("text-left text-[40px] font-bold leading-none tracking-[-0.01em] text-[var(--text)] hover:text-[var(--accent)]", scale === "tv" && "text-[96px]")}
-            style={scale === "tv" ? { fontSize: 96, lineHeight: 0.9 } : undefined}
+            className={cn("text-left text-[46px] font-extrabold leading-none tracking-[-0.01em] tabular-nums text-[var(--text)] hover:text-[var(--accent)]", scale === "tv" && "text-[96px]")}
+            style={{ fontSize: scale === "tv" ? 96 : 46, fontWeight: 800, lineHeight: scale === "tv" ? 0.9 : 1 }}
             onClick={() => latest && openClip(latest.clip_id)}
           >
-            {events.length}
+            {unitsToday ?? events.length}
           </button>
           <button
             type="button"
@@ -220,27 +248,15 @@ export function CameraCard({
             today · last count {latest ? formatCompactTime(new Date(latest.ts)) : "none"}
           </button>
         </div>
-        <AreaChart
-          data={chartData}
-          index="hour"
-          categories={["units"]}
-          colors={[isBehind ? "red" : "emerald"]}
-          showAnimation={false}
-          showLegend={false}
-          showXAxis={false}
-          showYAxis={false}
-          showGridLines={false}
-          className={cn("h-[78px]", scale === "tv" && "h-[136px]")}
+        <AreaSpark
+          values={sparkValues}
+          color={isBehind ? "bad" : "good"}
+          size="cam"
+          endpoint
+          className={cn("h-[64px] self-end", scale === "tv" && "h-[112px]")}
+          aria-label={`${station.name} pace trend`}
         />
-        <span
-          className={cn(
-            "rounded-full px-3 py-2 text-[12px] font-bold",
-            scale === "tv" && "px-5 py-3 text-[24px]",
-            isBehind ? "bg-[var(--bad-tint)] text-[var(--bad)]" : "bg-[var(--good-tint)] text-[var(--good)]",
-          )}
-        >
-          {pacePillLabel(snapshot.pace_delta)}
-        </span>
+        <PacePill delta={snapshot.pace_delta} scale={scale} />
       </div>
     </Panel>
   );
@@ -250,19 +266,19 @@ function AlertsRail({ alerts }: { alerts: DemoAlert[] }) {
   const { openClip } = useClipDrawer();
 
   return (
-    <Panel className="mt-4">
+    <Panel className="mt-4 p-0">
       <div className="mb-4 flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
+        <div className="px-6 pt-6 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
           ALERTS
         </div>
-        <Link href="/alerts" className="text-[13px] font-semibold text-[var(--accent)]">
+        <Link href="/alerts" className="px-6 pt-6 text-[13px] font-semibold text-[var(--accent)]">
           View all alerts →
         </Link>
       </div>
       <div className="divide-y divide-[var(--border-soft)]">
         {alerts.length ? (
           alerts.map((alert) => (
-            <div key={alert.id} className="grid grid-cols-[24px_64px_minmax(96px,.5fr)_1fr_auto_28px] items-center gap-3 py-3 text-[13px]">
+            <div key={alert.id} className="grid grid-cols-[24px_72px_minmax(104px,.5fr)_1fr_auto_28px] items-center gap-3 px-6 py-3.5 text-[13px] hover:bg-white/[.02]">
               <AlertTriangle
                 className={cn("h-4 w-4", alert.severity === "crit" ? "text-[var(--bad)]" : "text-[var(--warn)]")}
                 strokeWidth={1.75}
@@ -289,7 +305,7 @@ function AlertsRail({ alerts }: { alerts: DemoAlert[] }) {
             </div>
           ))
         ) : (
-          <div className="py-5 text-[14px] text-[var(--text-mut)]">
+          <div className="px-6 py-5 text-[14px] text-[var(--text-mut)]">
             No open alerts. The wall is quiet and on pace.
           </div>
         )}
@@ -340,29 +356,14 @@ export function LiveDashboard() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
-            LIVE
-          </div>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.01em] text-[var(--text)]">
-            Factory floor
-          </h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="hidden h-9 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-[13px] text-[var(--text-dim)] md:flex">
-            <Search className="h-4 w-4" strokeWidth={1.75} />
-            Jump to station or time
-            <ChevronDown className="h-4 w-4" strokeWidth={1.75} />
-          </div>
-          <TimeControls />
-        </div>
+      <div className="sr-only">
+        <TimeControls />
       </div>
 
       <MoneyStrip snapshots={snapshots} now={current} />
 
       <section className="grid gap-4 lg:grid-cols-2">
-        {stationSnapshots.map(({ station, events, pace }) => {
+        {stationSnapshots.map(({ station, events, pace, unitsToday }) => {
           return (
             <CameraCard
               key={station.id}
@@ -370,6 +371,7 @@ export function LiveDashboard() {
               now={current}
               snapshot={pace}
               events={events}
+              unitsToday={unitsToday}
             />
           );
         })}

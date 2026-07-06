@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { AreaChart } from "@tremor/react";
 import { CheckCircle2, CircleDollarSign, MoreHorizontal, Pause, Plus, RotateCcw } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { AreaSpark } from "@/components/charts/AreaSpark";
 import { useTime } from "@/components/providers/time-provider";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
@@ -76,18 +76,14 @@ function MoneyStrip({ jobSnapshots }: { jobSnapshots: JobWithPace[] }) {
           Active jobs only. Paused and finished work is outside this number.
         </p>
       </div>
-      <div className="absolute inset-y-6 right-4 w-[42%] opacity-40">
-        <AreaChart
-          data={data.length ? data : [{ hour: "7a", margin: totalMargin }]}
-          index="hour"
-          categories={["margin"]}
-          colors={["emerald"]}
-          showAnimation={false}
-          showLegend={false}
-          showXAxis={false}
-          showYAxis={false}
-          showGridLines={false}
+      <div className="pointer-events-none absolute bottom-0 right-0 top-6 w-[42%] opacity-70 [mask-image:linear-gradient(90deg,transparent_0%,black_20%,black_100%)]">
+        <AreaSpark
+          values={(data.length ? data : [{ hour: "7a", margin: totalMargin }]).map((point) => point.margin)}
+          color={totalMargin >= 0 ? "good" : "bad"}
+          size="hero"
+          endpoint
           className="h-full"
+          aria-label="active jobs margin trend"
         />
       </div>
     </Panel>

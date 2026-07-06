@@ -63,7 +63,7 @@ function ExpandedHistoryRow({ job }: { job: FinishedJob }) {
                 <div key={day.day} className="flex h-full flex-1 flex-col items-center justify-end">
                   <div className="mb-2 text-[12px] font-semibold text-[var(--text)]">{day.units}</div>
                   <div
-                    className="w-full max-w-[92px] rounded-t-lg bg-[linear-gradient(180deg,var(--good),rgba(70,194,107,.58))]"
+                    className="w-full max-w-[92px] rounded-t-lg bg-[linear-gradient(180deg,rgba(70,194,107,.9),rgba(70,194,107,.18))]"
                     style={{ height }}
                   />
                   <div className="absolute bottom-0 translate-y-6 text-[12px] text-[var(--text-mut)]">{day.day}</div>
