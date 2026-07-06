@@ -14,8 +14,7 @@ test.describe("G2 — the Tapes archive", () => {
 
   test("counted moments list opens the clip drawer", async ({ page }) => {
     await page.goto("/replay?station=pallet-a");
-    const moment = page.getByText("Counted moments").locator("xpath=ancestor::div[1]").locator("button").first();
-    // The panel's first moment button.
+    // The Counted moments panel lists each placement with its verifier.
     const firstMoment = page.locator("button", { hasText: /M\. Reyes/ }).first();
     await firstMoment.click();
     await expect(page.getByRole("dialog")).toBeVisible();
