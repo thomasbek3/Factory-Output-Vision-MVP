@@ -123,7 +123,7 @@ describe("paceMath", () => {
     const behind = evaluateJobPace(fixtureJob, 35, now, labor);
 
     expect(jobPaceSentence(fixtureJob, behind, now)).toBe(
-      "35 of 100 done - needs 137/day, doing 74. Watch it tomorrow.",
+      "35 of 100 done — needs 137/day, doing 74. Watch it tomorrow.",
     );
   });
 
@@ -138,7 +138,7 @@ describe("paceMath", () => {
     };
 
     expect(jobPaceSentence(fixtureJob, laborOverrun, now)).toBe(
-      "55 of 100 done - on pace, but labor is eating the margin — projected $143 over budget.",
+      "55 of 100 done — on pace, but labor is eating the margin — projected $143 over budget.",
     );
   });
 
@@ -146,7 +146,7 @@ describe("paceMath", () => {
     const overdue = evaluateJobPace(fixtureJob, 80, new Date("2026-06-26T18:00:00-07:00"), labor);
 
     expect(jobPaceSentence(fixtureJob, overdue, new Date("2026-06-26T18:00:00-07:00"))).toBe(
-      "80 of 100 done - Overdue — at this pace labor eats the whole margin.",
+      "80 of 100 done — Overdue — at this pace labor eats the whole margin.",
     );
   });
 

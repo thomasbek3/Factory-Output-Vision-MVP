@@ -106,7 +106,7 @@ export function moneySentence(jobSnapshots: JobWithPace[]) {
   if (!worst || !atRisk) return `All ${jobSnapshots.length} jobs on pace.`;
 
   const verdict = worst.snapshot.verdict === "LOSING MONEY" ? "losing money" : "getting tight";
-  return `You're in the green - but ${worst.job.client} is ${verdict}.`;
+  return `You're in the green — but ${worst.job.client} is ${verdict}.`;
 }
 
 export function cumulativeMarginSeries(jobSnapshots: JobWithPace[], events: CountEventShape[]) {
@@ -143,16 +143,16 @@ export function jobPaceSentence(job: JobSeed, snapshot: PaceSnapshot, now: Date)
   const overBudget = Math.max(0, Math.round(snapshot.projected_labor_usd - job.labor_budget_usd));
 
   if (isOverdue) {
-    return `${done} of ${job.units_required} done - Overdue — at this pace labor eats the whole margin.`;
+    return `${done} of ${job.units_required} done — Overdue — at this pace labor eats the whole margin.`;
   }
   if (snapshot.verdict === "LOSING MONEY" && !isBehindPace) {
-    return `${done} of ${job.units_required} done - on pace, but labor is eating the margin — projected $${overBudget.toLocaleString("en-US")} over budget.`;
+    return `${done} of ${job.units_required} done — on pace, but labor is eating the margin — projected $${overBudget.toLocaleString("en-US")} over budget.`;
   }
   if (snapshot.verdict === "GETTING TIGHT" && !isBehindPace && overBudget > 0) {
-    return `${done} of ${job.units_required} done - on pace, but labor is tightening the margin — projected $${overBudget.toLocaleString("en-US")} over budget.`;
+    return `${done} of ${job.units_required} done — on pace, but labor is tightening the margin — projected $${overBudget.toLocaleString("en-US")} over budget.`;
   }
   if (isBehindPace) {
-    return `${done} of ${job.units_required} done - needs ${neededPerDay}/day, doing ${actualPerDay}. Watch it tomorrow.`;
+    return `${done} of ${job.units_required} done — needs ${neededPerDay}/day, doing ${actualPerDay}. Watch it tomorrow.`;
   }
 
   return `${done} of ${job.units_required} done — ahead. Finishes ${formatFinishDay(projectedFinishDate(job, snapshot, now))} morning.`;

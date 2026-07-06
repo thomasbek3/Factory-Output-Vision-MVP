@@ -18,10 +18,9 @@ import {
   stationEventsThrough,
   stations,
 } from "@/lib/demoData";
-import { loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
+import { evaluateDemoAlerts, type DemoAlert } from "@/lib/alerts";
 import {
   evaluateJobPace,
-  workMinutesBetween,
   type PaceSnapshot,
 } from "@/lib/paceMath";
 import {
@@ -36,24 +35,13 @@ import {
 } from "@/lib/jobSelectors";
 import { cn } from "@/lib/utils";
 
-type AlertRow = {
-  id: string;
-  type: "behind_pace" | "station_quiet";
-  severity: "crit" | "warn";
-  stationId: string;
-  stationName: string;
-  ts: Date;
-  message: string;
-  clipId: string | null;
-};
-
-function formatMoney(value: number) {
+export function formatMoney(value: number) {
   const rounded = Math.round(value);
   const sign = rounded >= 0 ? "+" : "-";
   return `${sign}$${Math.abs(rounded).toLocaleString("en-US")}`;
 }
 
-function formatCompactTime(date: Date) {
+export function formatCompactTime(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Los_Angeles",
     hour: "numeric",
@@ -61,72 +49,14 @@ function formatCompactTime(date: Date) {
   }).format(date);
 }
 
-function stationQuietMinutes(stationId: string, now: Date) {
-  const events = stationEventsThrough(stationId, now);
-  const latest = events.at(-1);
-  if (!latest) return Infinity;
-  return workMinutesBetween(new Date(latest.ts), now, laborConfig);
-}
-
-function nearestClipId(stationId: string, target: Date) {
-  const events = loadDemoCountEvents().filter((event) => event.station_id === stationId);
-  const nearest = events.reduce<CountEventShape | null>((best, event) => {
-    if (!best) return event;
-    const eventDistance = Math.abs(new Date(event.ts).getTime() - target.getTime());
-    const bestDistance = Math.abs(new Date(best.ts).getTime() - target.getTime());
-    return eventDistance < bestDistance ? event : best;
-  }, null);
-  return nearest?.clip_id ?? null;
-}
-
-function evaluateAlerts(now: Date, snapshots: JobWithPace[]): AlertRow[] {
-  const alerts: AlertRow[] = [];
-
-  for (const station of stations) {
-    const job = jobForStation(station.id);
-    const jobSnapshot = snapshots.find((candidate) => candidate.job.id === job?.id)?.snapshot;
-    if (!job || !jobSnapshot) continue;
-
-    if (
-      jobSnapshot.expected_units_by_now > 0 &&
-      jobSnapshot.pace_delta <= -0.15 * jobSnapshot.expected_units_by_now
-    ) {
-      alerts.push({
-        id: `${station.id}-behind`,
-        type: "behind_pace",
-        severity: jobSnapshot.verdict === "LOSING MONEY" ? "crit" : "warn",
-        stationId: station.id,
-        stationName: station.name,
-        ts: now,
-        message: `${station.name} is ${pacePillLabel(jobSnapshot.pace_delta).toLowerCase()} on ${job.client}.`,
-        clipId: nearestClipId(station.id, now),
-      });
-    }
-
-    const quietMinutes = stationQuietMinutes(station.id, now);
-    if (quietMinutes >= 25) {
-      alerts.push({
-        id: `${station.id}-quiet`,
-        type: "station_quiet",
-        severity: "warn",
-        stationId: station.id,
-        stationName: station.name,
-        ts: now,
-        message: `${station.name} has no verified count in ${quietMinutes} work minutes.`,
-        clipId: nearestClipId(station.id, now),
-      });
-    }
-  }
-
-  return alerts.sort((a, b) => b.ts.getTime() - a.ts.getTime()).slice(0, 3);
-}
-
-function MoneyStrip({
+export function MoneyStrip({
   snapshots,
   now,
+  scale = "normal",
 }: {
   snapshots: JobWithPace[];
   now: Date;
+  scale?: "normal" | "tv";
 }) {
   const allEvents = countEventsThrough(now);
   const totalMargin = selectMoneyStripTotal(snapshots);
@@ -139,8 +69,8 @@ function MoneyStrip({
   const { openClip } = useClipDrawer();
 
   return (
-    <section className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(260px,.7fr)_minmax(260px,.7fr)]">
-      <Panel className="relative min-h-[214px] overflow-hidden">
+    <section className={cn("grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(260px,.7fr)_minmax(260px,.7fr)]", scale === "tv" && "xl:grid-cols-1")}>
+      <Panel className={cn("relative min-h-[214px] overflow-hidden", scale === "tv" && "min-h-[420px] p-10")}>
         <div className="relative z-[1]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
           TODAY · {snapshots.length} JOBS RUNNING
@@ -148,12 +78,13 @@ function MoneyStrip({
           <div
             className={cn(
               "mt-4 text-[60px] font-bold leading-none tracking-[-0.01em] drop-shadow-[0_0_22px_rgba(70,194,107,.24)]",
+              scale === "tv" && "text-[128px]",
               totalMargin >= 0 ? "text-[var(--good)]" : "text-[var(--bad)]",
             )}
           >
             {formatMoney(totalMargin)}
           </div>
-          <p className="mt-4 max-w-xl text-[14px] leading-6 text-[var(--text-mut)]">
+          <p className={cn("mt-4 max-w-xl text-[14px] leading-6 text-[var(--text-mut)]", scale === "tv" && "max-w-5xl text-[34px] leading-[1.25]")}>
             {moneySentence(snapshots)}
           </p>
         </div>
@@ -173,7 +104,7 @@ function MoneyStrip({
         </div>
       </Panel>
 
-      <Panel className="min-h-[214px]">
+      <Panel className={cn("min-h-[214px]", scale === "tv" && "hidden")}>
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
           UNITS VERIFIED TODAY
         </div>
@@ -206,7 +137,7 @@ function MoneyStrip({
         />
       </Panel>
 
-      <Panel className="min-h-[214px]">
+      <Panel className={cn("min-h-[214px]", scale === "tv" && "hidden")}>
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
           COUNTS VERIFIED
         </div>
@@ -224,14 +155,16 @@ function MoneyStrip({
   );
 }
 
-function CameraCard({
+export function CameraCard({
   station,
   now,
   snapshot,
+  scale = "normal",
 }: {
   station: (typeof stations)[number];
   now: Date;
   snapshot: PaceSnapshot;
+  scale?: "normal" | "tv";
 }) {
   const { openClip } = useClipDrawer();
   const events = stationEventsThrough(station.id, now);
@@ -240,11 +173,11 @@ function CameraCard({
   const isBehind = snapshot.pace_delta < 0;
 
   return (
-    <Panel className="p-5">
+    <Panel className={cn("p-5", scale === "tv" && "p-8")}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold text-[var(--text)]">{station.name}</h2>
-          <div className="mt-1 text-[12px] text-[var(--text-dim)]">
+          <h2 className={cn("text-[16px] font-semibold text-[var(--text)]", scale === "tv" && "text-[34px]")}>{station.name}</h2>
+          <div className={cn("mt-1 text-[12px] text-[var(--text-dim)]", scale === "tv" && "text-[18px]")}>
             {station.cameraId} · {station.location}
           </div>
         </div>
@@ -272,18 +205,19 @@ function CameraCard({
         playsInline
       />
 
-      <div className="mt-4 grid grid-cols-[minmax(116px,.7fr)_minmax(140px,1fr)_auto] items-center gap-4">
+      <div className={cn("mt-4 grid grid-cols-[minmax(116px,.7fr)_minmax(140px,1fr)_auto] items-center gap-4", scale === "tv" && "grid-cols-[minmax(220px,.7fr)_minmax(220px,1fr)_auto]")}>
         <div>
           <button
             type="button"
-            className="text-left text-[40px] font-bold leading-none tracking-[-0.01em] text-[var(--text)] hover:text-[var(--accent)]"
+            className={cn("text-left text-[40px] font-bold leading-none tracking-[-0.01em] text-[var(--text)] hover:text-[var(--accent)]", scale === "tv" && "text-[96px]")}
+            style={scale === "tv" ? { fontSize: 96, lineHeight: 0.9 } : undefined}
             onClick={() => latest && openClip(latest.clip_id)}
           >
             {events.length}
           </button>
           <button
             type="button"
-            className="mt-2 block text-left text-[12px] text-[var(--text-dim)] hover:text-[var(--accent)]"
+            className={cn("mt-2 block text-left text-[12px] text-[var(--text-dim)] hover:text-[var(--accent)]", scale === "tv" && "text-[20px]")}
             onClick={() => latest && openClip(latest.clip_id)}
           >
             today · last count {latest ? formatCompactTime(new Date(latest.ts)) : "none"}
@@ -299,11 +233,12 @@ function CameraCard({
           showXAxis={false}
           showYAxis={false}
           showGridLines={false}
-          className="h-[78px]"
+          className={cn("h-[78px]", scale === "tv" && "h-[136px]")}
         />
         <span
           className={cn(
             "rounded-full px-3 py-2 text-[12px] font-bold",
+            scale === "tv" && "px-5 py-3 text-[24px]",
             isBehind ? "bg-[var(--bad-tint)] text-[var(--bad)]" : "bg-[var(--good-tint)] text-[var(--good)]",
           )}
         >
@@ -314,7 +249,7 @@ function CameraCard({
   );
 }
 
-function AlertsRail({ alerts }: { alerts: AlertRow[] }) {
+function AlertsRail({ alerts }: { alerts: DemoAlert[] }) {
   const { openClip } = useClipDrawer();
 
   return (
@@ -403,7 +338,7 @@ export function LiveDashboard() {
   const { jobs: consoleJobs } = useConsoleJobs();
   const current = now();
   const snapshots = selectRunningJobSnapshots(current, consoleJobs);
-  const alerts = evaluateAlerts(current, snapshots);
+  const alerts = evaluateDemoAlerts(current, snapshots).slice(0, 3);
 
   return (
     <div className="space-y-4">

@@ -24,6 +24,21 @@ import { cn } from "@/lib/utils";
 
 type ReplayStation = "all" | string;
 type Speed = 1 | 4 | 15 | 60;
+type TimelineMarker =
+  | {
+      id: string;
+      kind: "single";
+      event: CountEventShape;
+      count: 1;
+      minutes: number;
+    }
+  | {
+      id: string;
+      kind: "cluster";
+      event: CountEventShape;
+      count: number;
+      minutes: number;
+    };
 
 type ReplayDashboardProps = {
   initialStation: string;
@@ -301,7 +316,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,.75fr)]">
+      <section className="space-y-5">
         <Panel className="space-y-4 p-4">
           <div className="relative overflow-hidden rounded-lg bg-black ring-1 ring-[var(--border)]">
             <video
@@ -396,16 +411,42 @@ function DayTimeline({
   onOpenClip: (clipId: string) => void;
 }) {
   const hourLabels = Array.from({ length: 11 }, (_, index) => 7 + index);
+  const dense = placements.length > 40;
+  const markerGroups: TimelineMarker[] = chapters.flatMap((chapter): TimelineMarker[] => {
+    const events = placements.filter((event) => {
+      const eventMinutes = minutesForDate(new Date(event.ts));
+      return eventMinutes >= chapter.start && eventMinutes < chapter.end;
+    });
+    if (!dense || events.length <= 3) {
+      return events.map((event) => ({
+        id: event.clip_id,
+        kind: "single" as const,
+        event,
+        count: 1,
+        minutes: minutesForDate(new Date(event.ts)),
+      }));
+    }
+
+    return [
+      {
+        id: `${chapter.start}-cluster`,
+        kind: "cluster" as const,
+        event: events[0],
+        count: events.length,
+        minutes: Math.round(chapter.start + chapterMinutes / 2),
+      },
+    ];
+  });
 
   return (
     <div className="space-y-3">
-      <div className="relative h-[126px] rounded-lg border border-[var(--border)] bg-[#0b0d0f] px-3 pt-8">
+      <div className="relative h-[140px] rounded-lg border border-[var(--border)] bg-[#0b0d0f] px-3 pt-8">
         <div className="absolute left-3 right-3 top-3 flex justify-between text-[11px] text-[var(--text-dim)]">
           {hourLabels.map((hour) => (
             <span key={hour}>{hour > 12 ? hour - 12 : hour}{hour >= 12 ? "p" : "a"}</span>
           ))}
         </div>
-        <div className="relative h-12 rounded-md bg-black/30">
+        <div className="relative mt-8 h-12 rounded-md bg-black/30">
           {chapters.map((chapter) => {
             const count = chapter.events.length;
             const tone =
@@ -436,21 +477,30 @@ function DayTimeline({
               width: `${widthPct(demoGap.start, demoGap.end)}%`,
             }}
           />
-          {placements.map((event, index) => {
-            const eventMinutes = minutesForDate(new Date(event.ts));
+          {markerGroups.map((marker, index) => {
             return (
               <button
-                key={event.clip_id}
+                key={marker.id}
                 type="button"
-                title={`${formatClock(new Date(event.ts), true)} · ${event.clip_id}`}
-                className="absolute top-[28px] h-4 w-4 -translate-x-1/2 rotate-45 rounded-[2px] bg-[var(--accent)] shadow-[0_0_12px_rgba(232,116,47,.55)] ring-1 ring-black/40 hover:bg-[var(--accent-hi)]"
-                style={{ left: `${positionPct(eventMinutes)}%` }}
-                aria-label={`Open placement ${index + 1}`}
+                title={
+                  marker.kind === "cluster"
+                    ? `${marker.count} placements · ${formatClock(dateForMinutes(marker.minutes))}`
+                    : `${formatClock(new Date(marker.event.ts), true)} · ${marker.event.clip_id}`
+                }
+                className="absolute top-[-22px] z-[2] h-4 w-4 -translate-x-1/2 rotate-45 rounded-[2px] bg-[var(--accent)] shadow-[0_0_12px_rgba(232,116,47,.55)] ring-1 ring-black/40 hover:bg-[var(--accent-hi)]"
+                style={{ left: `${positionPct(marker.minutes)}%` }}
+                aria-label={marker.kind === "cluster" ? `Open ${marker.count} placements` : `Open placement ${index + 1}`}
                 onClick={() => {
-                  onSeek(eventMinutes);
-                  onOpenClip(event.clip_id);
+                  onSeek(marker.minutes);
+                  onOpenClip(marker.event.clip_id);
                 }}
-              />
+              >
+                {marker.kind === "cluster" ? (
+                  <span className="absolute left-3 top-[-10px] rotate-[-45deg] rounded-full bg-[#21160f] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[var(--accent)] ring-1 ring-[var(--accent-tint)]">
+                    ×{marker.count}
+                  </span>
+                ) : null}
+              </button>
             );
           })}
           <div
@@ -472,6 +522,7 @@ function DayTimeline({
         <span className="inline-flex items-center gap-2"><i className="h-2.5 w-6 rounded bg-[var(--warn)]" /> sparse</span>
         <span className="inline-flex items-center gap-2"><i className="h-2.5 w-6 rounded bg-[var(--idle)]" /> idle</span>
         <span className="inline-flex items-center gap-2"><i className="h-3 w-3 rotate-45 rounded-[2px] bg-[var(--accent)]" /> verified placement</span>
+        <span className="inline-flex items-center gap-2 text-[var(--text-dim)]">×N = clustered 15-minute bucket</span>
         <span className="inline-flex items-center gap-2"><i className="h-3 w-6 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.25)_0,rgba(255,255,255,.25)_3px,rgba(120,124,128,.25)_3px,rgba(120,124,128,.25)_8px)]" /> demo gap</span>
       </div>
     </div>
@@ -502,7 +553,7 @@ function ChaptersGrid({
         </div>
         <BadgeCheck className="h-5 w-5 text-[var(--good)]" strokeWidth={1.75} />
       </div>
-      <div className="grid max-h-[648px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+      <div className="flex gap-3 overflow-x-auto pb-1">
         {chapters.map((chapter, index) => {
           const count = chapter.events.length;
           const firstEvent = uniquePlacementMoments(chapter.events)[0];
@@ -513,7 +564,7 @@ function ChaptersGrid({
               role="button"
               tabIndex={0}
               className={cn(
-                "group relative cursor-pointer overflow-hidden rounded-lg border bg-[var(--panel-2)] text-left transition-colors",
+                "group relative min-w-[250px] cursor-pointer overflow-hidden rounded-lg border bg-[var(--panel-2)] text-left transition-colors",
                 activeIndex === index
                   ? "border-[1.5px] border-[var(--accent)]"
                   : "border-[var(--border)] hover:border-[var(--border-soft)]",

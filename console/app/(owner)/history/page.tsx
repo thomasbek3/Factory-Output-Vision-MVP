@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/chrome/placeholder-page";
+import { HistoryDashboard } from "@/components/history/history-dashboard";
 
 export default function HistoryPage() {
-  return <PlaceholderPage title="History" />;
+  return <HistoryDashboard />;
 }

@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/chrome/placeholder-page";
+import { AlertsDashboard } from "@/components/alerts/alerts-dashboard";
 
 export default function AlertsPage() {
-  return <PlaceholderPage title="Alerts" />;
+  return <AlertsDashboard />;
 }
