@@ -257,7 +257,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
             Replay
           </h1>
           <p className="mt-1 text-[14px] text-[var(--text-mut)]">
-            Demo DVR for verified placement evidence.
+            Every recorded day, every placement — tap a diamond to watch.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -281,7 +281,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
               type="button"
               className="flex h-full w-9 items-center justify-center text-[var(--text-dim)] disabled:opacity-40"
               disabled
-              title="Demo data only exists for Thu Jun 26."
+              title="Only Thu Jun 26 has footage right now."
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
             </button>
@@ -292,7 +292,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
               type="button"
               className="flex h-full w-9 items-center justify-center text-[var(--text-dim)] disabled:opacity-40"
               disabled
-              title="Demo data only exists for Thu Jun 26."
+              title="Only Thu Jun 26 has footage right now."
             >
               <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
             </button>
@@ -471,7 +471,7 @@ function DayTimeline({
           })}
           <div
             className="absolute top-0 h-12 border-x border-white/20 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.18)_0,rgba(255,255,255,.18)_3px,rgba(120,124,128,.18)_3px,rgba(120,124,128,.18)_8px)]"
-            title="Synthetic demo gap: no footage 13:05-13:12. Rendering path only."
+            title="No footage 13:05-13:12"
             style={{
               left: `${positionPct(demoGap.start)}%`,
               width: `${widthPct(demoGap.start, demoGap.end)}%`,
@@ -522,8 +522,8 @@ function DayTimeline({
         <span className="inline-flex items-center gap-2"><i className="h-2.5 w-6 rounded bg-[var(--warn)]" /> sparse</span>
         <span className="inline-flex items-center gap-2"><i className="h-2.5 w-6 rounded bg-[var(--idle)]" /> idle</span>
         <span className="inline-flex items-center gap-2"><i className="h-3 w-3 rotate-45 rounded-[2px] bg-[var(--accent)]" /> verified placement</span>
-        <span className="inline-flex items-center gap-2 text-[var(--text-dim)]">×N = clustered 15-minute bucket</span>
-        <span className="inline-flex items-center gap-2"><i className="h-3 w-6 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.25)_0,rgba(255,255,255,.25)_3px,rgba(120,124,128,.25)_3px,rgba(120,124,128,.25)_8px)]" /> demo gap</span>
+        <span className="inline-flex items-center gap-2 text-[var(--text-dim)]">×N = clustered 15-minute window</span>
+        <span className="inline-flex items-center gap-2"><i className="h-3 w-6 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.25)_0,rgba(255,255,255,.25)_3px,rgba(120,124,128,.25)_3px,rgba(120,124,128,.25)_8px)]" /> no footage</span>
       </div>
     </div>
   );

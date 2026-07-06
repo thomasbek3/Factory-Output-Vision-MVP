@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { jobs as seedJobs } from "@/lib/demoData";
 import { validateNewJobInput, type NewJobInput } from "@/lib/jobForm";
 import { jobSeedFromRecord } from "@/lib/jobRecords";
+import { ownerVisibleJobs } from "@/lib/ownerJobs";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,8 @@ export async function GET() {
     const records = await prisma.job.findMany({
       orderBy: [{ status: "asc" }, { created_at: "asc" }],
     });
-    return Response.json({ jobs: records.map(jobSeedFromRecord) });
+    // Owner surface: never expose internal probe/smoke verification rows.
+    return Response.json({ jobs: ownerVisibleJobs(records.map(jobSeedFromRecord)) });
   } catch (error) {
     // Fall back to seed data so the page never hard-crashes, but LOG the failure:
     // a silent catch here previously masked a native-module ABI mismatch that made

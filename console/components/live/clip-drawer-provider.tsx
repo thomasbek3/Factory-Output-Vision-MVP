@@ -183,8 +183,7 @@ export function ClipDrawerProvider({ children }: { children: ReactNode }) {
                 </div>
                 <SheetTitle>{station?.name ?? activeEvent.station_id}</SheetTitle>
                 <p className="text-[13px] leading-5 text-[var(--text-mut)]">
-                  Count evidence loops around {formatTime(timestamp)}. This v0 uses the matching
-                  demo MP4 bucket and seeks to the event offset ±5s.
+                  Moment around {formatTime(timestamp)} · {station?.name ?? activeEvent.station_id}
                 </p>
               </SheetHeader>
 

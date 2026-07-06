@@ -122,7 +122,7 @@ export function evaluateDemoAlerts(now: Date, snapshots: JobWithPace[]): DemoAle
       stationId: "pallet-a",
       stationName: "Pallet A",
       ts: new Date(`${day}T13:12:00-07:00`),
-      message: "Pallet A had no verified count for 25 work minutes during the demo gap.",
+      message: "Pallet A had no verified count for 25 work minutes.",
       clipId: nearestClipId("pallet-a", new Date(`${day}T13:12:00-07:00`)),
     },
   );
