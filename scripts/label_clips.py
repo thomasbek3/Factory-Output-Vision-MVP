@@ -124,6 +124,8 @@ def run_codex_vote(*, sheet_path: Path, clip_id: str, runner: Runner = subproces
         text=True,
         capture_output=True,
         check=False,
+        stdin=subprocess.DEVNULL,
+        timeout=600,
     )
     if getattr(result, "returncode", 0) != 0:
         raise RuntimeError(f"codex exec failed: {getattr(result, 'stderr', '')}")
