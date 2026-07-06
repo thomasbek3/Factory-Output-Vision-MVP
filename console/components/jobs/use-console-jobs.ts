@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { jobs as seedJobs, type JobSeed } from "@/lib/demoData";
+import { pinDemoNarrative } from "@/lib/pinnedJobs";
 import type { NewJobInput } from "@/lib/jobForm";
 
 type JobsResponse = {
@@ -25,7 +26,7 @@ export function useConsoleJobs() {
       const response = await fetch("/api/jobs", { cache: "no-store" });
       if (!response.ok) throw new Error(`Jobs API returned ${response.status}`);
       const payload = (await response.json()) as JobsResponse;
-      setJobs(payload.jobs);
+      setJobs(pinDemoNarrative(payload.jobs));
       setError(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load jobs.");

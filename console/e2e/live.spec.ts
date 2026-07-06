@@ -22,6 +22,30 @@ test.describe("/ (Live)", () => {
     assertNoConsoleErrors(errors);
   });
 
+  test("money strip holds the pinned +$532 · 3-jobs narrative on load", async ({ page }) => {
+    // Regression guard: the money strip must ride the demo TimeProvider clock and
+    // the pinned seed narrative, NOT a drifted dev.db (jobs left "finished" would
+    // collapse it to "+$0 · All 0 jobs on pace" while the scoreboards still tell
+    // the demo story). This narrative was pinned in vitest selectors but never
+    // against the live page — that gap is what let the regression ship.
+    const errors = collectConsoleErrors(page);
+    await page.goto("/");
+
+    // The projected-profit hero renders the exact pinned dollar figure.
+    await expect(page.getByText("+$532", { exact: true })).toBeVisible();
+    // And the Alvarez at-risk sentence (3 jobs running, one losing money).
+    await expect(
+      page.getByText(/Alvarez Gates is losing money/i),
+    ).toBeVisible();
+
+    // The /jobs surface renders the "3 JOBS RUNNING" count off the same source.
+    await page.goto("/jobs");
+    await expect(page.getByText(/3 jobs running/i)).toBeVisible();
+    await expect(page.getByText("+$532", { exact: true })).toBeVisible();
+
+    assertNoConsoleErrors(errors);
+  });
+
   test("count number opens the clip drawer with a playing video", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/");

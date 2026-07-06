@@ -9,7 +9,10 @@ const compat = new FlatCompat({
 
 const eslintConfig = defineConfig([
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  // live-media/ holds HLS transport-stream segments (*.ts) written by the RTSP
+  // relay — video, not TypeScript. It's gitignored build output; keep eslint out
+  // of it so `npm run lint` doesn't choke parsing binary .ts segments.
+  globalIgnores([".next/**", "out/**", "build/**", "live-media/**", "next-env.d.ts"]),
 ]);
 
 export default eslintConfig;

@@ -164,6 +164,22 @@ function LiveVideo({
     // Safari plays HLS natively — no hls.js needed.
     const canNative = video.canPlayType("application/vnd.apple.mpegurl") !== "";
 
+    // A live tile must never sit paused at t=0. Autoplay/play() can be rejected
+    // (tab backgrounded at attach time, stream arriving mid-session after the
+    // replay→live upgrade, browser autoplay gate). We're always muted, so a
+    // retry is always allowed — re-issue play() whenever the media signals it
+    // can play and whenever the tab becomes visible again.
+    const retryPlay = () => {
+      const el = videoRef.current;
+      if (!el || disposed || el.paused === false) return;
+      void el.play().catch(() => {});
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") retryPlay();
+    };
+    video.addEventListener("canplay", retryPlay);
+    document.addEventListener("visibilitychange", onVisibility);
+
     async function attach() {
       const video = videoRef.current;
       if (!video || disposed) return;
@@ -218,6 +234,8 @@ function LiveVideo({
     return () => {
       disposed = true;
       window.clearTimeout(retryTimer);
+      video.removeEventListener("canplay", retryPlay);
+      document.removeEventListener("visibilitychange", onVisibility);
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
