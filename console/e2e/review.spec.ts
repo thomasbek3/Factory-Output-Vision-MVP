@@ -45,6 +45,25 @@ test.describe("/review", () => {
     assertNoConsoleErrors(errors);
   });
 
+  // G7 — reviewer clarity.
+  test("shows the instruction banner, humanized lag, hotkeys and walk-away note", async ({ page }) => {
+    await page.goto("/review");
+    const root = page.locator("[data-review-route='ready']");
+    await expect(root).toBeVisible({ timeout: 15000 });
+    const chunkAttr = await root.getAttribute("data-review-chunk");
+    test.skip(!chunkAttr, "no chunk available to review");
+
+    await expect(
+      page.getByText("Tap +1 COUNT every time a finished piece lands on the pallet."),
+    ).toBeVisible();
+    await expect(page.getByText(/goes back to the queue after 5 minutes/)).toBeVisible();
+    // Humanized lag ("N m" / "N h N m"), not "N min".
+    await expect(page.getByText(/counting \d+ (h|m).* behind live · \d+ chunks waiting/)).toBeVisible();
+    // Hotkey hints under the count button.
+    await expect(page.getByText("count", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("back 10s")).toBeVisible();
+  });
+
   test("lease prevents a second session from getting the same chunk", async ({ request }) => {
     const a = await request
       .get("/api/review/chunks/next?reviewerId=lease-a")

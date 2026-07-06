@@ -6,6 +6,7 @@ import { AreaChart } from "@tremor/react";
 import { ArrowLeft, Download, Factory, RadioTower, ShieldCheck, TimerReset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
+import { demoSourceDay } from "@/lib/demoEvents";
 
 type OpsSnapshot = {
   factories: number;
@@ -35,10 +36,12 @@ const agreementSeries = [
 function StatCard({
   label,
   value,
+  subtitle,
   icon: Icon,
 }: {
   label: string;
   value: string;
+  subtitle?: string;
   icon: typeof Factory;
 }) {
   return (
@@ -52,6 +55,9 @@ function StatCard({
       <div className="mt-4 text-[32px] font-bold leading-none tracking-[-0.01em] text-[var(--text)]">
         {value}
       </div>
+      {subtitle ? (
+        <div className="mt-2 text-[12px] leading-4 text-[var(--text-dim)]">{subtitle}</div>
+      ) : null}
     </Panel>
   );
 }
@@ -88,12 +94,17 @@ export function OpsConsole() {
 
   const cards = useMemo(() => {
     if (!snapshot) return [];
+    const demoDayLabel = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Los_Angeles",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(`${demoSourceDay}T12:00:00-07:00`));
     return [
-      { label: "Factories", value: String(snapshot.factories), icon: Factory },
-      { label: "Cameras up", value: `${snapshot.camerasUp}/${snapshot.camerasTotal}`, icon: RadioTower },
-      { label: "Events today", value: String(snapshot.eventsToday), icon: ShieldCheck },
-      { label: "Verification lag", value: `${snapshot.verificationLagMinutes}m`, icon: TimerReset },
-      { label: "Open queue", value: String(snapshot.openQueueDepth), icon: Download },
+      { label: "Factories", value: String(snapshot.factories), subtitle: "sites streaming to this console", icon: Factory },
+      { label: "Cameras up", value: `${snapshot.camerasUp}/${snapshot.camerasTotal}`, subtitle: "feeds online through the tunnel", icon: RadioTower },
+      { label: "Events today", value: String(snapshot.eventsToday), subtitle: `verified placements on ${demoDayLabel}`, icon: ShieldCheck },
+      { label: "Verification lag", value: `${snapshot.verificationLagMinutes}m`, subtitle: "how far behind live the human counts are", icon: TimerReset },
+      { label: "Open queue", value: String(snapshot.openQueueDepth), subtitle: "chunks still waiting for a reviewer", icon: Download },
     ];
   }, [snapshot]);
 
@@ -160,6 +171,9 @@ export function OpsConsole() {
           </div>
           <div className="mt-4 rounded-xl border border-[var(--border)] bg-white/[.02] p-4">
             <div className="text-[14px] font-semibold">Last held-out exam</div>
+            <div className="mt-1 text-[12px] text-[var(--text-dim)]">
+              held-out recall — the honest score on unseen footage
+            </div>
             <div className="mt-2 text-[32px] font-bold text-[var(--bad)]">3/7</div>
             <div className="mt-1 text-[13px] text-[var(--text-mut)]">
               0 false positives · dated 2026-06-18

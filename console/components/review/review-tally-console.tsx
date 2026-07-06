@@ -28,6 +28,16 @@ function formatRange(chunk: ReviewChunk) {
   return `${start}-${end}`;
 }
 
+/** "1 h 2 m" style lag, so the reviewer reads it like a person, not "62 min". */
+function humanizeLag(minutes: number) {
+  const total = Math.max(0, Math.round(minutes));
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours && mins) return `${hours} h ${mins} m`;
+  if (hours) return `${hours} h`;
+  return `${mins} m`;
+}
+
 function formatClock(iso: string) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Los_Angeles",
@@ -159,8 +169,8 @@ export function ReviewTallyConsole() {
           <div className="text-[13px] font-semibold text-[var(--text)]">
             {chunk.stationName} · {formatRange(chunk)}
           </div>
-          <div className="mt-1 text-[12px] text-[var(--text-dim)]">
-            counting {lagMinutes} min behind live · queue {payload.queueDepth}
+          <div className="mt-1 text-[12px] text-[var(--text-dim)]" title="If you leave, this chunk returns to the queue after 5 minutes.">
+            counting {humanizeLag(lagMinutes)} behind live · {payload.queueDepth} chunks waiting
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[12px]">
@@ -175,6 +185,16 @@ export function ReviewTallyConsole() {
           </span>
         </div>
       </header>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[rgba(232,116,47,.35)] bg-[rgba(232,116,47,.10)] px-4 py-3 text-[13px] text-[var(--text)]">
+        <Zap className="h-4 w-4 shrink-0 fill-[var(--accent)] text-[var(--accent)]" strokeWidth={1.75} />
+        <span className="font-semibold">
+          Tap +1 COUNT every time a finished piece lands on the pallet.
+        </span>
+        <span className="text-[var(--text-dim)]">
+          If you step away, this chunk goes back to the queue after 5 minutes.
+        </span>
+      </div>
 
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div>
@@ -278,6 +298,11 @@ export function ReviewTallyConsole() {
                   <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
                   Undo
                 </Button>
+                <div className="flex items-center justify-center gap-3 text-[12px] text-[var(--text-dim)]">
+                  <span><kbd className="rounded border border-[var(--border)] px-1.5 py-0.5">Space</kbd> count</span>
+                  <span><kbd className="rounded border border-[var(--border)] px-1.5 py-0.5">Z</kbd> undo</span>
+                  <span><kbd className="rounded border border-[var(--border)] px-1.5 py-0.5">←</kbd> back 10s</span>
+                </div>
               </div>
             </>
           )}
