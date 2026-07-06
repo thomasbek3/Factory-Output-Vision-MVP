@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AreaChart } from "@tremor/react";
-import { Download, Factory, RadioTower, ShieldCheck, TimerReset } from "lucide-react";
+import { ArrowLeft, Download, Factory, RadioTower, ShieldCheck, TimerReset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 
@@ -106,6 +107,13 @@ export function OpsConsole() {
     <main className="min-h-screen bg-[var(--bg)] p-6 text-[var(--text)]" data-ops-route="ready">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
+          <Link
+            href="/"
+            className="mb-2 inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--text-dim)] hover:text-[var(--text)]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
+            Console
+          </Link>
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
             OPS
           </div>

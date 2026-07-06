@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { ClipDrawerProvider } from "@/components/live/clip-drawer-provider";
 import { CameraCard, MoneyStrip } from "@/components/live/live-dashboard";
 import { TimeProvider, useTime } from "@/components/providers/time-provider";
@@ -75,6 +77,14 @@ function TvSurface() {
           <MoneyStrip snapshots={snapshots} now={current} scale="tv" />
         </div>
       </section>
+
+      <Link
+        href="/"
+        className="fixed bottom-4 left-4 z-10 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-dim)] opacity-30 transition-opacity hover:opacity-100"
+      >
+        <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+        Console
+      </Link>
     </main>
   );
 }
