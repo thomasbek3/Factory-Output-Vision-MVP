@@ -5,9 +5,8 @@ import { ClipDrawerProvider } from "@/components/live/clip-drawer-provider";
 import { CameraCard, MoneyStrip } from "@/components/live/live-dashboard";
 import { TimeProvider, useTime } from "@/components/providers/time-provider";
 import { useConsoleJobs } from "@/components/jobs/use-console-jobs";
-import { jobForStation, jobs as seedJobs, laborConfig, stations } from "@/lib/demoData";
-import { evaluateJobPace } from "@/lib/paceMath";
 import { selectRunningJobSnapshots } from "@/lib/jobSelectors";
+import { selectStationCountSnapshots } from "@/lib/stationSelectors";
 import { cn } from "@/lib/utils";
 
 function TvSurface() {
@@ -21,6 +20,7 @@ function TvSurface() {
   const [reconnectKey, setReconnectKey] = useState(0);
   const current = now();
   const snapshots = selectRunningJobSnapshots(current, jobs);
+  const stationSnapshots = selectStationCountSnapshots(current, jobs);
 
   const pinnedView = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -54,17 +54,14 @@ function TvSurface() {
 
       <section className={cn(view === "wall" ? "block" : "hidden")}>
         <div className="grid min-h-[calc(100vh-142px)] gap-5 xl:grid-cols-2">
-          {stations.map((station) => {
-            const job = jobForStation(station.id);
-            const snapshot =
-              snapshots.find((candidate) => candidate.job.id === job?.id)?.snapshot ??
-              evaluateJobPace(seedJobs[0], 0, current, laborConfig);
+          {stationSnapshots.map(({ station, events, pace }) => {
             return (
               <CameraCard
                 key={`${station.id}-${reconnectKey}`}
                 station={station}
                 now={current}
-                snapshot={snapshot}
+                snapshot={pace}
+                events={events}
                 scale="tv"
               />
             );

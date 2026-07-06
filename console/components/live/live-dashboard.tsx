@@ -10,19 +10,13 @@ import { useClipDrawer } from "@/components/live/clip-drawer-provider";
 import { useConsoleJobs } from "@/components/jobs/use-console-jobs";
 import {
   countEventsThrough,
-  jobForStation,
-  jobs,
-  laborConfig,
   lastFridayBaselineUnits,
   mediaUrlForStation,
   stationEventsThrough,
   stations,
 } from "@/lib/demoData";
 import { evaluateDemoAlerts, type DemoAlert } from "@/lib/alerts";
-import {
-  evaluateJobPace,
-  type PaceSnapshot,
-} from "@/lib/paceMath";
+import { type PaceSnapshot } from "@/lib/paceMath";
 import {
   cumulativeMarginSeries,
   eventsByHour,
@@ -33,6 +27,7 @@ import {
   selectRunningJobSnapshots,
   type JobWithPace,
 } from "@/lib/jobSelectors";
+import { selectStationCountSnapshots, type StationCountSnapshot } from "@/lib/stationSelectors";
 import { cn } from "@/lib/utils";
 
 export function formatMoney(value: number) {
@@ -159,15 +154,17 @@ export function CameraCard({
   station,
   now,
   snapshot,
+  events: selectedEvents,
   scale = "normal",
 }: {
   station: (typeof stations)[number];
   now: Date;
   snapshot: PaceSnapshot;
+  events?: StationCountSnapshot["events"];
   scale?: "normal" | "tv";
 }) {
   const { openClip } = useClipDrawer();
-  const events = stationEventsThrough(station.id, now);
+  const events = selectedEvents ?? stationEventsThrough(station.id, now);
   const latest = events.at(-1);
   const chartData = eventsByHour(events);
   const isBehind = snapshot.pace_delta < 0;
@@ -338,6 +335,7 @@ export function LiveDashboard() {
   const { jobs: consoleJobs } = useConsoleJobs();
   const current = now();
   const snapshots = selectRunningJobSnapshots(current, consoleJobs);
+  const stationSnapshots = selectStationCountSnapshots(current, consoleJobs);
   const alerts = evaluateDemoAlerts(current, snapshots).slice(0, 3);
 
   return (
@@ -364,17 +362,14 @@ export function LiveDashboard() {
       <MoneyStrip snapshots={snapshots} now={current} />
 
       <section className="grid gap-4 lg:grid-cols-2">
-        {stations.map((station) => {
-          const job = jobForStation(station.id);
-          const snapshot =
-            snapshots.find((candidate) => candidate.job.id === job?.id)?.snapshot ??
-            evaluateJobPace(jobs[0], 0, current, laborConfig);
+        {stationSnapshots.map(({ station, events, pace }) => {
           return (
             <CameraCard
               key={station.id}
               station={station}
               now={current}
-              snapshot={snapshot}
+              snapshot={pace}
+              events={events}
             />
           );
         })}

@@ -13,6 +13,7 @@ export type AlertSeverity = "crit" | "warn";
 
 export type DemoAlert = {
   id: string;
+  source: "rules" | "demo";
   type: AlertType;
   severity: AlertSeverity;
   stationId: string;
@@ -54,6 +55,7 @@ export function evaluateDemoAlerts(now: Date, snapshots: JobWithPace[]): DemoAle
     ) {
       alerts.push({
         id: `${station.id}-behind`,
+        source: "rules",
         type: "behind_pace",
         severity: jobSnapshot.verdict === "LOSING MONEY" ? "crit" : "warn",
         stationId: station.id,
@@ -68,6 +70,7 @@ export function evaluateDemoAlerts(now: Date, snapshots: JobWithPace[]): DemoAle
     if (quietMinutes >= 25) {
       alerts.push({
         id: `${station.id}-quiet`,
+        source: "rules",
         type: "station_quiet",
         severity: "warn",
         stationId: station.id,
@@ -81,6 +84,7 @@ export function evaluateDemoAlerts(now: Date, snapshots: JobWithPace[]): DemoAle
 
   alerts.push({
     id: "gate-line-camera-offline",
+    source: "demo",
     type: "camera_offline",
     severity: "warn",
     stationId: "gate-line",
@@ -97,9 +101,11 @@ export function evaluateDemoAlerts(now: Date, snapshots: JobWithPace[]): DemoAle
     day: "2-digit",
   }).format(now);
 
+  // TODO: live mode should derive alerts purely from persisted rule evaluations, not synthesized demo rows.
   alerts.push(
     {
       id: "alvarez-behind-demo",
+      source: "demo",
       type: "behind_pace",
       severity: "crit",
       stationId: "gate-line",
@@ -110,6 +116,7 @@ export function evaluateDemoAlerts(now: Date, snapshots: JobWithPace[]): DemoAle
     },
     {
       id: "pallet-quiet-demo",
+      source: "demo",
       type: "station_quiet",
       severity: "warn",
       stationId: "pallet-a",

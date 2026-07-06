@@ -3,6 +3,7 @@ import {
   evaluateJobPace,
   jobVerdict,
   moneyStripTotal,
+  pacePillLabel,
   workMinutesBetween,
 } from "@/lib/paceMath";
 import { demoNowIso, jobs } from "@/lib/demoData";
@@ -63,6 +64,12 @@ describe("paceMath", () => {
     expect(jobVerdict(0, 1000)).toBe("GETTING TIGHT");
     expect(jobVerdict(-0.01, 1000)).toBe("LOSING MONEY");
     expect(jobVerdict(-1, 1000)).toBe("LOSING MONEY");
+  });
+
+  it("labels a rounded zero pace delta as on pace, not behind", () => {
+    expect(pacePillLabel(-0.2)).toBe("ON PACE");
+    expect(pacePillLabel(18)).toBe("18 AHEAD");
+    expect(pacePillLabel(-21)).toBe("21 BEHIND");
   });
 
   it("excludes weekend wall-clock time from worked hours", () => {

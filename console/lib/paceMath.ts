@@ -167,6 +167,7 @@ export function moneyStripTotal(snapshots: PaceSnapshot[]) {
 
 export function pacePillLabel(delta: number) {
   const rounded = Math.round(Math.abs(delta));
+  if (rounded === 0) return "ON PACE";
   return `${rounded} ${delta >= 0 ? "AHEAD" : "BEHIND"}`;
 }
 
