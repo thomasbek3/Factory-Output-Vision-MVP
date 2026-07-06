@@ -31,7 +31,11 @@ export async function GET() {
       orderBy: [{ status: "asc" }, { created_at: "asc" }],
     });
     return Response.json({ jobs: records.map(jobSeedFromRecord) });
-  } catch {
+  } catch (error) {
+    // Fall back to seed data so the page never hard-crashes, but LOG the failure:
+    // a silent catch here previously masked a native-module ABI mismatch that made
+    // every DB write 500 while reads looked healthy.
+    console.error("GET /api/jobs failed, serving seed jobs:", error);
     return Response.json({ jobs: seedJobs });
   }
 }
