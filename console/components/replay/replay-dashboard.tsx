@@ -411,7 +411,7 @@ export function ReplayDashboard({ initialStation, initialTime, initialDay }: Rep
 
         <SavedClipsShelf clips={savedClips} onOpen={openClip} />
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,.7fr)]">
+        <div className="grid gap-5 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(320px,.7fr)]">
           <ChaptersGrid
             chapters={chapters}
             activeIndex={activeChapterIndex}

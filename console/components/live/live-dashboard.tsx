@@ -300,7 +300,7 @@ export function CameraCard({
         poster={mediaPosterUrlForStation(station.id, now)}
       />
 
-      <div className={cn("mt-4 grid grid-cols-[minmax(116px,.7fr)_minmax(140px,1fr)_auto] items-center gap-4", scale === "tv" && "grid-cols-[minmax(220px,.7fr)_minmax(220px,1fr)_auto]")}>
+      <div className={cn("mt-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-[minmax(116px,.7fr)_minmax(140px,1fr)_auto]", scale === "tv" && "sm:grid-cols-[minmax(220px,.7fr)_minmax(220px,1fr)_auto]")}>
         <div>
           <button
             type="button"
@@ -347,10 +347,10 @@ function AlertsRail({ alerts }: { alerts: DemoAlert[] }) {
           View all alerts →
         </Link>
       </div>
-      <div className="divide-y divide-[var(--border-soft)]">
+      <div className="divide-y divide-[var(--border-soft)] overflow-x-auto">
         {alerts.length ? (
           alerts.map((alert) => (
-            <div key={alert.id} className="grid grid-cols-[24px_72px_minmax(104px,.5fr)_1fr_auto_28px] items-center gap-3 px-6 py-3.5 text-[13px] hover:bg-white/[.02]">
+            <div key={alert.id} className="grid min-w-[560px] grid-cols-[24px_72px_minmax(104px,.5fr)_1fr_auto_28px] items-center gap-3 px-6 py-3.5 text-[13px] hover:bg-white/[.02]">
               <AlertTriangle
                 className={cn("h-4 w-4", alert.severity === "crit" ? "text-[var(--bad)]" : "text-[var(--warn)]")}
                 strokeWidth={1.75}
