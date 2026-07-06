@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  MoreHorizontal,
   Play,
 } from "lucide-react";
 import { useClipDrawer } from "@/components/live/clip-drawer-provider";
@@ -582,25 +581,21 @@ function ChaptersGrid({
                     {count > 0 ? `${count} PLACED` : "0 QUIET"}
                   </div>
                 </div>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  title="View events"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-dim)] hover:bg-white/[.06] hover:text-[var(--text)]"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (firstEvent) onOpenClip(firstEvent.clip_id);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
+                {firstEvent ? (
+                  <button
+                    type="button"
+                    title="Watch this chapter"
+                    aria-label={`Watch ${formatClock(dateForMinutes(chapter.start))} chapter`}
+                    className="flex h-8 items-center gap-1 rounded-md px-2 text-[12px] font-semibold text-[var(--text-dim)] hover:bg-white/[.06] hover:text-[var(--text)]"
+                    onClick={(event) => {
                       event.stopPropagation();
-                      if (firstEvent) onOpenClip(firstEvent.clip_id);
-                    }
-                  }}
-                >
-                  <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
-                </span>
+                      onOpenClip(firstEvent.clip_id);
+                    }}
+                  >
+                    <Play className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    Watch
+                  </button>
+                ) : null}
               </div>
             </div>
           );

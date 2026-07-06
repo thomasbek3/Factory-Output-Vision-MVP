@@ -8,6 +8,7 @@ import { Panel } from "@/components/ui/panel";
 import { Button } from "@/components/ui/button";
 import { useTime } from "@/components/providers/time-provider";
 import { useClipDrawer } from "@/components/live/clip-drawer-provider";
+import { CameraTileMenu } from "@/components/live/camera-tile-menu";
 import { useConsoleJobs } from "@/components/jobs/use-console-jobs";
 import {
   countEventsThrough,
@@ -252,6 +253,7 @@ export function CameraCard({
   events: selectedEvents,
   unitsToday,
   scale = "normal",
+  onHide,
 }: {
   station: (typeof stations)[number];
   now: Date;
@@ -259,6 +261,7 @@ export function CameraCard({
   events?: StationCountSnapshot["events"];
   unitsToday?: number;
   scale?: "normal" | "tv";
+  onHide?: () => void;
 }) {
   const { openClip } = useClipDrawer();
   const events = selectedEvents ?? stationEventsThrough(station.id, now);
@@ -280,13 +283,14 @@ export function CameraCard({
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--bad)] shadow-[0_0_10px_rgba(229,72,77,.7)]" />
             LIVE
           </span>
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-dim)] hover:bg-white/[.04] hover:text-[var(--text)]"
-            aria-label={`${station.name} menu`}
-          >
-            <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
-          </button>
+          {scale !== "tv" && onHide ? (
+            <CameraTileMenu
+              stationId={station.id}
+              stationName={station.name}
+              latestClipId={latest?.clip_id}
+              onHide={onHide}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -417,10 +421,12 @@ function TimeControls() {
 export function LiveDashboard() {
   const { now } = useTime();
   const { jobs: consoleJobs } = useConsoleJobs();
+  const [hiddenStations, setHiddenStations] = useState<Set<string>>(new Set());
   const current = now();
   const snapshots = selectRunningJobSnapshots(current, consoleJobs);
   const stationSnapshots = selectStationCountSnapshots(current, consoleJobs);
   const alerts = evaluateDemoAlerts(current, snapshots).slice(0, 3);
+  const visibleSnapshots = stationSnapshots.filter(({ station }) => !hiddenStations.has(station.id));
 
   return (
     <div className="space-y-4">
@@ -430,8 +436,18 @@ export function LiveDashboard() {
 
       <MoneyStrip snapshots={snapshots} now={current} />
 
+      {hiddenStations.size > 0 ? (
+        <button
+          type="button"
+          onClick={() => setHiddenStations(new Set())}
+          className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px] font-semibold text-[var(--text-mut)] hover:text-[var(--text)]"
+        >
+          Show {hiddenStations.size} hidden tile{hiddenStations.size > 1 ? "s" : ""}
+        </button>
+      ) : null}
+
       <section className="grid gap-4 lg:grid-cols-2">
-        {stationSnapshots.map(({ station, events, pace, unitsToday }) => {
+        {visibleSnapshots.map(({ station, events, pace, unitsToday }) => {
           return (
             <CameraCard
               key={station.id}
@@ -440,6 +456,9 @@ export function LiveDashboard() {
               snapshot={pace}
               events={events}
               unitsToday={unitsToday}
+              onHide={() =>
+                setHiddenStations((current) => new Set(current).add(station.id))
+              }
             />
           );
         })}

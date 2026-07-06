@@ -50,6 +50,20 @@ export function useConsoleJobs() {
     return payload.job as JobSeed;
   }, []);
 
+  const editJob = useCallback(async (jobId: string, input: NewJobInput) => {
+    const response = await fetch(`/api/jobs/${jobId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "edit", ...input }),
+    });
+    const payload = (await response.json()) as Partial<JobResponse> & { errors?: unknown };
+    if (!response.ok || !payload.job) {
+      throw payload;
+    }
+    setJobs((current) => replaceJob(current, payload.job as JobSeed));
+    return payload.job as JobSeed;
+  }, []);
+
   const updateJob = useCallback(async (jobId: string, action: "pause" | "resume" | "finish") => {
     const response = await fetch(`/api/jobs/${jobId}`, {
       method: "PATCH",
@@ -67,6 +81,7 @@ export function useConsoleJobs() {
     error,
     refresh,
     createJob,
+    editJob,
     pauseJob: (jobId: string) => updateJob(jobId, "pause"),
     resumeJob: (jobId: string) => updateJob(jobId, "resume"),
     finishJob: (jobId: string) => updateJob(jobId, "finish"),

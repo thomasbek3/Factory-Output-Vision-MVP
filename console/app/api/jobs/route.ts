@@ -1,30 +1,11 @@
 import { NextRequest } from "next/server";
 import { jobs as seedJobs } from "@/lib/demoData";
-import { validateNewJobInput, type NewJobInput } from "@/lib/jobForm";
+import { normalizeJobInput, validateNewJobInput } from "@/lib/jobForm";
 import { jobSeedFromRecord } from "@/lib/jobRecords";
 import { ownerVisibleJobs } from "@/lib/ownerJobs";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-
-function parseNumber(value: unknown) {
-  if (typeof value === "number") return value;
-  if (typeof value === "string") return Number(value);
-  return Number.NaN;
-}
-
-function normalizeInput(body: Record<string, unknown>): NewJobInput {
-  return {
-    client: String(body.client ?? ""),
-    title: String(body.title ?? ""),
-    units_required: parseNumber(body.units_required),
-    quote_usd: parseNumber(body.quote_usd),
-    cogs_usd: parseNumber(body.cogs_usd),
-    labor_budget_usd: parseNumber(body.labor_budget_usd),
-    deadline: String(body.deadline ?? ""),
-    station_ids: Array.isArray(body.station_ids) ? body.station_ids.map(String) : [],
-  };
-}
 
 export async function GET() {
   try {
@@ -44,7 +25,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as Record<string, unknown>;
-  const input = normalizeInput(body);
+  const input = normalizeJobInput(body);
   const validation = validateNewJobInput(input);
 
   if (!validation.ok) {

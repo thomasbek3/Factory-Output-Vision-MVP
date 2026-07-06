@@ -93,12 +93,12 @@ export function AlertsDashboard() {
   }, [filteredAlerts]);
 
   function resolveAlert(alertId: string) {
-    setResolvedIds((currentIds) => {
-      const next = new Set(currentIds);
-      next.add(alertId);
-      writeResolvedIds(next);
-      return next;
-    });
+    // Persist + broadcast OUTSIDE the state updater: dispatching the event from
+    // inside the updater runs during render and makes NavRail setState mid-render.
+    const next = new Set(resolvedIds);
+    next.add(alertId);
+    setResolvedIds(next);
+    writeResolvedIds(next);
   }
 
   return (

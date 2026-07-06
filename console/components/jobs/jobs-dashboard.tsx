@@ -1,8 +1,10 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
-import { CheckCircle2, CircleDollarSign, MoreHorizontal, Pause, Plus, RotateCcw } from "lucide-react";
+import { CheckCircle2, CircleDollarSign, MoreHorizontal, Pause, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { useToast } from "@/components/providers/toast-provider";
 import { AreaSpark } from "@/components/charts/AreaSpark";
 import { useTime } from "@/components/providers/time-provider";
 import { Button } from "@/components/ui/button";
@@ -96,12 +98,14 @@ function JobCard({
   onPause,
   onResume,
   onFinish,
+  onEdit,
 }: {
   item: JobWithPace;
   now: Date;
   onPause: (jobId: string) => void;
   onResume: (jobId: string) => void;
   onFinish: (jobId: string) => void;
+  onEdit: (job: JobSeed) => void;
 }) {
   const { job, snapshot } = item;
   const percent = pacePercent(snapshot, job.units_required);
@@ -185,6 +189,10 @@ function JobCard({
             <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
           </summary>
           <div className="absolute bottom-10 right-0 z-20 w-48 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)] p-1 shadow-[0_18px_42px_rgba(0,0,0,.55)]">
+            <button type="button" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--text)] hover:bg-white/[.04]" onClick={() => onEdit(job)}>
+              <Pencil className="h-4 w-4" strokeWidth={1.75} />
+              Edit
+            </button>
             {job.status === "paused" ? (
               <button type="button" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--text)] hover:bg-white/[.04]" onClick={() => onResume(job.id)}>
                 <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
@@ -210,11 +218,56 @@ function JobCard({
   );
 }
 
-function NewJobSheet({ onCreate }: { onCreate: (input: NewJobInput) => Promise<void> }) {
-  const [open, setOpen] = useState(false);
+const jobNumberFields = [
+  ["client", "Client", "Northline Metal"],
+  ["title", "Title", "300 brackets"],
+  ["units_required", "Units required", "300"],
+  ["quote_usd", "Quote $", "2400"],
+  ["cogs_usd", "COGS $", "900"],
+  ["labor_budget_usd", "Labor budget $", "600"],
+] as const;
+
+function defaultValueFor(name: string, job?: JobSeed): string {
+  if (!job) return "";
+  switch (name) {
+    case "client":
+      return job.client;
+    case "title":
+      return job.title;
+    case "units_required":
+      return String(job.units_required);
+    case "quote_usd":
+      return String(job.quote_usd);
+    case "cogs_usd":
+      return String(job.cogs_usd);
+    case "labor_budget_usd":
+      return String(job.labor_budget_usd);
+    default:
+      return "";
+  }
+}
+
+/** New-job and edit-job share one form. `job` present => edit (PATCH), else create (POST). */
+function JobFormSheet({
+  job,
+  open,
+  onOpenChange,
+  onSubmit,
+  trigger,
+}: {
+  job?: JobSeed;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (input: NewJobInput) => Promise<void>;
+  trigger?: React.ReactNode;
+}) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [selectedStations, setSelectedStations] = useState<string[]>([stations[0]?.id ?? ""]);
+  const [selectedStations, setSelectedStations] = useState<string[]>(
+    job ? job.station_ids : [stations[0]?.id ?? ""],
+  );
+
+  const deadlineDefault = job ? job.deadline.slice(0, 10) : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -236,45 +289,34 @@ function NewJobSheet({ onCreate }: { onCreate: (input: NewJobInput) => Promise<v
     }
     setSubmitting(true);
     try {
-      await onCreate(input);
-      setOpen(false);
+      await onSubmit(input);
+      onOpenChange(false);
       setErrors({});
     } catch (caught) {
       const next = caught as { errors?: Record<string, string> };
-      setErrors(next.errors ?? { client: "Could not create job." });
+      setErrors(next.errors ?? { client: job ? "Could not save changes." : "Could not create job." });
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button type="button" variant="primary" className="h-10">
-          <Plus className="h-4 w-4" strokeWidth={1.75} />
-          New Job
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
       <SheetContent aria-describedby={undefined}>
         <SheetHeader>
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
-            Add work
+            {job ? "Update work" : "Add work"}
           </div>
-          <SheetTitle>New Job</SheetTitle>
+          <SheetTitle>{job ? `Edit ${job.client}` : "New Job"}</SheetTitle>
         </SheetHeader>
         <form onSubmit={submit} className="flex-1 space-y-4 overflow-y-auto px-6 pb-6">
-          {[
-            ["client", "Client", "Northline Metal"],
-            ["title", "Title", "300 brackets"],
-            ["units_required", "Units required", "300"],
-            ["quote_usd", "Quote $", "2400"],
-            ["cogs_usd", "COGS $", "900"],
-            ["labor_budget_usd", "Labor budget $", "600"],
-          ].map(([name, label, placeholder]) => (
+          {jobNumberFields.map(([name, label, placeholder]) => (
             <label key={name} className="block">
               <span className="text-[12px] font-semibold text-[var(--text-mut)]">{label}</span>
               <input
                 name={name}
+                defaultValue={defaultValueFor(name, job)}
                 type={name.includes("usd") || name === "units_required" ? "number" : "text"}
                 placeholder={placeholder}
                 className="mt-2 h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-[14px] text-[var(--text)]"
@@ -293,6 +335,7 @@ function NewJobSheet({ onCreate }: { onCreate: (input: NewJobInput) => Promise<v
             <input
               name="deadline"
               type="date"
+              defaultValue={deadlineDefault}
               className="mt-2 h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-[14px] text-[var(--text)]"
             />
             {errors.deadline ? <span className="mt-1 block text-[12px] text-[var(--bad)]">{errors.deadline}</span> : null}
@@ -329,7 +372,7 @@ function NewJobSheet({ onCreate }: { onCreate: (input: NewJobInput) => Promise<v
 
           <Button type="submit" variant="primary" className="h-10 w-full" disabled={submitting}>
             <CircleDollarSign className="h-4 w-4" strokeWidth={1.75} />
-            {submitting ? "Saving" : "Save job"}
+            {submitting ? "Saving" : job ? "Save changes" : "Save job"}
           </Button>
         </form>
       </SheetContent>
@@ -337,10 +380,38 @@ function NewJobSheet({ onCreate }: { onCreate: (input: NewJobInput) => Promise<v
   );
 }
 
+function NewJobSheet({ onCreate }: { onCreate: (input: NewJobInput) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <JobFormSheet
+      open={open}
+      onOpenChange={setOpen}
+      onSubmit={onCreate}
+      trigger={
+        <Button type="button" variant="primary" className="h-10">
+          <Plus className="h-4 w-4" strokeWidth={1.75} />
+          New Job
+        </Button>
+      }
+    />
+  );
+}
+
+function gradeForJob(job: JobSeed): string {
+  // Simple honest grade off planned-vs-quote margin ratio; A when comfortably profitable.
+  const margin = job.quote_usd - job.cogs_usd - job.labor_budget_usd;
+  const ratio = job.quote_usd > 0 ? margin / job.quote_usd : 0;
+  if (ratio >= 0.35) return "A";
+  if (ratio >= 0.2) return "B";
+  if (ratio >= 0.05) return "C";
+  return "D";
+}
+
 export function JobsDashboard() {
   const { now } = useTime();
   const current = now();
-  const { jobs, error, createJob, pauseJob, resumeJob, finishJob } = useConsoleJobs();
+  const { showToast } = useToast();
+  const { jobs, error, createJob, editJob, pauseJob, resumeJob, finishJob } = useConsoleJobs();
   const visibleJobs = jobs.filter((job) => job.status !== "finished");
   const runningSnapshots = selectRunningJobSnapshots(current, jobs);
   const visibleSnapshots = visibleJobs.map((job) => {
@@ -348,12 +419,13 @@ export function JobsDashboard() {
     if (active) return active;
     return selectRunningJobSnapshots(current, [{ ...job, status: "active" }])[0];
   });
-  const [toast, setToast] = useState<string | null>(null);
+  const [editingJob, setEditingJob] = useState<JobSeed | null>(null);
+  const [confirmFinish, setConfirmFinish] = useState<JobSeed | null>(null);
 
-  async function finish(jobId: string) {
-    if (!window.confirm("Mark this job finished? It will move to History.")) return;
-    await finishJob(jobId);
-    setToast("Finished — moved to History.");
+  async function finish(job: JobSeed) {
+    await finishJob(job.id);
+    setConfirmFinish(null);
+    showToast(`Finished — Grade ${gradeForJob(job)}`, { label: "View in History →", href: "/history" });
   }
 
   return (
@@ -369,15 +441,11 @@ export function JobsDashboard() {
         </div>
         <NewJobSheet onCreate={async (input) => {
           await createJob(input);
+          showToast("Job created.");
         }} />
       </div>
 
       {error ? <div className="text-[13px] text-[var(--warn)]">{error}</div> : null}
-      {toast ? (
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[13px] text-[var(--text-mut)]">
-          {toast} <Link href="/history" className="text-[var(--accent)]">Open History</Link>
-        </div>
-      ) : null}
 
       <MoneyStrip jobSnapshots={runningSnapshots} />
 
@@ -389,10 +457,71 @@ export function JobsDashboard() {
             now={current}
             onPause={(jobId) => void pauseJob(jobId)}
             onResume={(jobId) => void resumeJob(jobId)}
-            onFinish={(jobId) => void finish(jobId)}
+            onFinish={() => setConfirmFinish(item.job)}
+            onEdit={(job) => setEditingJob(job)}
           />
         ))}
       </section>
+
+      {editingJob ? (
+        <JobFormSheet
+          key={editingJob.id}
+          job={editingJob}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditingJob(null);
+          }}
+          onSubmit={async (input) => {
+            await editJob(editingJob.id, input);
+            showToast("Job updated.");
+            setEditingJob(null);
+          }}
+        />
+      ) : null}
+
+      <ConfirmFinishDialog
+        job={confirmFinish}
+        onCancel={() => setConfirmFinish(null)}
+        onConfirm={() => confirmFinish && void finish(confirmFinish)}
+      />
     </div>
+  );
+}
+
+function ConfirmFinishDialog({
+  job,
+  onCancel,
+  onConfirm,
+}: {
+  job: JobSeed | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog.Root open={Boolean(job)} onOpenChange={(open) => (!open ? onCancel() : undefined)}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-[2px]" />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className="fixed left-1/2 top-1/2 z-[71] w-[92vw] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[0_24px_70px_rgba(0,0,0,.7)] outline-none"
+        >
+          <Dialog.Title className="text-[16px] font-semibold text-[var(--text)]">
+            {job ? `Finish ${job.client}?` : "Finish job?"}
+          </Dialog.Title>
+          <p className="mt-2 text-[13px] leading-6 text-[var(--text-mut)]">
+            It moves to History with its final grade. You can still open its footage on Replay.
+          </p>
+          <div className="mt-5 flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Keep running
+            </Button>
+            <Button type="button" variant="primary" onClick={onConfirm}>
+              <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />
+              Finish job
+            </Button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

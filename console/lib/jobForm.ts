@@ -14,6 +14,25 @@ export type NewJobValidation = {
   errors: Partial<Record<keyof NewJobInput, string>>;
 };
 
+function parseNumber(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+/** Coerce a loose request body into a NewJobInput. Shared by POST + PATCH edit. */
+export function normalizeJobInput(body: Record<string, unknown>): NewJobInput {
+  return {
+    client: String(body.client ?? ""),
+    title: String(body.title ?? ""),
+    units_required: parseNumber(body.units_required),
+    quote_usd: parseNumber(body.quote_usd),
+    cogs_usd: parseNumber(body.cogs_usd),
+    labor_budget_usd: parseNumber(body.labor_budget_usd),
+    deadline: String(body.deadline ?? ""),
+    station_ids: Array.isArray(body.station_ids) ? body.station_ids.map(String) : [],
+  };
+}
+
 export function validateNewJobInput(input: NewJobInput): NewJobValidation {
   const errors: NewJobValidation["errors"] = {};
 
