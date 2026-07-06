@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0c0e10;
+  --bg-rail: #0a0b0d;
+  --panel: #14171b;
+  --panel-2: #101317;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-soft: rgba(255, 255, 255, 0.045);
+
+  --text: #f2f4f5;
+  --text-mut: #9aa1a9;
+  --text-dim: #6f7476;
+
+  --accent: #e8742f;
+  --accent-hi: #f98a3c;
+  --accent-tint: rgba(232, 116, 47, 0.14);
+
+  --good: #46c26b;
+  --good-tint: rgba(70, 194, 107, 0.14);
+  --bad: #e5484d;
+  --bad-tint: rgba(229, 72, 77, 0.14);
+  --warn: #e7a13b;
+  --warn-tint: rgba(231, 161, 59, 0.13);
+  --idle: #3a3f45;
+
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--panel);
+  --card-foreground: var(--text);
+  --popover: var(--panel);
+  --popover-foreground: var(--text);
+  --primary: var(--accent);
+  --primary-foreground: #11100d;
+  --secondary: var(--panel-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--panel-2);
+  --muted-foreground: var(--text-mut);
+  --accent-foreground: #11100d;
+  --destructive: var(--bad);
+  --border-color: var(--border);
+  --input: var(--border);
+  --ring: var(--accent);
+  --radius: 12px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-rail: var(--bg-rail);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-text: var(--text);
+  --color-text-mut: var(--text-mut);
+  --color-text-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-hi: var(--accent-hi);
+  --color-accent-tint: var(--accent-tint);
+  --color-good: var(--good);
+  --color-good-tint: var(--good-tint);
+  --color-bad: var(--bad);
+  --color-bad-tint: var(--bad-tint);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-idle: var(--idle);
+  --font-sans: var(--font-inter);
+  --radius-panel: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-tint);
+  color: var(--text);
+}

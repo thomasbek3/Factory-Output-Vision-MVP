@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum CameraStatus {
+  online
+  offline
+}
+
+enum JobStatus {
+  active
+  finished
+  paused
+}
+
+enum CountEventSource {
+  tripwire
+}
+
+enum CountVerdict {
+  placed
+  not
+  unsure
+}
+
+enum AlertType {
+  behind_pace
+  station_quiet
+  camera_offline
+}
+
+enum AlertSeverity {
+  crit
+  warn
+}
+
+enum UserRole {
+  owner
+  reviewer
+  ops
+}
+
+enum ReviewTaskStatus {
+  pending
+  done
+  escalated
+}
+
+model Camera {
+  id            String       @id
+  name          String
+  rtsp_url      String
+  station_id    String
+  status        CameraStatus
+  last_frame_at DateTime
+}
+
+model Station {
+  id            String  @id
+  name          String
+  camera_id     String
+  zone_polygon  Json
+  baseline_rate Float
+  active        Boolean
+}
+
+model Job {
+  id               String    @id
+  client           String
+  title            String
+  units_required   Int
+  quote_usd        Int
+  cogs_usd         Int
+  labor_budget_usd Int
+  deadline         DateTime
+  station_ids      Json
+  status           JobStatus
+  created_at       DateTime
+  finished_at      DateTime?
+  notes            String?
+}
+
+model CountEvent {
+  id            String           @id
+  station_id    String
+  job_id        String?
+  ts            DateTime
+  clip_id       String
+  source        CountEventSource
+  verdict       CountVerdict
+  verified_by   String
+  verified_at   DateTime
+  model_verdict Json
+  disputed      Boolean
+}
+
+model Clip {
+  id           String   @id
+  station_id   String
+  t_start      DateTime
+  t_end        DateTime
+  hls_uri      String
+  thumb_uri    String
+  segment_refs Json
+}
+
+model Alert {
+  id         String        @id
+  type       AlertType
+  severity   AlertSeverity
+  station_id String
+  job_id     String?
+  ts         DateTime
+  message    String
+  clip_id    String?
+  resolved   Boolean
+}
+
+model User {
+  id    String   @id
+  role  UserRole
+  name  String
+  email String
+}
+
+model ReviewTask {
+  id             String           @id
+  clip_id        String
+  station_id     String
+  ts             DateTime
+  tripwire_score Float
+  status         ReviewTaskStatus
+  decided_by     String?
+  decided_at     DateTime?
+  decision       CountVerdict?
+}
+
+model LaborConfig {
+  id                  String @id
+  work_hours          Json
+  hourly_rate_usd     Int
+  workers_per_station Int
+}

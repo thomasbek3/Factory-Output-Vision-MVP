@@ -1,0 +1,1409 @@
+{
+  "schema": "demo-events-v1",
+  "header": "PLACEHOLDER — replace with pipeline output demo_events_0626.json",
+  "station": "pallet-a",
+  "source_day": "2026-06-26",
+  "clip_start_wall": "10:15:44",
+  "events": [
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:15:44",
+      "offset_sec": 0,
+      "candidate_id": "pa-001",
+      "confidence": 0.72
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:15:44",
+      "offset_sec": 0,
+      "candidate_id": "gl-001",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:20:05",
+      "offset_sec": 261,
+      "candidate_id": "pa-002",
+      "confidence": 0.91
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:21:35",
+      "offset_sec": 351,
+      "candidate_id": "pa-003",
+      "confidence": 0.87
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:23:57",
+      "offset_sec": 493,
+      "candidate_id": "pa-004",
+      "confidence": 0.83
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:25:46",
+      "offset_sec": 602,
+      "candidate_id": "gl-002",
+      "confidence": 0.91
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:29:32",
+      "offset_sec": 828,
+      "candidate_id": "pa-005",
+      "confidence": 0.79
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:29:39",
+      "offset_sec": 835,
+      "candidate_id": "gl-003",
+      "confidence": 0.87
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:32:48",
+      "offset_sec": 1024,
+      "candidate_id": "pa-006",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:33:24",
+      "offset_sec": 1060,
+      "candidate_id": "pa-007",
+      "confidence": 0.75
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:35:16",
+      "offset_sec": 1172,
+      "candidate_id": "gl-004",
+      "confidence": 0.83
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:36:19",
+      "offset_sec": 1235,
+      "candidate_id": "pa-008",
+      "confidence": 0.9
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:41:59",
+      "offset_sec": 1575,
+      "candidate_id": "pa-009",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:44:41",
+      "offset_sec": 1737,
+      "candidate_id": "pa-010",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:46:00",
+      "offset_sec": 1816,
+      "candidate_id": "pa-011",
+      "confidence": 0.78
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:47:09",
+      "offset_sec": 1885,
+      "candidate_id": "gl-005",
+      "confidence": 0.79
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:50:39",
+      "offset_sec": 2095,
+      "candidate_id": "pa-012",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:54:06",
+      "offset_sec": 2302,
+      "candidate_id": "pa-013",
+      "confidence": 0.93
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:55:42",
+      "offset_sec": 2398,
+      "candidate_id": "gl-006",
+      "confidence": 0.75
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:55:48",
+      "offset_sec": 2404,
+      "candidate_id": "pa-014",
+      "confidence": 0.89
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "10:57:08",
+      "offset_sec": 2484,
+      "candidate_id": "gl-007",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "10:57:53",
+      "offset_sec": 2529,
+      "candidate_id": "pa-015",
+      "confidence": 0.85
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:03:19",
+      "offset_sec": 2855,
+      "candidate_id": "pa-016",
+      "confidence": 0.81
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:05:00",
+      "offset_sec": 2956,
+      "candidate_id": "gl-008",
+      "confidence": 0.9
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:07:31",
+      "offset_sec": 3107,
+      "candidate_id": "pa-017",
+      "confidence": 0.77
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:08:40",
+      "offset_sec": 3176,
+      "candidate_id": "pa-018",
+      "confidence": 0.73
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:10:09",
+      "offset_sec": 3265,
+      "candidate_id": "pa-019",
+      "confidence": 0.92
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:15:52",
+      "offset_sec": 3608,
+      "candidate_id": "pa-020",
+      "confidence": 0.88
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:17:04",
+      "offset_sec": 3680,
+      "candidate_id": "gl-009",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:18:53",
+      "offset_sec": 3789,
+      "candidate_id": "pa-021",
+      "confidence": 0.84
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:20:05",
+      "offset_sec": 3861,
+      "candidate_id": "pa-022",
+      "confidence": 0.8
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:23:18",
+      "offset_sec": 4054,
+      "candidate_id": "gl-010",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:24:25",
+      "offset_sec": 4121,
+      "candidate_id": "pa-023",
+      "confidence": 0.76
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:26:51",
+      "offset_sec": 4267,
+      "candidate_id": "gl-011",
+      "confidence": 0.78
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:29:47",
+      "offset_sec": 4443,
+      "candidate_id": "pa-024",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:30:02",
+      "offset_sec": 4458,
+      "candidate_id": "pa-025",
+      "confidence": 0.91
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:31:51",
+      "offset_sec": 4567,
+      "candidate_id": "pa-026",
+      "confidence": 0.87
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:36:55",
+      "offset_sec": 4871,
+      "candidate_id": "gl-012",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:37:06",
+      "offset_sec": 4882,
+      "candidate_id": "pa-027",
+      "confidence": 0.83
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:41:37",
+      "offset_sec": 5153,
+      "candidate_id": "pa-028",
+      "confidence": 0.79
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:42:52",
+      "offset_sec": 5228,
+      "candidate_id": "pa-029",
+      "confidence": 0.75
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:45:43",
+      "offset_sec": 5399,
+      "candidate_id": "pa-030",
+      "confidence": 0.94
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:46:17",
+      "offset_sec": 5433,
+      "candidate_id": "gl-013",
+      "confidence": 0.93
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:49:42",
+      "offset_sec": 5638,
+      "candidate_id": "pa-031",
+      "confidence": 0.9
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:50:35",
+      "offset_sec": 5691,
+      "candidate_id": "gl-014",
+      "confidence": 0.89
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:53:04",
+      "offset_sec": 5840,
+      "candidate_id": "pa-032",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:54:12",
+      "offset_sec": 5908,
+      "candidate_id": "pa-033",
+      "confidence": 0.82
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "11:55:38",
+      "offset_sec": 5994,
+      "candidate_id": "gl-015",
+      "confidence": 0.85
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "11:58:13",
+      "offset_sec": 6149,
+      "candidate_id": "pa-034",
+      "confidence": 0.78
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:03:44",
+      "offset_sec": 6480,
+      "candidate_id": "pa-035",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:05:00",
+      "offset_sec": 6556,
+      "candidate_id": "pa-036",
+      "confidence": 0.77
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:05:00",
+      "offset_sec": 6556,
+      "candidate_id": "pa-037",
+      "confidence": 0.87
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:05:00",
+      "offset_sec": 6556,
+      "candidate_id": "gl-016",
+      "confidence": 0.92
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:08:30",
+      "offset_sec": 6766,
+      "candidate_id": "pa-038",
+      "confidence": 0.85
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:08:30",
+      "offset_sec": 6766,
+      "candidate_id": "pa-039",
+      "confidence": 0.83
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:08:30",
+      "offset_sec": 6766,
+      "candidate_id": "gl-017",
+      "confidence": 0.88
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:12:00",
+      "offset_sec": 6976,
+      "candidate_id": "pa-040",
+      "confidence": 0.81
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:12:00",
+      "offset_sec": 6976,
+      "candidate_id": "pa-041",
+      "confidence": 0.91
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:12:00",
+      "offset_sec": 6976,
+      "candidate_id": "gl-018",
+      "confidence": 0.73
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:56:58",
+      "offset_sec": 9674,
+      "candidate_id": "gl-019",
+      "confidence": 0.76
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:57:00",
+      "offset_sec": 9676,
+      "candidate_id": "pa-042",
+      "confidence": 0.93
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:57:00",
+      "offset_sec": 9676,
+      "candidate_id": "pa-043",
+      "confidence": 0.88
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:57:00",
+      "offset_sec": 9676,
+      "candidate_id": "gl-020",
+      "confidence": 0.8
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:57:52",
+      "offset_sec": 9728,
+      "candidate_id": "pa-044",
+      "confidence": 0.89
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:57:52",
+      "offset_sec": 9728,
+      "candidate_id": "pa-045",
+      "confidence": 0.84
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:57:52",
+      "offset_sec": 9728,
+      "candidate_id": "pa-046",
+      "confidence": 0.79
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:57:52",
+      "offset_sec": 9728,
+      "candidate_id": "gl-021",
+      "confidence": 0.81
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:58:44",
+      "offset_sec": 9780,
+      "candidate_id": "pa-047",
+      "confidence": 0.8
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:58:44",
+      "offset_sec": 9780,
+      "candidate_id": "pa-048",
+      "confidence": 0.75
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "12:58:44",
+      "offset_sec": 9780,
+      "candidate_id": "gl-022",
+      "confidence": 0.77
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:59:02",
+      "offset_sec": 9798,
+      "candidate_id": "pa-049",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "12:59:36",
+      "offset_sec": 9832,
+      "candidate_id": "pa-050",
+      "confidence": 0.76
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:00:28",
+      "offset_sec": 9884,
+      "candidate_id": "pa-051",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:01:20",
+      "offset_sec": 9936,
+      "candidate_id": "pa-052",
+      "confidence": 0.73
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:02:12",
+      "offset_sec": 9988,
+      "candidate_id": "pa-053",
+      "confidence": 0.92
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:02:12",
+      "offset_sec": 9988,
+      "candidate_id": "gl-023",
+      "confidence": 0.84
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:02:30",
+      "offset_sec": 10006,
+      "candidate_id": "pa-054",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:03:05",
+      "offset_sec": 10041,
+      "candidate_id": "pa-055",
+      "confidence": 0.9
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:05:51",
+      "offset_sec": 10207,
+      "candidate_id": "pa-056",
+      "confidence": 0.82
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:08:26",
+      "offset_sec": 10362,
+      "candidate_id": "gl-024",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:11:32",
+      "offset_sec": 10548,
+      "candidate_id": "pa-057",
+      "confidence": 0.78
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:11:32",
+      "offset_sec": 10548,
+      "candidate_id": "gl-025",
+      "confidence": 0.91
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:14:24",
+      "offset_sec": 10720,
+      "candidate_id": "pa-058",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:15:39",
+      "offset_sec": 10795,
+      "candidate_id": "pa-059",
+      "confidence": 0.93
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:16:03",
+      "offset_sec": 10819,
+      "candidate_id": "gl-026",
+      "confidence": 0.87
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:20:08",
+      "offset_sec": 11064,
+      "candidate_id": "pa-060",
+      "confidence": 0.89
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:23:43",
+      "offset_sec": 11279,
+      "candidate_id": "pa-061",
+      "confidence": 0.85
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:25:33",
+      "offset_sec": 11389,
+      "candidate_id": "pa-062",
+      "confidence": 0.81
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:27:19",
+      "offset_sec": 11495,
+      "candidate_id": "gl-027",
+      "confidence": 0.83
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:27:28",
+      "offset_sec": 11504,
+      "candidate_id": "pa-063",
+      "confidence": 0.77
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:32:49",
+      "offset_sec": 11825,
+      "candidate_id": "pa-064",
+      "confidence": 0.73
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:37:07",
+      "offset_sec": 12083,
+      "candidate_id": "gl-028",
+      "confidence": 0.79
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:37:12",
+      "offset_sec": 12088,
+      "candidate_id": "pa-065",
+      "confidence": 0.92
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:38:24",
+      "offset_sec": 12160,
+      "candidate_id": "pa-066",
+      "confidence": 0.88
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:39:42",
+      "offset_sec": 12238,
+      "candidate_id": "pa-067",
+      "confidence": 0.84
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:40:33",
+      "offset_sec": 12289,
+      "candidate_id": "gl-029",
+      "confidence": 0.75
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:45:24",
+      "offset_sec": 12580,
+      "candidate_id": "pa-068",
+      "confidence": 0.8
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:47:05",
+      "offset_sec": 12681,
+      "candidate_id": "gl-030",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:48:36",
+      "offset_sec": 12772,
+      "candidate_id": "pa-069",
+      "confidence": 0.76
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:49:45",
+      "offset_sec": 12841,
+      "candidate_id": "pa-070",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:53:55",
+      "offset_sec": 13091,
+      "candidate_id": "pa-071",
+      "confidence": 0.91
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "13:57:29",
+      "offset_sec": 13305,
+      "candidate_id": "gl-031",
+      "confidence": 0.9
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:59:23",
+      "offset_sec": 13419,
+      "candidate_id": "pa-072",
+      "confidence": 0.87
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "13:59:47",
+      "offset_sec": 13443,
+      "candidate_id": "pa-073",
+      "confidence": 0.83
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:01:28",
+      "offset_sec": 13544,
+      "candidate_id": "pa-074",
+      "confidence": 0.79
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:05:03",
+      "offset_sec": 13759,
+      "candidate_id": "gl-032",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:06:36",
+      "offset_sec": 13852,
+      "candidate_id": "pa-075",
+      "confidence": 0.75
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:08:13",
+      "offset_sec": 13949,
+      "candidate_id": "gl-033",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:11:16",
+      "offset_sec": 14132,
+      "candidate_id": "pa-076",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:12:36",
+      "offset_sec": 14212,
+      "candidate_id": "pa-077",
+      "confidence": 0.9
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:15:16",
+      "offset_sec": 14372,
+      "candidate_id": "pa-078",
+      "confidence": 0.86
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:17:03",
+      "offset_sec": 14479,
+      "candidate_id": "gl-034",
+      "confidence": 0.78
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:19:14",
+      "offset_sec": 14610,
+      "candidate_id": "pa-079",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:22:47",
+      "offset_sec": 14823,
+      "candidate_id": "pa-080",
+      "confidence": 0.78
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:23:53",
+      "offset_sec": 14889,
+      "candidate_id": "pa-081",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:27:43",
+      "offset_sec": 15119,
+      "candidate_id": "pa-082",
+      "confidence": 0.93
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:28:50",
+      "offset_sec": 15186,
+      "candidate_id": "gl-035",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:33:18",
+      "offset_sec": 15454,
+      "candidate_id": "pa-083",
+      "confidence": 0.89
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:34:10",
+      "offset_sec": 15506,
+      "candidate_id": "gl-036",
+      "confidence": 0.93
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:35:29",
+      "offset_sec": 15585,
+      "candidate_id": "pa-084",
+      "confidence": 0.81
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:35:42",
+      "offset_sec": 15598,
+      "candidate_id": "pa-085",
+      "confidence": 0.85
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:36:32",
+      "offset_sec": 15648,
+      "candidate_id": "gl-037",
+      "confidence": 0.89
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:40:23",
+      "offset_sec": 15879,
+      "candidate_id": "pa-086",
+      "confidence": 0.77
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:45:19",
+      "offset_sec": 16175,
+      "candidate_id": "pa-087",
+      "confidence": 0.73
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:46:50",
+      "offset_sec": 16266,
+      "candidate_id": "pa-088",
+      "confidence": 0.92
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:47:22",
+      "offset_sec": 16298,
+      "candidate_id": "gl-038",
+      "confidence": 0.85
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:49:10",
+      "offset_sec": 16406,
+      "candidate_id": "pa-089",
+      "confidence": 0.88
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:54:44",
+      "offset_sec": 16740,
+      "candidate_id": "pa-090",
+      "confidence": 0.84
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:56:56",
+      "offset_sec": 16872,
+      "candidate_id": "pa-091",
+      "confidence": 0.8
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "14:57:44",
+      "offset_sec": 16920,
+      "candidate_id": "gl-039",
+      "confidence": 0.81
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "14:58:02",
+      "offset_sec": 16938,
+      "candidate_id": "pa-092",
+      "confidence": 0.76
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:01:27",
+      "offset_sec": 17143,
+      "candidate_id": "gl-040",
+      "confidence": 0.77
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:01:32",
+      "offset_sec": 17148,
+      "candidate_id": "pa-093",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:07:12",
+      "offset_sec": 17488,
+      "candidate_id": "pa-094",
+      "confidence": 0.91
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:07:21",
+      "offset_sec": 17497,
+      "candidate_id": "gl-041",
+      "confidence": 0.73
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:09:56",
+      "offset_sec": 17652,
+      "candidate_id": "pa-095",
+      "confidence": 0.87
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:11:14",
+      "offset_sec": 17730,
+      "candidate_id": "pa-096",
+      "confidence": 0.83
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:14:09",
+      "offset_sec": 17905,
+      "candidate_id": "pa-097",
+      "confidence": 0.79
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:19:19",
+      "offset_sec": 18215,
+      "candidate_id": "gl-042",
+      "confidence": 0.92
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:19:20",
+      "offset_sec": 18216,
+      "candidate_id": "pa-098",
+      "confidence": 0.75
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:21:03",
+      "offset_sec": 18319,
+      "candidate_id": "pa-099",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:23:06",
+      "offset_sec": 18442,
+      "candidate_id": "pa-100",
+      "confidence": 0.9
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:25:52",
+      "offset_sec": 18608,
+      "candidate_id": "gl-043",
+      "confidence": 0.88
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:28:32",
+      "offset_sec": 18768,
+      "candidate_id": "pa-101",
+      "confidence": 0.86
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:28:59",
+      "offset_sec": 18795,
+      "candidate_id": "gl-044",
+      "confidence": 0.84
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:32:13",
+      "offset_sec": 18989,
+      "candidate_id": "pa-102",
+      "confidence": 0.78
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:32:46",
+      "offset_sec": 19022,
+      "candidate_id": "pa-103",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:35:22",
+      "offset_sec": 19178,
+      "candidate_id": "pa-104",
+      "confidence": 0.74
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:37:09",
+      "offset_sec": 19285,
+      "candidate_id": "gl-045",
+      "confidence": 0.8
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:41:05",
+      "offset_sec": 19521,
+      "candidate_id": "pa-105",
+      "confidence": 0.93
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:44:08",
+      "offset_sec": 19704,
+      "candidate_id": "pa-106",
+      "confidence": 0.89
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:45:19",
+      "offset_sec": 19775,
+      "candidate_id": "pa-107",
+      "confidence": 0.85
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:49:09",
+      "offset_sec": 20005,
+      "candidate_id": "gl-046",
+      "confidence": 0.76
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:49:38",
+      "offset_sec": 20034,
+      "candidate_id": "pa-108",
+      "confidence": 0.81
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:53:19",
+      "offset_sec": 20255,
+      "candidate_id": "pa-109",
+      "confidence": 0.77
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:55:06",
+      "offset_sec": 20362,
+      "candidate_id": "gl-047",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:55:17",
+      "offset_sec": 20373,
+      "candidate_id": "pa-110",
+      "confidence": 0.73
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "15:57:05",
+      "offset_sec": 20481,
+      "candidate_id": "pa-111",
+      "confidence": 0.92
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "15:58:48",
+      "offset_sec": 20584,
+      "candidate_id": "gl-048",
+      "confidence": 0.91
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:02:19",
+      "offset_sec": 20795,
+      "candidate_id": "pa-112",
+      "confidence": 0.88
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:06:51",
+      "offset_sec": 21067,
+      "candidate_id": "pa-113",
+      "confidence": 0.84
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:07:25",
+      "offset_sec": 21101,
+      "candidate_id": "gl-049",
+      "confidence": 0.87
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:08:07",
+      "offset_sec": 21143,
+      "candidate_id": "pa-114",
+      "confidence": 0.8
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:09:14",
+      "offset_sec": 21210,
+      "candidate_id": "pa-115",
+      "confidence": 0.76
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:14:55",
+      "offset_sec": 21551,
+      "candidate_id": "pa-116",
+      "confidence": 0.72
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:18:17",
+      "offset_sec": 21753,
+      "candidate_id": "gl-050",
+      "confidence": 0.83
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:18:19",
+      "offset_sec": 21755,
+      "candidate_id": "pa-117",
+      "confidence": 0.91
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:19:26",
+      "offset_sec": 21822,
+      "candidate_id": "pa-118",
+      "confidence": 0.87
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:22:23",
+      "offset_sec": 21999,
+      "candidate_id": "gl-051",
+      "confidence": 0.79
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:23:26",
+      "offset_sec": 22062,
+      "candidate_id": "pa-119",
+      "confidence": 0.83
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:27:40",
+      "offset_sec": 22316,
+      "candidate_id": "gl-052",
+      "confidence": 0.75
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:28:58",
+      "offset_sec": 22394,
+      "candidate_id": "pa-120",
+      "confidence": 0.79
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:29:31",
+      "offset_sec": 22427,
+      "candidate_id": "pa-121",
+      "confidence": 0.75
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:31:05",
+      "offset_sec": 22521,
+      "candidate_id": "pa-122",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:36:06",
+      "offset_sec": 22822,
+      "candidate_id": "pa-123",
+      "confidence": 0.9
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:39:26",
+      "offset_sec": 23022,
+      "candidate_id": "gl-053",
+      "confidence": 0.94
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:40:55",
+      "offset_sec": 23111,
+      "candidate_id": "pa-124",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:42:20",
+      "offset_sec": 23196,
+      "candidate_id": "pa-125",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:44:50",
+      "offset_sec": 23346,
+      "candidate_id": "pa-126",
+      "confidence": 0.78
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:48:19",
+      "offset_sec": 23555,
+      "candidate_id": "gl-054",
+      "confidence": 0.9
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:48:44",
+      "offset_sec": 23580,
+      "candidate_id": "pa-127",
+      "confidence": 0.74
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:49:48",
+      "offset_sec": 23644,
+      "candidate_id": "gl-055",
+      "confidence": 0.86
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:52:29",
+      "offset_sec": 23805,
+      "candidate_id": "pa-128",
+      "confidence": 0.93
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:53:35",
+      "offset_sec": 23871,
+      "candidate_id": "pa-129",
+      "confidence": 0.89
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "16:57:14",
+      "offset_sec": 24090,
+      "candidate_id": "pa-130",
+      "confidence": 0.85
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "16:57:18",
+      "offset_sec": 24094,
+      "candidate_id": "gl-056",
+      "confidence": 0.82
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:02:52",
+      "offset_sec": 24428,
+      "candidate_id": "pa-131",
+      "confidence": 0.81
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:05:07",
+      "offset_sec": 24563,
+      "candidate_id": "pa-132",
+      "confidence": 0.73
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:05:27",
+      "offset_sec": 24583,
+      "candidate_id": "pa-133",
+      "confidence": 0.77
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "17:09:25",
+      "offset_sec": 24821,
+      "candidate_id": "gl-057",
+      "confidence": 0.78
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:09:52",
+      "offset_sec": 24848,
+      "candidate_id": "pa-134",
+      "confidence": 0.92
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:14:57",
+      "offset_sec": 25153,
+      "candidate_id": "pa-135",
+      "confidence": 0.88
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "17:16:00",
+      "offset_sec": 25216,
+      "candidate_id": "gl-058",
+      "confidence": 0.74
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:16:34",
+      "offset_sec": 25250,
+      "candidate_id": "pa-136",
+      "confidence": 0.84
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:18:45",
+      "offset_sec": 25381,
+      "candidate_id": "pa-137",
+      "confidence": 0.8
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "17:19:25",
+      "offset_sec": 25421,
+      "candidate_id": "gl-059",
+      "confidence": 0.93
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:24:15",
+      "offset_sec": 25711,
+      "candidate_id": "pa-138",
+      "confidence": 0.76
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:26:37",
+      "offset_sec": 25853,
+      "candidate_id": "pa-139",
+      "confidence": 0.72
+    },
+    {
+      "station": "pallet-a",
+      "wall_clock": "17:27:45",
+      "offset_sec": 25921,
+      "candidate_id": "pa-140",
+      "confidence": 0.91
+    },
+    {
+      "station": "gate-line",
+      "wall_clock": "17:29:00",
+      "offset_sec": 25996,
+      "candidate_id": "gl-060",
+      "confidence": 0.89
+    }
+  ]
+}

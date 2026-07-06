@@ -1,3 +1,26 @@
+# Console App CP1 - 2026-07-05
+
+## Objective
+
+Build checkpoint 1 of the FactoryVision console app in `console/`: scaffold, locked design tokens, owner chrome, placeholder role routes, Prisma data spine, and demo-time/event loader.
+
+## Milestones
+
+- [x] CP1-1 Scaffold isolated Next.js app with pinned npm dependencies.
+- [x] CP1-2 Map `DESIGN.md` tokens into Tailwind/globals and shared Panel/chrome components.
+- [x] CP1-3 Add owner placeholder routes plus `/review`, `/ops`, `/tv` shells and role/time providers.
+- [x] CP1-4 Add Prisma schema, seed data, generated demo events, and demo loader.
+- [x] CP1-5 Run build, lint, dev route smoke, `make docs-check`, credential grep, and commit explicit paths only.
+
+## Review
+
+- `npm run lint` in `console/` -> passed.
+- `npm run build` in `console/` -> passed; generated static routes for `/`, `/replay`, `/jobs`, `/stations`, `/history`, `/alerts`, `/settings`, `/review`, `/ops`, and `/tv`.
+- Dev server booted at `http://localhost:3000`; route smoke confirmed owner chrome on owner routes and standalone shells for `/review`, `/ops`, `/tv`.
+- Screenshot reviewed at `/tmp/factoryvision-console-cp1-live.png`; owner rail, header, panel styling, and trust line are visible.
+- `make docs-check` -> passed with existing tracked-artifact/cache warning.
+- Python suite intentionally not run for this checkpoint; no `app/` or `tests/` changes made.
+
 # Stage D1 Repo Cleanup - 2026-07-04
 
 ## Objective
