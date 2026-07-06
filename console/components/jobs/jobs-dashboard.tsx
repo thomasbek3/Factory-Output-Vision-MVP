@@ -180,7 +180,7 @@ function JobCard({
           </div>
           <div className="mt-2 text-[12px] leading-5 text-[var(--text-dim)]">
             of the ${job.quote_usd.toLocaleString("en-US")} quote · planned $
-            {job.labor_budget_usd.toLocaleString("en-US")}
+            {Math.round(snapshot.planned_margin).toLocaleString("en-US")}
           </div>
         </div>
 

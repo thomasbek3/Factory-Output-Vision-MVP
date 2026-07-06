@@ -50,7 +50,7 @@ Right-side overlay drawer, 480px, available on EVERY screen. Anything with a tim
 - `labor_burned_usd` = Σ per station-day (active worked hours × hourly_rate × workers). v1 proxy for "active hours": scheduled work hours while job assigned; v2 uses camera-derived presence.
 - `projected_labor_usd` = labor_burned ÷ max(units_done,1) × units_required (units-based projection), clamped by remaining scheduled hours.
 - `projected_margin` = quote − cogs − projected_labor.
-- **Verdicts** (job): `IN THE GREEN` = projected_margin ≥ 0.9 × planned_margin; `GETTING TIGHT` = 0.5–0.9×; `LOSING MONEY` = < 0.5× or negative. (planned_margin = quote − cogs − labor_budget). Thresholds in config, shown in Settings later.
+- **Verdicts** (job): `IN THE GREEN` = projected_margin ≥ 0.9 × planned_margin; `GETTING TIGHT` = 0 ≤ projected_margin < 0.9 × planned_margin; `LOSING MONEY` = projected_margin < 0 only. (planned_margin = quote − cogs − labor_budget). Thresholds in config, shown in Settings later.
 - **Grades** (finished job): A = margin ≥ planned AND on time; B = margin ≥ 0.8× planned OR ≤1 day late; C = margin ≥ 0; C− = negative margin. (v1 formula; tune with real data.)
 - Money strip total = Σ projected_margin over active jobs.
 

@@ -135,31 +135,31 @@ async function main() {
       quote_usd: 1000,
       cogs_usd: 500,
       labor_budget_usd: 300,
-      deadline: new Date("2026-06-29T10:58:00-07:00"),
+      deadline: new Date("2026-06-29T10:15:05-07:00"),
       station_ids: ["pallet-a"],
       notes: "Pitch demo active job.",
     },
     {
       id: "job-delgado-hvac",
       client: "Delgado HVAC",
-      title: "260 brackets",
-      units_required: 260,
-      quote_usd: 1600,
-      cogs_usd: 500,
-      labor_budget_usd: 100,
-      deadline: new Date("2026-06-29T09:34:00-07:00"),
-      station_ids: ["pallet-a"],
+      title: "600 brackets",
+      units_required: 600,
+      quote_usd: 1800,
+      cogs_usd: 700,
+      labor_budget_usd: 520,
+      deadline: new Date("2026-06-30T12:16:44-07:00"),
+      station_ids: ["gate-line"],
       notes: "Spec checkpoint seed job.",
     },
     {
       id: "job-alvarez-gates",
       client: "Alvarez Gates",
-      title: "180 gate frames",
-      units_required: 180,
-      quote_usd: 2100,
-      cogs_usd: 500,
-      labor_budget_usd: 100,
-      deadline: new Date("2026-06-29T09:00:00-07:00"),
+      title: "120 frame gates",
+      units_required: 120,
+      quote_usd: 2400,
+      cogs_usd: 1150,
+      labor_budget_usd: 800,
+      deadline: new Date("2026-06-30T08:33:33-07:00"),
       station_ids: ["gate-line", "pallet-a"],
       notes: "Spec checkpoint seed job.",
     },
@@ -171,13 +171,23 @@ async function main() {
       update: {
         ...job,
         status: "active",
-        created_at: job.id === "job-alvarez-gates" ? new Date("2026-06-25T07:00:00-07:00") : now,
+        created_at:
+          job.id === "job-alvarez-gates"
+            ? new Date("2026-06-25T07:00:00-07:00")
+            : job.id === "job-ramirez-fencing"
+              ? new Date("2026-06-26T07:47:49-07:00")
+              : now,
         finished_at: null,
       },
       create: {
         ...job,
         status: "active",
-        created_at: job.id === "job-alvarez-gates" ? new Date("2026-06-25T07:00:00-07:00") : now,
+        created_at:
+          job.id === "job-alvarez-gates"
+            ? new Date("2026-06-25T07:00:00-07:00")
+            : job.id === "job-ramirez-fencing"
+              ? new Date("2026-06-26T07:47:49-07:00")
+              : now,
         finished_at: null,
       },
     });

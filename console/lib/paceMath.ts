@@ -135,7 +135,7 @@ export function projectedMargin(job: JobSeed, unitsDone: number, now: Date, labo
 
 export function jobVerdict(projected_margin: number, planned_margin: number): PaceSnapshot["verdict"] {
   if (projected_margin >= 0.9 * planned_margin) return "IN THE GREEN";
-  if (projected_margin >= 0.5 * planned_margin) return "GETTING TIGHT";
+  if (projected_margin >= 0) return "GETTING TIGHT";
   return "LOSING MONEY";
 }
 

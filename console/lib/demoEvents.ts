@@ -54,10 +54,10 @@ function unitQuantityForJobEvent(jobId: string, sequence: number) {
     return sequence <= 44 ? 3 : 2;
   }
   if (jobId === "job-delgado-hvac") {
-    return sequence <= 10 ? 9 : 8;
+    return sequence <= 7 ? 12 : 11;
   }
   if (jobId === "job-alvarez-gates") {
-    return sequence <= 6 ? 2 : 1;
+    return sequence <= 5 ? 4 : 3;
   }
   return 1;
 }

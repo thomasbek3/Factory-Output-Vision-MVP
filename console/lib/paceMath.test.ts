@@ -57,11 +57,11 @@ describe("paceMath", () => {
     expect(snapshot.projected_margin).toBeCloseTo(1300, 3);
   });
 
-  it("uses exact 0.9 and 0.5 planned-margin verdict boundaries", () => {
+  it("uses exact 0.9 planned-margin and zero-dollar verdict boundaries", () => {
     expect(jobVerdict(900, 1000)).toBe("IN THE GREEN");
     expect(jobVerdict(899.99, 1000)).toBe("GETTING TIGHT");
-    expect(jobVerdict(500, 1000)).toBe("GETTING TIGHT");
-    expect(jobVerdict(499.99, 1000)).toBe("LOSING MONEY");
+    expect(jobVerdict(0, 1000)).toBe("GETTING TIGHT");
+    expect(jobVerdict(-0.01, 1000)).toBe("LOSING MONEY");
     expect(jobVerdict(-1, 1000)).toBe("LOSING MONEY");
   });
 
@@ -105,7 +105,8 @@ describe("paceMath", () => {
     expect(byClient.get("Alvarez Gates")?.snapshot.verdict).toBe("LOSING MONEY");
     expect(byClient.get("Ramirez Fencing")?.unitsDone).toBe(208);
     expect(Math.round(byClient.get("Ramirez Fencing")?.snapshot.expected_units_by_now ?? 0)).toBe(208);
-    expect(selectMoneyStripTotal(snapshots)).toBeGreaterThan(0);
+    expect(byClient.get("Alvarez Gates")?.snapshot.projected_margin).toBeLessThan(0);
+    expect(selectMoneyStripTotal(snapshots)).toBeCloseTo(532, 0);
   });
 
   it("writes ahead, behind, and overdue job-card sentences", () => {
