@@ -11,6 +11,7 @@ When explaining output, results, or concepts to Thomas, always include a plain-E
 Start with the concise current docs before relying on older task logs or research notes:
 
 - `docs/00_CURRENT_STATE.md`
+- `DESIGN.md` — locked UI design system (mandatory for ALL frontend/UI work)
 - `docs/01_PRODUCT_SPEC.md`
 - `docs/02_ARCHITECTURE.md`
 - `docs/03_VALIDATION_PIPELINE.md`
@@ -174,6 +175,8 @@ npm run test:e2e:headed
 - `run_clip_exam.py` — run the blind exam gate for Track B promotion
 
 **Frontend** (`frontend/src/`): React 19 + React Router + TypeScript + Vite
+
+> **DESIGN RULE (mandatory):** any frontend/UI work — new screens, components, dashboards, mockups, or image-engine render briefs — MUST follow the locked design system in [`DESIGN.md`](../DESIGN.md) (repo root). Reference render: `docs/design/fv-live-a-approved.png` (owner-approved 2026-07-05). Map its color/type tokens 1:1; do not invent palettes, typefaces, brand names, or layout patterns outside it. If a requested change conflicts with DESIGN.md, flag it to the owner instead of improvising.
 
 - `features/wizard/` — Multi-step setup wizard (camera config, ROI drawing, calibration)
 - `features/dashboard/` — Live monitoring dashboard (status light, counts, rolling rate, events)
