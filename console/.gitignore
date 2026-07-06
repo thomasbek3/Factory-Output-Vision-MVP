@@ -17,6 +17,7 @@ dev.db
 /coverage
 /.playwright-cli/
 /test-results/
+/e2e-audit/
 /playwright-report/
 /blob-report/
 /.playwright/

@@ -20,6 +20,13 @@ import {
   stations,
 } from "@/lib/demoData";
 import { loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
+import {
+  DIAMOND_CLUSTER_THRESHOLD,
+  buildReplayChapters,
+  eventMinutesLA,
+  uniquePlacementMoments as selectUniquePlacementMoments,
+  type ReplayChapter,
+} from "@/lib/replayTimeline";
 import { cn } from "@/lib/utils";
 
 type ReplayStation = "all" | string;
@@ -103,14 +110,7 @@ function widthPct(start: number, end: number) {
   return ((Math.min(end, workEnd) - Math.max(start, workStart)) / workMinutes) * 100;
 }
 
-function uniquePlacementMoments(events: CountEventShape[]) {
-  const seen = new Set<string>();
-  return events.filter((event) => {
-    if (seen.has(event.clip_id)) return false;
-    seen.add(event.clip_id);
-    return true;
-  });
-}
+const uniquePlacementMoments = selectUniquePlacementMoments;
 
 function stationLabel(stationId: string) {
   return stations.find((station) => station.id === stationId)?.name ?? stationId;
@@ -142,7 +142,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
     return fromParam ?? "14:32";
   });
   const [jumpValue, setJumpValue] = useState(selectedTime);
-  const [speed, setSpeed] = useState<Speed>(15);
+  const [speed, setSpeed] = useState<Speed>(1);
   const [paused, setPaused] = useState(true);
 
   const selectedDate = useMemo(
@@ -182,19 +182,7 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
     ? placements.findIndex((event) => event.clip_id === nearEvent.clip_id) + 1
     : 0;
 
-  const chapters = useMemo(
-    () =>
-      Array.from({ length: workMinutes / chapterMinutes }, (_, index) => {
-        const start = workStart + index * chapterMinutes;
-        const end = start + chapterMinutes;
-        const events = filteredEvents.filter((event) => {
-          const eventMinutes = minutesForDate(new Date(event.ts));
-          return eventMinutes >= start && eventMinutes < end;
-        });
-        return { start, end, events };
-      }),
-    [filteredEvents],
-  );
+  const chapters = useMemo(() => buildReplayChapters(filteredEvents), [filteredEvents]);
 
   const activeChapterIndex = Math.floor((clampMinutes(selectedMinutes) - workStart) / chapterMinutes);
   const nowMinutes = minutesForDate(now());
@@ -372,7 +360,6 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
 
           <DayTimeline
             chapters={chapters}
-            placements={placements}
             nowMinutes={nowMinutes}
             selectedMinutes={selectedMinutes}
             onSeek={(minutes) => seekToClock(formatClock(dateForMinutes(minutes)))}
@@ -386,7 +373,6 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
           selectedStation={viewerStation}
           onOpenClip={openClip}
           onSelect={(minutes) => {
-            setSpeed(15);
             seekToClock(formatClock(dateForMinutes(minutes)));
           }}
         />
@@ -397,33 +383,29 @@ export function ReplayDashboard({ initialStation, initialTime }: ReplayDashboard
 
 function DayTimeline({
   chapters,
-  placements,
   nowMinutes,
   selectedMinutes,
   onSeek,
   onOpenClip,
 }: {
-  chapters: { start: number; end: number; events: CountEventShape[] }[];
-  placements: CountEventShape[];
+  chapters: ReplayChapter[];
   nowMinutes: number;
   selectedMinutes: number;
   onSeek: (minutes: number) => void;
   onOpenClip: (clipId: string) => void;
 }) {
   const hourLabels = Array.from({ length: 11 }, (_, index) => 7 + index);
-  const dense = placements.length > 40;
+  // Individual diamonds when a 15-min window has <= threshold placements;
+  // otherwise a single labelled cluster keeps the timeline readable.
   const markerGroups: TimelineMarker[] = chapters.flatMap((chapter): TimelineMarker[] => {
-    const events = placements.filter((event) => {
-      const eventMinutes = minutesForDate(new Date(event.ts));
-      return eventMinutes >= chapter.start && eventMinutes < chapter.end;
-    });
-    if (!dense || events.length <= 3) {
+    const events = chapter.placements;
+    if (events.length <= DIAMOND_CLUSTER_THRESHOLD) {
       return events.map((event) => ({
         id: event.clip_id,
         kind: "single" as const,
         event,
         count: 1,
-        minutes: minutesForDate(new Date(event.ts)),
+        minutes: eventMinutesLA(event.ts),
       }));
     }
 
@@ -448,7 +430,7 @@ function DayTimeline({
         </div>
         <div className="relative mt-8 h-12 rounded-md bg-black/30">
           {chapters.map((chapter) => {
-            const count = chapter.events.length;
+            const count = chapter.placementCount;
             const tone =
               count >= 3
                 ? "bg-[var(--good)]"
@@ -487,7 +469,7 @@ function DayTimeline({
                     ? `${marker.count} placements · ${formatClock(dateForMinutes(marker.minutes))}`
                     : `${formatClock(new Date(marker.event.ts), true)} · ${marker.event.clip_id}`
                 }
-                className="absolute top-[-22px] z-[2] h-4 w-4 -translate-x-1/2 rotate-45 rounded-[2px] bg-[var(--accent)] shadow-[0_0_12px_rgba(232,116,47,.55)] ring-1 ring-black/40 hover:bg-[var(--accent-hi)]"
+                className="absolute top-[-22px] z-[2] h-4 w-4 -translate-x-1/2 rotate-45 rounded-[2px] bg-[var(--accent)] shadow-[0_0_12px_rgba(232,116,47,.55)] ring-1 ring-black/40 hover:z-[3] hover:bg-[var(--accent-hi)]"
                 style={{ left: `${positionPct(marker.minutes)}%` }}
                 aria-label={marker.kind === "cluster" ? `Open ${marker.count} placements` : `Open placement ${index + 1}`}
                 onClick={() => {
@@ -536,7 +518,7 @@ function ChaptersGrid({
   onOpenClip,
   onSelect,
 }: {
-  chapters: { start: number; end: number; events: CountEventShape[] }[];
+  chapters: ReplayChapter[];
   activeIndex: number;
   selectedStation: string;
   onOpenClip: (clipId: string) => void;
@@ -555,8 +537,8 @@ function ChaptersGrid({
       </div>
       <div className="flex gap-3 overflow-x-auto pb-1">
         {chapters.map((chapter, index) => {
-          const count = chapter.events.length;
-          const firstEvent = uniquePlacementMoments(chapter.events)[0];
+          const count = chapter.placementCount;
+          const firstEvent = chapter.placements[0];
           const thumbnailDate = dateForMinutes(chapter.start);
           return (
             <div
