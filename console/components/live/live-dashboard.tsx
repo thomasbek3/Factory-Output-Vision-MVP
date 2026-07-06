@@ -7,6 +7,7 @@ import { Panel } from "@/components/ui/panel";
 import { Button } from "@/components/ui/button";
 import { useTime } from "@/components/providers/time-provider";
 import { useClipDrawer } from "@/components/live/clip-drawer-provider";
+import { useConsoleJobs } from "@/components/jobs/use-console-jobs";
 import {
   countEventsThrough,
   jobForStation,
@@ -20,11 +21,19 @@ import {
 import { loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
 import {
   evaluateJobPace,
-  moneyStripTotal,
-  pacePillLabel,
   workMinutesBetween,
   type PaceSnapshot,
 } from "@/lib/paceMath";
+import {
+  cumulativeMarginSeries,
+  eventsByHour,
+  moneySentence,
+  pacePillLabel,
+  proratedBaselineUnits,
+  selectMoneyStripTotal,
+  selectRunningJobSnapshots,
+  type JobWithPace,
+} from "@/lib/jobSelectors";
 import { cn } from "@/lib/utils";
 
 type AlertRow = {
@@ -52,53 +61,6 @@ function formatCompactTime(date: Date) {
   }).format(date);
 }
 
-function formatHourLabel(hour: number) {
-  const suffix = hour >= 12 ? "p" : "a";
-  const display = hour > 12 ? hour - 12 : hour;
-  return `${display}${suffix}`;
-}
-
-function hourInPacific(date: Date) {
-  return Number(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Los_Angeles",
-      hour: "2-digit",
-      hour12: false,
-    }).format(date),
-  );
-}
-
-function eventsByHour(events: CountEventShape[]) {
-  return Array.from({ length: 11 }, (_, index) => {
-    const hour = index + 7;
-    return {
-      hour: formatHourLabel(hour),
-      units: events.filter((event) => hourInPacific(new Date(event.ts)) === hour).length,
-    };
-  });
-}
-
-function jobUnits(jobId: string, now: Date) {
-  return countEventsThrough(now).filter((event) => event.job_id === jobId).length;
-}
-
-function liveJobSnapshots(now: Date) {
-  return jobs.map((job) => ({
-    job,
-    snapshot: evaluateJobPace(job, jobUnits(job.id, now), now, laborConfig),
-  }));
-}
-
-function moneySentence(snapshots: { job: (typeof jobs)[number]; snapshot: PaceSnapshot }[]) {
-  const worst = [...snapshots].sort((a, b) => a.snapshot.projected_margin - b.snapshot.projected_margin)[0];
-  const atRisk = snapshots.find(({ snapshot }) => snapshot.verdict !== "IN THE GREEN");
-  if (!atRisk) return `All ${snapshots.length} jobs on pace.`;
-
-  const verdict =
-    worst.snapshot.verdict === "LOSING MONEY" ? "losing money" : "getting tight";
-  return `You're in the green - but ${worst.job.client} is ${verdict}.`;
-}
-
 function stationQuietMinutes(stationId: string, now: Date) {
   const events = stationEventsThrough(stationId, now);
   const latest = events.at(-1);
@@ -117,7 +79,7 @@ function nearestClipId(stationId: string, target: Date) {
   return nearest?.clip_id ?? null;
 }
 
-function evaluateAlerts(now: Date, snapshots: ReturnType<typeof liveJobSnapshots>): AlertRow[] {
+function evaluateAlerts(now: Date, snapshots: JobWithPace[]): AlertRow[] {
   const alerts: AlertRow[] = [];
 
   for (const station of stations) {
@@ -163,18 +125,16 @@ function MoneyStrip({
   snapshots,
   now,
 }: {
-  snapshots: ReturnType<typeof liveJobSnapshots>;
+  snapshots: JobWithPace[];
   now: Date;
 }) {
   const allEvents = countEventsThrough(now);
-  const totalMargin = moneyStripTotal(snapshots.map(({ snapshot }) => snapshot));
-  const delta = allEvents.length - lastFridayBaselineUnits;
-  const percentDelta = Math.round((delta / lastFridayBaselineUnits) * 100);
+  const totalMargin = selectMoneyStripTotal(snapshots);
+  const expectedByNow = proratedBaselineUnits(now, lastFridayBaselineUnits);
+  const delta = allEvents.length - expectedByNow;
+  const percentDelta = Math.round((delta / Math.max(expectedByNow, 1)) * 100);
   const chartData = eventsByHour(allEvents);
-  const marginChartData = chartData.map((point, index) => ({
-    hour: point.hour,
-    margin: Math.round(totalMargin * ((index + 1) / chartData.length)),
-  }));
+  const marginChartData = cumulativeMarginSeries(snapshots, allEvents);
   const latest = allEvents.at(-1);
   const { openClip } = useClipDrawer();
 
@@ -183,7 +143,7 @@ function MoneyStrip({
       <Panel className="relative min-h-[214px] overflow-hidden">
         <div className="relative z-[1]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
-            TODAY · {snapshots.length} JOBS RUNNING
+          TODAY · {snapshots.length} JOBS RUNNING
           </div>
           <div
             className={cn(
@@ -230,7 +190,7 @@ function MoneyStrip({
             delta >= 0 ? "bg-[var(--good-tint)] text-[var(--good)]" : "bg-[var(--bad-tint)] text-[var(--bad)]",
           )}
         >
-          {delta >= 0 ? "▲" : "▼"} {Math.abs(percentDelta)}% vs last Friday
+          {delta >= 0 ? "▲" : "▼"} {Math.abs(percentDelta)}% vs expected by now
         </div>
         <AreaChart
           data={chartData}
@@ -440,8 +400,9 @@ function TimeControls() {
 
 export function LiveDashboard() {
   const { now } = useTime();
+  const { jobs: consoleJobs } = useConsoleJobs();
   const current = now();
-  const snapshots = liveJobSnapshots(current);
+  const snapshots = selectRunningJobSnapshots(current, consoleJobs);
   const alerts = evaluateAlerts(current, snapshots);
 
   return (

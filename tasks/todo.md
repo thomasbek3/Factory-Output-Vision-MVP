@@ -1,3 +1,49 @@
+# Console App CP3 - 2026-07-05
+
+## Objective
+
+Build checkpoint 3 of the FactoryVision console app in `console/`: fix CP2 demo
+narrative coherence, complete the JOBS tab, and keep LIVE/JOBS money math on one
+shared selector.
+
+## Milestones
+
+- [x] CP3-1 Anchor seeded jobs to `demo_events.json.source_day` and prove the
+  14:32 demo verdicts: Ramirez green, Delgado tight, Alvarez losing.
+- [x] CP3-2 Fix LIVE KPI delta, green area sparklines, cumulative money ghost
+  chart, and ClipDrawer poster/autoplay behavior.
+- [x] CP3-3 Build DESIGN.md job cards, shared money strip selector, and Jobs tab
+  pause/finish states.
+- [x] CP3-4 Add + New Job sheet form, pure validation, Prisma-backed API route,
+  and immediate UI update.
+- [x] CP3-5 Run lint, build, vitest, dev/API smoke, docs-check, credential grep,
+  self-review diff, and commit without pushing.
+
+## Review
+
+- `cd console && npm run lint` -> passed.
+- `cd console && npm run build` -> passed; owner routes prerender, `/api/jobs`,
+  `/api/jobs/[id]`, and `/api/media/[...path]` are dynamic.
+- `cd console && npm test` -> `8 passed` for `lib/paceMath.test.ts`.
+- Demo 14:32 proof: Ramirez Fencing `IN THE GREEN`, `208/400` done, expected `208`,
+  projected `+$182`; Delgado HVAC `GETTING TIGHT`, `130/260` done, expected `150`,
+  projected `+$813`; Alvarez Gates `LOSING MONEY`, `26/180` done, expected `141`,
+  projected `+$588`; money strip total `+$1,582`.
+- `make docs-check` -> passed with the existing tracked artifact/cache warning.
+- Dev server smoke used `http://127.0.0.1:3001` because `3000` was already in use:
+  `/`, `/jobs`, and `/api/media/pallet-a/midday.jpg` returned `200`; poster content
+  type was `image/jpeg`.
+- API smoke: `POST /api/jobs` created `CP3 Smoke`, `GET /api/jobs` returned it, and
+  `PATCH /api/jobs/:id {"action":"finish"}` moved it to `finished`.
+- `console/scripts/prepare-demo-media.sh` regenerated six ignored MP4 loops and added
+  six ignored JPG posters under `console/demo-media/`.
+- Credential grep over the diff -> `credential_gate=0`.
+- No `app/`, `tests/`, `.claude/`, `.agents/`, `agents/`, or `agents/openai.yaml`
+  paths were changed.
+- Browser screenshot was not captured: Playwright is not installed in `console/`, and
+  no lightweight localhost screenshot tool was available without using Thomas's
+  desktop browser.
+
 # Console App CP2 - 2026-07-05
 
 ## Objective

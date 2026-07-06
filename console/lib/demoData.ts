@@ -1,4 +1,4 @@
-import { loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
+import { demoSourceDay, loadDemoCountEvents, type CountEventShape } from "@/lib/demoEvents";
 
 export type StationSeed = {
   id: string;
@@ -39,9 +39,9 @@ export type LaborConfigSeed = {
   workers_per_station: number;
 };
 
-export const demoDay = "2026-06-26";
-export const demoNowIso = "2026-06-26T14:32:00-07:00";
-export const lastFridayBaselineUnits = 380;
+export const demoDay = demoSourceDay;
+export const demoNowIso = `${demoSourceDay}T14:32:00-07:00`;
+export const lastFridayBaselineUnits = 440;
 
 export const laborConfig: LaborConfigSeed = {
   work_hours: {
@@ -76,6 +76,16 @@ export const stations: StationSeed[] = [
   },
 ];
 
+function demoIso(time: string) {
+  return `${demoSourceDay}T${time}-07:00`;
+}
+
+function demoIsoOffset(days: number, time: string) {
+  const date = new Date(`${demoSourceDay}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return `${date.toISOString().slice(0, 10)}T${time}-07:00`;
+}
+
 export const jobs: JobSeed[] = [
   {
     id: "job-ramirez-fencing",
@@ -85,22 +95,35 @@ export const jobs: JobSeed[] = [
     quote_usd: 1000,
     cogs_usd: 500,
     labor_budget_usd: 300,
-    created_at: "2026-06-26T07:00:00-07:00",
-    deadline: "2026-06-29T17:30:00-07:00",
+    created_at: demoIso("07:00:00"),
+    deadline: demoIsoOffset(3, "10:58:00"),
     station_ids: ["pallet-a"],
+    status: "active",
+  },
+  {
+    id: "job-delgado-hvac",
+    client: "Delgado HVAC",
+    title: "260 brackets",
+    units_required: 260,
+    quote_usd: 1600,
+    cogs_usd: 500,
+    labor_budget_usd: 100,
+    created_at: demoIso("07:00:00"),
+    deadline: demoIsoOffset(3, "09:34:00"),
+    station_ids: ["gate-line"],
     status: "active",
   },
   {
     id: "job-alvarez-gates",
     client: "Alvarez Gates",
-    title: "120 gates",
-    units_required: 120,
-    quote_usd: 2400,
-    cogs_usd: 1150,
-    labor_budget_usd: 800,
-    created_at: "2026-06-26T07:00:00-07:00",
-    deadline: "2026-06-29T17:30:00-07:00",
-    station_ids: ["gate-line"],
+    title: "180 gate frames",
+    units_required: 180,
+    quote_usd: 2100,
+    cogs_usd: 500,
+    labor_budget_usd: 100,
+    created_at: demoIsoOffset(-1, "07:00:00"),
+    deadline: demoIsoOffset(3, "09:00:00"),
+    station_ids: ["gate-line", "pallet-a"],
     status: "active",
   },
 ];
@@ -154,4 +177,10 @@ export function mediaUrlForStation(stationId: string, now: Date) {
   const station = stations.find((candidate) => candidate.id === stationId);
   const slug = station?.mediaSlug ?? stationId;
   return `/api/media/${slug}/${mediaBucketForTime(now)}.mp4`;
+}
+
+export function mediaPosterUrlForStation(stationId: string, now: Date) {
+  const station = stations.find((candidate) => candidate.id === stationId);
+  const slug = station?.mediaSlug ?? stationId;
+  return `/api/media/${slug}/${mediaBucketForTime(now)}.jpg`;
 }

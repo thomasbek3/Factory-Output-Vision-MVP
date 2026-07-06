@@ -5,6 +5,13 @@ import {
   moneyStripTotal,
   workMinutesBetween,
 } from "@/lib/paceMath";
+import { demoNowIso, jobs } from "@/lib/demoData";
+import { validateNewJobInput } from "@/lib/jobForm";
+import {
+  jobPaceSentence,
+  selectMoneyStripTotal,
+  selectRunningJobSnapshots,
+} from "@/lib/jobSelectors";
 import type { JobSeed, LaborConfigSeed } from "@/lib/demoData";
 
 const labor: LaborConfigSeed = {
@@ -86,5 +93,57 @@ describe("paceMath", () => {
     const b = { ...a, projected_margin: -100 };
 
     expect(moneyStripTotal([a, b])).toBeCloseTo(1200, 3);
+  });
+
+  it("holds the demo-day 14:32 narrative exactly", () => {
+    const snapshots = selectRunningJobSnapshots(new Date(demoNowIso), jobs);
+    const byClient = new Map(snapshots.map((snapshot) => [snapshot.job.client, snapshot]));
+
+    expect(snapshots).toHaveLength(3);
+    expect(byClient.get("Ramirez Fencing")?.snapshot.verdict).toBe("IN THE GREEN");
+    expect(byClient.get("Delgado HVAC")?.snapshot.verdict).toBe("GETTING TIGHT");
+    expect(byClient.get("Alvarez Gates")?.snapshot.verdict).toBe("LOSING MONEY");
+    expect(byClient.get("Ramirez Fencing")?.unitsDone).toBe(208);
+    expect(Math.round(byClient.get("Ramirez Fencing")?.snapshot.expected_units_by_now ?? 0)).toBe(208);
+    expect(selectMoneyStripTotal(snapshots)).toBeGreaterThan(0);
+  });
+
+  it("writes ahead, behind, and overdue job-card sentences", () => {
+    const now = new Date("2026-06-26T12:00:00-07:00");
+    const ahead = evaluateJobPace(fixtureJob, 60, now, labor);
+    const behind = evaluateJobPace(fixtureJob, 35, now, labor);
+    const overdue = evaluateJobPace(fixtureJob, 80, new Date("2026-06-26T18:00:00-07:00"), labor);
+
+    expect(jobPaceSentence(fixtureJob, ahead, now)).toContain("Finishes Monday morning.");
+    expect(jobPaceSentence(fixtureJob, behind, now)).toContain("Needs");
+    expect(jobPaceSentence(fixtureJob, overdue, new Date("2026-06-26T18:00:00-07:00"))).toContain("overdue");
+  });
+
+  it("validates new-job form input as a pure function", () => {
+    expect(
+      validateNewJobInput({
+        client: "",
+        title: "",
+        units_required: 0,
+        quote_usd: 0,
+        cogs_usd: 0,
+        labor_budget_usd: 0,
+        deadline: "",
+        station_ids: [],
+      }).ok,
+    ).toBe(false);
+
+    expect(
+      validateNewJobInput({
+        client: "Northline",
+        title: "300 brackets",
+        units_required: 300,
+        quote_usd: 2400,
+        cogs_usd: 900,
+        labor_budget_usd: 600,
+        deadline: "2026-06-30",
+        station_ids: ["pallet-a"],
+      }).ok,
+    ).toBe(true);
   });
 });

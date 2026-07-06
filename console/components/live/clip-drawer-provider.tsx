@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import {
   eventsForStation,
   findEventByClipId,
+  mediaPosterUrlForStation,
   jobForEvent,
   mediaUrlForStation,
   stationForEvent,
@@ -107,6 +108,7 @@ export function ClipDrawerProvider({ children }: { children: ReactNode }) {
 
     const onLoaded = () => {
       video.currentTime = seekSecond;
+      video.muted = true;
       void video.play().catch(() => undefined);
     };
     const onTimeUpdate = () => {
@@ -190,7 +192,9 @@ export function ClipDrawerProvider({ children }: { children: ReactNode }) {
                   key={activeEvent.clip_id}
                   ref={videoRef}
                   src={mediaUrlForStation(activeEvent.station_id, timestamp)}
+                  poster={mediaPosterUrlForStation(activeEvent.station_id, timestamp)}
                   className="aspect-video w-full rounded-lg bg-black object-cover ring-1 ring-[var(--border)]"
+                  autoPlay
                   controls
                   muted
                   loop

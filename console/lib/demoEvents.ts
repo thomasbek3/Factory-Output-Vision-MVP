@@ -37,14 +37,45 @@ type DemoEventsFile = {
 
 const demo = demoEvents as DemoEventsFile;
 
-export function loadDemoCountEvents(): CountEventShape[] {
-  return demo.events.map((event) => {
-    const stationId = event.station ?? demo.station;
+export const demoSourceDay = demo.source_day;
 
-    return {
-      id: event.candidate_id,
+function jobIdForRawEvent(event: DemoEventRecord, stationId: string) {
+  if (stationId === "gate-line" && event.wall_clock < "12:00:00") {
+    return "job-delgado-hvac";
+  }
+  if (stationId === "gate-line") {
+    return "job-alvarez-gates";
+  }
+  return "job-ramirez-fencing";
+}
+
+function unitQuantityForJobEvent(jobId: string, sequence: number) {
+  if (jobId === "job-ramirez-fencing") {
+    return sequence <= 44 ? 3 : 2;
+  }
+  if (jobId === "job-delgado-hvac") {
+    return sequence <= 10 ? 9 : 8;
+  }
+  if (jobId === "job-alvarez-gates") {
+    return sequence <= 6 ? 2 : 1;
+  }
+  return 1;
+}
+
+export function loadDemoCountEvents(): CountEventShape[] {
+  const jobSequences = new Map<string, number>();
+
+  return demo.events.flatMap((event) => {
+    const stationId = event.station ?? demo.station;
+    const jobId = jobIdForRawEvent(event, stationId);
+    const sequence = (jobSequences.get(jobId) ?? 0) + 1;
+    jobSequences.set(jobId, sequence);
+    const quantity = unitQuantityForJobEvent(jobId, sequence);
+
+    return Array.from({ length: quantity }, (_, unitIndex) => ({
+      id: `${event.candidate_id}-u${String(unitIndex + 1).padStart(2, "0")}`,
       station_id: stationId,
-      job_id: stationId === "gate-line" ? "job-alvarez-gates" : "job-ramirez-fencing",
+      job_id: jobId,
       ts: `${demo.source_day}T${event.wall_clock}-07:00`,
       clip_id: `clip-${event.candidate_id}`,
       source: "tripwire",
@@ -57,7 +88,7 @@ export function loadDemoCountEvents(): CountEventShape[] {
         confidence: event.confidence,
       },
       disputed: false,
-    };
+    }));
   });
 }
 

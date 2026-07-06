@@ -5,6 +5,11 @@ import { Readable } from "node:stream";
 import { NextRequest } from "next/server";
 
 const mediaRoot = path.join(process.cwd(), "demo-media");
+const contentTypes: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".mp4": "video/mp4",
+};
 
 function safeMediaPath(parts: string[]) {
   const resolved = path.resolve(mediaRoot, ...parts);
@@ -34,9 +39,10 @@ export async function GET(
 
   const size = statSync(filePath).size;
   const range = request.headers.get("range");
+  const contentType = contentTypes[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
   const headers = {
     "Accept-Ranges": "bytes",
-    "Content-Type": "video/mp4",
+    "Content-Type": contentType,
     "Cache-Control": "public, max-age=3600",
   };
 

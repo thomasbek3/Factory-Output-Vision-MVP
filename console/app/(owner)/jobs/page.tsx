@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/chrome/placeholder-page";
+import { JobsDashboard } from "@/components/jobs/jobs-dashboard";
 
 export default function JobsPage() {
-  return <PlaceholderPage title="Jobs" />;
+  return <JobsDashboard />;
 }

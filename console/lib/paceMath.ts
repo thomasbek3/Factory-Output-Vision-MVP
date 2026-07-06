@@ -51,24 +51,41 @@ function parseClock(value: string) {
   return hours * 60 + minutes;
 }
 
+function dateKeyAfter(dateKey: string, days: number) {
+  const date = new Date(`${dateKey}T12:00:00-07:00`);
+  date.setDate(date.getDate() + days);
+  return pacificParts(date).dateKey;
+}
+
+function dateForPacificMinute(dateKey: string, minute: number) {
+  const hours = Math.floor(minute / 60);
+  const minutes = minute % 60;
+  return new Date(
+    `${dateKey}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00-07:00`,
+  );
+}
+
 export function workMinutesBetween(start: Date, end: Date, labor: LaborConfigSeed) {
   if (end <= start) return 0;
 
   let minutes = 0;
-  let cursor = new Date(start);
-  cursor.setSeconds(0, 0);
+  let dateKey = pacificParts(start).dateKey;
+  const endDateKey = pacificParts(end).dateKey;
 
-  while (cursor < end) {
-    const parts = pacificParts(cursor);
+  while (dateKey <= endDateKey) {
+    const dayMidpoint = new Date(`${dateKey}T12:00:00-07:00`);
+    const parts = pacificParts(dayMidpoint);
     const window = labor.work_hours[parts.weekday];
     if (window) {
       const startMinute = parseClock(window.start);
       const endMinute = parseClock(window.end);
-      if (parts.minutes >= startMinute && parts.minutes < endMinute) {
-        minutes += 1;
-      }
+      const windowStart = dateForPacificMinute(dateKey, startMinute);
+      const windowEnd = dateForPacificMinute(dateKey, endMinute);
+      const segmentStart = new Date(Math.max(start.getTime(), windowStart.getTime()));
+      const segmentEnd = new Date(Math.min(end.getTime(), windowEnd.getTime()));
+      minutes += Math.max(0, (segmentEnd.getTime() - segmentStart.getTime()) / 60_000);
     }
-    cursor = new Date(cursor.getTime() + 60_000);
+    dateKey = dateKeyAfter(dateKey, 1);
   }
 
   return minutes;
