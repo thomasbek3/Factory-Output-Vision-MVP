@@ -99,6 +99,13 @@ ensure_build
 backoff=1
 log "starting supervisor loop: next start --hostname ${HOSTNAME_BIND} --port ${PORT}"
 while true; do
+  # If the volume dropped and remounted, our cwd handle is dead (uv_cwd ENOENT)
+  # and every child spawn fails forever. Exit so launchd respawns us with a
+  # fresh cwd resolved from the remounted path.
+  if ! cd "${CONSOLE_DIR}" 2>/dev/null; then
+    log "FATAL: console dir unreachable (volume remounted?) — exiting for launchd respawn"
+    exit 1
+  fi
   start_ts=$(date +%s)
   npx next start --hostname "${HOSTNAME_BIND}" --port "${PORT}" 2>&1 | tee -a "${LOG_FILE}"
   exit_code=${PIPESTATUS[0]}

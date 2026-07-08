@@ -56,6 +56,13 @@ relay_camera() {
   log "${tag}" "relay armed → station '${slug}' (dir ${out_dir})"
 
   while true; do
+    # Volume drop/remount kills our cwd handle (uv_cwd/spawn ENOENT forever).
+    # Exit so launchd respawns the relay with a fresh cwd.
+    if ! cd "${MEDIA_ROOT}" 2>/dev/null; then
+      log "${tag}" "FATAL: media root unreachable (volume remounted?) — exiting for launchd respawn"
+      exit 1
+    fi
+    mkdir -p "${out_dir}"
     log "${tag}" "starting ffmpeg RTSP→HLS"
     # -c copy: remux only, no CPU-heavy re-encode. delete_segments+temp_file keep
     # the directory bounded and readers from seeing half-written segments.
