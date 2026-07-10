@@ -47,6 +47,18 @@ function formatClock(iso: string) {
   }).format(new Date(iso));
 }
 
+function formatVideoTime(seconds: number) {
+  const total = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function formatTimeLeft(seconds: number) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return minutes ? `${minutes}m ${secs}s` : `${secs}s`;
+}
+
 function clickWallClock(chunk: ReviewChunk, click: TallyClick) {
   return new Date(new Date(chunk.startIso).getTime() + Math.min(900, Math.max(0, click.videoSec)) * 1000).toISOString();
 }
@@ -57,11 +69,15 @@ export function ReviewTallyConsole() {
   const [payload, setPayload] = useState<NextChunkResponse | null>(null);
   const [clicks, setClicks] = useState<TallyClick[]>([]);
   const [speed, setSpeed] = useState<5 | 10 | 15>(10);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [screen, setScreen] = useState<"loading" | "tally" | "summary">("loading");
   const [pressing, setPressing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
   const chunk = payload?.chunk ?? null;
+  const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
+  const timeLeft = duration > 0 ? Math.max(0, duration - currentTime) / speed : 0;
   const lagMinutes = useMemo(() => {
     if (!chunk) return 0;
     return Math.round((new Date("2026-06-26T14:32:00-07:00").getTime() - new Date(chunk.endIso).getTime()) / 60_000);
@@ -78,6 +94,8 @@ export function ReviewTallyConsole() {
     const next = (await response.json()) as NextChunkResponse;
     setPayload(next);
     setClicks([]);
+    setCurrentTime(0);
+    setDuration(0);
     setStatus(null);
     setScreen("tally");
   }, []);
@@ -207,10 +225,36 @@ export function ReviewTallyConsole() {
             muted
             playsInline
             onLoadedMetadata={() => {
-              if (videoRef.current) videoRef.current.playbackRate = speed;
+              if (!videoRef.current) return;
+              videoRef.current.playbackRate = speed;
+              setCurrentTime(videoRef.current.currentTime);
+              setDuration(Number.isFinite(videoRef.current.duration) ? videoRef.current.duration : 0);
             }}
+            onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
             onEnded={() => setScreen("summary")}
           />
+          <div className="mt-3">
+            <button
+              type="button"
+              className="flex w-full cursor-pointer items-center py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+              aria-label="Seek video"
+              onPointerDown={(event) => {
+                if (!videoRef.current || duration <= 0) return;
+                const rect = event.currentTarget.getBoundingClientRect();
+                const fraction = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+                videoRef.current.currentTime = fraction * duration;
+                setCurrentTime(videoRef.current.currentTime);
+              }}
+            >
+              <span className="h-1 w-full overflow-hidden rounded-full bg-white/[.08]">
+                <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${progress * 100}%` }} />
+              </span>
+            </button>
+            <div className="mt-1 flex items-center justify-between gap-3 text-[12px] tabular-nums text-[var(--text-dim)]">
+              <span>{formatVideoTime(currentTime)} / {formatVideoTime(duration)}</span>
+              <span>~{formatTimeLeft(timeLeft)} left at {speed}x</span>
+            </div>
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {[5, 10, 15].map((value) => (
               <button
