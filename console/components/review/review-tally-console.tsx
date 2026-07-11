@@ -8,7 +8,9 @@ import type { ReviewDayQueueRow } from "@/lib/reviewStore";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
 import { cn, isTypingTarget } from "@/lib/utils";
 
-const reviewSpeeds = [1, 2, 5, 10, 15, 20] as const;
+// 16x is the hard ceiling browsers allow for HTMLMediaElement.playbackRate
+// (Chrome/Safari throw NotSupportedError above it — a 20x option crashes the app).
+const reviewSpeeds = [1, 2, 5, 10, 15, 16] as const;
 type ReviewSpeed = (typeof reviewSpeeds)[number];
 
 type NextChunkResponse = {
@@ -150,7 +152,12 @@ export function ReviewTallyConsole() {
   }, [loadNext]);
 
   useEffect(() => {
-    if (videoRef.current) videoRef.current.playbackRate = speed;
+    if (!videoRef.current) return;
+    try {
+      videoRef.current.playbackRate = speed;
+    } catch {
+      videoRef.current.playbackRate = 16;
+    }
   }, [speed, chunk]);
 
   const addCount = useCallback(() => {
@@ -312,7 +319,11 @@ export function ReviewTallyConsole() {
               playsInline
               onLoadedMetadata={() => {
                 if (!videoRef.current) return;
-                videoRef.current.playbackRate = speed;
+                try {
+                  videoRef.current.playbackRate = speed;
+                } catch {
+                  videoRef.current.playbackRate = 16;
+                }
                 setCurrentTime(videoRef.current.currentTime);
                 setDuration(Number.isFinite(videoRef.current.duration) ? videoRef.current.duration : 0);
               }}
