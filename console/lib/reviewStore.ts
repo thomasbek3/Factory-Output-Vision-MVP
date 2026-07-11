@@ -24,6 +24,22 @@ type Store = {
   humanEvents: HumanTallyEvent[];
   sessions: Record<string, { name: string; startedAtIso: string; chunksDone: number; clicks: number }>;
   golden: Record<string, { correct: number; total: number }>;
+  submissions: Record<string, {
+    chunkId: string;
+    reviewerId: string;
+    events: HumanTallyEvent[];
+    stats: { chunksDone: number; clicks: number; chunksPerHour: number };
+  }>;
+};
+
+export type ReviewDayQueueRow = {
+  id: string;
+  order: number;
+  stationName: string;
+  timeRange: string;
+  state: "working" | "done" | "pending" | "locked-by-other";
+  count: number | null;
+  problem: string | null;
 };
 
 const globalForReview = globalThis as unknown as { factoryVisionReviewStore?: Store };
@@ -41,6 +57,7 @@ function createStore(): Store {
       "m-reyes": { correct: 23, total: 24 },
       "a-kim": { correct: 19, total: 20 },
     },
+    submissions: {},
   };
 }
 
@@ -88,9 +105,16 @@ export function confirmChunk(
   chunkId: string,
   reviewerId: string,
   clicks: TallyClick[],
+  idempotencyKey: string,
+  problem?: string,
   now = new Date(demoNowIso),
 ) {
   const store = reviewStore();
+  const prior = store.submissions[idempotencyKey];
+  if (prior && prior.chunkId === chunkId && prior.reviewerId === reviewerId) {
+    const chunk = store.chunks.find((candidate) => candidate.id === chunkId)!;
+    return { ok: true as const, chunk, events: prior.events, stats: prior.stats };
+  }
   releaseExpiredLocks(store.chunks, now);
   const chunk = store.chunks.find((candidate) => candidate.id === chunkId);
 
@@ -101,11 +125,12 @@ export function confirmChunk(
     return { ok: false as const, status: 409, error: "Chunk is not locked by this reviewer" };
   }
 
-  const events = tallyClicksToEvents(chunk, clicks, reviewerId, now);
+  const events = problem ? [] : tallyClicksToEvents(chunk, clicks, reviewerId, now);
   store.humanEvents.push(...events);
   chunk.state = "processed";
   chunk.processedBy = reviewerId;
   chunk.processedAtIso = now.toISOString();
+  chunk.problem = problem ?? null;
   chunk.lockedBy = null;
   chunk.lockedUntilIso = null;
 
@@ -116,15 +141,40 @@ export function confirmChunk(
     clicks: 0,
   });
   session.chunksDone += 1;
-  session.clicks += clicks.length;
+  session.clicks += events.length;
 
-  if (chunk.isGolden && chunk.goldenCount !== null) {
+  if (!problem && chunk.isGolden && chunk.goldenCount !== null) {
     const accuracy = (store.golden[reviewerId] ??= { correct: 0, total: 0 });
     accuracy.total += 1;
     if (clicks.length === chunk.goldenCount) accuracy.correct += 1;
   }
 
-  return { ok: true as const, chunk, events, stats: sessionStats(reviewerId, now) };
+  const stats = sessionStats(reviewerId, now);
+  store.submissions[idempotencyKey] = { chunkId, reviewerId, events, stats };
+  return { ok: true as const, chunk, events, stats };
+}
+
+export function getDayQueue(reviewerId: string, now = new Date(demoNowIso)): ReviewDayQueueRow[] {
+  const store = reviewStore();
+  releaseExpiredLocks(store.chunks, now);
+  const counts = new Map<string, number>();
+  for (const event of store.humanEvents) {
+    counts.set(event.clip_id.split("-tally-")[0], (counts.get(event.clip_id.split("-tally-")[0]) ?? 0) + 1);
+  }
+
+  return store.chunks.map((chunk, index) => ({
+    id: chunk.id,
+    order: index + 1,
+    stationName: chunk.stationName,
+    timeRange: `${chunk.startIso.slice(11, 16)}-${chunk.endIso.slice(11, 16)}`,
+    state: chunk.state === "processed"
+      ? "done"
+      : chunk.state === "locked"
+        ? chunk.lockedBy === reviewerId ? "working" : "locked-by-other"
+        : "pending",
+    count: chunk.state === "processed" ? counts.get(chunk.id) ?? 0 : null,
+    problem: chunk.problem,
+  }));
 }
 
 export function sessionStats(reviewerId: string, now = new Date(demoNowIso)) {

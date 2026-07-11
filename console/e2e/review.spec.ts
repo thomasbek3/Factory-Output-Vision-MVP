@@ -4,6 +4,8 @@ import { assertNoConsoleErrors, collectConsoleErrors } from "./helpers";
 test.describe("/review", () => {
   test("chunk loads with video, spacebar tallies, Z undoes, confirm writes events", async ({ page, request }) => {
     const errors = collectConsoleErrors(page);
+    // The console defaults to Spanish for LatAm workers; this spec asserts the EN strings.
+    await page.addInitScript(() => window.localStorage.setItem("factoryvision-review-language", "en"));
     await page.goto("/review");
 
     // Wait for a chunk to lease and render.
@@ -29,7 +31,7 @@ test.describe("/review", () => {
     await page.keyboard.press("z"); // undo one -> net 2
 
     // Running tally in the aside reflects the net count.
-    await expect(page.locator("aside").getByText("2", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("running-tally")).toHaveText("2");
 
     // End chunk -> summary -> CONFIRM writes the events.
     await page.getByRole("button", { name: /end chunk/i }).click();
@@ -47,6 +49,7 @@ test.describe("/review", () => {
 
   // G7 — reviewer clarity.
   test("shows the instruction banner, humanized lag, hotkeys and walk-away note", async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem("factoryvision-review-language", "en"));
     await page.goto("/review");
     const root = page.locator("[data-review-route='ready']");
     await expect(root).toBeVisible({ timeout: 15000 });

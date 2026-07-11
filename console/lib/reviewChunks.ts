@@ -20,6 +20,7 @@ export type ReviewChunk = {
   lockedUntilIso: string | null;
   processedBy: string | null;
   processedAtIso: string | null;
+  problem: string | null;
   isGolden: boolean;
   goldenCount: number | null;
 };
@@ -81,6 +82,7 @@ export function buildDemoReviewChunks() {
         lockedUntilIso: null,
         processedBy: null,
         processedAtIso: null,
+        problem: null,
         isGolden,
         goldenCount: isGolden ? 6 : null,
       });

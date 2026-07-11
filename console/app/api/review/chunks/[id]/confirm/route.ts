@@ -24,7 +24,9 @@ export async function POST(
   const body = (await request.json()) as Record<string, unknown>;
   const reviewerId = String(body.reviewerId || "live-session");
   const now = new Date(String(body.now || demoNowIso));
-  const result = confirmChunk(id, reviewerId, normalizeClicks(body.clicks), now);
+  const idempotencyKey = String(body.idempotencyKey || `${id}:${reviewerId}:${now.toISOString()}`);
+  const problem = typeof body.problem === "string" && body.problem ? body.problem : undefined;
+  const result = confirmChunk(id, reviewerId, normalizeClicks(body.clicks), idempotencyKey, problem, now);
 
   if (!result.ok) {
     return Response.json({ error: result.error }, { status: result.status });
