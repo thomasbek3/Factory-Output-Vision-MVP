@@ -68,7 +68,7 @@ function clickWallClock(chunk: ReviewChunk, click: TallyClick) {
 export function ReviewTallyConsole() {
   const reviewerId = "live-session";
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const languageRef = useRef<ReviewLanguage>("es");
+  const languageRef = useRef<ReviewLanguage>("en");
   const [payload, setPayload] = useState<NextChunkResponse | null>(null);
   const [clicks, setClicks] = useState<TallyClick[]>([]);
   const [speed, setSpeed] = useState<5 | 10 | 15>(10);
@@ -77,7 +77,7 @@ export function ReviewTallyConsole() {
   const [screen, setScreen] = useState<"loading" | "tally" | "summary">("loading");
   const [pressing, setPressing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [language, setLanguage] = useState<ReviewLanguage>("es");
+  const [language, setLanguage] = useState<ReviewLanguage>("en");
   const [dayQueue, setDayQueue] = useState<ReviewDayQueueRow[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
@@ -273,7 +273,7 @@ export function ReviewTallyConsole() {
             {payload.stats.chunksPerHour} {strings.chunksPerHour}
           </span>
           <div className="flex rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-1" aria-label={strings.languageLabel}>
-            {(["es", "en"] as const).map((value) => (
+            {(["en", "es"] as const).map((value) => (
               <button
                 key={value}
                 type="button"
