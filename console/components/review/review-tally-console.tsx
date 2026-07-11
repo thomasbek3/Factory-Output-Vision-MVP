@@ -8,6 +8,9 @@ import type { ReviewDayQueueRow } from "@/lib/reviewStore";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
 import { cn, isTypingTarget } from "@/lib/utils";
 
+const reviewSpeeds = [1, 2, 5, 10, 15, 20] as const;
+type ReviewSpeed = (typeof reviewSpeeds)[number];
+
 type NextChunkResponse = {
   chunk: ReviewChunk;
   nextChunk: ReviewChunk | null;
@@ -71,7 +74,7 @@ export function ReviewTallyConsole() {
   const languageRef = useRef<ReviewLanguage>("en");
   const [payload, setPayload] = useState<NextChunkResponse | null>(null);
   const [clicks, setClicks] = useState<TallyClick[]>([]);
-  const [speed, setSpeed] = useState<5 | 10 | 15>(10);
+  const [speed, setSpeed] = useState<ReviewSpeed>(10);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [screen, setScreen] = useState<"loading" | "tally" | "summary">("loading");
@@ -305,7 +308,6 @@ export function ReviewTallyConsole() {
               src={chunk.mediaUrl}
               poster={chunk.posterUrl}
               className="h-full w-full bg-black object-contain"
-              autoPlay
               muted
               playsInline
               onLoadedMetadata={() => {
@@ -358,7 +360,7 @@ export function ReviewTallyConsole() {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {[5, 10, 15].map((value) => (
+            {reviewSpeeds.map((value) => (
               <button
                 key={value}
                 type="button"
@@ -366,7 +368,7 @@ export function ReviewTallyConsole() {
                   "rounded-lg px-3 py-2 text-[13px] font-semibold",
                   speed === value ? "bg-[var(--accent)] text-[#11100d]" : "border border-[var(--border)] bg-[var(--panel-2)] text-[var(--text-mut)]",
                 )}
-                onClick={() => setSpeed(value as 5 | 10 | 15)}
+                onClick={() => setSpeed(value)}
               >
                 {value}x
               </button>
