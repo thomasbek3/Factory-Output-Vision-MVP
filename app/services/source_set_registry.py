@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.services.exam_firewall import (
@@ -57,13 +57,19 @@ def _parse_source_window(source_set: str, payload: object) -> SourceWindow:
     )
 
 
-def validate_source_sets(payload: object) -> tuple[SourceWindow, ...]:
+def validate_source_sets(
+    payload: object,
+    *,
+    cross_set_context_seconds: float = 5,
+) -> tuple[SourceWindow, ...]:
     if not isinstance(payload, dict):
         raise ValueError("source-set registry must be an object")
     if payload.get("schema_version") != "factory-vision-review-source-sets-v1":
         raise ValueError("unsupported source-set registry schema")
     if payload.get("fail_closed") is not True:
         raise ValueError("source-set registry must declare fail_closed=true")
+    if cross_set_context_seconds < 0:
+        raise ValueError("cross_set_context_seconds must not be negative")
 
     sets = payload.get("sets")
     if not isinstance(sets, dict) or set(sets) != REQUIRED_SOURCE_SETS:
@@ -82,7 +88,12 @@ def validate_source_sets(payload: object) -> tuple[SourceWindow, ...]:
         for right in windows[index + 1 :]:
             if left.lineage_source_sha256.isdisjoint(right.lineage_source_sha256):
                 continue
-            if left.start_at < right.end_at and right.start_at < left.end_at:
+            margin = (
+                timedelta(seconds=cross_set_context_seconds)
+                if left.source_set != right.source_set
+                else timedelta(0)
+            )
+            if left.start_at < right.end_at + margin and right.start_at < left.end_at + margin:
                 raise ValueError(
                     f"source windows in {left.source_set} and {right.source_set} overlap"
                 )
@@ -118,6 +129,19 @@ def validate_source_sets_against_exam(
                 raise ValueError(
                     f"{window.source_set} overlaps exam interval {protected.interval_id}"
                 )
+
+    for holdout in holdouts:
+        containing_intervals = [
+            protected
+            for protected in protected_intervals
+            if protected.source_sha256 in holdout.lineage_source_sha256
+            and protected.start_at <= holdout.start_at
+            and protected.end_at >= holdout.end_at
+        ]
+        if not containing_intervals:
+            raise ValueError(
+                "ai_evaluation_holdout window is not contained in the exam firewall"
+            )
 
 
 def load_source_sets(

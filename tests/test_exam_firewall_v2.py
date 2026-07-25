@@ -90,6 +90,19 @@ def test_context_clipped_at_exam_boundary_is_eligible() -> None:
     )
 
 
+def test_naive_assignment_timestamp_fails_closed() -> None:
+    intervals = load_exam_firewall(FIREWALL_PATH)
+    protected = intervals[0]
+
+    with pytest.raises(ValueError, match="timezone-aware UTC"):
+        assignment_overlaps_exam(
+            intervals,
+            source_sha256=protected.source_sha256,
+            start_at=protected.start_at.replace(tzinfo=None),
+            end_at=protected.end_at.replace(tzinfo=None),
+        )
+
+
 def test_invalid_registry_fails_closed(tmp_path: Path) -> None:
     payload = json.loads(FIREWALL_PATH.read_text(encoding="utf-8"))
     del payload["intervals"][0]["source_sha256"]

@@ -15,6 +15,9 @@ CONTRACT_FILES = [
 
 
 def test_current_product_copy_does_not_claim_unproved_human_ai_verification() -> None:
+    missing = [path for path in CONTRACT_FILES if not path.is_file()]
+    assert not missing, f"contract files missing: {missing}"
+
     contents = {
         path.relative_to(REPO_ROOT).as_posix(): path.read_text(encoding="utf-8")
         for path in CONTRACT_FILES
@@ -45,11 +48,13 @@ def test_design_contract_contains_dated_verification_copy_amendment() -> None:
 
 def test_owner_console_has_no_named_reviewer_claim() -> None:
     console_root = REPO_ROOT / "console"
-    owner_source = "\n".join(
-        path.read_text(encoding="utf-8")
+    owner_paths = [
+        path
         for path in console_root.rglob("*.tsx")
         if "components/review/" not in path.as_posix()
-    )
+    ]
+    assert owner_paths, "owner console scan found no TSX files"
+    owner_source = "\n".join(path.read_text(encoding="utf-8") for path in owner_paths)
 
     assert "Verified by M. Reyes" not in owner_source
     assert "M. Reyes" not in owner_source

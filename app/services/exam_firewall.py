@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -89,6 +89,16 @@ def assignment_overlaps_exam(
 ) -> bool:
     if not SHA256_PATTERN.fullmatch(source_sha256):
         raise ValueError("assignment source_sha256 must be 64 lowercase hex characters")
+    timestamps = [start_at, end_at]
+    if presented_start_at is not None:
+        timestamps.append(presented_start_at)
+    if presented_end_at is not None:
+        timestamps.append(presented_end_at)
+    if any(
+        value.tzinfo is None or value.utcoffset() != timezone.utc.utcoffset(value)
+        for value in timestamps
+    ):
+        raise ValueError("assignment and presented timestamps must be timezone-aware UTC")
     if start_at >= end_at:
         raise ValueError("assignment start_at must precede end_at")
     visible_start_at = presented_start_at or start_at

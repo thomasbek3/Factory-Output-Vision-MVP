@@ -331,6 +331,10 @@ interval may not create duplicate chunks.
   disables tally input there. An event exactly at `end_at` belongs to the next
   chunk.
 - Rendition padding is clipped at exam-firewall and protected-source boundaries.
+  Protected-source boundaries include every resolver-calibration,
+  AI-evaluation-holdout, practice, and qualification interval declared in the
+  source-set registry. Different source sets maintain at least the full context
+  duration between visible intervals unless presentation is clipped.
   Assignment eligibility is evaluated against the complete visible rendition
   interval, including context, not only the canonical chunk interval.
 - Leading context copy is
@@ -608,6 +612,11 @@ Owner publication always waits for `human_final_at`. Selected audits therefore
 have a separate completion-latency cohort and are excluded from the provisional
 90-minute non-audited target until real audit handle time is measured. No count
 that can still be changed by a required audit is owner-visible.
+
+Chunks whose publication depends on a successor seam result form a separate
+latency cohort. Their structural floor includes the successor's readiness and
+resolution time, so they are excluded from the provisional 90-minute
+non-audited/non-seam target and reported separately.
 
 Later owner disputes create a new immutable version and do not expose AI output
 to the adjudicator.
@@ -1002,6 +1011,7 @@ Operational targets:
 | Eligible chunk to first lease p95 | under 15 minutes |
 | Source end to `human_final_at` p95, non-audited chunks | under 90 minutes (design target pending Tier B measurement) |
 | Source end to `human_final_at` p95, selected audits | measured and reported separately before a target is approved |
+| Source end to `human_final_at` p95, seam-dependent chunks | measured and reported separately with successor wait time |
 | Successful draft persistence | 99.9 percent |
 | Duplicate final submissions | zero |
 | Cross-tenant access | zero |

@@ -59,3 +59,32 @@ neither reviewer identity nor model output.
 The same pass also led to cross-registry exam containment, same-set duplicate
 rejection, explicit clipped presentation intervals, Spanish `+1 PIEZA` copy,
 and separate non-audited/audited publication-latency cohorts.
+
+## Third closure pass
+
+- Resolved model: `claude-fable-5`
+- Effort: `high`
+- Session: `80e9a9de-aa82-4292-bfba-24e5724a9012`
+- Reported turns: 23
+- Verdict: **PASS**
+
+Fable verified that all nine prior Opus P0 findings and all six original Fable
+minimum changes are closed. Its remaining P1/P2 findings were remediated before
+the Opus gate:
+
+- holdout-to-firewall containment is now bidirectional;
+- different source sets enforce a five-second context isolation margin;
+- missing contract files and an empty owner-component scan fail explicitly;
+- assignment/presentation timestamps must be timezone-aware UTC;
+- seam-dependent chunks have a separate latency cohort.
+
+Fresh local evidence after those changes:
+
+- focused firewall/source-set/copy contract tests: `23 passed`;
+- complete backend suite: `644 passed`, with 16 dependency warnings;
+- repository docs/hygiene check: passed;
+- `git show 723df77054289be5e0f9992b97b0817f76bf4621` confirms the widened
+  amendment includes both `DESIGN.md` and `docs/specs/app_spec_v1.md`.
+
+Fable checkpoint status: **PASS**. Tier B and Tier C evidence remains explicitly
+blocked and is not represented as completed.

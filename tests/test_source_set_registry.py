@@ -45,7 +45,36 @@ def test_duplicate_window_in_same_set_fails_closed() -> None:
         validate_source_sets(payload)
 
 
-def test_adjacent_windows_do_not_overlap() -> None:
+def test_windows_with_five_second_isolation_margin_do_not_overlap() -> None:
+    payload = {
+        "schema_version": "factory-vision-review-source-sets-v1",
+        "fail_closed": True,
+        "sets": {
+            "resolver_calibration": [
+                {
+                    "source_sha256": "b" * 64,
+                    "lineage_source_sha256": ["b" * 64],
+                    "start_at": "2026-07-25T10:00:00Z",
+                    "end_at": "2026-07-25T10:15:00Z"
+                }
+            ],
+            "ai_evaluation_holdout": [],
+            "practice": [
+                {
+                    "source_sha256": "b" * 64,
+                    "lineage_source_sha256": ["b" * 64],
+                    "start_at": "2026-07-25T10:15:05Z",
+                    "end_at": "2026-07-25T10:30:00Z"
+                }
+            ],
+            "qualification": []
+        }
+    }
+
+    assert len(validate_source_sets(payload)) == 2
+
+
+def test_adjacent_cross_set_windows_fail_context_isolation() -> None:
     payload = {
         "schema_version": "factory-vision-review-source-sets-v1",
         "fail_closed": True,
@@ -71,7 +100,8 @@ def test_adjacent_windows_do_not_overlap() -> None:
         }
     }
 
-    assert len(validate_source_sets(payload)) == 2
+    with pytest.raises(ValueError, match="overlap"):
+        validate_source_sets(payload)
 
 
 def test_reencoded_source_with_shared_lineage_cannot_cross_sets() -> None:
@@ -118,3 +148,27 @@ def test_exam_interval_missing_from_holdout_fails_closed() -> None:
 
     with pytest.raises(ValueError, match="not contained"):
         validate_source_sets_against_exam(windows, (unmirrored,))
+
+
+def test_holdout_missing_from_exam_firewall_fails_closed() -> None:
+    windows = list(
+        validate_source_sets(
+            json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        )
+    )
+    existing = windows[0]
+    windows.append(
+        type(existing)(
+            source_set="ai_evaluation_holdout",
+            source_sha256="f" * 64,
+            lineage_source_sha256=frozenset({"f" * 64}),
+            start_at=existing.start_at,
+            end_at=existing.end_at,
+        )
+    )
+
+    with pytest.raises(ValueError, match="not contained in the exam firewall"):
+        validate_source_sets_against_exam(
+            tuple(windows),
+            load_exam_firewall(EXAM_FIREWALL_PATH),
+        )
