@@ -439,16 +439,16 @@ export function MoneyStrip({
 
       <Panel className={cn("flex min-h-[208px] flex-col overflow-hidden pb-4", scale === "tv" && "hidden")}>
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-dim)]">
-          COUNTS VERIFIED
+          VERIFICATION STATUS
         </div>
         <div className="mt-4 text-[30px] font-extrabold leading-none tracking-[-0.01em] tabular-nums text-[var(--text)]">
-          100%
+          DEMO
         </div>
         <div className="mt-3 inline-flex rounded-full bg-[var(--good-tint)] px-2 py-1 text-[12px] font-semibold text-[var(--good)]">
-          HUMAN+AI
+          SEEDED REVIEW
         </div>
         <p className="mt-5 text-[14px] leading-6 text-[var(--text-mut)]">
-          Every count has a reviewed clip behind it. Tap a number and the proof opens.
+          Seeded review events power this demo. Production counts show their source and verified-through time.
         </p>
         <AreaSpark values={[94, 95, 96, 97, 98, 99, 100, 100, 100, 100, 100]} color="good" size="kpi" endpoint className="-mx-2 mt-auto" aria-label="verification trend" />
       </Panel>

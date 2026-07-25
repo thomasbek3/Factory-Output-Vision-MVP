@@ -7,6 +7,12 @@ Every screen, mockup, render brief, and line of UI code follows THIS file. When 
 
 Product surfaces: **LIVE** (camera wall) · **REPLAY** (DVR + placement markers) · **TODAY** (jobs + stations) · **PROJECTS** (job history + quote calibration).
 
+**Verification-copy amendment (2026-07-25):** the visual contract remains
+locked, but verification copy must state its source and verified-through time.
+Never claim live human verification or `100% HUMAN+AI` unless production data
+proves both claims. This amendment is required by
+`docs/specs/worker_ground_truth_portal_v1.md`.
+
 ---
 
 ## 1. Brand
@@ -14,7 +20,7 @@ Product surfaces: **LIVE** (camera wall) · **REPLAY** (DVR + placement markers)
 - Wordmark: **Factory** in white + **Vision** in accent orange. Always "FactoryVision", never any other name.
 - Logo mark: minimal orange "F" glyph in a rounded square, top of the nav rail.
 - Product line under nothing — no taglines in the app chrome.
-- Voice: plain English a factory owner reads in one pass. Money verdicts as sentences: "You're in the green — but Alvarez Gates is losing money." Verdict labels: `IN THE GREEN` / `GETTING TIGHT` / `LOSING MONEY`. Trust line everywhere: "Every count verified by a person, live."
+- Voice: plain English a factory owner reads in one pass. Money verdicts as sentences: "You're in the green — but Alvarez Gates is losing money." Verdict labels: `IN THE GREEN` / `GETTING TIGHT` / `LOSING MONEY`. Trust line everywhere: "Verification source and through-time are shown with every resolved count."
 
 ## 2. Color tokens
 

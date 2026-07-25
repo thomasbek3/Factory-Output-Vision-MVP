@@ -39,5 +39,6 @@
   ],
   "expected_human_total": 7,
   "schema_version": "day1-human-exam-ledger-v1",
-  "source": "typed by human reviewer for exam_clip.mp4"
+  "source": "typed by human reviewer for exam_clip.mp4",
+  "firewall_registry": "validation/exam/exam_firewall_v2.json"
 }

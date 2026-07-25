@@ -37,9 +37,9 @@ When docs conflict, prefer this order:
 
 ## Specs
 
-These dated specs document the Track B pivot work by day. They are useful
-implementation references, but current claim boundaries still come from
-`00_CURRENT_STATE.md` first.
+These specs document the Track B pivot work and approved implementation targets.
+They are useful implementation references, but current claim boundaries still
+come from `00_CURRENT_STATE.md` first.
 
 | Spec | Purpose |
 | --- | --- |
@@ -47,6 +47,10 @@ implementation references, but current claim boundaries still come from
 | `specs/day3_wide_net_miner_spec.md` | Day 3 wide-net miner experiment |
 | `specs/day4_action_recognition_spec.md` | Day 4 tripwire + clip action-recognition design |
 | `specs/day5_human_trigger_spec.md` | Day 5 human-trigger workflow |
+| `specs/worker_ground_truth_portal_v1.md` | Production three-reviewer ground-truth portal, consensus, and blind AI comparison |
+| `specs/worker_ground_truth_portal_v1_fable_review.md` | Independent unknown-unknowns review and disposition for the worker portal spec |
+| `specs/worker_ground_truth_portal_v1_fable_checkpoint_0.md` | Fable checkpoint-zero closure attempts, findings, and remediation status |
+| `specs/worker_ground_truth_portal_v1_opus_checkpoint_0.md` | High-effort Opus adversary review and checkpoint-zero remediation receipt |
 
 ## Script Index
 

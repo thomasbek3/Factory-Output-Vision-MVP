@@ -55,5 +55,6 @@
   ],
   "training_eligible": false,
   "role": "exam_answer_key_never_train",
-  "provenance": "copied 2026-07-01 from FactoryVisionArtifacts/onboarding/factory_live_day1/pipeline_day2_full/"
+  "provenance": "copied 2026-07-01 from FactoryVisionArtifacts/onboarding/factory_live_day1/pipeline_day2_full/",
+  "firewall_registry": "validation/exam/exam_firewall_v2.json"
 }

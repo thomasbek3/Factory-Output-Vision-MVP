@@ -2,7 +2,31 @@
 
 Status: APPROVED DIRECTION — build target for the investor-pitch demo and pilot product.
 Design law: `DESIGN.md` (repo root) + reference render `docs/design/fv-live-a-approved.png`. No UI deviates.
-Product doctrine: video-first; every count is human-verified and evidence-backed; plain-English money verdicts.
+Product doctrine: video-first; every published count shows its verification source
+and verified-through time; plain-English money verdicts.
+
+## Verification and reviewer amendment (2026-07-25)
+
+The reviewer workflow, verification semantics, quality controls, reviewer
+metrics, and production playback-speed limits in section 2 and the OPS reviewer
+metrics in section 3 are superseded by
+`docs/specs/worker_ground_truth_portal_v1.md`.
+
+In particular:
+
+- one reviewer click is a draft timestamp, not an owner-published or verified
+  count;
+- three distinct blind primary reviews and, when required, adjudication resolve
+  the human event set;
+- hidden golden-chunk injection is prohibited;
+- worker-facing speed/rank/throughput metrics are prohibited;
+- production playback defaults to `1x` and is capped at `5x` unless the
+  real-footage safety gate explicitly enables a higher speed;
+- Ops cannot adjudicate and cannot read AI evidence; adjudicator and AI analyst
+  are separate capabilities.
+
+Demo or fixture events remain labeled as such and do not prove production human
+verification.
 
 One codebase, one deploy, three role-gated faces:
 - **OWNER** (`/`) — the factory owner's console. 95% of design effort.
@@ -62,7 +86,7 @@ Nav rail (DESIGN.md chrome): **Live · Replay · Jobs · Stations · History · 
 
 ### 1.1 LIVE (home)
 Layout per approved render.
-- **Money strip**: hero `+$532` (Σ projected margins, live-updating) + sentence naming the worst job if any is TIGHT/LOSING ("You're in the green — but Alvarez Gates is losing money."), else "All N jobs on pace." Ghost area-chart of today's cumulative projected margin. KPI cards: Units verified today (+delta vs same weekday last week, sparkline of per-hour counts) · Counts verified 100% HUMAN+AI.
+- **Money strip**: hero `+$532` (Σ projected margins, live-updating) + sentence naming the worst job if any is TIGHT/LOSING ("You're in the green — but Alvarez Gates is losing money."), else "All N jobs on pace." Ghost area-chart of today's cumulative projected margin. KPI cards: Units verified today (+delta vs same weekday last week, sparkline of per-hour counts) · Verification status with source and verified-through time. Demo/fixture data is labeled as demo data.
 - **Camera wall**: one tile per active station (grid auto-fit 2×N). Tile = DESIGN.md camera card: header (name, CAM-ID · location, red LIVE pill, kebab: open replay / station page / hide), clean live video, scoreboard below (count today → opens ClipDrawer at latest event; `today · last count 14:31`; per-hour area sparkline colored by pace; pace pill).
 - Offline camera state: tile keeps header, video area shows dark slate + "camera offline since 14:07" + amber pill; alert auto-raised.
 - **Flags rail** (alerts, latest 3 unresolved): severity icon, time, station, sentence, `▶ Watch replay` (ClipDrawer at trigger moment), "View all alerts →".
@@ -110,19 +134,21 @@ Layout per approved render.
 
 ---
 
-## 2. REVIEWER CONSOLE (`/review`) — TALLY MODE (v1 primary, per Thomas 2026-07-05)
+## 2. REVIEWER CONSOLE (`/review`) — GROUND-TRUTH TALLY
 
-Purpose: workers watch delayed recordings at speed and tally placements with one button. Every click = a verified CountEvent for owners AND a timestamped training label. Deliberately dead-simple: trainable in 5 minutes.
+The complete contract is
+`docs/specs/worker_ground_truth_portal_v1.md`. The worker receives the oldest
+eligible 15-minute assignment automatically, watches a Spanish-first interface,
+records draft event timestamps, reviews the summary, and submits an immutable
+primary review. A click never publishes directly to an owner and never becomes
+a training label before the human-final and audit gates.
 
-- **Unit of work: the 15-minute chunk.** Recordings are auto-cut into per-station 15-min chunks with a 10× rendition (pipeline job). Chunks become servable after a configurable delay (default 60 min behind live). Queue serves the oldest unprocessed chunk for the reviewer's assigned stations; chunk LOCKING prevents double-counting (lease with timeout).
-- **Layout**: full-width video playing the chunk at 10× (speed options 5×/10×/15×; pause; back-10s `←`). Header: station + time range ("Pallet A · 12:30–12:45"), chunk-lag indicator, session stats (chunks done, clicks, chunks/hr). Below the video: ONE GIANT orange button **"+1 COUNT"** (hotkey: spacebar) + small Undo (`Z`, removes last click). Running tally huge beside the button.
-- Each click records video-time → wall-clock timestamp; on chunk confirm it becomes CountEvent(verdict=placed, source=human_tally, verified_by, verified_at) + a training label.
-- **End-of-chunk review**: summary — "You counted 4 in 12:30–12:45" with each click listed (tap = replay ±5s for self-check) → CONFIRM (writes events, marks chunk processed) or REDO. Next chunk auto-loads on confirm (preloaded during current).
-- **Quality**: golden chunks (known counts) injected ~2%; per-reviewer accuracy visible only in ops. Owner-disputed events re-queue their chunk segment to a DIFFERENT reviewer; second count wins; disagreements surface in ops.
-- Exam firewall: chunks overlapping exam windows are never served; enforced server-side.
-- Chrome: same tokens, minimal, no nav; cheap-laptop + weak-connection friendly.
-- **Latency model (honest)**: owner counts update in ~15-min batches, ~60–75 min behind live; live video tiles remain real-time. The model shadow-counts in real time; as agreement rises, model counts can lead and human tallies become the audit layer — the path to real-time without changing any UI.
-- v2 (deferred): candidate-clip adjudication queue (Y/N/U on tripwire clips) as a "fast lane" for near-real-time counts on high-value stations.
+The UI has no factory/video picker, peer answers, expected count, AI output,
+hidden golden chunks, or worker throughput ranking. Production speed starts at
+`1x`; higher speeds are enabled only by the real-footage safety gate. Exam and
+evaluation-holdout source intervals are blocked by server-side source lineage
+and padded presentation interval. Three blind, independent primary reviews are
+resolved by consensus or the separate adjudication capability.
 
 ---
 
@@ -130,7 +156,8 @@ Purpose: workers watch delayed recordings at speed and tally placements with one
 
 - **Factories table**: factory, cameras up/down, stations active, events today, verification latency p50/p95, open queue depth, reviewers online.
 - **The Investor Chart**: model shadow-agreement % vs human verdicts, weekly trend per station + overall ("automation share rising"). Data: CountEvent.model_verdict vs verdict.
-- **Reviewer metrics**: per reviewer — decisions today, rate/hr, golden-clip accuracy, disagreement rate.
+- **Reviewer quality**: audited agreement and error evidence only after the
+  sample floor in the worker-portal spec; no hidden-golden or raw speed ranking.
 - **Model ops**: exam results log (from pipeline runs), label export button → training manifest (calls existing scripts), drift flag when weekly agreement drops >5pts.
 - v1 = tables + one chart; no write actions except label-export trigger.
 
