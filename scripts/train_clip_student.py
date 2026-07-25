@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.clip_models import arch_availability, train_arch_selection, write_synthetic_clip_manifest
+from app.services.training_exam_guard import validate_training_manifest
 
 VIDEO_ARCHES = {"video_x3d", "video_vmae"}
 
@@ -39,6 +40,8 @@ def main(argv: list[str] | None = None) -> int:
         write_synthetic_clip_manifest(manifest_path, image_size=synthetic_smoke_image_size(args.arch))
     if manifest_path is None:
         parser.error("--manifest is required unless --synthetic-smoke is set")
+    if not args.synthetic_smoke:
+        validate_training_manifest(json.loads(manifest_path.read_text(encoding="utf-8")))
 
     results = train_arch_selection(
         manifest_path=manifest_path,

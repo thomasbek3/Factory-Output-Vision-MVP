@@ -56,6 +56,7 @@ def test_windows_with_five_second_isolation_margin_do_not_overlap() -> None:
                 {
                     "source_sha256": "b" * 64,
                     "lineage_source_sha256": ["b" * 64],
+                    "lineage_is_transitive_complete": True,
                     "start_at": "2026-07-25T10:00:00Z",
                     "end_at": "2026-07-25T10:15:00Z"
                 }
@@ -65,6 +66,7 @@ def test_windows_with_five_second_isolation_margin_do_not_overlap() -> None:
                 {
                     "source_sha256": "b" * 64,
                     "lineage_source_sha256": ["b" * 64],
+                    "lineage_is_transitive_complete": True,
                     "start_at": "2026-07-25T10:15:05Z",
                     "end_at": "2026-07-25T10:30:00Z"
                 }
@@ -85,6 +87,7 @@ def test_adjacent_cross_set_windows_fail_context_isolation() -> None:
                 {
                     "source_sha256": "b" * 64,
                     "lineage_source_sha256": ["b" * 64],
+                    "lineage_is_transitive_complete": True,
                     "start_at": "2026-07-25T10:00:00Z",
                     "end_at": "2026-07-25T10:15:00Z"
                 }
@@ -94,6 +97,7 @@ def test_adjacent_cross_set_windows_fail_context_isolation() -> None:
                 {
                     "source_sha256": "b" * 64,
                     "lineage_source_sha256": ["b" * 64],
+                    "lineage_is_transitive_complete": True,
                     "start_at": "2026-07-25T10:15:00Z",
                     "end_at": "2026-07-25T10:30:00Z"
                 }
@@ -115,6 +119,7 @@ def test_reencoded_source_with_shared_lineage_cannot_cross_sets() -> None:
                 {
                     "source_sha256": "c" * 64,
                     "lineage_source_sha256": ["a" * 64],
+                    "lineage_is_transitive_complete": True,
                     "start_at": "2026-07-25T10:00:00Z",
                     "end_at": "2026-07-25T10:15:00Z"
                 }
@@ -123,6 +128,7 @@ def test_reencoded_source_with_shared_lineage_cannot_cross_sets() -> None:
                 {
                     "source_sha256": "d" * 64,
                     "lineage_source_sha256": ["a" * 64],
+                    "lineage_is_transitive_complete": True,
                     "start_at": "2026-07-25T10:00:00Z",
                     "end_at": "2026-07-25T10:15:00Z"
                 }
@@ -181,7 +187,38 @@ def test_assignment_inside_holdout_guard_band_is_blocked() -> None:
     assert assignment_overlaps_protected_source_set(
         windows,
         lineage_source_sha256=holdout.lineage_source_sha256,
+        lineage_is_transitive_complete=True,
         start_at=holdout.end_at + timedelta(seconds=1),
         end_at=holdout.end_at + timedelta(seconds=10),
+        guard_band_seconds=60,
+    )
+
+
+def test_assignment_outside_holdout_guard_band_is_allowed() -> None:
+    windows = load_source_sets(REGISTRY_PATH, EXAM_FIREWALL_PATH)
+    holdout = windows[0]
+
+    assert not assignment_overlaps_protected_source_set(
+        windows,
+        lineage_source_sha256=holdout.lineage_source_sha256,
+        lineage_is_transitive_complete=True,
+        start_at=holdout.end_at + timedelta(seconds=61),
+        end_at=holdout.end_at + timedelta(seconds=70),
+        guard_band_seconds=60,
+    )
+
+
+def test_presented_context_inside_guard_band_is_blocked() -> None:
+    windows = load_source_sets(REGISTRY_PATH, EXAM_FIREWALL_PATH)
+    holdout = windows[0]
+
+    assert assignment_overlaps_protected_source_set(
+        windows,
+        lineage_source_sha256=holdout.lineage_source_sha256,
+        lineage_is_transitive_complete=True,
+        start_at=holdout.end_at + timedelta(seconds=61),
+        end_at=holdout.end_at + timedelta(seconds=70),
+        presented_start_at=holdout.end_at + timedelta(seconds=59),
+        presented_end_at=holdout.end_at + timedelta(seconds=75),
         guard_band_seconds=60,
     )

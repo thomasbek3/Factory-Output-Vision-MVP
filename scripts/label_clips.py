@@ -17,6 +17,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from app.services.training_exam_guard import validate_training_manifest
+
 PLACEMENT_JUDGE_PROMPT = """You are judging a factory output-pallet clip.
 Question: did a worker PLACE a finished wire frame onto the pallet/stack?
 Assert only for carry-in, set-down, and worker leaving it there. Refute walk-by,
@@ -201,17 +203,15 @@ def parse_time_list(value: str) -> list[float]:
     return [float(part.strip()) for part in value.split(",") if part.strip()]
 
 
-def guard_no_exam_rows(manifest: dict[str, Any]) -> None:
-    for row in manifest.get("samples") or []:
-        source = str(row.get("source", ""))
-        candidate_id = str(row.get("candidate_id", ""))
-        if row.get("training_eligible") is False:
-            raise ValueError("refusing to label training-ineligible samples")
-        if row.get("exam_only") is True or row.get("source_role") == "exam":
-            raise ValueError("refusing to label exam window samples")
-        lowered = f"{source} {candidate_id}".lower()
-        if "exam_clip" in lowered or "pipeline_day2_full/exam" in lowered:
-            raise ValueError("refusing to label exam window samples")
+def guard_no_exam_rows(
+    manifest: dict[str, Any],
+    *,
+    exam_firewall_path: Path | None = None,
+) -> None:
+    if exam_firewall_path is None:
+        validate_training_manifest(manifest)
+    else:
+        validate_training_manifest(manifest, exam_firewall_path=exam_firewall_path)
 
 
 def safe_slug(value: str) -> str:

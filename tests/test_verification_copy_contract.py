@@ -36,7 +36,8 @@ def test_current_product_copy_does_not_claim_unproved_human_ai_verification() ->
     assert all("Verified by M. Reyes" not in text for text in contents.values())
     assert all("model agreed" not in text for text in contents.values())
     assert "VERIFICATION STATUS" in contents["console/components/live/live-dashboard.tsx"]
-    assert "SEEDED REVIEW" in contents["console/components/live/live-dashboard.tsx"]
+    assert "HISTORICAL" in contents["console/components/live/live-dashboard.tsx"]
+    assert "REVIEW DATA" in contents["console/components/live/live-dashboard.tsx"]
 
 
 def test_design_contract_contains_dated_verification_copy_amendment() -> None:
@@ -73,10 +74,12 @@ def test_owner_console_has_no_named_reviewer_claim() -> None:
     console_root = REPO_ROOT / "console"
     owner_paths = [
         path
-        for path in console_root.rglob("*.tsx")
+        for root in ("app", "components", "lib")
+        for extension in ("*.ts", "*.tsx", "*.json")
+        for path in (console_root / root).rglob(extension)
         if "components/review/" not in path.as_posix()
     ]
-    assert owner_paths, "owner console scan found no TSX files"
+    assert owner_paths, "owner console scan found no source files"
     owner_source = "\n".join(path.read_text(encoding="utf-8") for path in owner_paths)
 
     assert "Verified by M. Reyes" not in owner_source
@@ -98,6 +101,9 @@ def test_worker_copy_uses_the_versioned_release_anchor() -> None:
     assert "queda en el área de salida indicada" in lexicon
     assert "llegue al pallet" not in strings
     assert "+1 CONTEO" not in strings
+    assert "Contexto del video anterior. No cuentes aquí." in lexicon
+    assert "Contexto del siguiente video. No cuentes aquí." in lexicon
+    assert re.search(r"\b(?:bloque|cola|colocación)\b", lexicon, flags=re.IGNORECASE) is None
 
 
 def test_worker_payload_sources_omit_golden_and_throughput_fields() -> None:
@@ -121,5 +127,35 @@ def test_worker_payload_sources_omit_golden_and_throughput_fields() -> None:
     ).read_text(encoding="utf-8")
 
     combined = "\n".join([next_route, confirm_route, chunks, reviewer])
-    for forbidden in ("isGolden", "goldenCount", "queueDepth", "chunksPerHour"):
+    for forbidden in (
+        "isGolden",
+        "goldenCount",
+        "queueDepth",
+        "chunksPerHour",
+        "nextChunk",
+        "locked-by-other",
+    ):
         assert forbidden not in combined
+
+
+def test_training_paths_consume_the_registry_firewall() -> None:
+    guard = (
+        REPO_ROOT / "app" / "services" / "training_exam_guard.py"
+    ).read_text(encoding="utf-8")
+    extractor = (
+        REPO_ROOT / "app" / "services" / "clip_dataset.py"
+    ).read_text(encoding="utf-8")
+    labeler = (REPO_ROOT / "scripts" / "label_clips.py").read_text(encoding="utf-8")
+    trainer = (
+        REPO_ROOT / "scripts" / "train_clip_student.py"
+    ).read_text(encoding="utf-8")
+    model_service = (
+        REPO_ROOT / "app" / "services" / "clip_models.py"
+    ).read_text(encoding="utf-8")
+
+    assert "load_exam_firewall" in guard
+    assert "assignment_overlaps_exam" in guard
+    assert "validate_training_row" in extractor
+    assert "validate_training_manifest" in labeler
+    assert "validate_training_manifest" in trainer
+    assert "validate_training_manifest" in model_service

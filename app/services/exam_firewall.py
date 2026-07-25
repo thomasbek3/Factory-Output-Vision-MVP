@@ -47,6 +47,8 @@ def parse_protected_interval(payload: object) -> ProtectedInterval:
         for item in lineage_payload
     ):
         raise ValueError("protected interval lineage hashes must be 64 lowercase hex characters")
+    if payload.get("lineage_is_transitive_complete") is not True:
+        raise ValueError("protected interval lineage must declare transitive completeness")
     if payload.get("training_eligible") is not False:
         raise ValueError("protected interval must be training-ineligible")
     if payload.get("assignment_eligible") is not False:
@@ -94,6 +96,7 @@ def assignment_overlaps_exam(
     start_at: datetime,
     end_at: datetime,
     lineage_source_sha256: Iterable[str],
+    lineage_is_transitive_complete: bool,
     presented_start_at: Optional[datetime] = None,
     presented_end_at: Optional[datetime] = None,
 ) -> bool:
@@ -121,6 +124,8 @@ def assignment_overlaps_exam(
     lineage_hashes = set(lineage_source_sha256)
     if not lineage_hashes:
         raise ValueError("assignment lineage_source_sha256 must be non-empty")
+    if lineage_is_transitive_complete is not True:
+        raise ValueError("assignment lineage must declare transitive completeness")
     source_hashes = {source_sha256, *lineage_hashes}
     if any(not SHA256_PATTERN.fullmatch(value) for value in source_hashes):
         raise ValueError("assignment lineage hashes must be 64 lowercase hex characters")

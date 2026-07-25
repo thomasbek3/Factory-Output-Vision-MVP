@@ -34,7 +34,7 @@ test.describe("/review", () => {
     await expect(page.getByTestId("running-tally")).toHaveText("2");
 
     // End chunk -> summary -> CONFIRM writes the events.
-    await page.getByRole("button", { name: /end chunk/i }).click();
+    await page.getByRole("button", { name: /finish video/i }).click();
     await page.getByRole("button", { name: /^confirm$/i }).click();
 
     // eventsToday increases (proves the confirm wrote events to the store).
@@ -61,7 +61,7 @@ test.describe("/review", () => {
         "Count one finished piece on the first frame where the worker releases it and it remains in the designated output area.",
       ),
     ).toBeVisible();
-    await expect(page.getByText(/goes back to the queue after 5 minutes/)).toBeVisible();
+    await expect(page.getByText(/becomes available again after 5 minutes/)).toBeVisible();
     // Humanized lag ("N m" / "N h N m"), not "N min".
     await expect(page.getByText(/counting \d+ (h|m).* behind live/)).toBeVisible();
     // Hotkey hints under the count button.
@@ -94,5 +94,26 @@ test.describe("/review", () => {
     expect(serialized).not.toContain("chunksPerHour");
     expect(serialized).not.toContain("lockedBy");
     expect(serialized).not.toContain("processedBy");
+    expect(serialized).not.toContain("nextChunk");
+  });
+
+  test("day queue exposes only the caller's own work", async ({ request }) => {
+    const ownerId = "queue-owner";
+    const peerId = "queue-peer";
+    const ownerLease = await request
+      .get(`/api/review/chunks/next?reviewerId=${ownerId}`)
+      .then((response) => response.json());
+    const peerLease = await request
+      .get(`/api/review/chunks/next?reviewerId=${peerId}`)
+      .then((response) => response.json());
+    const dayQueue = await request
+      .get(`/api/review/day-queue?reviewerId=${ownerId}`)
+      .then((response) => response.json());
+
+    const rows = dayQueue.chunks as Array<{ id: string; state: string }>;
+    expect(rows.every((row) => row.id === ownerLease.chunk?.id)).toBeTruthy();
+    expect(rows.some((row) => row.id === peerLease.chunk?.id)).toBeFalsy();
+    expect(JSON.stringify(dayQueue)).not.toContain("locked-by-other");
+    expect(JSON.stringify(dayQueue)).not.toContain("pending");
   });
 });

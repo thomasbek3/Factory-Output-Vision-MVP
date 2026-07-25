@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
+from app.services.training_exam_guard import validate_training_manifest
 
 ArchName = Literal["stack3_mobilenet", "video_x3d", "video_vmae", "twostream"]
 ARCHES: tuple[ArchName, ...] = ("stack3_mobilenet", "video_x3d", "video_vmae", "twostream")
@@ -474,6 +475,8 @@ def label_to_index(label: Any) -> int:
 
 def labeled_rows(manifest_path: Path) -> list[dict[str, Any]]:
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if payload.get("purpose") != "synthetic_smoke":
+        validate_training_manifest(payload)
     rows = [row for row in payload.get("samples", []) if row.get("label") is not None]
     if not rows:
         raise ValueError("manifest has no labeled samples")
@@ -564,7 +567,11 @@ def write_synthetic_clip_manifest(path: Path, *, sample_count: int = 6, image_si
                 "label": label,
             }
         )
-    manifest = {"schema_version": "factory-vision-clip-dataset-v1", "samples": rows}
+    manifest = {
+        "schema_version": "factory-vision-clip-dataset-v1",
+        "purpose": "synthetic_smoke",
+        "samples": rows,
+    }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return manifest

@@ -116,6 +116,7 @@ def run_clip_exam(
             output_zone_polygon=output_zone_polygon,
             default_video_path=video_path,
             encoding=encodings_for_arch(resolved_arch),
+            purpose="evaluation",
         ),
     )
     judge = _run_stage("judge", lambda: load_student_judge(model_path=model_path, arch=resolved_arch))

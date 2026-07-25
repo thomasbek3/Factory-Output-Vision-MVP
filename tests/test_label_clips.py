@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from app.services.training_exam_guard import sha256_file
 
 from scripts.label_clips import (
     guard_no_exam_rows,
@@ -44,10 +46,32 @@ def test_human_timestamp_ingest_maps_nearest_candidates(tmp_path: Path) -> None:
 
 def test_exam_window_never_labeled(tmp_path: Path) -> None:
     manifest = make_manifest(tmp_path, centers=[10.0])
-    manifest["samples"][0]["source"] = "/tmp/pipeline_day2_full/exam_clip.mp4"
+    source_sha256 = manifest["samples"][0]["source_sha256"]
+    firewall = tmp_path / "exam-firewall.json"
+    firewall.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-vision-exam-firewall-v2",
+                "fail_closed": True,
+                "intervals": [
+                    {
+                        "id": "neutral-path-exam",
+                        "source_sha256": source_sha256,
+                        "lineage_source_sha256": [source_sha256],
+                        "lineage_is_transitive_complete": True,
+                        "start_at": "2026-07-25T13:00:00Z",
+                        "end_at": "2026-07-25T13:01:00Z",
+                        "training_eligible": False,
+                        "assignment_eligible": False,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     with pytest.raises(ValueError, match="refusing to label exam"):
-        guard_no_exam_rows(manifest)
+        guard_no_exam_rows(manifest, exam_firewall_path=firewall)
 
 
 def test_parse_label_output_accepts_embedded_json() -> None:
@@ -60,13 +84,21 @@ def test_parse_label_output_accepts_embedded_json() -> None:
 
 def make_manifest(tmp_path: Path, *, centers: list[float]) -> dict:
     stack_path = tmp_path / "stack3.npz"
+    source_path = tmp_path / "neutral-source.mp4"
+    source_path.write_bytes(b"neutral training source")
     np.savez_compressed(stack_path, data=np.zeros((3, 16, 16, 3), dtype=np.uint8))
+    source_sha256 = sha256_file(source_path)
     return {
         "schema_version": "factory-vision-clip-dataset-v1",
         "samples": [
             {
                 "candidate_id": f"candidate-{index}",
-                "source": "/tmp/train.mp4",
+                "source": str(source_path),
+                "source_sha256": source_sha256,
+                "lineage_source_sha256": [source_sha256],
+                "lineage_is_transitive_complete": True,
+                "start_at": "2026-07-25T13:00:00Z",
+                "end_at": "2026-07-25T13:00:01Z",
                 "center_sec": center,
                 "start_sec": center - 1,
                 "end_sec": center + 1,

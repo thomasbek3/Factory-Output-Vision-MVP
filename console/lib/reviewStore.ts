@@ -13,7 +13,7 @@ import { demoNowIso } from "@/lib/demoData";
 type Store = {
   chunks: ReviewChunk[];
   humanEvents: HumanTallyEvent[];
-  sessions: Record<string, { name: string; startedAtIso: string; chunksDone: number; clicks: number }>;
+  sessions: Record<string, { startedAtIso: string; chunksDone: number; clicks: number }>;
   submissions: Record<string, {
     chunkId: string;
     reviewerId: string;
@@ -26,7 +26,7 @@ export type ReviewDayQueueRow = {
   order: number;
   stationName: string;
   timeRange: string;
-  state: "working" | "done" | "pending" | "locked-by-other";
+  state: "working" | "done";
   count: number | null;
   problem: string | null;
 };
@@ -38,9 +38,7 @@ function createStore(): Store {
     chunks: buildDemoReviewChunks(),
     humanEvents: [],
     sessions: {
-      "m-reyes": { name: "M. Reyes", startedAtIso: "2026-06-26T12:00:00-07:00", chunksDone: 12, clicks: 74 },
-      "a-kim": { name: "A. Kim", startedAtIso: "2026-06-26T12:30:00-07:00", chunksDone: 9, clicks: 52 },
-      "live-session": { name: "Live session", startedAtIso: "2026-06-26T14:20:00-07:00", chunksDone: 0, clicks: 0 },
+      "live-session": { startedAtIso: "2026-06-26T14:20:00-07:00", chunksDone: 0, clicks: 0 },
     },
     submissions: {},
   };
@@ -59,7 +57,6 @@ export function resetReviewStoreForTests() {
 export function getNextChunk(reviewerId: string, now = new Date(demoNowIso)) {
   const store = reviewStore();
   store.sessions[reviewerId] ??= {
-    name: reviewerId === "live-session" ? "Live session" : reviewerId,
     startedAtIso: now.toISOString(),
     chunksDone: 0,
     clicks: 0,
@@ -72,15 +69,9 @@ export function getNextChunk(reviewerId: string, now = new Date(demoNowIso)) {
     new Date(chunk.lockedUntilIso).getTime() > now.getTime()
   ));
   const chunk = existing ?? leaseOldestPendingChunk(store.chunks, reviewerId, now);
-  const next = store.chunks.find((candidate) => (
-    candidate.state === "pending" &&
-    candidate.id !== chunk?.id &&
-    new Date(candidate.endIso).getTime() <= now.getTime() - 60 * 60_000
-  )) ?? null;
 
   return {
     chunk,
-    nextChunk: next,
   };
 }
 
@@ -118,7 +109,6 @@ export function confirmChunk(
   chunk.lockedUntilIso = null;
 
   const session = (store.sessions[reviewerId] ??= {
-    name: reviewerId,
     startedAtIso: now.toISOString(),
     chunksDone: 0,
     clicks: 0,
@@ -138,21 +128,22 @@ export function getDayQueue(reviewerId: string, now = new Date(demoNowIso)): Rev
     counts.set(event.clip_id.split("-tally-")[0], (counts.get(event.clip_id.split("-tally-")[0]) ?? 0) + 1);
   }
 
-  return store.chunks.map((chunk, index) => ({
-    id: chunk.id,
-    order: index + 1,
-    stationName: chunk.stationName,
-    timeRange: `${chunk.startIso.slice(11, 16)}-${chunk.endIso.slice(11, 16)}`,
-    state: chunk.state === "processed"
-      ? "done"
-      : chunk.state === "locked"
-        ? chunk.lockedBy === reviewerId ? "working" : "locked-by-other"
-        : "pending",
-    count: chunk.state === "processed" && chunk.processedBy === reviewerId
-      ? counts.get(chunk.id) ?? 0
-      : null,
-    problem: chunk.processedBy === reviewerId ? chunk.problem : null,
-  }));
+  return store.chunks.flatMap((chunk, index) => {
+    const belongsToReviewer = (
+      (chunk.state === "locked" && chunk.lockedBy === reviewerId) ||
+      (chunk.state === "processed" && chunk.processedBy === reviewerId)
+    );
+    if (!belongsToReviewer) return [];
+    return [{
+      id: chunk.id,
+      order: index + 1,
+      stationName: chunk.stationName,
+      timeRange: `${chunk.startIso.slice(11, 16)}-${chunk.endIso.slice(11, 16)}`,
+      state: chunk.state === "processed" ? "done" as const : "working" as const,
+      count: chunk.state === "processed" ? counts.get(chunk.id) ?? 0 : null,
+      problem: chunk.state === "processed" ? chunk.problem : null,
+    }];
+  });
 }
 
 export function opsSnapshot(now = new Date(demoNowIso)) {

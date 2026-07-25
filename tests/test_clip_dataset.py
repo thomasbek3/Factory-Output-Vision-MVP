@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from app.services.clip_dataset import extract_clip_dataset
+from app.services.training_exam_guard import sha256_file
 
 
 def test_clip_extractor_writes_stack3_clip_flow_shapes_and_is_resumable(tmp_path: Path) -> None:
@@ -17,6 +18,10 @@ def test_clip_extractor_writes_stack3_clip_flow_shapes_and_is_resumable(tmp_path
             "center_sec": 1.0,
             "start_sec": 0.0,
             "end_sec": 2.0,
+            "source_start_at": "2026-07-25T12:00:00Z",
+            "source_sha256": sha256_file(video),
+            "lineage_source_sha256": [sha256_file(video)],
+            "lineage_is_transitive_complete": True,
         }
     ]
     out_dir = tmp_path / "dataset"
@@ -47,6 +52,9 @@ def test_clip_extractor_writes_stack3_clip_flow_shapes_and_is_resumable(tmp_path
     assert np.load(paths["clip"])["data"].shape == (16, 48, 24, 3)
     assert np.load(paths["flow"])["data"].shape == (15, 48, 24, 2)
     assert first["samples"][0]["label"] is None
+    assert first["samples"][0]["source_sha256"] == sha256_file(video)
+    assert first["samples"][0]["start_at"] == "2026-07-25T12:00:00Z"
+    assert first["samples"][0]["end_at"] == "2026-07-25T12:00:02Z"
 
 
 def synthetic_frames() -> list[np.ndarray]:

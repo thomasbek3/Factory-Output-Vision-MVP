@@ -32,6 +32,7 @@ def test_assignment_is_blocked_by_hash_and_utc_overlap_not_filename() -> None:
         intervals,
         source_sha256=protected.source_sha256,
         lineage_source_sha256=[protected.source_sha256],
+        lineage_is_transitive_complete=True,
         start_at=protected.start_at,
         end_at=protected.end_at,
     )
@@ -46,6 +47,7 @@ def test_derived_assignment_is_blocked_by_lineage_hash() -> None:
         intervals,
         source_sha256=derived_hash,
         lineage_source_sha256=[protected.source_sha256],
+        lineage_is_transitive_complete=True,
         start_at=protected.start_at,
         end_at=protected.end_at,
     )
@@ -65,6 +67,7 @@ def test_exam_registered_on_derivative_blocks_original_lineage(tmp_path: Path) -
         intervals,
         source_sha256=original_hash,
         lineage_source_sha256=[original_hash],
+        lineage_is_transitive_complete=True,
         start_at=protected.start_at,
         end_at=protected.end_at,
     )
@@ -78,6 +81,7 @@ def test_non_overlapping_interval_is_allowed() -> None:
         intervals,
         source_sha256=protected.source_sha256,
         lineage_source_sha256=[protected.source_sha256],
+        lineage_is_transitive_complete=True,
         start_at=utc("2026-06-11T22:24:49.045000Z"),
         end_at=utc("2026-06-11T22:25:00Z"),
     )
@@ -91,6 +95,7 @@ def test_unclipped_visible_context_cannot_leak_adjacent_exam_frames() -> None:
         intervals,
         source_sha256=protected.source_sha256,
         lineage_source_sha256=[protected.source_sha256],
+        lineage_is_transitive_complete=True,
         start_at=protected.end_at,
         end_at=utc("2026-06-11T22:25:00Z"),
         presented_start_at=utc("2026-06-11T22:24:44.045000Z"),
@@ -106,6 +111,7 @@ def test_context_clipped_at_exam_boundary_is_eligible() -> None:
         intervals,
         source_sha256=protected.source_sha256,
         lineage_source_sha256=[protected.source_sha256],
+        lineage_is_transitive_complete=True,
         start_at=protected.end_at,
         end_at=utc("2026-06-11T22:25:00Z"),
         presented_start_at=protected.end_at,
@@ -122,6 +128,7 @@ def test_naive_assignment_timestamp_fails_closed() -> None:
             intervals,
             source_sha256=protected.source_sha256,
             lineage_source_sha256=[protected.source_sha256],
+            lineage_is_transitive_complete=True,
             start_at=protected.start_at.replace(tzinfo=None),
             end_at=protected.end_at.replace(tzinfo=None),
         )
@@ -135,6 +142,22 @@ def test_assignment_without_lineage_fails_closed() -> None:
         assignment_overlaps_exam(
             intervals,
             source_sha256="a" * 64,
+            lineage_is_transitive_complete=True,
+            start_at=protected.start_at,
+            end_at=protected.end_at,
+        )
+
+
+def test_assignment_with_incomplete_lineage_fails_closed() -> None:
+    intervals = load_exam_firewall(FIREWALL_PATH)
+    protected = intervals[0]
+
+    with pytest.raises(ValueError, match="transitive completeness"):
+        assignment_overlaps_exam(
+            intervals,
+            source_sha256=protected.source_sha256,
+            lineage_source_sha256=[protected.source_sha256],
+            lineage_is_transitive_complete=False,
             start_at=protected.start_at,
             end_at=protected.end_at,
         )

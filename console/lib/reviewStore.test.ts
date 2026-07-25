@@ -47,16 +47,15 @@ describe("review day queue", () => {
     resetReviewStoreForTests();
   });
 
-  it("projects ordered worker-facing states without allowing chunk selection", () => {
+  it("projects only the caller's own leased or completed work", () => {
     const current = getNextChunk("reviewer-1", now).chunk!;
-    getNextChunk("reviewer-2", now);
+    const peer = getNextChunk("reviewer-2", now).chunk!;
 
     const queue = getDayQueue("reviewer-1", now);
 
-    expect(queue).toHaveLength(84);
-    expect(queue.map((row) => row.order)).toEqual(queue.map((_, index) => index + 1));
+    expect(queue).toHaveLength(1);
     expect(queue.find((row) => row.id === current.id)?.state).toBe("working");
-    expect(queue.some((row) => row.state === "locked-by-other")).toBe(true);
+    expect(queue.some((row) => row.id === peer.id)).toBe(false);
     expect(queue[0]).toMatchObject({
       stationName: "Gate line",
       timeRange: "07:00-07:15",

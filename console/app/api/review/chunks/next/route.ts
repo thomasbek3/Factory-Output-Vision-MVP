@@ -34,6 +34,5 @@ export async function GET(request: NextRequest) {
 
   return Response.json({
     chunk: workerChunk(payload.chunk),
-    nextChunk: workerChunk(payload.nextChunk),
   });
 }

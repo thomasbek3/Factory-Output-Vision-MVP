@@ -44,6 +44,8 @@ def _parse_source_window(source_set: str, payload: object) -> SourceWindow:
         for item in lineage_payload
     ):
         raise ValueError(f"{source_set} lineage hashes must be 64 lowercase hex characters")
+    if payload.get("lineage_is_transitive_complete") is not True:
+        raise ValueError(f"{source_set} lineage must declare transitive completeness")
     start_at = parse_utc_timestamp(payload.get("start_at"))
     end_at = parse_utc_timestamp(payload.get("end_at"))
     if start_at >= end_at:
@@ -134,29 +136,45 @@ def assignment_overlaps_protected_source_set(
     windows: tuple[SourceWindow, ...],
     *,
     lineage_source_sha256: frozenset[str],
+    lineage_is_transitive_complete: bool,
     start_at: datetime,
     end_at: datetime,
+    presented_start_at: datetime | None = None,
+    presented_end_at: datetime | None = None,
     guard_band_seconds: float = 60,
 ) -> bool:
     if not lineage_source_sha256:
         raise ValueError("assignment lineage_source_sha256 must be non-empty")
+    if lineage_is_transitive_complete is not True:
+        raise ValueError("assignment lineage must declare transitive completeness")
     if any(not SHA256_PATTERN.fullmatch(item) for item in lineage_source_sha256):
         raise ValueError("assignment lineage hashes must be 64 lowercase hex characters")
     if guard_band_seconds < 0:
         raise ValueError("guard_band_seconds must not be negative")
+    timestamps = [start_at, end_at]
+    if presented_start_at is not None:
+        timestamps.append(presented_start_at)
+    if presented_end_at is not None:
+        timestamps.append(presented_end_at)
     if any(
         value.tzinfo is None or value.utcoffset() != timezone.utc.utcoffset(value)
-        for value in (start_at, end_at)
+        for value in timestamps
     ):
         raise ValueError("assignment timestamps must be timezone-aware UTC")
     if start_at >= end_at:
         raise ValueError("assignment start_at must precede end_at")
+    visible_start_at = presented_start_at or start_at
+    visible_end_at = presented_end_at or end_at
+    if visible_start_at > start_at or visible_end_at < end_at:
+        raise ValueError("presented interval must contain the canonical assignment interval")
+    if visible_start_at >= visible_end_at:
+        raise ValueError("presented interval start must precede end")
 
     guard = timedelta(seconds=guard_band_seconds)
     return any(
         not window.lineage_source_sha256.isdisjoint(lineage_source_sha256)
-        and start_at < window.end_at + guard
-        and window.start_at - guard < end_at
+        and visible_start_at < window.end_at + guard
+        and window.start_at - guard < visible_end_at
         for window in windows
     )
 

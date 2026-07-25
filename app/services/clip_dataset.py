@@ -9,6 +9,10 @@ from typing import Any, Literal
 import numpy as np
 
 from app.services.zone_tripwire import ZoneCropper, load_output_zone_polygon, sample_timestamps
+from app.services.training_exam_guard import (
+    candidate_training_interval,
+    validate_training_row,
+)
 
 Encoding = Literal["stack3", "clip", "flow"]
 SCHEMA_VERSION = "factory-vision-clip-dataset-v1"
@@ -24,6 +28,7 @@ def extract_clip_dataset(
     encoding: Encoding | Iterable[Encoding] | Literal["all"] = "clip",
     clip_fps: float = 6.0,
     clip_frame_count: int = 16,
+    purpose: Literal["training", "evaluation"] = "training",
 ) -> dict[str, Any]:
     if clip_fps <= 0:
         raise ValueError("clip_fps must be positive")
@@ -40,6 +45,27 @@ def extract_clip_dataset(
         start_sec = float(candidate.get("start_sec", candidate.get("start_offset_sec", 0.0)))
         end_sec = float(candidate.get("end_sec", candidate.get("end_offset_sec", start_sec)))
         center_sec = float(candidate.get("center_sec", candidate.get("center_offset_sec", (start_sec + end_sec) / 2.0)))
+        lineage_fields: dict[str, Any] = {}
+        if purpose == "training":
+            start_at, end_at = candidate_training_interval(
+                source_start_at=candidate.get("source_start_at"),
+                start_sec=start_sec,
+                end_sec=end_sec,
+            )
+            lineage_fields = {
+                "source_sha256": candidate.get("source_sha256"),
+                "lineage_source_sha256": candidate.get("lineage_source_sha256"),
+                "lineage_is_transitive_complete": candidate.get("lineage_is_transitive_complete"),
+                "start_at": start_at,
+                "end_at": end_at,
+            }
+            validate_training_row(
+                {
+                    **candidate,
+                    **lineage_fields,
+                    "source": str(source_path),
+                }
+            )
         frames = decode_zone_clip(
             video_path=source_path,
             output_zone_polygon=output_zone_polygon,
@@ -64,12 +90,14 @@ def extract_clip_dataset(
                 "end_sec": end_sec,
                 "paths": paths,
                 "label": candidate.get("label"),
+                **lineage_fields,
             }
         )
     return {
         "schema_version": SCHEMA_VERSION,
         "clip_fps": float(clip_fps),
         "clip_frame_count": int(clip_frame_count),
+        "purpose": purpose,
         "encodings": requested,
         "samples": rows,
     }

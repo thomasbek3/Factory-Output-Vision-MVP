@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { ReviewChunk, TallyClick } from "@/lib/reviewChunks";
 import type { ReviewDayQueueRow } from "@/lib/reviewStore";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
+import { applyValidatedPlaybackRate } from "@/lib/reviewPlayback";
 import { cn, isTypingTarget } from "@/lib/utils";
 
 // 16x is the hard ceiling browsers allow for HTMLMediaElement.playbackRate
@@ -15,7 +16,6 @@ type ReviewSpeed = (typeof reviewSpeeds)[number];
 
 type NextChunkResponse = {
   chunk: ReviewChunk;
-  nextChunk: ReviewChunk | null;
 };
 
 type ConfirmResponse = {
@@ -146,12 +146,18 @@ export function ReviewTallyConsole() {
 
   useEffect(() => {
     if (!videoRef.current) return;
-    try {
-      videoRef.current.playbackRate = speed;
-    } catch {
-      videoRef.current.playbackRate = 16;
+    let fallbackTimer: number | undefined;
+    const result = applyValidatedPlaybackRate(videoRef.current, speed);
+    if (result.steppedDown) {
+      fallbackTimer = window.setTimeout(() => {
+        setSpeed(1);
+        setStatus(strings.speedSteppedDown);
+      }, 0);
     }
-  }, [speed, chunk]);
+    return () => {
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+    };
+  }, [speed, chunk, strings.speedSteppedDown]);
 
   const addCount = useCallback(() => {
     if (!videoRef.current || screen !== "tally") return;
@@ -303,10 +309,10 @@ export function ReviewTallyConsole() {
               playsInline
               onLoadedMetadata={() => {
                 if (!videoRef.current) return;
-                try {
-                  videoRef.current.playbackRate = speed;
-                } catch {
-                  videoRef.current.playbackRate = 16;
+                const result = applyValidatedPlaybackRate(videoRef.current, speed);
+                if (result.steppedDown) {
+                  setSpeed(1);
+                  setStatus(strings.speedSteppedDown);
                 }
                 setCurrentTime(videoRef.current.currentTime);
                 setDuration(Number.isFinite(videoRef.current.duration) ? videoRef.current.duration : 0);
@@ -500,7 +506,7 @@ export function ReviewTallyConsole() {
                 {strings.todayPrefix} {dayQueue.filter((row) => row.state === "done").length} {strings.done} · {dayQueue.filter((row) => row.state !== "done").length} {strings.left}
               </div>
             </div>
-            <div className="mt-3 grid grid-cols-[20px_minmax(52px,1fr)_58px_54px_40px] gap-0 border-b border-[var(--border)] px-2 pb-2 text-[10px] font-semibold text-[var(--text-dim)] sm:grid-cols-[24px_minmax(72px,1fr)_76px_66px_42px] sm:gap-1 sm:text-[11px]">
+            <div className="mt-3 grid grid-cols-[20px_minmax(52px,1fr)_58px_54px_40px] gap-0 border-b border-[var(--border)] px-2 pb-2 text-[10px] font-semibold text-[var(--text-dim)]">
               <span>{strings.numberHeader}</span>
               <span>{strings.stationHeader}</span>
               <span>{strings.timeHeader}</span>
@@ -516,14 +522,12 @@ export function ReviewTallyConsole() {
                     ? strings.working
                     : row.state === "done"
                       ? strings.doneStatus
-                      : row.state === "locked-by-other"
-                        ? strings.lockedByOther
-                        : strings.pending;
+                      : strings.working;
                 return (
                   <div
                     key={row.id}
                     className={cn(
-                      "grid grid-cols-[20px_minmax(52px,1fr)_58px_54px_40px] gap-0 border-b border-[var(--border-soft)] px-2 py-2 text-[10px] text-[var(--text-mut)] sm:grid-cols-[24px_minmax(72px,1fr)_76px_66px_42px] sm:gap-1 sm:text-[11px]",
+                      "grid grid-cols-[20px_minmax(52px,1fr)_58px_54px_40px] gap-0 border-b border-[var(--border-soft)] px-2 py-2 text-[10px] text-[var(--text-mut)]",
                       current && "border-l-2 border-l-[var(--accent)] bg-[var(--accent-tint)] pl-1.5",
                     )}
                   >
@@ -540,9 +544,6 @@ export function ReviewTallyConsole() {
         </aside>
       </section>
 
-      {payload.nextChunk && (
-        <video src={payload.nextChunk.mediaUrl} preload="auto" className="hidden" aria-hidden="true" />
-      )}
     </main>
   );
 }

@@ -91,6 +91,10 @@ presented as real-time. An AI result must not be presented as human verified.
 - Track B exam-firewall intervals are excluded server-side from review and
   training queues. An exam-firewall interval is a source-hash and source-time
   range registered under `validation/exam/` as held-out evaluation evidence.
+  Every training extractor, labeler, and trainer consumes that registry; a
+  training manifest without a verified source SHA-256, UTC visible interval,
+  and declared complete transitive lineage fails closed. Filenames and caller
+  eligibility flags are not firewall evidence.
   Assignment, rendition, and export services must consume both the exam
   firewall and source-set registries directly when those services are
   implemented. Every declared source-set window is blocked from ordinary
@@ -169,8 +173,8 @@ times, peer counts, AI counts, consensus state, or dispute state.
 
 Adjudicator and AI-analyst permissions are mutually exclusive during the pilot.
 An account eligible to adjudicate cannot read AI runs, AI events, or comparison
-data for an unresolved or open-dispute chunk. The embargo is enforced in the
-database/API, not only by hiding UI.
+data for any chunk, including a resolved chunk that an owner dispute could
+reopen. The embargo is enforced in the database/API, not only by hiding UI.
 
 Capabilities, rather than page names, are authoritative:
 
@@ -346,6 +350,9 @@ interval may not create duplicate chunks.
   unless presentation is clipped.
   Assignment eligibility is evaluated against the complete visible rendition
   interval, including context, not only the canonical chunk interval.
+  Source registrations and assignments declare the full transitive ancestry
+  hash set. A missing or partial-lineage declaration fails closed rather than
+  relying on single-hop hash matching.
 - Leading context copy is
   `Contexto del video anterior. No cuentes aquí.` Trailing context copy is
   `Contexto del siguiente video. No cuentes aquí.` The count button remains
@@ -1054,15 +1061,11 @@ Required views:
 The AI comparison surface is a separate `/ai-analysis` route available only to
 the AI-analyst capability after `human_final_at`.
 
-Ops write actions in v1 are limited to:
-
-- disable/re-enable reviewer;
-- release or reassign a stuck lease;
-- quarantine/unquarantine a chunk with reason;
-- trigger an approved label export;
-- retry an idempotent processing job.
-
-Every write requires authorization, a reason when applicable, and an audit row.
+The `/ops` route is read-only in v1. Reviewer disablement, lease release,
+quarantine, job retry, and label export require separately named capabilities
+and a later contract amendment; they must not be inferred from access to
+`/ops`. Any future write requires authorization, a reason when applicable, and
+an audit row.
 
 ## 13. Failure Modes
 
