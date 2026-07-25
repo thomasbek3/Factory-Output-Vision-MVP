@@ -9,6 +9,8 @@ CONTRACT_FILES = [
     REPO_ROOT / "docs" / "specs" / "app_spec_v1.md",
     REPO_ROOT / "console" / "components" / "chrome" / "trust-line.tsx",
     REPO_ROOT / "console" / "components" / "live" / "live-dashboard.tsx",
+    REPO_ROOT / "console" / "components" / "live" / "clip-drawer-provider.tsx",
+    REPO_ROOT / "console" / "components" / "replay" / "replay-dashboard.tsx",
 ]
 
 
@@ -24,6 +26,8 @@ def test_current_product_copy_does_not_claim_unproved_human_ai_verification() ->
     assert "Every click = a verified CountEvent" not in contents["docs/specs/app_spec_v1.md"]
     assert "golden chunks (known counts) injected" not in contents["docs/specs/app_spec_v1.md"]
     assert "chunks/hr" not in contents["docs/specs/app_spec_v1.md"]
+    assert all("Verified by M. Reyes" not in text for text in contents.values())
+    assert all("model agreed" not in text for text in contents.values())
     assert "VERIFICATION STATUS" in contents["console/components/live/live-dashboard.tsx"]
     assert "SEEDED REVIEW" in contents["console/components/live/live-dashboard.tsx"]
 
@@ -37,3 +41,15 @@ def test_design_contract_contains_dated_verification_copy_amendment() -> None:
     app_spec = (REPO_ROOT / "docs" / "specs" / "app_spec_v1.md").read_text(encoding="utf-8")
     assert "Verification and reviewer amendment (2026-07-25)" in app_spec
     assert "hidden golden-chunk injection is prohibited" in app_spec
+
+
+def test_owner_console_has_no_named_reviewer_claim() -> None:
+    console_root = REPO_ROOT / "console"
+    owner_source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in console_root.rglob("*.tsx")
+        if "components/review/" not in path.as_posix()
+    )
+
+    assert "Verified by M. Reyes" not in owner_source
+    assert "M. Reyes" not in owner_source

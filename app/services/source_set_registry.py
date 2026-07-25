@@ -5,7 +5,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from app.services.exam_firewall import SHA256_PATTERN, parse_utc_timestamp
+from app.services.exam_firewall import (
+    SHA256_PATTERN,
+    ProtectedInterval,
+    load_exam_firewall,
+    parse_utc_timestamp,
+)
 
 
 REQUIRED_SOURCE_SETS = {
@@ -75,21 +80,57 @@ def validate_source_sets(payload: object) -> tuple[SourceWindow, ...]:
 
     for index, left in enumerate(windows):
         for right in windows[index + 1 :]:
-            if (
-                left.source_set == right.source_set
-                or left.lineage_source_sha256.isdisjoint(right.lineage_source_sha256)
-            ):
+            if left.lineage_source_sha256.isdisjoint(right.lineage_source_sha256):
                 continue
             if left.start_at < right.end_at and right.start_at < left.end_at:
                 raise ValueError(
-                    f"source sets {left.source_set} and {right.source_set} overlap"
+                    f"source windows in {left.source_set} and {right.source_set} overlap"
                 )
     return windows
 
 
-def load_source_sets(path: Path) -> tuple[SourceWindow, ...]:
+def validate_source_sets_against_exam(
+    windows: tuple[SourceWindow, ...],
+    protected_intervals: tuple[ProtectedInterval, ...],
+) -> None:
+    holdouts = tuple(
+        window for window in windows if window.source_set == "ai_evaluation_holdout"
+    )
+    for protected in protected_intervals:
+        matching_holdouts = [
+            window
+            for window in holdouts
+            if protected.source_sha256 in window.lineage_source_sha256
+            and window.start_at <= protected.start_at
+            and window.end_at >= protected.end_at
+        ]
+        if not matching_holdouts:
+            raise ValueError(
+                f"exam interval {protected.interval_id} is not contained in ai_evaluation_holdout"
+            )
+
+        for window in windows:
+            if window.source_set == "ai_evaluation_holdout":
+                continue
+            if protected.source_sha256 not in window.lineage_source_sha256:
+                continue
+            if window.start_at < protected.end_at and protected.start_at < window.end_at:
+                raise ValueError(
+                    f"{window.source_set} overlaps exam interval {protected.interval_id}"
+                )
+
+
+def load_source_sets(
+    path: Path,
+    exam_firewall_path: Path,
+) -> tuple[SourceWindow, ...]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError("source-set registry is unavailable or invalid; operation must fail closed") from exc
-    return validate_source_sets(payload)
+    windows = validate_source_sets(payload)
+    validate_source_sets_against_exam(
+        windows,
+        load_exam_firewall(exam_firewall_path),
+    )
+    return windows

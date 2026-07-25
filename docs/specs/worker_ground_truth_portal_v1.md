@@ -116,7 +116,8 @@ requires a new architecture decision record.
   video-file selection.
 - Automatic arrival of newly ready 15-minute work without a browser refresh.
 - Fifteen-minute source chunks.
-- Playback at 1x, 2x, 5x, 10x, and 15x.
+- Playback at 1x, 2x, and 5x. Shipped 10x and 15x controls remain gated off
+  until the real-footage/device safety criteria in section 6.5 pass.
 - Three blind primary reviews per chunk.
 - Automatic exact agreement and event matching.
 - Internal adjudication for every pilot disagreement.
@@ -432,7 +433,9 @@ Video:
 
 Primary controls:
 
-- One large `+1 COUNT` button.
+- One large Spanish-first `+1 PIEZA` button (`+1 COUNT` after the worker
+  explicitly switches to English). The approved station noun may replace
+  `PIEZA`.
 - Spacebar performs the same action.
 - Undo removes only the latest unsubmitted click.
 - `Z` performs undo.
@@ -600,6 +603,11 @@ before the sample floor is met.
 
 - the chunk was not selected for audit; or
 - its selected audit/adjudication is complete.
+
+Owner publication always waits for `human_final_at`. Selected audits therefore
+have a separate completion-latency cohort and are excluded from the provisional
+90-minute non-audited target until real audit handle time is measured. No count
+that can still be changed by a required audit is owner-visible.
 
 Later owner disputes create a new immutable version and do not expose AI output
 to the adjudicator.
@@ -992,7 +1000,8 @@ Operational targets:
 | Metric | Pilot target |
 | --- | --- |
 | Eligible chunk to first lease p95 | under 15 minutes |
-| Source end to resolved human result p95 | under 90 minutes |
+| Source end to `human_final_at` p95, non-audited chunks | under 90 minutes (design target pending Tier B measurement) |
+| Source end to `human_final_at` p95, selected audits | measured and reported separately before a target is approved |
 | Successful draft persistence | 99.9 percent |
 | Duplicate final submissions | zero |
 | Cross-tenant access | zero |

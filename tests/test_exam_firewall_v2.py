@@ -62,7 +62,7 @@ def test_non_overlapping_interval_is_allowed() -> None:
     )
 
 
-def test_visible_context_cannot_leak_adjacent_exam_frames() -> None:
+def test_unclipped_visible_context_cannot_leak_adjacent_exam_frames() -> None:
     intervals = load_exam_firewall(FIREWALL_PATH)
     protected = intervals[0]
 
@@ -71,7 +71,22 @@ def test_visible_context_cannot_leak_adjacent_exam_frames() -> None:
         source_sha256=protected.source_sha256,
         start_at=protected.end_at,
         end_at=utc("2026-06-11T22:25:00Z"),
-        visible_context_seconds=5,
+        presented_start_at=utc("2026-06-11T22:24:44.045000Z"),
+        presented_end_at=utc("2026-06-11T22:25:05Z"),
+    )
+
+
+def test_context_clipped_at_exam_boundary_is_eligible() -> None:
+    intervals = load_exam_firewall(FIREWALL_PATH)
+    protected = intervals[0]
+
+    assert not assignment_overlaps_exam(
+        intervals,
+        source_sha256=protected.source_sha256,
+        start_at=protected.end_at,
+        end_at=utc("2026-06-11T22:25:00Z"),
+        presented_start_at=protected.end_at,
+        presented_end_at=utc("2026-06-11T22:25:05Z"),
     )
 
 

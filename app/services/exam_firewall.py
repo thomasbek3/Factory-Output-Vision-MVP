@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
@@ -84,21 +84,23 @@ def assignment_overlaps_exam(
     start_at: datetime,
     end_at: datetime,
     lineage_source_sha256: Iterable[str] = (),
-    visible_context_seconds: float = 0,
+    presented_start_at: Optional[datetime] = None,
+    presented_end_at: Optional[datetime] = None,
 ) -> bool:
     if not SHA256_PATTERN.fullmatch(source_sha256):
         raise ValueError("assignment source_sha256 must be 64 lowercase hex characters")
     if start_at >= end_at:
         raise ValueError("assignment start_at must precede end_at")
-    if visible_context_seconds < 0:
-        raise ValueError("visible_context_seconds must not be negative")
+    visible_start_at = presented_start_at or start_at
+    visible_end_at = presented_end_at or end_at
+    if visible_start_at > start_at or visible_end_at < end_at:
+        raise ValueError("presented interval must contain the canonical assignment interval")
+    if visible_start_at >= visible_end_at:
+        raise ValueError("presented interval start must precede end")
 
     source_hashes = {source_sha256, *lineage_source_sha256}
     if any(not SHA256_PATTERN.fullmatch(value) for value in source_hashes):
         raise ValueError("assignment lineage hashes must be 64 lowercase hex characters")
-
-    visible_start_at = start_at - timedelta(seconds=visible_context_seconds)
-    visible_end_at = end_at + timedelta(seconds=visible_context_seconds)
 
     return any(
         protected.source_sha256 in source_hashes

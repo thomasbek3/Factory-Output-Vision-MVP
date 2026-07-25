@@ -12,6 +12,9 @@ locked, but verification copy must state its source and verified-through time.
 Never claim live human verification or `100% HUMAN+AI` unless production data
 proves both claims. This amendment is required by
 `docs/specs/worker_ground_truth_portal_v1.md`.
+Reviewer identity, individual votes, model evidence, and tripwire scores are not
+owner- or reviewer-facing design elements. Where older component examples
+conflict, the worker-portal privacy and capability contract controls.
 
 ---
 
@@ -92,7 +95,9 @@ Rules:
 - Rows: severity triangle icon (red crit / amber warn), time (12px dim), station (semibold), one plain sentence, orange **Watch replay** button (radius 8px, solid `--accent`, dark text), kebab. Section header `ALERTS` + "View all alerts →" link right.
 
 ### Replay surfaces
-- Viewer: rounded video, centered orange circular play button (white triangle), caption bottom-left `PLACEMENT #14 · 12:40:22 · Verified by M. Reyes`, speed pills bottom-right `1× 4× 15× 60×` (active = solid orange).
+- Viewer: rounded video, centered orange circular play button (white triangle),
+  caption bottom-left `PLACEMENT #14 · 12:40:22 · Human consensus`, speed pills
+  bottom-right `1× 4× 15× 60×` (active = solid orange).
 - Day timeline: hour labels top, green/amber activity heat band, **orange diamond = one verified placement**, white NOW needle with label. Legend line below.
 - Chapter cards: real footage thumbnail, time range, `6 PLACED` in `--good` (`0 QUIET` dimmed); active card gets a 1.5px orange outline.
 

@@ -63,7 +63,7 @@ Ranked blind spots:
 | Add bandwidth, latency, adjudication, and cost physics | Added formulas, headroom limits, review triggers, and a Thomas-approved cost ceiling gate |
 | Structurally preserve blind AI review | Added mutually exclusive adjudicator/AI roles and API/database embargo tests |
 | Expand legal/privacy/model deletion posture | Added filmed-employee basis, cross-border review, watermark/residual risk, and trained-weight deletion policy |
-| Fix design-copy contradiction | This spec explicitly supersedes the dishonest live-verification copy and requires Phase 0 contract updates |
+| Fix design-copy contradiction | Requires explicit dated amendments to the locked design/app contracts and corresponding UI updates |
 
 ## Required Failure Tests
 

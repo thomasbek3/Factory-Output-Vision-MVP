@@ -11,7 +11,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ArrowLeft, ArrowRight, BadgeCheck, Flag, SkipBack, SkipForward } from "lucide-react";
+import { ArrowLeft, ArrowRight, Flag, SkipBack, SkipForward } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -214,16 +214,9 @@ export function ClipDrawerProvider({ children }: { children: ReactNode }) {
                       {job?.client ?? "Unassigned"}
                     </span>
                   </span>
-                  <span className="text-[var(--text-dim)]">Verifier</span>
-                  <span className="flex items-center gap-2 text-[var(--text)]">
-                    <BadgeCheck className="h-4 w-4 text-[var(--good)]" strokeWidth={1.75} />
-                    Verified by M. Reyes
-                  </span>
-                  <span className="text-[var(--text-dim)]">Model</span>
-                  <span>
-                    <span className="rounded-full bg-[var(--good-tint)] px-2 py-1 text-[12px] font-semibold text-[var(--good)]">
-                      model agreed · {activeEvent.model_verdict.confidence.toFixed(2)}
-                    </span>
+                  <span className="text-[var(--text-dim)]">Verification</span>
+                  <span className="text-[var(--text)]">
+                    Seeded review · demo data
                   </span>
                 </div>
 

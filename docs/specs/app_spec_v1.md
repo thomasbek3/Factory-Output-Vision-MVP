@@ -7,9 +7,9 @@ and verified-through time; plain-English money verdicts.
 
 ## Verification and reviewer amendment (2026-07-25)
 
-The reviewer workflow, verification semantics, quality controls, reviewer
-metrics, and production playback-speed limits in section 2 and the OPS reviewer
-metrics in section 3 are superseded by
+All reviewer workflow, verification semantics, reviewer attribution, AI/model
+evidence visibility, quality controls, reviewer metrics, and production
+playback-speed requirements in this document are superseded by
 `docs/specs/worker_ground_truth_portal_v1.md`.
 
 In particular:
@@ -24,6 +24,11 @@ In particular:
   real-footage safety gate explicitly enables a higher speed;
 - Ops cannot adjudicate and cannot read AI evidence; adjudicator and AI analyst
   are separate capabilities.
+- owners see resolved verification source and through-time, never a reviewer
+  name, individual vote, model shadow verdict, or tripwire score;
+- reviewers never see AI/model evidence or tripwire scores;
+- model comparisons and investor automation analysis live only behind the
+  separate AI-analyst capability.
 
 Demo or fixture events remain labeled as such and do not prove production human
 verification.
@@ -48,7 +53,11 @@ One codebase, one deploy, three role-gated faces:
 - **Camera**: id, name, rtsp_url (encrypted at rest), station_id, status(online/offline), last_frame_at.
 - **Station**: id, name, camera_id, zone_polygon(json, normalized coords), baseline_rate(units/hr, learned or manual), active(bool).
 - **Job**: id, client, title, units_required, quote_usd, cogs_usd, labor_budget_usd, deadline(date), station_ids[], status(active/finished/paused), created_at, finished_at, notes.
-- **CountEvent** (the atom): id, station_id, job_id(nullable), ts, clip_id, source(tripwire), verdict(placed/not/unsure), verified_by(user_id|model), verified_at, model_verdict(placed/not, confidence), disputed(bool).
+- **PublishedCountEvent** (owner-facing atom): id, station_id,
+  job_id(nullable), ts, clip_id, verification_source(human_consensus|adjudicated),
+  verified_through_at, human_result_version, disputed(bool). Raw human
+  submissions and immutable AI runs are separate role-gated records defined by
+  the worker-portal spec.
 - **Clip**: id, station_id, t_start, t_end, hls_uri, thumb_uri, segment_refs[].
 - **Alert**: id, type(behind_pace|station_quiet|camera_offline), severity(crit|warn), station_id, job_id?, ts, message, clip_id?, resolved(bool).
 - **User**: id, role(owner|reviewer|ops), name, email.
@@ -57,7 +66,10 @@ One codebase, one deploy, three role-gated faces:
 
 ### 0.3 The Evidence Primitive — ClipDrawer (GLOBAL)
 Right-side overlay drawer, 480px, available on EVERY screen. Anything with a timestamp opens it.
-- Content: video player (the event clip, default ±5s around the moment, loop), station + wall-clock, job chip, "Verified by M. Reyes · 14:31:52" line, model shadow-verdict chip, tripwire score (ops/reviewer roles only).
+- Content: video player (the event clip, default ±5s around the moment, loop),
+  station + wall-clock, job chip, and `Human consensus · verified through
+  14:31:52`. Owner and reviewer surfaces contain no individual reviewer
+  identity, vote, model shadow verdict, or tripwire score.
 - Actions: ⏮ prev event / next event ⏭ (within station+day), "Open in Replay" (deep-link, seeks timeline), "Dispute this count" (owner → flags event, queues re-review), speed 0.5×/1×/2×.
 - Keyboard: `Esc` close, `←/→` prev/next, `space` play/pause.
 - Invoked from: camera-tile count & last-count line, KPI units number, alert rows, replay diamonds & chapter cards, job pace sentences, station chart points, history row drill-ins, reviewer queue (is natively this).
@@ -94,7 +106,11 @@ Layout per approved render.
 
 ### 1.2 REPLAY
 - **Controls row**: station pills (real station names; active orange), date pager (◀ date ▶, default Today), jump-to-time field.
-- **Viewer**: HLS player of the selected chapter/moment. Caption bottom-left: current event ("PLACEMENT #14 · 12:40:22 · Verified by M. Reyes") when paused on/near an event. Speed pills: 1× 4× 15× 60×. Implementation: 1×/4× native playbackRate on source; **15×/60× play pre-rendered timelapse renditions** (pipeline already renders 15×; 60× derived) with the same timeline mapping — seamless to the user.
+- **Viewer**: HLS player of the selected chapter/moment. Caption bottom-left:
+  current event (`PLACEMENT #14 · 12:40:22 · Human consensus`) when paused
+  on/near an event. Speed pills: 1× 4× 15× 60×. Implementation: 1×/4× native
+  playbackRate on source; **15×/60× play pre-rendered timelapse renditions**
+  (pipeline already renders 15×; 60× derived) with the same timeline mapping.
 - **Day timeline**: work-hours span; activity heat band (event density per 15-min, green/amber/idle); **orange diamond per verified CountEvent** (click → seek viewer + open ClipDrawer); white NOW needle (live/demo clock). Hover: tooltip with time + event id.
 - **Chapters grid**: 15-min cards (thumb from segment mid-frame, time range, `6 PLACED`/`0 QUIET`); click = load chapter into viewer at 15×; active card orange-outlined. Lazy-load thumbs.
 - **Download/share**: kebab on viewer → "Save clip" (mp4 of current event clip) — owners share proof.
@@ -155,11 +171,13 @@ resolved by consensus or the separate adjudication capability.
 ## 3. OPS VIEW (`/ops`) — v1 read-only
 
 - **Factories table**: factory, cameras up/down, stations active, events today, verification latency p50/p95, open queue depth, reviewers online.
-- **The Investor Chart**: model shadow-agreement % vs human verdicts, weekly trend per station + overall ("automation share rising"). Data: CountEvent.model_verdict vs verdict.
+- The model shadow-agreement investor chart and model-ops evidence are excluded
+  from `/ops`. They live under `/ai-analysis`, require the AI-analyst
+  capability, and reveal only after `human_final_at`.
 - **Reviewer quality**: audited agreement and error evidence only after the
   sample floor in the worker-portal spec; no hidden-golden or raw speed ranking.
-- **Model ops**: exam results log (from pipeline runs), label export button → training manifest (calls existing scripts), drift flag when weekly agreement drops >5pts.
-- v1 = tables + one chart; no write actions except label-export trigger.
+- `/ops` contains no model results, comparison chart, adjudication action, or
+  label-export trigger.
 
 ---
 
