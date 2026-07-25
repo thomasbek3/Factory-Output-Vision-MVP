@@ -57,11 +57,13 @@ test.describe("/review", () => {
     test.skip(!chunkAttr, "no chunk available to review");
 
     await expect(
-      page.getByText("Tap +1 COUNT every time a finished piece lands on the pallet."),
+      page.getByText(
+        "Count one finished piece on the first frame where the worker releases it and it remains in the designated output area.",
+      ),
     ).toBeVisible();
     await expect(page.getByText(/goes back to the queue after 5 minutes/)).toBeVisible();
     // Humanized lag ("N m" / "N h N m"), not "N min".
-    await expect(page.getByText(/counting \d+ (h|m).* behind live · \d+ chunks waiting/)).toBeVisible();
+    await expect(page.getByText(/counting \d+ (h|m).* behind live/)).toBeVisible();
     // Hotkey hints under the count button.
     await expect(page.getByText("count", { exact: false }).first()).toBeVisible();
     await expect(page.getByText("back 10s")).toBeVisible();
@@ -79,5 +81,18 @@ test.describe("/review", () => {
     if (a.chunk && b.chunk) {
       expect(a.chunk.id).not.toBe(b.chunk.id);
     }
+  });
+
+  test("worker payload omits answer and throughput metadata", async ({ request }) => {
+    const response = await request.get("/api/review/chunks/next?reviewerId=payload-check");
+    const payload = await response.json();
+    const serialized = JSON.stringify(payload);
+
+    expect(serialized).not.toContain("isGolden");
+    expect(serialized).not.toContain("goldenCount");
+    expect(serialized).not.toContain("queueDepth");
+    expect(serialized).not.toContain("chunksPerHour");
+    expect(serialized).not.toContain("lockedBy");
+    expect(serialized).not.toContain("processedBy");
   });
 });

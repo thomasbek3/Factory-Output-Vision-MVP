@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 
@@ -11,6 +12,9 @@ CONTRACT_FILES = [
     REPO_ROOT / "console" / "components" / "live" / "live-dashboard.tsx",
     REPO_ROOT / "console" / "components" / "live" / "clip-drawer-provider.tsx",
     REPO_ROOT / "console" / "components" / "replay" / "replay-dashboard.tsx",
+    REPO_ROOT / "console" / "components" / "ops" / "ops-console.tsx",
+    REPO_ROOT / "console" / "lib" / "reviewLexicon.ts",
+    REPO_ROOT / "console" / "lib" / "reviewStrings.ts",
 ]
 
 
@@ -46,6 +50,25 @@ def test_design_contract_contains_dated_verification_copy_amendment() -> None:
     assert "hidden golden-chunk injection is prohibited" in app_spec
 
 
+def test_ops_surface_contains_no_ai_exam_ranking_or_export_controls() -> None:
+    ops = (
+        REPO_ROOT / "console" / "components" / "ops" / "ops-console.tsx"
+    ).read_text(encoding="utf-8").lower()
+
+    forbidden = [
+        "model agreement",
+        "model ops",
+        "held-out exam",
+        "golden accuracy",
+        "chunks/hr",
+        "export labels",
+    ]
+    assert all(term not in ops for term in forbidden)
+    assert not (
+        REPO_ROOT / "console" / "app" / "api" / "ops" / "labels" / "export" / "route.ts"
+    ).exists()
+
+
 def test_owner_console_has_no_named_reviewer_claim() -> None:
     console_root = REPO_ROOT / "console"
     owner_paths = [
@@ -58,3 +81,45 @@ def test_owner_console_has_no_named_reviewer_claim() -> None:
 
     assert "Verified by M. Reyes" not in owner_source
     assert "M. Reyes" not in owner_source
+    assert re.search(r"\bverified by\s+[A-Z]", owner_source, flags=re.IGNORECASE) is None
+
+
+def test_worker_copy_uses_the_versioned_release_anchor() -> None:
+    lexicon = (
+        REPO_ROOT / "console" / "lib" / "reviewLexicon.ts"
+    ).read_text(encoding="utf-8")
+    strings = (
+        REPO_ROOT / "console" / "lib" / "reviewStrings.ts"
+    ).read_text(encoding="utf-8")
+
+    assert "worker-ground-truth-es-419-v1" in lexicon
+    assert "+1 PIEZA" in lexicon
+    assert "primer cuadro en que el trabajador la suelta" in lexicon
+    assert "queda en el área de salida indicada" in lexicon
+    assert "llegue al pallet" not in strings
+    assert "+1 CONTEO" not in strings
+
+
+def test_worker_payload_sources_omit_golden_and_throughput_fields() -> None:
+    next_route = (
+        REPO_ROOT / "console" / "app" / "api" / "review" / "chunks" / "next" / "route.ts"
+    ).read_text(encoding="utf-8")
+    confirm_route = (
+        REPO_ROOT
+        / "console"
+        / "app"
+        / "api"
+        / "review"
+        / "chunks"
+        / "[id]"
+        / "confirm"
+        / "route.ts"
+    ).read_text(encoding="utf-8")
+    chunks = (REPO_ROOT / "console" / "lib" / "reviewChunks.ts").read_text(encoding="utf-8")
+    reviewer = (
+        REPO_ROOT / "console" / "components" / "review" / "review-tally-console.tsx"
+    ).read_text(encoding="utf-8")
+
+    combined = "\n".join([next_route, confirm_route, chunks, reviewer])
+    for forbidden in ("isGolden", "goldenCount", "queueDepth", "chunksPerHour"):
+        assert forbidden not in combined

@@ -25,10 +25,7 @@ describe("review chunker", () => {
       startIso: "2026-06-26T17:15:00-07:00",
       endIso: "2026-06-26T17:30:00-07:00",
     });
-    expect(chunks.find((chunk) => chunk.isGolden)).toMatchObject({
-      id: "pallet-a-1345",
-      goldenCount: 6,
-    });
+    expect(chunks.some((chunk) => "isGolden" in chunk || "goldenCount" in chunk)).toBe(false);
   });
 
   it("serves only pending chunks at least 60 minutes behind now", () => {

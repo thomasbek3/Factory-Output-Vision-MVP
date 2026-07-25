@@ -13,9 +13,10 @@ const FORBIDDEN = /checkpoint|\bv0\b|\bdemo\b|\bMP4\b|\bbucket\b|probe|smoke/i;
 test.describe("G3 owner-surface language", () => {
   for (const route of OWNER_ROUTES) {
     test(`no demo/dev language on ${route}`, async ({ page }) => {
-      await page.goto(route);
-      // Let client components hydrate and render their copy.
-      await page.waitForLoadState("networkidle");
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      // Live media requests can remain open indefinitely; hydration is the gate.
+      await page.locator("body").waitFor({ state: "visible" });
+      await page.waitForTimeout(500);
       const readable = await page.evaluate(() => {
         const parts = [document.body.innerText];
         document.querySelectorAll("[title],[aria-label],[placeholder]").forEach((el) => {

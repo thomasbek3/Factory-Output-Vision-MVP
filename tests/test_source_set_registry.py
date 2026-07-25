@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 
 from app.services.exam_firewall import ProtectedInterval, load_exam_firewall
 from app.services.source_set_registry import (
+    assignment_overlaps_protected_source_set,
     load_source_sets,
     validate_source_sets,
     validate_source_sets_against_exam,
@@ -142,6 +144,7 @@ def test_exam_interval_missing_from_holdout_fails_closed() -> None:
     unmirrored = ProtectedInterval(
         interval_id="exam-source-08",
         source_sha256="e" * 64,
+        lineage_source_sha256=frozenset({"e" * 64}),
         start_at=existing.start_at,
         end_at=existing.end_at,
     )
@@ -150,25 +153,35 @@ def test_exam_interval_missing_from_holdout_fails_closed() -> None:
         validate_source_sets_against_exam(windows, (unmirrored,))
 
 
-def test_holdout_missing_from_exam_firewall_fails_closed() -> None:
+def test_holdout_may_be_wider_than_exam_firewall() -> None:
     windows = list(
         validate_source_sets(
             json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
         )
     )
     existing = windows[0]
-    windows.append(
-        type(existing)(
-            source_set="ai_evaluation_holdout",
-            source_sha256="f" * 64,
-            lineage_source_sha256=frozenset({"f" * 64}),
-            start_at=existing.start_at,
-            end_at=existing.end_at,
-        )
+    windows[0] = type(existing)(
+        source_set=existing.source_set,
+        source_sha256=existing.source_sha256,
+        lineage_source_sha256=existing.lineage_source_sha256,
+        start_at=existing.start_at - timedelta(seconds=60),
+        end_at=existing.end_at + timedelta(seconds=60),
     )
 
-    with pytest.raises(ValueError, match="not contained in the exam firewall"):
-        validate_source_sets_against_exam(
-            tuple(windows),
-            load_exam_firewall(EXAM_FIREWALL_PATH),
-        )
+    validate_source_sets_against_exam(
+        tuple(windows),
+        load_exam_firewall(EXAM_FIREWALL_PATH),
+    )
+
+
+def test_assignment_inside_holdout_guard_band_is_blocked() -> None:
+    windows = load_source_sets(REGISTRY_PATH, EXAM_FIREWALL_PATH)
+    holdout = windows[0]
+
+    assert assignment_overlaps_protected_source_set(
+        windows,
+        lineage_source_sha256=holdout.lineage_source_sha256,
+        start_at=holdout.end_at + timedelta(seconds=1),
+        end_at=holdout.end_at + timedelta(seconds=10),
+        guard_band_seconds=60,
+    )

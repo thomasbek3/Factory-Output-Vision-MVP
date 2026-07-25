@@ -10,23 +10,16 @@ import { cn, isTypingTarget } from "@/lib/utils";
 
 // 16x is the hard ceiling browsers allow for HTMLMediaElement.playbackRate
 // (Chrome/Safari throw NotSupportedError above it — a 20x option crashes the app).
-const reviewSpeeds = [1, 2, 5, 10, 15, 16] as const;
+const reviewSpeeds = [1, 2, 5] as const;
 type ReviewSpeed = (typeof reviewSpeeds)[number];
 
 type NextChunkResponse = {
   chunk: ReviewChunk;
   nextChunk: ReviewChunk | null;
-  stats: {
-    chunksDone: number;
-    clicks: number;
-    chunksPerHour: number;
-  };
-  queueDepth: number;
 };
 
 type ConfirmResponse = {
   events: Array<{ id: string; ts: string }>;
-  stats: NextChunkResponse["stats"];
 };
 
 function formatRange(chunk: ReviewChunk) {
@@ -73,16 +66,16 @@ function clickWallClock(chunk: ReviewChunk, click: TallyClick) {
 export function ReviewTallyConsole() {
   const reviewerId = "live-session";
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const languageRef = useRef<ReviewLanguage>("en");
+  const languageRef = useRef<ReviewLanguage>("es");
   const [payload, setPayload] = useState<NextChunkResponse | null>(null);
   const [clicks, setClicks] = useState<TallyClick[]>([]);
-  const [speed, setSpeed] = useState<ReviewSpeed>(10);
+  const [speed, setSpeed] = useState<ReviewSpeed>(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [screen, setScreen] = useState<"loading" | "tally" | "summary">("loading");
   const [pressing, setPressing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [language, setLanguage] = useState<ReviewLanguage>("en");
+  const [language, setLanguage] = useState<ReviewLanguage>("es");
   const [dayQueue, setDayQueue] = useState<ReviewDayQueueRow[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
@@ -269,19 +262,10 @@ export function ReviewTallyConsole() {
             {chunk.stationName} · {formatRange(chunk)}
           </div>
           <div className="mt-1 text-[12px] text-[var(--text-dim)]" title={strings.leaseTitle}>
-            {strings.countingBehind} {humanizeLag(lagMinutes)} {strings.behindLive} · {payload.queueDepth} {strings.chunksWaiting}
+            {strings.countingBehind} {humanizeLag(lagMinutes)} {strings.behindLive}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[12px]">
-          <span className="rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
-            {payload.stats.chunksDone} {strings.chunksDone}
-          </span>
-          <span className="rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
-            {payload.stats.clicks} {strings.clicks}
-          </span>
-          <span className="rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
-            {payload.stats.chunksPerHour} {strings.chunksPerHour}
-          </span>
           <div className="flex rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-1" aria-label={strings.languageLabel}>
             {(["en", "es"] as const).map((value) => (
               <button
@@ -307,8 +291,8 @@ export function ReviewTallyConsole() {
         </span>
       </div>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div>
+      <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
           <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black ring-1 ring-[var(--border)]">
             <video
               ref={videoRef}
@@ -424,7 +408,7 @@ export function ReviewTallyConsole() {
           </div>
         </div>
 
-        <aside className="flex min-h-[420px] flex-col rounded-xl border border-[var(--border)] bg-[linear-gradient(180deg,var(--panel),var(--panel-2))] p-5">
+        <aside className="flex min-w-0 min-h-[420px] flex-col rounded-xl border border-[var(--border)] bg-[linear-gradient(180deg,var(--panel),var(--panel-2))] p-5">
           <div className="flex min-h-[360px] flex-1 flex-col justify-between">
             {screen === "summary" ? (
             <div className="flex h-full flex-col">
@@ -516,7 +500,7 @@ export function ReviewTallyConsole() {
                 {strings.todayPrefix} {dayQueue.filter((row) => row.state === "done").length} {strings.done} · {dayQueue.filter((row) => row.state !== "done").length} {strings.left}
               </div>
             </div>
-            <div className="mt-3 grid grid-cols-[24px_minmax(72px,1fr)_76px_66px_34px] gap-1 border-b border-[var(--border)] px-2 pb-2 text-[11px] font-semibold text-[var(--text-dim)]">
+            <div className="mt-3 grid grid-cols-[20px_minmax(52px,1fr)_58px_54px_40px] gap-0 border-b border-[var(--border)] px-2 pb-2 text-[10px] font-semibold text-[var(--text-dim)] sm:grid-cols-[24px_minmax(72px,1fr)_76px_66px_42px] sm:gap-1 sm:text-[11px]">
               <span>{strings.numberHeader}</span>
               <span>{strings.stationHeader}</span>
               <span>{strings.timeHeader}</span>
@@ -539,7 +523,7 @@ export function ReviewTallyConsole() {
                   <div
                     key={row.id}
                     className={cn(
-                      "grid grid-cols-[24px_minmax(72px,1fr)_76px_66px_34px] gap-1 border-b border-[var(--border-soft)] px-2 py-2 text-[11px] text-[var(--text-mut)]",
+                      "grid grid-cols-[20px_minmax(52px,1fr)_58px_54px_40px] gap-0 border-b border-[var(--border-soft)] px-2 py-2 text-[10px] text-[var(--text-mut)] sm:grid-cols-[24px_minmax(72px,1fr)_76px_66px_42px] sm:gap-1 sm:text-[11px]",
                       current && "border-l-2 border-l-[var(--accent)] bg-[var(--accent-tint)] pl-1.5",
                     )}
                   >

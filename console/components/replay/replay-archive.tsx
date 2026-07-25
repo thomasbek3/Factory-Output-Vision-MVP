@@ -114,6 +114,7 @@ export function CountedMoments({
             <button
               key={event.clip_id}
               type="button"
+              data-testid="counted-moment"
               onClick={() => onOpen(event.clip_id)}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13px] hover:bg-white/[.03]"
             >

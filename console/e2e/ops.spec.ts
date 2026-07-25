@@ -11,24 +11,26 @@ test.describe("/ops", () => {
     await expect(page.getByText(/cameras up/i)).toBeVisible();
     await expect(page.getByText(/events today/i)).toBeVisible();
 
-    // Reviewers table header present.
-    await expect(page.getByText(/golden accuracy/i)).toBeVisible();
+    await expect(page.getByText("Queue health only")).toBeVisible();
+    await expect(page.getByText(/model agreement/i)).toHaveCount(0);
+    await expect(page.getByText(/held-out exam/i)).toHaveCount(0);
+    await expect(page.getByText(/golden accuracy/i)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /export labels/i })).toHaveCount(0);
 
     assertNoConsoleErrors(errors);
   });
 
-  test("export labels writes a file and toasts", async ({ page }) => {
-    await page.goto("/ops");
-    await page.getByRole("button", { name: /export labels/i }).click();
-    await expect(page.getByText(/wrote .*labels|export failed/i)).toBeVisible();
+  test("legacy ungated label export route is absent", async ({ request }) => {
+    const response = await request.post("/api/ops/labels/export");
+    expect(response.status()).toBe(404);
   });
 
   // G8 — ops legibility.
   test("stat cards have explanatory subtitles", async ({ page }) => {
     await page.goto("/ops");
-    await expect(page.getByText("how far behind live the human counts are")).toBeVisible();
-    await expect(page.getByText(/verified placements on \w+ \d+/)).toBeVisible();
-    await expect(page.getByText("held-out recall — the honest score on unseen footage")).toBeVisible();
+    await expect(page.getByText("demo review delay behind source time")).toBeVisible();
+    await expect(page.getByText(/seeded review events on \w+ \d+/)).toBeVisible();
+    await expect(page.getByText("Queue health only")).toBeVisible();
   });
 
   // G5 — internal back-link.

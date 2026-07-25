@@ -33,8 +33,6 @@ export async function POST(
   }
 
   return Response.json({
-    chunk: result.chunk,
     events: result.events,
-    stats: result.stats,
   });
 }

@@ -81,18 +81,20 @@ test.describe("/ (Live)", () => {
     await expect(page).toHaveURL(/\/replay\?station=/);
   });
 
-  test("live playlist route 404s cleanly when no relay stream exists", async ({ page }) => {
-    // No relay is running in CI, so the playlist is absent → clean 404 (not 500),
-    // which is what lets the tile fall back to the demo loop.
+  test("live playlist route reports relay state honestly", async ({ page }) => {
+    // A supervised relay may be active in production and absent in CI.
     const res = await page.request.get("/api/live/pallet-a/stream.m3u8");
-    expect(res.status()).toBe(404);
+    expect([200, 404]).toContain(res.status());
 
-    // Unknown station is rejected by the allowlist, also 404.
+    // Unknown stations are always rejected by the allowlist.
     const bad = await page.request.get("/api/live/ghost-line/stream.m3u8");
     expect(bad.status()).toBe(404);
   });
 
   test("with no live stream, tiles fall back to demo loop and show the REPLAY chip", async ({ page }) => {
+    await page.route("**/api/live/*/stream.m3u8", async (route) => {
+      await route.fulfill({ status: 404, body: "not found" });
+    });
     await page.goto("/");
 
     // The camera video element is present and playing the demo loop.

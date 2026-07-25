@@ -442,15 +442,14 @@ export function MoneyStrip({
           VERIFICATION STATUS
         </div>
         <div className="mt-4 text-[30px] font-extrabold leading-none tracking-[-0.01em] tabular-nums text-[var(--text)]">
-          DEMO
+          HISTORICAL
         </div>
         <div className="mt-3 inline-flex rounded-full bg-[var(--good-tint)] px-2 py-1 text-[12px] font-semibold text-[var(--good)]">
-          SEEDED REVIEW
+          REVIEW DATA
         </div>
         <p className="mt-5 text-[14px] leading-6 text-[var(--text-mut)]">
-          Seeded review events power this demo. Production counts show their source and verified-through time.
+          These are historical review events. Production counts show their source and verified-through time.
         </p>
-        <AreaSpark values={[94, 95, 96, 97, 98, 99, 100, 100, 100, 100, 100]} color="good" size="kpi" endpoint className="-mx-2 mt-auto" aria-label="verification trend" />
       </Panel>
     </section>
   );

@@ -21,8 +21,6 @@ export type ReviewChunk = {
   processedBy: string | null;
   processedAtIso: string | null;
   problem: string | null;
-  isGolden: boolean;
-  goldenCount: number | null;
 };
 
 export type HumanTallyEvent = {
@@ -67,8 +65,6 @@ export function buildDemoReviewChunks() {
       const endIso = isoAt(minute + chunkMinutes);
       const start = new Date(startIso);
       const bucket = mediaBucketForTime(start);
-      const isGolden = station.id === "pallet-a" && startIso.endsWith("13:45:00-07:00");
-
       chunks.push({
         id: `${station.id}-${formatIdTime(startIso)}`,
         stationId: station.id,
@@ -83,8 +79,6 @@ export function buildDemoReviewChunks() {
         processedBy: null,
         processedAtIso: null,
         problem: null,
-        isGolden,
-        goldenCount: isGolden ? 6 : null,
       });
     }
   }

@@ -43,14 +43,11 @@ Current implementation evidence:
 - `console/lib/reviewStore.ts:45-67` stores work in process memory.
 - `console/lib/reviewStore.ts:128-135` marks a chunk processed after one
   submission.
-- `console/lib/reviewChunks.ts:24-25` places golden-answer metadata on the
-  worker-facing chunk object.
-- `console/lib/reviewStore.ts:165-176` exposes completed peer counts in the
-  worker day queue.
 - `console/lib/reviewStore.ts:113-153` uses a global idempotency map that can be
   overwritten by a colliding key from another reviewer.
-- `console/lib/reviewStore.ts:219-230` calculates reviewer throughput that must
-  not leak into the worker-facing payload.
+- The checkpoint-zero amendment removed hidden-golden metadata, peer-count
+  projection, global queue depth, and reviewer-throughput fields from current
+  worker API responses and UI. Durable domain replacement is still required.
 - `console/lib/reviewChunks.ts:50-53` hardcodes demo day and `-07:00` source
   offset instead of factory timezone rules.
 - `console/lib/reviewChunks.ts:143-169` assumes rendition time equals source
@@ -94,8 +91,11 @@ presented as real-time. An AI result must not be presented as human verified.
 - Track B exam-firewall intervals are excluded server-side from review and
   training queues. An exam-firewall interval is a source-hash and source-time
   range registered under `validation/exam/` as held-out evaluation evidence.
-  Assignment, rendition, and export services must consume that registry
-  directly when those services are implemented.
+  Assignment, rendition, and export services must consume both the exam
+  firewall and source-set registries directly when those services are
+  implemented. Every declared source-set window is blocked from ordinary
+  production assignment/export with a provisional 60-second guard band;
+  real-footage similarity measurement may widen but never silently shrink it.
 
 This spec does not change count authority, cloud/offline posture, or teacher
 roles in the live runtime. Any implementation that changes those boundaries
@@ -193,6 +193,13 @@ software. A first-time Spanish-speaking worker must reach guided practice within
 5 minutes of opening the invite and begin a real assignment within 15 minutes,
 including authentication, TOTP enrollment, walkthrough, practice, and
 qualification, without live assistance.
+
+Pilot devices have an approved authenticator installed before timed onboarding.
+The five-minute target includes linking the preinstalled authenticator and
+entering TOTP, not app-store acquisition. A missing or incompatible
+authenticator blocks the timing attempt and routes to ops device provisioning;
+the worker is not penalized and no five-minute claim is recorded for that
+attempt.
 
 The normal day is:
 
@@ -333,8 +340,10 @@ interval may not create duplicate chunks.
 - Rendition padding is clipped at exam-firewall and protected-source boundaries.
   Protected-source boundaries include every resolver-calibration,
   AI-evaluation-holdout, practice, and qualification interval declared in the
-  source-set registry. Different source sets maintain at least the full context
-  duration between visible intervals unless presentation is clipped.
+  source-set registry. Ordinary production assignments and exports maintain a
+  provisional 60-second guard band around every protected set. Different source
+  sets maintain at least the full context duration between visible intervals
+  unless presentation is clipped.
   Assignment eligibility is evaluated against the complete visible rendition
   interval, including context, not only the canonical chunk interval.
 - Leading context copy is
@@ -356,8 +365,9 @@ interval may not create duplicate chunks.
 The transcode pipeline must preserve a tested rendition-to-source-time mapping.
 Burned-timecode fixtures, including variable-frame-rate and discontinuous input,
 must demonstrate mapping error below 250 ms before reviewer-tolerance
-calibration begins. The final mapping budget must also remain below 20 percent
-of the accepted event-alignment tolerance.
+calibration begins. After the event-alignment tolerance is measured, the
+mapping test is rerun against `min(250 ms, 20 percent of the accepted
+tolerance)`; failure invalidates the calibration and blocks that rendition.
 
 ### 6.3 Assignment
 
@@ -427,7 +437,8 @@ Header:
 Video:
 
 - Clean 16:9 or source-aspect playback.
-- Speed controls: 1x, 2x, 5x, 10x, 15x.
+- Speed controls: 1x, 2x, and 5x. The 10x and 15x controls are present only for
+  a device/rendition class whose Tier B safety gate in section 6.5 has passed.
 - Play/pause.
 - Back 10 source seconds.
 - Timeline with the reviewer's own click markers.
@@ -1259,13 +1270,14 @@ review. It must not reuse `globalThis` as production persistence.
 
 ### End to end
 
-- Invite, Spanish-first login, guided practice, qualification, and first real
-  assignment without staff assistance.
+- Invite, Spanish-first login on a pre-provisioned pilot device, guided
+  practice, qualification, and first real assignment without staff assistance.
 - `work_ready` automatically appears on the idle waiting screen without refresh.
 - New work never interrupts or replaces an active review.
 - Confirming one chunk automatically opens the next ready assignment.
 - Reviewer login, resume draft, tally by keyboard, undo, summary, confirm.
-- 1x/2x/5x/10x/15x playback on approved low-cost hardware.
+- 1x/2x/5x playback on approved low-cost hardware; gated 10x/15x only after the
+  named device/rendition class passes the Tier B safety screen.
 - Automatic speed downgrade on dropped-frame or bandwidth-health breach.
 - Connection loss and URL refresh.
 - Spanish UI at desktop and narrow widths.

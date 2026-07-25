@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from app.services.exam_firewall import (
@@ -111,7 +111,7 @@ def validate_source_sets_against_exam(
         matching_holdouts = [
             window
             for window in holdouts
-            if protected.source_sha256 in window.lineage_source_sha256
+            if not protected.lineage_source_sha256.isdisjoint(window.lineage_source_sha256)
             and window.start_at <= protected.start_at
             and window.end_at >= protected.end_at
         ]
@@ -123,25 +123,42 @@ def validate_source_sets_against_exam(
         for window in windows:
             if window.source_set == "ai_evaluation_holdout":
                 continue
-            if protected.source_sha256 not in window.lineage_source_sha256:
+            if protected.lineage_source_sha256.isdisjoint(window.lineage_source_sha256):
                 continue
             if window.start_at < protected.end_at and protected.start_at < window.end_at:
                 raise ValueError(
                     f"{window.source_set} overlaps exam interval {protected.interval_id}"
                 )
 
-    for holdout in holdouts:
-        containing_intervals = [
-            protected
-            for protected in protected_intervals
-            if protected.source_sha256 in holdout.lineage_source_sha256
-            and protected.start_at <= holdout.start_at
-            and protected.end_at >= holdout.end_at
-        ]
-        if not containing_intervals:
-            raise ValueError(
-                "ai_evaluation_holdout window is not contained in the exam firewall"
-            )
+def assignment_overlaps_protected_source_set(
+    windows: tuple[SourceWindow, ...],
+    *,
+    lineage_source_sha256: frozenset[str],
+    start_at: datetime,
+    end_at: datetime,
+    guard_band_seconds: float = 60,
+) -> bool:
+    if not lineage_source_sha256:
+        raise ValueError("assignment lineage_source_sha256 must be non-empty")
+    if any(not SHA256_PATTERN.fullmatch(item) for item in lineage_source_sha256):
+        raise ValueError("assignment lineage hashes must be 64 lowercase hex characters")
+    if guard_band_seconds < 0:
+        raise ValueError("guard_band_seconds must not be negative")
+    if any(
+        value.tzinfo is None or value.utcoffset() != timezone.utc.utcoffset(value)
+        for value in (start_at, end_at)
+    ):
+        raise ValueError("assignment timestamps must be timezone-aware UTC")
+    if start_at >= end_at:
+        raise ValueError("assignment start_at must precede end_at")
+
+    guard = timedelta(seconds=guard_band_seconds)
+    return any(
+        not window.lineage_source_sha256.isdisjoint(lineage_source_sha256)
+        and start_at < window.end_at + guard
+        and window.start_at - guard < end_at
+        for window in windows
+    )
 
 
 def load_source_sets(

@@ -14,8 +14,10 @@ test.describe("G2 — the Tapes archive", () => {
 
   test("counted moments list opens the clip drawer", async ({ page }) => {
     await page.goto("/replay?station=pallet-a");
-    // The Counted moments panel lists each placement with its verifier.
-    const firstMoment = page.locator("button", { hasText: /M\. Reyes/ }).first();
+    // Owner surfaces expose the event, not the reviewer identity.
+    const firstMoment = page.getByTestId("counted-moment").first();
+    await expect(firstMoment).toContainText("Seeded review");
+    await expect(firstMoment).not.toContainText(/M\. Reyes/);
     await firstMoment.click();
     await expect(page.getByRole("dialog")).toBeVisible();
   });

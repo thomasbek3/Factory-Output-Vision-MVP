@@ -61,7 +61,10 @@ One codebase, one deploy, three role-gated faces:
 - **Clip**: id, station_id, t_start, t_end, hls_uri, thumb_uri, segment_refs[].
 - **Alert**: id, type(behind_pace|station_quiet|camera_offline), severity(crit|warn), station_id, job_id?, ts, message, clip_id?, resolved(bool).
 - **User**: id, role(owner|reviewer|ops), name, email.
-- **ReviewTask**: id, clip_id, station_id, ts, tripwire_score, status(pending|done|escalated), decided_by, decided_at, decision.
+- Reviewer-domain entities are the versioned chunk, assignment, draft action,
+  immutable submission, consensus result, adjudication decision, audit
+  selection, and separately permissioned AI run defined by the worker-portal
+  spec. The legacy single-decider `ReviewTask` shape is retired.
 - **LaborConfig**: work_hours per weekday (e.g. 07:00–17:30), hourly_rate_usd, workers_per_station(default 1).
 
 ### 0.3 The Evidence Primitive — ClipDrawer (GLOBAL)

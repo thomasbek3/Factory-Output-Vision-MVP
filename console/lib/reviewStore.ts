@@ -10,25 +10,14 @@ import {
 } from "@/lib/reviewChunks";
 import { demoNowIso } from "@/lib/demoData";
 
-export type ReviewerMetric = {
-  reviewerId: string;
-  name: string;
-  chunksToday: number;
-  clicksToday: number;
-  chunksPerHour: number;
-  goldenAccuracyPct: number | null;
-};
-
 type Store = {
   chunks: ReviewChunk[];
   humanEvents: HumanTallyEvent[];
   sessions: Record<string, { name: string; startedAtIso: string; chunksDone: number; clicks: number }>;
-  golden: Record<string, { correct: number; total: number }>;
   submissions: Record<string, {
     chunkId: string;
     reviewerId: string;
     events: HumanTallyEvent[];
-    stats: { chunksDone: number; clicks: number; chunksPerHour: number };
   }>;
 };
 
@@ -52,10 +41,6 @@ function createStore(): Store {
       "m-reyes": { name: "M. Reyes", startedAtIso: "2026-06-26T12:00:00-07:00", chunksDone: 12, clicks: 74 },
       "a-kim": { name: "A. Kim", startedAtIso: "2026-06-26T12:30:00-07:00", chunksDone: 9, clicks: 52 },
       "live-session": { name: "Live session", startedAtIso: "2026-06-26T14:20:00-07:00", chunksDone: 0, clicks: 0 },
-    },
-    golden: {
-      "m-reyes": { correct: 23, total: 24 },
-      "a-kim": { correct: 19, total: 20 },
     },
     submissions: {},
   };
@@ -96,8 +81,6 @@ export function getNextChunk(reviewerId: string, now = new Date(demoNowIso)) {
   return {
     chunk,
     nextChunk: next,
-    stats: sessionStats(reviewerId, now),
-    queueDepth: openQueueDepth(store.chunks, now),
   };
 }
 
@@ -113,7 +96,7 @@ export function confirmChunk(
   const prior = store.submissions[idempotencyKey];
   if (prior && prior.chunkId === chunkId && prior.reviewerId === reviewerId) {
     const chunk = store.chunks.find((candidate) => candidate.id === chunkId)!;
-    return { ok: true as const, chunk, events: prior.events, stats: prior.stats };
+    return { ok: true as const, chunk, events: prior.events };
   }
   releaseExpiredLocks(store.chunks, now);
   const chunk = store.chunks.find((candidate) => candidate.id === chunkId);
@@ -143,15 +126,8 @@ export function confirmChunk(
   session.chunksDone += 1;
   session.clicks += events.length;
 
-  if (!problem && chunk.isGolden && chunk.goldenCount !== null) {
-    const accuracy = (store.golden[reviewerId] ??= { correct: 0, total: 0 });
-    accuracy.total += 1;
-    if (clicks.length === chunk.goldenCount) accuracy.correct += 1;
-  }
-
-  const stats = sessionStats(reviewerId, now);
-  store.submissions[idempotencyKey] = { chunkId, reviewerId, events, stats };
-  return { ok: true as const, chunk, events, stats };
+  store.submissions[idempotencyKey] = { chunkId, reviewerId, events };
+  return { ok: true as const, chunk, events };
 }
 
 export function getDayQueue(reviewerId: string, now = new Date(demoNowIso)): ReviewDayQueueRow[] {
@@ -172,25 +148,11 @@ export function getDayQueue(reviewerId: string, now = new Date(demoNowIso)): Rev
       : chunk.state === "locked"
         ? chunk.lockedBy === reviewerId ? "working" : "locked-by-other"
         : "pending",
-    count: chunk.state === "processed" ? counts.get(chunk.id) ?? 0 : null,
-    problem: chunk.problem,
+    count: chunk.state === "processed" && chunk.processedBy === reviewerId
+      ? counts.get(chunk.id) ?? 0
+      : null,
+    problem: chunk.processedBy === reviewerId ? chunk.problem : null,
   }));
-}
-
-export function sessionStats(reviewerId: string, now = new Date(demoNowIso)) {
-  const store = reviewStore();
-  const session = store.sessions[reviewerId] ?? {
-    name: reviewerId,
-    startedAtIso: now.toISOString(),
-    chunksDone: 0,
-    clicks: 0,
-  };
-  const hours = Math.max((now.getTime() - new Date(session.startedAtIso).getTime()) / 3_600_000, 0.25);
-  return {
-    chunksDone: session.chunksDone,
-    clicks: session.clicks,
-    chunksPerHour: Number((session.chunksDone / hours).toFixed(1)),
-  };
 }
 
 export function opsSnapshot(now = new Date(demoNowIso)) {
@@ -211,23 +173,5 @@ export function opsSnapshot(now = new Date(demoNowIso)) {
     verificationLagMinutes,
     openQueueDepth: openQueueDepth(store.chunks, now),
     chunksTotal: store.chunks.length,
-    humanEvents: store.humanEvents,
-    reviewers: reviewerMetrics(now),
   };
-}
-
-export function reviewerMetrics(now = new Date(demoNowIso)): ReviewerMetric[] {
-  const store = reviewStore();
-  return Object.entries(store.sessions).map(([reviewerId, session]) => {
-    const golden = store.golden[reviewerId];
-    const hours = Math.max((now.getTime() - new Date(session.startedAtIso).getTime()) / 3_600_000, 0.25);
-    return {
-      reviewerId,
-      name: session.name,
-      chunksToday: session.chunksDone,
-      clicksToday: session.clicks,
-      chunksPerHour: Number((session.chunksDone / hours).toFixed(1)),
-      goldenAccuracyPct: golden && golden.total > 0 ? Math.round((golden.correct / golden.total) * 100) : null,
-    };
-  });
 }
