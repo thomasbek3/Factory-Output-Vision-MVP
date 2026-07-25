@@ -818,7 +818,7 @@ phrase `100% HUMAN+AI`. Phase 0 must make an explicit dated amendment to both
 contracts, record the amendment commit in this spec, and update
 `console/components/chrome/trust-line.tsx` before production implementation.
 The dated contract amendment is present in both files. Amendment commit:
-`b3cf7737b594236808e9bac20fca966239be543b`.
+`723df77054289be5e0f9992b97b0817f76bf4621`.
 The replacement pattern is:
 
 ```text
