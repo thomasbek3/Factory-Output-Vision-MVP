@@ -60,6 +60,50 @@ Session `75a8bdf8-a136-4aab-b487-a44507630130` resolved to the same canonical
 model but had no usable read tools and produced no verdict. It is not checkpoint
 evidence.
 
+## Third High-Effort Review
+
+Session: `4c93b688-5f8c-401f-9d5c-5c5e5a903462`
+
+Canonical model: `claude-opus-5`
+
+Reported turns: 43
+
+Verdict: **REVISE**
+
+The reviewer verified that the three second-pass P0s were closed, then found one
+remaining P0: the low-level trainer consumed the exam registry but did not
+compose that check with the wider protected source-set registry. Holdout,
+practice, qualification, calibration, or resolver-calibration footage could
+therefore be declared training-eligible without appearing in the exam registry.
+
+Adjacent findings covered global queue ordinals, a missing composed
+exam/source-set guard band, advisory teacher outputs, rendition-source
+provenance, a vacuous zero-row queue test, adjudicator-copy ambiguity, worker
+lexicon drift, traversal-budget arithmetic, permissive missing
+`training_eligible`, and an incorrect download icon on a read-only queue card.
+
+## Third Remediation Applied
+
+- Added one composed review-eligibility service that consumes both the exam
+  firewall and protected source-set registry. The low-level trainer now uses
+  that service, so no caller or filename can bypass either registry.
+- Added negative tests for holdout, practice, qualification,
+  resolver-calibration, and the 60-second guard band, plus a positive test for
+  ordinary footage outside every protected set.
+- Made `training_eligible: true` an explicit fail-closed lineage field for
+  training manifests. Advisory teacher-label and evidence outputs cannot enter
+  training, and behavioral tests prove they are rejected.
+- Made queue ordinals caller-local and gap-free after peer rows are removed.
+  API and unit tests now require at least one caller row, assert exact ordinal
+  continuity, and prove the peer row is absent.
+- Restored the exact canonical English and Spanish release-event instruction,
+  replaced internal vocabulary, and expanded the worker problem menu to the six
+  specified reasons.
+- Clarified that no adjudicator-capable account or endpoint may receive model
+  evidence, corrected the fastest-traversal floor to `2m55s`, and removed
+  download semantics from the read-only operations queue.
+- Renamed remaining seeded/demo-facing owner copy as historical review data.
+
 ## Second Remediation Applied
 
 - Day-queue responses now contain only the caller's own leased or completed
@@ -112,8 +156,8 @@ evidence.
 
 ## Verification Before Closure Review
 
-- Backend: `655 passed`, 16 dependency warnings.
-- Focused firewall/training/copy suite: `39 passed`.
+- Backend: `662 passed`, 16 dependency warnings.
+- Focused firewall/training/copy suite: `46 passed`.
 - Console unit: `44 passed`.
 - Console lint: zero errors, 12 pre-existing warnings under `e2e-audit`.
 - Next production build: passed; the removed export route is absent.
@@ -125,6 +169,7 @@ evidence.
 
 ## Re-Review Gate
 
-Checkpoint zero remains **REVISE** until a fresh Opus 5 high-effort pass finds no
-open P0. This receipt will record that independent closure result rather than
-self-certifying the remediation.
+Checkpoint zero remains **REVISE** after three completed high-effort reviews and
+will not close until a fresh Opus 5 high-effort pass finds no open P0. This
+receipt records the independent finding and remediation rather than
+self-certifying closure.

@@ -103,6 +103,12 @@ def test_worker_copy_uses_the_versioned_release_anchor() -> None:
     assert "+1 CONTEO" not in strings
     assert "Contexto del video anterior. No cuentes aquí." in lexicon
     assert "Contexto del siguiente video. No cuentes aquí." in lexicon
+    assert (
+        "Count one piece on the first frame where the worker has released the "
+        "finished piece and it remains in the designated output area."
+    ) in lexicon
+    assert "CONTINUAR VIDEO" in lexicon
+    assert "COMENZAR SIGUIENTE VIDEO" in lexicon
     assert re.search(r"\b(?:bloque|cola|colocación)\b", lexicon, flags=re.IGNORECASE) is None
 
 
@@ -142,6 +148,9 @@ def test_training_paths_consume_the_registry_firewall() -> None:
     guard = (
         REPO_ROOT / "app" / "services" / "training_exam_guard.py"
     ).read_text(encoding="utf-8")
+    eligibility = (
+        REPO_ROOT / "app" / "services" / "review_eligibility.py"
+    ).read_text(encoding="utf-8")
     extractor = (
         REPO_ROOT / "app" / "services" / "clip_dataset.py"
     ).read_text(encoding="utf-8")
@@ -153,8 +162,9 @@ def test_training_paths_consume_the_registry_firewall() -> None:
         REPO_ROOT / "app" / "services" / "clip_models.py"
     ).read_text(encoding="utf-8")
 
-    assert "load_exam_firewall" in guard
-    assert "assignment_overlaps_exam" in guard
+    assert "review_interval_is_protected" in guard
+    assert "assignment_overlaps_exam" in eligibility
+    assert "assignment_overlaps_protected_source_set" in eligibility
     assert "validate_training_row" in extractor
     assert "validate_training_manifest" in labeler
     assert "validate_training_manifest" in trainer

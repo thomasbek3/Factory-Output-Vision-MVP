@@ -53,6 +53,7 @@ def extract_clip_dataset(
                 end_sec=end_sec,
             )
             lineage_fields = {
+                "training_eligible": True,
                 "source_sha256": candidate.get("source_sha256"),
                 "lineage_source_sha256": candidate.get("lineage_source_sha256"),
                 "lineage_is_transitive_complete": candidate.get("lineage_is_transitive_complete"),

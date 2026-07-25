@@ -120,7 +120,7 @@ export function CountedMoments({
             >
               <span className="font-semibold tabular-nums text-[var(--text)]">{timeLabel(event.ts, true)}</span>
               <span className="text-[var(--text-dim)]">{stationName(event.station_id)}</span>
-              <span className="ml-auto text-[12px] text-[var(--text-dim)]">Seeded review</span>
+              <span className="ml-auto text-[12px] text-[var(--text-dim)]">Historical review</span>
             </button>
           ))}
         </div>

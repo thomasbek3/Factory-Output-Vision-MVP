@@ -28,8 +28,8 @@ test.describe("/ops", () => {
   // G8 — ops legibility.
   test("stat cards have explanatory subtitles", async ({ page }) => {
     await page.goto("/ops");
-    await expect(page.getByText("demo review delay behind source time")).toBeVisible();
-    await expect(page.getByText(/seeded review events on \w+ \d+/)).toBeVisible();
+    await expect(page.getByText("historical review delay behind source time")).toBeVisible();
+    await expect(page.getByText(/historical review events on \w+ \d+/)).toBeVisible();
     await expect(page.getByText("Queue health only")).toBeVisible();
   });
 

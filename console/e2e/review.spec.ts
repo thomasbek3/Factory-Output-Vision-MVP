@@ -58,7 +58,7 @@ test.describe("/review", () => {
 
     await expect(
       page.getByText(
-        "Count one finished piece on the first frame where the worker releases it and it remains in the designated output area.",
+        "Count one piece on the first frame where the worker has released the finished piece and it remains in the designated output area.",
       ),
     ).toBeVisible();
     await expect(page.getByText(/becomes available again after 5 minutes/)).toBeVisible();
@@ -110,9 +110,13 @@ test.describe("/review", () => {
       .get(`/api/review/day-queue?reviewerId=${ownerId}`)
       .then((response) => response.json());
 
-    const rows = dayQueue.chunks as Array<{ id: string; state: string }>;
+    const rows = dayQueue.chunks as Array<{ id: string; order: number; state: string }>;
+    expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((row) => row.id === ownerLease.chunk?.id)).toBeTruthy();
     expect(rows.some((row) => row.id === peerLease.chunk?.id)).toBeFalsy();
+    expect(rows.map((row, index) => index + 1)).toEqual(
+      rows.map((row) => row.order),
+    );
     expect(JSON.stringify(dayQueue)).not.toContain("locked-by-other");
     expect(JSON.stringify(dayQueue)).not.toContain("pending");
   });

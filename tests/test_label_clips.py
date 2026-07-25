@@ -69,9 +69,37 @@ def test_exam_window_never_labeled(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    source_sets = tmp_path / "source-sets.json"
+    source_sets.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-vision-review-source-sets-v1",
+                "fail_closed": True,
+                "sets": {
+                    "resolver_calibration": [],
+                    "ai_evaluation_holdout": [
+                        {
+                            "source_sha256": source_sha256,
+                            "lineage_source_sha256": [source_sha256],
+                            "lineage_is_transitive_complete": True,
+                            "start_at": "2026-07-25T13:00:00Z",
+                            "end_at": "2026-07-25T13:01:00Z",
+                        }
+                    ],
+                    "practice": [],
+                    "qualification": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    with pytest.raises(ValueError, match="refusing to label exam"):
-        guard_no_exam_rows(manifest, exam_firewall_path=firewall)
+    with pytest.raises(ValueError, match="refusing to label protected"):
+        guard_no_exam_rows(
+            manifest,
+            exam_firewall_path=firewall,
+            source_set_registry_path=source_sets,
+        )
 
 
 def test_parse_label_output_accepts_embedded_json() -> None:
@@ -94,6 +122,7 @@ def make_manifest(tmp_path: Path, *, centers: list[float]) -> dict:
             {
                 "candidate_id": f"candidate-{index}",
                 "source": str(source_path),
+                "training_eligible": True,
                 "source_sha256": source_sha256,
                 "lineage_source_sha256": [source_sha256],
                 "lineage_is_transitive_complete": True,

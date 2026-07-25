@@ -16,7 +16,7 @@ test.describe("G2 — the Tapes archive", () => {
     await page.goto("/replay?station=pallet-a");
     // Owner surfaces expose the event, not the reviewer identity.
     const firstMoment = page.getByTestId("counted-moment").first();
-    await expect(firstMoment).toContainText("Seeded review");
+    await expect(firstMoment).toContainText("Historical review");
     await expect(firstMoment).not.toContainText(/M\. Reyes/);
     await firstMoment.click();
     await expect(page.getByRole("dialog")).toBeVisible();

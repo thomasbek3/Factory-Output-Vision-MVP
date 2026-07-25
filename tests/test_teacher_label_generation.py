@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+from app.services.training_exam_guard import validate_training_manifest
 from scripts.teacher_generate_labels import DryRunFixtureProvider, build_teacher_labels
 
 
@@ -61,3 +63,5 @@ def test_teacher_generate_labels_dry_run_outputs_only_bronze_pending(tmp_path: P
     assert label["review_status"] == "pending"
     assert label["validation_truth_eligible"] is False
     assert label["training_eligible"] is False
+    with pytest.raises(ValueError, match="training-ineligible"):
+        validate_training_manifest({"samples": payload["labels"]})

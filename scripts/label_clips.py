@@ -207,11 +207,17 @@ def guard_no_exam_rows(
     manifest: dict[str, Any],
     *,
     exam_firewall_path: Path | None = None,
+    source_set_registry_path: Path | None = None,
 ) -> None:
-    if exam_firewall_path is None:
+    if exam_firewall_path is None and source_set_registry_path is None:
         validate_training_manifest(manifest)
     else:
-        validate_training_manifest(manifest, exam_firewall_path=exam_firewall_path)
+        kwargs = {}
+        if exam_firewall_path is not None:
+            kwargs["exam_firewall_path"] = exam_firewall_path
+        if source_set_registry_path is not None:
+            kwargs["source_set_registry_path"] = source_set_registry_path
+        validate_training_manifest(manifest, **kwargs)
 
 
 def safe_slug(value: str) -> str:

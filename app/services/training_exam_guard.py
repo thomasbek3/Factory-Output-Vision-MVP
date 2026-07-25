@@ -5,16 +5,15 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
-from app.services.exam_firewall import (
-    SHA256_PATTERN,
-    assignment_overlaps_exam,
-    load_exam_firewall,
-    parse_utc_timestamp,
-)
+from app.services.exam_firewall import SHA256_PATTERN, parse_utc_timestamp
+from app.services.review_eligibility import review_interval_is_protected
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_EXAM_FIREWALL_PATH = REPO_ROOT / "validation" / "exam" / "exam_firewall_v2.json"
+DEFAULT_SOURCE_SET_REGISTRY_PATH = (
+    REPO_ROOT / "validation" / "review_portal" / "source_sets_v1.json"
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -29,9 +28,12 @@ def validate_training_row(
     row: dict[str, Any],
     *,
     exam_firewall_path: Path = DEFAULT_EXAM_FIREWALL_PATH,
+    source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
 ) -> None:
     if row.get("training_eligible") is False:
         raise ValueError("refusing to label training-ineligible samples")
+    if row.get("training_eligible") is not True:
+        raise ValueError("training row must declare training_eligible=true")
     if row.get("exam_only") is True or row.get("source_role") == "exam":
         raise ValueError("refusing to label exam window samples")
 
@@ -53,23 +55,25 @@ def validate_training_row(
 
     start_at = parse_utc_timestamp(row.get("start_at"))
     end_at = parse_utc_timestamp(row.get("end_at"))
-    if assignment_overlaps_exam(
-        load_exam_firewall(exam_firewall_path),
+    if review_interval_is_protected(
+        exam_firewall_path=exam_firewall_path,
+        source_set_registry_path=source_set_registry_path,
         source_sha256=source_sha256,
-        lineage_source_sha256=lineage,
+        lineage_source_sha256=frozenset({source_sha256, *lineage}),
         lineage_is_transitive_complete=True,
         start_at=start_at,
         end_at=end_at,
         presented_start_at=start_at,
         presented_end_at=end_at,
     ):
-        raise ValueError("refusing to label exam window samples")
+        raise ValueError("refusing to label protected source-set samples")
 
 
 def validate_training_manifest(
     manifest: dict[str, Any],
     *,
     exam_firewall_path: Path = DEFAULT_EXAM_FIREWALL_PATH,
+    source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
 ) -> None:
     samples = manifest.get("samples")
     if not isinstance(samples, list):
@@ -77,7 +81,11 @@ def validate_training_manifest(
     for row in samples:
         if not isinstance(row, dict):
             raise ValueError("training manifest rows must be objects")
-        validate_training_row(row, exam_firewall_path=exam_firewall_path)
+        validate_training_row(
+            row,
+            exam_firewall_path=exam_firewall_path,
+            source_set_registry_path=source_set_registry_path,
+        )
 
 
 def candidate_training_interval(

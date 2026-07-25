@@ -91,10 +91,12 @@ presented as real-time. An AI result must not be presented as human verified.
 - Track B exam-firewall intervals are excluded server-side from review and
   training queues. An exam-firewall interval is a source-hash and source-time
   range registered under `validation/exam/` as held-out evaluation evidence.
-  Every training extractor, labeler, and trainer consumes that registry; a
-  training manifest without a verified source SHA-256, UTC visible interval,
-  and declared complete transitive lineage fails closed. Filenames and caller
-  eligibility flags are not firewall evidence.
+  Every path capable of emitting or consuming `training_eligible=true` consumes
+  both the exam and protected source-set registries. Advisory evidence/teacher
+  tools emit `training_eligible=false`; the low-level trainer rejects those
+  outputs behaviorally. A training manifest without a verified source SHA-256,
+  UTC visible interval, and declared complete transitive lineage fails closed.
+  Filenames and caller eligibility flags are not firewall evidence.
   Assignment, rendition, and export services must consume both the exam
   firewall and source-set registries directly when those services are
   implemented. Every declared source-set window is blocked from ordinary
@@ -149,7 +151,7 @@ requires a new architecture decision record.
 | Role | Authentication | May access |
 | --- | --- | --- |
 | Reviewer | Invite-only account, magic-link enrollment plus required TOTP MFA before production work | Assigned chunk media, own in-progress work, own daily progress |
-| Adjudicator | FactoryVision Google Workspace SSO plus MFA | Disputed chunks, three anonymized submissions, evidence clips; no AI result for any open case |
+| Adjudicator | FactoryVision Google Workspace SSO plus MFA | Disputed chunks, three anonymized submissions, evidence clips; no AI result for any chunk |
 | Ops | FactoryVision Google Workspace SSO plus MFA | Queue and reviewer-health metadata plus audit logs; no adjudication and no AI event/comparison reads |
 | AI analyst | FactoryVision Google Workspace SSO plus MFA | AI comparison only after the human-result embargo clears |
 | Factory owner | Existing owner authentication | Resolved counts and evidence permitted by factory policy |
@@ -649,9 +651,9 @@ The adjudicator sees:
 - coverage/problem metadata;
 - no AI output ever, as required by the section 5 capability matrix.
 
-The API denies AI data for open cases even when the same employee also performs
-general ops work. The pilot uses separate adjudicator and AI-analyst accounts;
-shared credentials are prohibited.
+The API denies AI data to every adjudicator-capable account for every chunk,
+including resolved chunks that may later reopen. The pilot uses separate
+adjudicator and AI-analyst accounts; shared credentials are prohibited.
 
 The adjudicator may add/remove/move events, mark footage unusable, or send the
 chunk for a fresh fourth review. Every action requires a reason code. The
@@ -985,7 +987,7 @@ Pilot example:
 - eight recorded hours per camera;
 - 64 total 15-minute chunks per day;
 - 192 primary assignments per day;
-- a hard traversal floor of 3 minutes per assignment at 5x, before review,
+- a hard traversal floor of 2 minutes 55 seconds per assignment at 5x, before review,
   pauses, edits, problems, or confirmation.
 
 No reviewer-hours or roster-size claim is derived from that hard floor. A

@@ -364,7 +364,7 @@ export function ReplayDashboard({ initialStation, initialTime, initialDay }: Rep
                 className="absolute bottom-4 left-4 rounded-lg bg-black/70 px-3 py-2 text-left text-[13px] font-semibold text-white backdrop-blur hover:bg-black/85"
                 onClick={() => openClip(nearEvent.clip_id)}
               >
-                PLACEMENT #{placementNumber} · {formatClock(new Date(nearEvent.ts), true)} · Seeded review
+                PLACEMENT #{placementNumber} · {formatClock(new Date(nearEvent.ts), true)} · Historical review
               </button>
             ) : null}
             <div className="absolute bottom-4 right-4 flex rounded-lg border border-white/10 bg-black/65 p-1 backdrop-blur">

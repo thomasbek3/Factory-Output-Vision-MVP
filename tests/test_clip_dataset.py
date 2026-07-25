@@ -18,6 +18,7 @@ def test_clip_extractor_writes_stack3_clip_flow_shapes_and_is_resumable(tmp_path
             "center_sec": 1.0,
             "start_sec": 0.0,
             "end_sec": 2.0,
+            "training_eligible": True,
             "source_start_at": "2026-07-25T12:00:00Z",
             "source_sha256": sha256_file(video),
             "lineage_source_sha256": [sha256_file(video)],

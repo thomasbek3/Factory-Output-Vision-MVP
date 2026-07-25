@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+from app.services.training_exam_guard import validate_training_manifest
 from scripts.extract_event_windows import build_event_evidence, write_review_frames_for_evidence
 
 
@@ -106,6 +108,8 @@ def test_extract_event_windows_produces_stable_schema_shaped_evidence(tmp_path: 
     ]
     assert first["windows"][0]["label_authority_tier"] == "bronze"
     assert first["review_window_metadata"][0]["review_status"] == "not_reviewed"
+    with pytest.raises(ValueError, match="samples must be a list"):
+        validate_training_manifest(first)
 
 
 def test_write_review_frames_for_evidence_adds_frame_assets(tmp_path: Path) -> None:

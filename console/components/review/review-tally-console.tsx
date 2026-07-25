@@ -393,10 +393,12 @@ export function ReviewTallyConsole() {
                 <div className="absolute bottom-full left-0 z-10 mb-2 w-56 rounded-xl border border-[var(--border)] bg-[linear-gradient(180deg,var(--panel),var(--panel-2))] p-2 shadow-[0_10px_28px_rgba(0,0,0,.42)]">
                   <div className="px-2 pb-2 text-[11px] font-semibold text-[var(--text-dim)]">{strings.problemPrompt}</div>
                   {([
-                    ["camera-blocked", strings.cameraBlocked],
-                    ["cannot-tell", strings.cannotTell],
                     ["video-wont-play", strings.videoWontPlay],
-                    ["wrong-scene", strings.wrongScene],
+                    ["camera-blocked", strings.cameraBlocked],
+                    ["timestamp-jump", strings.timestampJump],
+                    ["wrong-station", strings.wrongStation],
+                    ["no-usable-footage", strings.noUsableFootage],
+                    ["other", strings.otherProblem],
                   ] as const).map(([reason, label]) => (
                     <button
                       key={reason}

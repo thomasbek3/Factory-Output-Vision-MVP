@@ -128,13 +128,12 @@ export function getDayQueue(reviewerId: string, now = new Date(demoNowIso)): Rev
     counts.set(event.clip_id.split("-tally-")[0], (counts.get(event.clip_id.split("-tally-")[0]) ?? 0) + 1);
   }
 
-  return store.chunks.flatMap((chunk, index) => {
-    const belongsToReviewer = (
+  return store.chunks
+    .filter((chunk) => (
       (chunk.state === "locked" && chunk.lockedBy === reviewerId) ||
       (chunk.state === "processed" && chunk.processedBy === reviewerId)
-    );
-    if (!belongsToReviewer) return [];
-    return [{
+    ))
+    .map((chunk, index) => ({
       id: chunk.id,
       order: index + 1,
       stationName: chunk.stationName,
@@ -142,8 +141,7 @@ export function getDayQueue(reviewerId: string, now = new Date(demoNowIso)): Rev
       state: chunk.state === "processed" ? "done" as const : "working" as const,
       count: chunk.state === "processed" ? counts.get(chunk.id) ?? 0 : null,
       problem: chunk.state === "processed" ? chunk.problem : null,
-    }];
-  });
+    }));
 }
 
 export function opsSnapshot(now = new Date(demoNowIso)) {

@@ -54,6 +54,7 @@ describe("review day queue", () => {
     const queue = getDayQueue("reviewer-1", now);
 
     expect(queue).toHaveLength(1);
+    expect(queue.map((row) => row.order)).toEqual([1]);
     expect(queue.find((row) => row.id === current.id)?.state).toBe("working");
     expect(queue.some((row) => row.id === peer.id)).toBe(false);
     expect(queue[0]).toMatchObject({

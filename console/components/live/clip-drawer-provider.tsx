@@ -216,7 +216,7 @@ export function ClipDrawerProvider({ children }: { children: ReactNode }) {
                   </span>
                   <span className="text-[var(--text-dim)]">Verification</span>
                   <span className="text-[var(--text)]">
-                    Seeded review · demo data
+                    Historical review data
                   </span>
                 </div>
 

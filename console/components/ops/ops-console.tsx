@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Factory, RadioTower, ShieldCheck, TimerReset } from "lucide-react";
+import { ArrowLeft, Factory, ListChecks, RadioTower, ShieldCheck, TimerReset } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import { demoSourceDay } from "@/lib/demoEvents";
 
@@ -85,9 +85,9 @@ export function OpsConsole() {
     return [
       { label: "Factories", value: String(snapshot.factories), subtitle: "sites streaming to this console", icon: Factory },
       { label: "Cameras up", value: `${snapshot.camerasUp}/${snapshot.camerasTotal}`, subtitle: "feeds online through the tunnel", icon: RadioTower },
-      { label: "Events today", value: String(snapshot.eventsToday), subtitle: `seeded review events on ${demoDayLabel}`, icon: ShieldCheck },
-      { label: "Review lag", value: `${snapshot.verificationLagMinutes}m`, subtitle: "demo review delay behind source time", icon: TimerReset },
-      { label: "Open queue", value: String(snapshot.openQueueDepth), subtitle: "chunks still waiting for a reviewer", icon: Download },
+      { label: "Events today", value: String(snapshot.eventsToday), subtitle: `historical review events on ${demoDayLabel}`, icon: ShieldCheck },
+      { label: "Review lag", value: `${snapshot.verificationLagMinutes}m`, subtitle: "historical review delay behind source time", icon: TimerReset },
+      { label: "Open queue", value: String(snapshot.openQueueDepth), subtitle: "chunks still waiting for a reviewer", icon: ListChecks },
     ];
   }, [snapshot]);
 
