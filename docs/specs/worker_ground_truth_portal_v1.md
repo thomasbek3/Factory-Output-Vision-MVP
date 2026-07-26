@@ -10,6 +10,29 @@ Design contract: `DESIGN.md` and `docs/design/fv-live-a-approved.png`
 Review status: revised after an independent Fable unknown-unknowns pass. See
 `worker_ground_truth_portal_v1_fable_review.md`.
 
+## Owner Amendment: 2026-07-26
+
+This amendment is authoritative when older text in this document conflicts with
+it:
+
+- Every normal production chunk receives three blind human reviews.
+- Two matching human submissions are sufficient to resolve a count or aligned
+  event. The third submission remains immutable evidence.
+- No dedicated adjudicator role, adjudication capability, or manual truth-edit
+  path exists in the pilot.
+- When no two reviewers agree, the chunk remains unpublished in an internal
+  exception queue. Ops may mark the footage unusable or request a new,
+  independent three-reviewer round; ops may not invent or edit ground truth.
+- AI never breaks a human tie, changes consensus, or determines human truth.
+- The pilot control and media plane is the dedicated Supabase project
+  `jhoshtiffhwsgurntgxp` in `us-east-1`. Original footage, browser review
+  renditions, and short evidence clips use separate private Supabase Storage
+  buckets.
+
+ADR 0006 records the durable architecture decision. Any residual reference to
+an adjudicator, a fourth-review path, unanimous-only resolution, or Cloudflare
+R2 is superseded by this amendment.
+
 ## 1. Plain-English Summary
 
 FactoryVision needs a secure work portal where remote reviewers count completed
@@ -18,9 +41,10 @@ factory output in 15-minute video chunks.
 Each chunk is reviewed independently by three people. Every press of the count
 button creates a timestamped placement label. The system compares the three
 submissions, resolves straightforward agreement automatically, and sends every
-pilot disagreement to an internal adjudicator. Factory owners see only resolved
-counts. FactoryVision staff can see queue health, reviewer quality, disputes,
-and a blind comparison between the human result and the AI result.
+case without a two-person human majority to an internal exception queue.
+Factory owners see only resolved counts. FactoryVision staff can see queue
+health, reviewer quality, exceptions, and a blind comparison between the human
+result and the AI result.
 
 This portal does not control the appliance's live AI counter. It is a delayed
 ground-truth, verification, audit, and training system. The edge appliance must
@@ -55,7 +79,7 @@ Current implementation evidence:
   make both assumptions invalid.
 - `console/prisma/schema.prisma` uses a single-factory SQLite demo schema and
   does not model independent assignments, submissions, consensus, or
-  adjudication.
+  exception handling.
 
 The production portal must replace those assumptions without discarding the
 speed and clarity of the existing tally interaction.
@@ -81,10 +105,10 @@ presented as real-time. An AI result must not be presented as human verified.
 - The portal is never in the live appliance increment path.
 - An internet outage never stops the edge appliance from counting or recording.
 - Human, AI, and owner-published events remain distinct records with lineage.
-- AI results are hidden from reviewers and adjudicators until the human result
-  is final during the pilot.
+- AI results are hidden from reviewers and human-resolution services until the
+  human result is final during the pilot.
 - Raw reviewer submissions are immutable after final submission.
-- Owners see only resolved consensus/adjudicated events, never individual
+- Owners see only resolved majority-consensus events, never individual
   reviewer identities or unresolved votes.
 - No footage leaves the approved local or cloud boundary without explicit
   factory authorization.
@@ -114,9 +138,9 @@ requires a new architecture decision record.
 - One factory.
 - Two stations/cameras.
 - Three distinct primary reviews per chunk. The eligible reviewer pool is sized
-  from measured p95 handle time and absence/fourth-review demand; five qualified
+  from measured p95 handle time and absence/replacement-round demand; five qualified
   reviewers is the minimum planning floor, not a pre-measurement staffing claim.
-- FactoryVision ops and adjudicator access.
+- FactoryVision ops access.
 - Spanish-first reviewer UI with English toggle.
 - A single daily-work experience that requires no factory, camera, date, or
   video-file selection.
@@ -125,8 +149,8 @@ requires a new architecture decision record.
 - Playback at 1x, 2x, and 5x. Shipped 10x and 15x controls remain gated off
   until the real-footage/device safety criteria in section 6.5 pass.
 - Three blind primary reviews per chunk.
-- Automatic exact agreement and event matching.
-- Internal adjudication for every pilot disagreement.
+- Automatic 2-of-3 count agreement and event matching.
+- An internal exception queue for cases without a two-reviewer majority.
 - Post-hoc audited production chunks and explicit qualification clips for
   reviewer quality measurement; no hidden replay with falsified timestamps.
 - Blind AI-versus-human comparison after human resolution.
@@ -144,15 +168,14 @@ requires a new architecture decision record.
 - AI model promotion or self-training.
 - Sub-15-minute verified count latency.
 - Multi-region active-active infrastructure.
-- A configurable adjudication threshold editor.
+- A manual truth-editing or AI tie-breaking tool.
 
 ## 5. Users, Roles, And Permissions
 
 | Role | Authentication | May access |
 | --- | --- | --- |
 | Reviewer | Invite-only account, magic-link enrollment plus required TOTP MFA before production work | Assigned chunk media, own in-progress work, own daily progress |
-| Adjudicator | FactoryVision Google Workspace SSO plus MFA | Disputed chunks, three anonymized submissions, evidence clips; no AI result for any chunk |
-| Ops | FactoryVision Google Workspace SSO plus MFA | Queue and reviewer-health metadata plus audit logs; no adjudication and no AI event/comparison reads |
+| Ops | FactoryVision Google Workspace SSO plus MFA | Queue, reviewer-health metadata, exception status, and audit logs; no manual truth editing and no raw AI event reads |
 | AI analyst | FactoryVision Google Workspace SSO plus MFA | AI comparison only after the human-result embargo clears |
 | Factory owner | Existing owner authentication | Resolved counts and evidence permitted by factory policy |
 | Service worker | Short-lived workload identity | Ingest, transcode, assign, resolve, publish, retention jobs |
@@ -173,22 +196,15 @@ role.
 No worker response may include `is_golden`, an expected count, expected event
 times, peer counts, AI counts, consensus state, or dispute state.
 
-Adjudicator and AI-analyst permissions are mutually exclusive during the pilot.
-An account eligible to adjudicate cannot read AI runs, AI events, or comparison
-data for any chunk, including a resolved chunk that an owner dispute could
-reopen. The embargo is enforced in the database/API, not only by hiding UI.
-
 Capabilities, rather than page names, are authoritative:
 
-| Capability | Reviewer | Ops | Adjudicator | AI analyst |
-| --- | ---: | ---: | ---: | ---: |
-| Lease/tally assigned work | yes | no | no | no |
-| Read queue and worker-health metadata | no | yes | no | no |
-| Read primary submissions for a dispute | no | no | yes | no |
-| Resolve/adjudicate a chunk | no | no | yes | no |
-| Read AI events/comparisons | no | no | no | only after `human_final_at` |
-
-No account may hold both `adjudicate` and `read_ai_comparison` during the pilot.
+| Capability | Reviewer | Ops | AI analyst |
+| --- | ---: | ---: | ---: |
+| Lease/tally assigned work | yes | no | no |
+| Read queue and worker-health metadata | no | yes | no |
+| Request a fresh three-review round or mark footage unusable | no | yes | no |
+| Add, remove, move, or choose a human truth event | no | no | no |
+| Read AI events/comparisons | no | no | only after `human_final_at` |
 
 ## 6. End-To-End Workflow
 
@@ -361,7 +377,7 @@ interval may not create duplicate chunks.
   visible but disabled, with the reason exposed to assistive technology.
 - The resolver performs an adjacent-chunk seam check before publication. Events
   inside 2 seconds of a seam are compared across both chunks and may produce
-  exactly one owner-published event. An ambiguous seam enters adjudication.
+  exactly one owner-published event. An ambiguous seam enters the exception queue.
 - DST transitions, camera clock changes, discontinuities, and missing footage
   create explicit gap metadata. They must never silently stretch or compress the
   source timeline.
@@ -385,8 +401,10 @@ Each eligible chunk creates three primary `review_assignment` rows.
 Assignment rules:
 
 - three distinct active reviewers;
-- no reviewer receives the same chunk more than once;
-- a reviewer does not receive an adjudication task for a chunk they reviewed;
+- no reviewer receives the same chunk twice within one review round; replacement
+  rounds use three different people when staffing permits and never combine
+  votes across rounds;
+- replacement-round reviewers are independent when staffing permits;
 - assignment ordering is oldest eligible first, with station coverage balancing;
 - quality sampling is selected after normal production submission so reviewers
   cannot know which current chunk will be audited;
@@ -396,10 +414,10 @@ Assignment rules:
 Three is the number of reviews, not the entire eligible roster. The pilot
 starts capacity planning at five qualified reviewers, but the final roster is
 set only after real-footage p95 handle time, absence coverage, disagreement
-rate, and fourth-review demand are measured. The adjudicator is separate. If
-fewer than three distinct reviewers are available, the chunk waits and
-backlog/verified-through time becomes visible; the system does not silently
-publish a two-review result.
+rate, and replacement-round demand are measured. If fewer than three distinct
+reviewers are available, the chunk waits and backlog/verified-through time
+becomes visible; the system never treats only two submitted reviews as the
+required three-review round.
 
 Qualification clips are explicit non-publishing exercises with synthetic
 session time and no owner-count path. Production quality references are created
@@ -560,29 +578,30 @@ Final confirmation is an idempotent database transaction that:
 6. queues resolution if all three primary submissions exist;
 7. returns the next work unit.
 
-No update endpoint edits a final event. A correction creates a superseding
-submission or adjudication event with reason and actor.
+No update endpoint edits a final event. A correction requires a new independent
+review round with immutable lineage.
 
 ### 6.8 Consensus
 
 Consensus has two levels:
 
-1. **Count agreement**: all three reviewers report the same total.
+1. **Count agreement**: at least two of three reviewers report the same total.
 2. **Event agreement**: individual timestamped clicks can be aligned across
    submissions.
 
 For the pilot:
 
-- If all three totals match, the resolver aligns events by source time and
-  creates one provisional consensus set.
-- If any total differs, the whole chunk enters adjudication.
-- If totals match but event alignment is ambiguous, the chunk enters
-  adjudication.
+- If at least two totals match, the resolver aligns events from the matching
+  submissions by source time and creates one provisional consensus set.
+- A third matching submission increases support from 2-of-3 to 3-of-3 but is
+  not required for resolution.
+- If no two totals match, or no two event tracks can be aligned, the whole chunk
+  enters the internal exception queue and remains unpublished.
 - If an event group lies inside the seam window, both adjacent chunks must be
   resolved enough to run cross-chunk deduplication before owner publication,
   except for the terminal cases below.
 - Any problem submission enters ops triage and does not count as agreement.
-- Every owner dispute creates a new adjudication case; it never mutates the
+- Every owner dispute creates a new internal review case; it never mutates the
   original resolved record.
 
 Event alignment uses a configurable tolerance measured during pilot calibration,
@@ -594,10 +613,11 @@ disjoint from AI evaluation holdouts.
 Seam terminal rules:
 
 - End of shift/day is an explicit closing seam. Available post-roll context is
-  adjudicated if needed; the last chunk never waits for a nonexistent successor.
+  resolved only with a two-reviewer majority; the last chunk never waits for a
+  nonexistent successor.
 - If the successor is quarantined or absent beyond 30 minutes after its expected
-  readiness time, seam evidence is adjudicated from available padded context and
-  receives `seam_adjudicated` or `seam_unverifiable` provenance.
+  readiness time, seam evidence is resolved from available padded context or
+  receives `seam_unverifiable` provenance.
 - No chunk remains indefinitely in `resolving` because of a missing seam partner.
 
 The consensus result stores:
@@ -611,12 +631,11 @@ The consensus result stores:
 - publication status.
 
 For the first two pilot weeks, 20 percent of otherwise auto-resolved chunks are
-selected for independent adjudicator audit, with at least 10 audited chunks per
-active factory-day when volume permits. Selection is committed before any AI
-reveal and is balanced over time across station, event density, speed, and
-reviewer trio; it is not required to fill every cross-product stratum daily.
-After at least 200 audited events with no repeated systematic miss, sampling may
-fall to 5 percent.
+selected for a fresh blind three-review audit round, with at least 10 audited
+chunks per active factory-day when volume permits. Selection is committed
+before any AI reveal and is balanced over time across station, event density,
+speed, and reviewer trio. After at least 200 audited events with no repeated
+systematic miss, sampling may fall to 5 percent.
 
 One isolated error opens a quality review. Two errors of the same physical or
 workflow class inside a rolling 200 audited-event window pause automatic
@@ -626,7 +645,7 @@ before the sample floor is met.
 `human_final_at` is set only after audit selection is committed and either:
 
 - the chunk was not selected for audit; or
-- its selected audit/adjudication is complete.
+- its selected independent audit round is complete.
 
 Owner publication always waits for `human_final_at`. Selected audits therefore
 have a separate completion-latency cohort and are excluded from the provisional
@@ -638,30 +657,28 @@ latency cohort. Their structural floor includes the successor's readiness and
 resolution time, so they are excluded from the provisional 90-minute
 non-audited/non-seam target and reported separately.
 
-Later owner disputes create a new immutable version and do not expose AI output
-to the adjudicator.
+Later owner disputes create a new immutable review round.
 
-### 6.9 Adjudication
+### 6.9 Internal Exception Handling
 
-The adjudicator sees:
+When no 2-of-3 majority exists, ops sees:
 
-- the chunk video;
-- three anonymized timestamp tracks;
-- event-group disagreements;
-- coverage/problem metadata;
-- no AI output ever, as required by the section 5 capability matrix.
+- the chunk identifier and station;
+- whether the exception is count disagreement, timestamp ambiguity, problem
+  footage, or an owner dispute;
+- assignment completion and media-health metadata;
+- no control capable of creating, selecting, moving, or deleting truth events.
 
-The API denies AI data to every adjudicator-capable account for every chunk,
-including resolved chunks that may later reopen. The pilot uses separate
-adjudicator and AI-analyst accounts; shared credentials are prohibited.
+Ops may take exactly two resolution actions:
 
-The adjudicator may add/remove/move events, mark footage unusable, or send the
-chunk for a fresh fourth review. Every action requires a reason code. The
-adjudicated event set becomes the resolved human result without erasing primary
-submissions.
+1. Request a new independent round of three blind reviews. Reviewers from the
+   disputed round are excluded when staffing permits.
+2. Mark the footage unusable with a reason code. The interval stays visibly
+   unverified and is never published as a zero count.
 
-Pilot staffing must include a named daily adjudicator and a backup. Queue
-capacity planning must include adjudication time; it is not assumed to be free.
+Every action is append-only and audited. AI output is never shown in this
+workflow and cannot resolve or prioritize the case based on agreement with a
+candidate human answer.
 
 ### 6.10 Blind AI comparison
 
@@ -737,8 +754,7 @@ Required entities:
 | `reference_answer` | Server-only qualification/audit truth |
 | `consensus_run` | Versioned resolver execution |
 | `consensus_event` | Resolved event with submission lineage |
-| `adjudication_case` | Disagreement lifecycle |
-| `adjudication_action` | Append-only decision history |
+| `internal_review_case` | Unpublished no-majority/problem lifecycle and append-only ops disposition |
 | `ai_run` | Blind model execution provenance |
 | `ai_event` | AI-only event |
 | `resolved_human_count_event` | Owner-publishable human result |
@@ -777,9 +793,8 @@ queued -> leased -> draft -> submitted
        -> expired/reassigned
        -> problem
 
-adjudication_case:
-open -> in_review -> resolved
-     -> needs_fourth_review
+internal_review_case:
+open -> pending_new_round -> resolved_by_new_round
      -> unusable
 ```
 
@@ -801,8 +816,11 @@ State changes occur through transactions with explicit allowed transitions.
 ### 8.2 Media plane
 
 - Edge remains the original recorder and temporary source holder.
-- Private Cloudflare R2 is the preferred pilot review-media store, pending
-  explicit factory permission and data-processing terms.
+- Private Supabase Storage in project `jhoshtiffhwsgurntgxp` is the pilot
+  review-media store.
+- `factory-originals` stores immutable source uploads, `review-renditions`
+  stores browser-ready 15-minute encodings, and `evidence-clips` stores short
+  diagnostic excerpts. All three buckets are private.
 - Browser media access uses assignment-scoped, short-lived authorization.
 - A server endpoint validates the active assignment, logs the access, and mints
   a signed URL with a maximum 10-minute lifetime.
@@ -827,7 +845,7 @@ factory camera
   -> opt-in resumable upload
   -> private review media + durable control plane
   -> three blind reviewers
-  -> consensus/adjudication
+  -> 2-of-3 human consensus or internal exception queue
   -> delayed owner publication
 
 recorded chunk
@@ -993,7 +1011,7 @@ Pilot example:
 No reviewer-hours or roster-size claim is derived from that hard floor. A
 real-footage rehearsal must measure median and p95 end-to-end handle time first.
 Staffing is then based on p95 demand, breaks, expected absence, measured
-adjudication/fourth-review demand, and 25 percent buffer.
+exception/replacement-round demand, and 25 percent buffer.
 
 Capacity planning must also complete this per-station budget:
 
@@ -1002,10 +1020,10 @@ daily_source_bytes = source_bitrate_bps / 8 * recorded_seconds
 chunk_upload_seconds = chunk_bytes * 8 / measured_sustained_upstream_bps
 review_delivery_bps = rendition_bitrate_bps * effective_playback_rate
 daily_primary_hours = chunks * 3 * p95_primary_handle_seconds / 3600
-daily_adjudication_hours = disputed_chunks * p95_adjudication_seconds / 3600
+daily_exception_hours = exception_cases * p95_exception_seconds / 3600
 cost_per_resolved_chunk =
   (storage + upload + transcode + database + delivery + reviewer labor
-   + adjudicator labor + support) / resolved_chunks
+   + replacement-review labor + support) / resolved_chunks
 ```
 
 Required pilot headroom:
@@ -1015,9 +1033,9 @@ Required pilot headroom:
 - chunk upload plus transcode p95 is at most 30 minutes;
 - worker downlink supports the validated speed at no more than 70 percent of
   measured sustained bandwidth;
-- primary plus adjudication staffing has 25 percent p95 headroom;
-- exact-agreement adjudication rate is measured during rehearsal. Above 20
-  percent of chunks or 1.5 adjudicator-hours per factory-day triggers a product
+- primary plus exception/replacement staffing has 25 percent p95 headroom;
+- no-majority rate is measured during rehearsal. Above 20 percent of chunks or
+  1.5 exception-handling hours per factory-day triggers a product
   review before scale-up.
 
 Phase 0 records actual vendor and labor inputs and a maximum acceptable
@@ -1049,15 +1067,15 @@ unresolved counts silently.
 
 Required views:
 
-- **Queue:** ready, leased, awaiting reviewers, resolving, adjudication,
+- **Queue:** ready, leased, awaiting reviewers, resolving, exception,
   quarantined, oldest age, p50/p95 lag.
 - **Factories:** camera/upload health, last source time, consent/privacy mode,
   storage age.
 - **Reviewers:** online state, active assignment, quality metrics with sample
   size, suspicious-pattern flags.
-- **Disagreements:** queue status and age only. Opening primary submissions or
-  taking adjudication action requires the separate adjudicator capability.
-- **Audit:** account changes, media access, exports, adjudication, retention,
+- **Exceptions:** queue status, age, replacement-round request, and unusable
+  disposition. Ops cannot create or edit truth events.
+- **Audit:** account changes, media access, exports, exception actions, retention,
   publication.
 
 The AI comparison surface is a separate `/ai-analysis` route available only to
@@ -1082,9 +1100,9 @@ an audit row.
 | Duplicate upload | Idempotent ingest returns existing chunk |
 | Corrupt/transcode-failed media | Chunk quarantined; no assignments |
 | Camera clock jumps | Gap/discontinuity visible; chunk quarantined when unsafe |
-| Placement crosses chunk seam | Padded context plus adjacent-chunk dedup yields exactly one event or adjudication |
+| Placement crosses chunk seam | Padded context plus adjacent-chunk dedup yields exactly one event or an unpublished exception |
 | Last chunk has no seam partner | Explicit closing seam uses available post-roll and reaches a terminal state |
-| Seam partner is quarantined | Available context is adjudicated within 30 minutes as seam-adjudicated or seam-unverifiable |
+| Seam partner is quarantined | Available context reaches majority resolution within 30 minutes or becomes seam-unverifiable |
 | Reviewer submits twice | Same idempotency key returns original result |
 | Resolver runs twice | Same version/input set returns one consensus run |
 | One reviewer never submits | Assignment expires and is replaced by a distinct reviewer |
@@ -1104,7 +1122,7 @@ Structured metrics:
 - leases, heartbeats, expiry, reassignment;
 - draft-save and final-submit latency/error;
 - coverage failures;
-- consensus/adjudication rates;
+- majority-consensus and exception rates;
 - publication lag;
 - media mint/access failures;
 - retention/deletion success;
@@ -1136,14 +1154,14 @@ must never be shortened to `pilot ready` or `production ready`.
   preserving offline runtime authority.
 - Obtain pilot factory upload/storage permission and retention terms.
 - Select managed Postgres/auth, object storage, and durable job queue.
-- Define factory timezone, shift hours, stations, adjudicator rota, and the
+- Define factory timezone, shift hours, stations, ops exception ownership, and the
   exam-firewall registry contract.
 - Use `es-419` only as a development locale. Name the reviewer country and
   approve the checked-in station lexicon before Tier C deployment.
 - Build frame-reviewed resolver-calibration, AI-evaluation holdout, practice,
   and qualification sets with disjoint source hashes/windows.
 - Measure source bitrate, factory upstream, worker downlink, transcode p95,
-  playback frame drops, disagreement rate, adjudication handle time, and full
+  playback frame drops, no-majority rate, exception handle time, and full
   cost per resolved chunk.
 - Measure real-footage p95 reviewer handle time before sizing the final reviewer
   roster; the minimum planning floor remains five.
@@ -1185,11 +1203,11 @@ Exit evidence: Tier A browser/power/network interruption, IndexedDB
 reconciliation, signed-URL refresh, and expired/disabled-user denial tests pass;
 Opus checkpoint review has no open P0.
 
-### Phase 3: three-review consensus and adjudication
+### Phase 3: three-review majority consensus and exception handling
 
 - Generate three distinct blind assignments.
 - Add versioned event alignment and consensus.
-- Build adjudication queue and append-only decisions.
+- Build the no-majority exception queue and append-only dispositions.
 - Publish only resolved human events with honest latency.
 
 Exit evidence: Tier A fixture matrix covers 3/3 agreement, count disagreement,
@@ -1205,7 +1223,7 @@ checkpoint review has no open P0.
 - Add quality metrics, queue dashboards, alerts, and export gates.
 
 Exit evidence: Tier A capability/RLS tests prove AI cannot influence consensus
-or be read by adjudicator-capable accounts; holdout and exam-firewall tests pass;
+or be read before human finalization; holdout and exam-firewall tests pass;
 Opus checkpoint review has no open P0.
 
 ### Phase 5: pilot hardening
@@ -1237,7 +1255,7 @@ Likely implementation areas:
 - new `console/lib/auth/**`, `console/lib/media/**`,
   `console/lib/consensus/**`, and `console/lib/audit/**`;
 - `console/components/review/review-tally-console.tsx`;
-- `/ops` queue/reviewer-health views, separate adjudication surface, and
+- `/ops` queue/reviewer-health and exception views, plus a
   capability-isolated `/ai-analysis` view;
 - edge upload/manifest scripts under `scripts/`;
 - unit, integration, security, E2E, and failure-recovery tests.
@@ -1264,12 +1282,12 @@ review. It must not reuse `globalThis` as production persistence.
 
 - Auth and row-level-security tenant isolation.
 - Reference-answer non-disclosure.
-- Open-case AI embargo across adjudicator and ops roles.
+- Open-case AI embargo across reviewer and ops roles.
 - Signed-media authorization, expiry, and disabled-user denial.
 - Database restart durability.
 - Queue worker retry and exactly-once domain effects.
 - Three submissions through resolution/publication.
-- Adjudication lineage.
+- Exception and replacement-round lineage.
 - AI blind-reveal ordering.
 - Deletion through object-store verification.
 
@@ -1287,7 +1305,8 @@ review. It must not reuse `globalThis` as production persistence.
 - Connection loss and URL refresh.
 - Spanish UI at desktop and narrow widths.
 - Three workers receive the same chunk blindly and cannot see peer answers.
-- A separately authorized adjudicator resolves a disagreement.
+- A no-majority case remains unpublished until a fresh three-review round
+  resolves it or ops marks the footage unusable.
 - Owner sees only the resolved result and verified-through time.
 - No browser console errors.
 
@@ -1299,7 +1318,7 @@ review. It must not reuse `globalThis` as production persistence.
 - Queue worker crash after external side effect but before acknowledgement.
 - Object store latency and transient failures.
 - Backlog recovery without duplicate publication.
-- One absent reviewer plus expiry/replacement and a requested fourth review.
+- One absent reviewer plus expiry/replacement and a requested fresh review round.
 - Fabricated client coverage proves coverage telemetry cannot independently
   establish quality or attention.
 - Two accounts on one registered device cannot receive the same chunk.
@@ -1335,13 +1354,14 @@ No tier may borrow proof from a higher tier.
       reviewer, submission, stable action UUID, and app-version lineage.
 - [ ] Coverage is represented as unverified client telemetry; no test or score
       treats it as proof of attention.
-- [ ] Count disagreement and ambiguous event alignment enter adjudication.
+- [ ] No-majority counts and ambiguous event alignment enter the internal
+      exception queue and remain unpublished.
 - [ ] Boundary fixtures produce exactly one event before, at, and after seams,
       including end-of-shift and quarantined-partner terminal cases.
 - [ ] A mid-day unverified chunk stops the contiguous verified-through frontier
       and exposes excluded minutes.
-- [ ] AI is hidden until `human_final_at`; adjudicator-capable accounts receive
-      403 from all AI event/comparison reads.
+- [ ] AI is hidden until `human_final_at`; reviewer and ops accounts receive 403
+      from all AI event/comparison reads.
 - [ ] Exam-firewall source intervals cannot be assigned or exported.
 - [ ] Signed-media authorization, seamless refresh, refresh failure, and
       disabled/expired-user denial tests pass.
@@ -1353,7 +1373,8 @@ No tier may borrow proof from a higher tier.
 - [ ] Every eval names the source video path, SHA-256, source interval, truth
       tier, reviewer identities or simulation boundary, and generated artifacts.
 - [ ] The real-footage worker flow runs from ingest through assignment, draft,
-      three submissions, resolution/adjudication, and owner publication.
+      three submissions, majority resolution or exception handling, and owner
+      publication.
 - [ ] Constant- and variable-frame-rate burned-timecode tests prove mapping error
       below 250 ms and below 20 percent of the final alignment tolerance.
 - [ ] Each enabled speed passes zero-miss and p95 frame-drop gates on the named
@@ -1363,10 +1384,10 @@ No tier may borrow proof from a higher tier.
 - [ ] The canonical bilingual event definition reaches required two-annotator
       timing agreement before reference labels are used.
 - [ ] Real-footage p95 handle time, disagreement rate, audit load, absence, and
-      fourth-review demand size the roster with 25 percent headroom.
+      replacement-round demand size the roster with 25 percent headroom.
 - [ ] Random audits meet their sample floor and measure unanimous-human error
       without evaluation leakage.
-- [ ] Upload, transcode, queue, adjudication, and cost-per-resolved-chunk budgets
+- [ ] Upload, transcode, queue, exception handling, and cost-per-resolved-chunk budgets
       are measured on the actual pilot network/hardware.
 
 ### Tier C - pilot/legal acceptance
@@ -1376,7 +1397,7 @@ No tier may borrow proof from a higher tier.
 - [ ] Factory footage permission, filmed-worker basis/notice/consent where
       required, cross-border transfer, reviewer terms, and retention are signed.
 - [ ] Auth/Postgres, object-store region, durable queue, reviewer roster,
-      adjudicator coverage, and cost ceiling are approved.
+      ops exception ownership, and cost ceiling are approved.
 - [ ] Retention deletion is verified against production object storage and model
       lineage/deletion obligations are resolved.
 - [ ] Production is deployed, then browsed at the live URL with screenshots,
@@ -1392,9 +1413,9 @@ These are explicit launch gates, not implementation ambiguities:
   agreement.
 - Final retention for labels and evidence clips.
 - Selected auth/Postgres, object-store region, and durable queue.
-- Named adjudicator and backup coverage.
+- Named ops ownership and response target for the exception queue.
 - Reviewer roster sized from measured p95 handle time, absence,
-  disagreement/adjudication, and fourth-review demand, with five as the minimum
+  disagreement and replacement-round demand, with five as the minimum
   planning floor.
 - Real reviewer hardware, browser, bandwidth, and accessibility profile.
 - Measured event-alignment tolerance at each allowed speed.
@@ -1410,7 +1431,7 @@ These are explicit launch gates, not implementation ambiguities:
 
 The feature is done when a production-like 15-minute factory chunk is uploaded,
 served privately to three authenticated reviewers, independently tallied,
-resolved or adjudicated with immutable lineage, compared blindly to an immutable
+resolved by a human majority with immutable lineage, compared blindly to an immutable
 AI run, and published to the owner as an honestly delayed verified count.
 
 Proof must include:
@@ -1425,8 +1446,8 @@ Proof must include:
 - an exact-once chunk-seam test;
 - real-device playback-quality and reference-event miss results for every
   enabled speed;
-- a reviewer absence/replacement/fourth-review simulation;
-- an open-adjudication AI-access denial test;
-- the filled bandwidth, latency, adjudication, and cost budget;
+- a reviewer absence/replacement/review-round simulation;
+- an open-exception AI-access denial test;
+- the filled bandwidth, latency, exception-handling, and cost budget;
 - an updated current-state document that distinguishes implemented, tested,
   deployed, and pilot-proven claims.

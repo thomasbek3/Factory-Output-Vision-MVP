@@ -24,3 +24,4 @@ Each decision should include:
 | `0003-detector-and-edge-stack-changes-are-evaluation-lanes.md` | Keep detector/hardware/vendor stack changes behind benchmark gates |
 | `0004-pivot-from-yolo-to-clip-action-recognition.md` | Use clip action recognition for the live overhead station |
 | `0005-vlm-and-teacher-models-are-audit-only.md` | Keep VLMs and teacher models out of live count authority |
+| `0006-supabase-worker-portal-control-and-media-plane.md` | Use private Supabase control/media storage and human-only 2-of-3 resolution |
