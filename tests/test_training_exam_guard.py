@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from app.services.training_exam_guard import sha256_file, validate_training_row
+from app.services.training_exam_guard import (
+    sha256_file,
+    validate_training_manifest,
+    validate_training_row,
+)
 
 
 def write_registries(
@@ -152,3 +156,8 @@ def test_training_row_outside_all_protected_sets_is_allowed(tmp_path: Path) -> N
         exam_firewall_path=firewall,
         source_set_registry_path=source_sets,
     )
+
+
+def test_training_manifest_rejects_empty_samples() -> None:
+    with pytest.raises(ValueError, match="non-empty"):
+        validate_training_manifest({"samples": []})

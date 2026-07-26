@@ -67,6 +67,7 @@ def build_stable_negative_manifest(
                     "candidate_id": proposal.get("candidate_id"),
                     "segment_id": proposal.get("segment_id"),
                     "motion_summary": proposal.get("motion_summary"),
+                    "training_provenance": proposal.get("training_provenance"),
                 },
             }
         )

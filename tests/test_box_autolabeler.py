@@ -11,6 +11,7 @@ from app.services.box_autolabeler import (
     propose_auto_boxes,
     write_auto_box_manifest,
 )
+from app.services.training_exam_guard import sha256_file
 from scripts import propose_auto_boxes as propose_auto_boxes_cli
 from scripts.research.factory2.assemble_active_panel_dataset import assemble_dataset
 from scripts.research.factory2.review_labels_ai import review_manifest
@@ -65,6 +66,17 @@ def _frame_provider(
 
 
 def _fixtures(tmp_path: Path, packet_ids: list[str]) -> tuple[Path, Path]:
+    segment = tmp_path / "segment.mkv"
+    segment.write_bytes(b"ordinary-box-source")
+    source_hash = sha256_file(segment)
+    training_provenance = {
+        "source": str(segment),
+        "source_sha256": source_hash,
+        "lineage_source_sha256": [source_hash],
+        "lineage_is_transitive_complete": True,
+        "start_at": "2026-07-25T12:00:00Z",
+        "end_at": "2026-07-25T12:01:00Z",
+    }
     packet_rows = []
     for packet_id in packet_ids:
         packet_path = tmp_path / f"{packet_id}.json"
@@ -75,7 +87,10 @@ def _fixtures(tmp_path: Path, packet_ids: list[str]) -> tuple[Path, Path]:
                     "window_id": f"{packet_id}-window",
                     "station_id": "line-a",
                     "segment_id": "chunk_000",
-                    "segment_path": str(tmp_path / "segment.mkv"),
+                    "segment_path": str(segment),
+                    "source_proposal": {
+                        "training_provenance": training_provenance,
+                    },
                     "window": {
                         "start_offset_sec": 2.0,
                         "center_offset_sec": 6.0,
@@ -97,7 +112,12 @@ def _fixtures(tmp_path: Path, packet_ids: list[str]) -> tuple[Path, Path]:
             {
                 "schema_version": "factory-vision-silver-training-candidates-v1",
                 "items": [
-                    {"item_id": f"{packet_id}-silver", "packet_id": packet_id, "training_eligible": True}
+                    {
+                        "item_id": f"{packet_id}-silver",
+                        "packet_id": packet_id,
+                        "training_candidate": True,
+                        "training_eligible": False,
+                    }
                     for packet_id in packet_ids
                 ],
             }

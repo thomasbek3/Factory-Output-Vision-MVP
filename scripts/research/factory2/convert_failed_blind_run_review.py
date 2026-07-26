@@ -160,6 +160,7 @@ def _classify_row(row: dict[str, Any]) -> dict[str, Any]:
             "review_status": "pending",
             "label_authority_tier": "bronze",
             "validation_truth_eligible": False,
+            "training_candidate": False,
             "training_eligible": False,
             "is_true_placement": False,
             "is_hard_negative": False,
@@ -174,7 +175,8 @@ def _classify_row(row: dict[str, Any]) -> dict[str, Any]:
             "review_status": "approved",
             "label_authority_tier": "gold",
             "validation_truth_eligible": True,
-            "training_eligible": True,
+            "training_candidate": True,
+            "training_eligible": False,
             "is_true_placement": True,
             "is_hard_negative": False,
             "is_pending": False,
@@ -188,7 +190,8 @@ def _classify_row(row: dict[str, Any]) -> dict[str, Any]:
             "review_status": "approved",
             "label_authority_tier": "gold",
             "validation_truth_eligible": False,
-            "training_eligible": True,
+            "training_candidate": True,
+            "training_eligible": False,
             "is_true_placement": False,
             "is_hard_negative": True,
             "is_pending": False,
@@ -202,6 +205,7 @@ def _classify_row(row: dict[str, Any]) -> dict[str, Any]:
             "review_status": "unclear",
             "label_authority_tier": "bronze",
             "validation_truth_eligible": False,
+            "training_candidate": False,
             "training_eligible": False,
             "is_true_placement": False,
             "is_hard_negative": False,
@@ -236,6 +240,7 @@ def _build_label(
         "approved_event_ts_sec": classification["approved_event_ts_sec"],
         "label_authority_tier": classification["label_authority_tier"],
         "validation_truth_eligible": classification["validation_truth_eligible"],
+        "training_candidate": classification["training_candidate"],
         "training_eligible": classification["training_eligible"],
         "sheet_path": (row.get("sheet_path") or "").strip() or _candidate_asset(packet, candidate_id, "sheet_path"),
         "clip_path": (row.get("clip_path") or "").strip() or _candidate_asset(packet, candidate_id, "clip_path"),
@@ -274,7 +279,7 @@ def _build_dataset_manifest(
     items: list[dict[str, Any]] = []
     training_index = 0
     for label in labels:
-        if status == "reviewed_complete" and label["training_eligible"]:
+        if status == "reviewed_complete" and label["training_candidate"]:
             training_index += 1
             split = _split_for_training_index(training_index)
         else:
@@ -302,7 +307,8 @@ def _build_dataset_manifest(
                 "duplicate_risk": "unknown",
                 "miss_risk": "high" if label["approved_status"] == "completed" else "unknown",
                 "validation_truth_eligible": bool(label["validation_truth_eligible"]),
-                "training_eligible": bool(label["training_eligible"]) and split != "review",
+                "training_candidate": bool(label["training_candidate"]) and split != "review",
+                "training_eligible": False,
                 "label_kind": label_kind,
                 "approved_event_ts_sec": label["approved_event_ts_sec"],
                 "sheet_path": label.get("sheet_path"),
@@ -311,7 +317,11 @@ def _build_dataset_manifest(
         )
 
     true_count = sum(1 for label in labels if label["approved_status"] == "completed")
-    hard_negative_count = sum(1 for label in labels if label["training_eligible"] and label["approved_status"] != "completed")
+    hard_negative_count = sum(
+        1
+        for label in labels
+        if label["training_candidate"] and label["approved_status"] != "completed"
+    )
     pending_count = sum(1 for label in labels if label["review_status"] == "pending")
     unclear_count = sum(1 for label in labels if label["review_status"] == "unclear")
     positive_box_labels_ready = False
@@ -334,7 +344,10 @@ def _build_dataset_manifest(
             "hard_negative_count": hard_negative_count,
             "pending_count": pending_count,
             "unclear_count": unclear_count,
-            "training_item_count": sum(1 for item in items if item["training_eligible"]),
+            "training_candidate_count": sum(
+                1 for item in items if item["training_candidate"]
+            ),
+            "training_item_count": 0,
             "review_item_count": sum(1 for item in items if item["split"] == "review"),
         },
         "detector_training": {
@@ -481,7 +494,11 @@ def convert_review(
     write_json(review_labels_path, review_labels, force=force)
     write_json(dataset_manifest_path, dataset_manifest, force=force)
 
-    hard_negative_count = sum(1 for label in labels if label["training_eligible"] and label["approved_status"] != "completed")
+    hard_negative_count = sum(
+        1
+        for label in labels
+        if label["training_candidate"] and label["approved_status"] != "completed"
+    )
     summary = {
         "schema_version": "factory-vision-failed-blind-review-conversion-v1",
         "case_id": case_id,
@@ -496,7 +513,8 @@ def convert_review(
         "pending_row_count": pending_count,
         "unclear_row_count": unclear_count,
         "validation_truth_eligible": status == "reviewed_complete",
-        "training_eligible": status == "reviewed_complete",
+        "training_candidate": status == "reviewed_complete",
+        "training_eligible": False,
         "truth_csv_path": truth_csv_path.as_posix() if status == "reviewed_complete" else None,
         "truth_ledger_path": truth_ledger_path.as_posix() if status == "reviewed_complete" else None,
         "review_labels_path": review_labels_path.as_posix(),

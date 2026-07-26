@@ -218,7 +218,7 @@ def test_reviewed_worksheet_writes_gold_truth_and_training_anchors(tmp_path: Pat
     assert status["accepted_true_placement_count"] == 2
     assert status["hard_negative_label_count"] == 3
     assert status["validation_truth_eligible"] is True
-    assert status["training_eligible"] is True
+    assert status["training_eligible"] is False
 
     truth_rows = list(csv.DictReader(outputs["truth_csv_path"].open(newline="", encoding="utf-8")))
     assert [(row["count_total"], row["event_ts"]) for row in truth_rows] == [("1", "42.5"), ("2", "65.25")]

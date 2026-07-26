@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.research.factory2.run_factory_day1_pipeline import cap_event_proposals, exclude_segments_by_filename_window
+from scripts.research.factory2.run_factory_day1_pipeline import (
+    cap_event_proposals,
+    partition_recorder_segments,
+)
 from scripts.research.factory2.validate_zone_mining import build_zone_mining_validation, proposal_wall_time
 
 
@@ -113,23 +116,102 @@ def test_zone_ranked_cap_keeps_top_scores_with_twelve_second_dedup(tmp_path: Pat
     assert payload["summary"]["day1_event_cap"]["sampling"] == "top_n_zone_score_time_dedup"
 
 
-def test_pipeline_segment_exclusion_drops_only_inclusive_filename_range() -> None:
+def test_pipeline_partition_uses_registries_instead_of_filename_order(
+    tmp_path: Path,
+) -> None:
+    train_hash = "a" * 64
+    holdout_hash = "b" * 64
+    practice_hash = "c" * 64
     segments = [
-        {"segment_id": "before", "path": "/tmp/20260611T152149_a.mkv"},
-        {"segment_id": "start", "path": "/tmp/20260611T152150_a.mkv"},
-        {"segment_id": "middle", "path": "/tmp/20260611T160000_a.mkv"},
-        {"segment_id": "end", "path": "/tmp/20260611T162733_a.mkv"},
-        {"segment_id": "after", "path": "/tmp/20260611T162734_a.mkv"},
+        {
+            "segment_id": "filename-sorts-last-but-trains",
+            "path": "/tmp/99999999T999999_train.mkv",
+            "sha256": train_hash,
+            "start_wall_ts": "2026-07-25T12:00:00Z",
+            "end_wall_ts": "2026-07-25T12:01:00Z",
+        },
+        {
+            "segment_id": "filename-sorts-first-but-is-holdout",
+            "path": "/tmp/00000000T000000_holdout.mkv",
+            "sha256": holdout_hash,
+            "start_wall_ts": "2026-07-25T13:00:00Z",
+            "end_wall_ts": "2026-07-25T13:01:00Z",
+        },
+        {
+            "segment_id": "protected-practice",
+            "path": "/tmp/50000000T000000_practice.mkv",
+            "sha256": practice_hash,
+            "start_wall_ts": "2026-07-25T14:00:00Z",
+            "end_wall_ts": "2026-07-25T14:01:00Z",
+        },
     ]
-
-    kept, dropped = exclude_segments_by_filename_window(
-        segments,
-        exclude_segments_after="20260611T152150",
-        exclude_segments_before="20260611T162733",
+    exam_path = tmp_path / "exam.json"
+    exam_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-vision-exam-firewall-v2",
+                "fail_closed": True,
+                "intervals": [
+                    {
+                        "id": "exam-1",
+                        "source_sha256": holdout_hash,
+                        "lineage_source_sha256": [holdout_hash],
+                        "lineage_is_transitive_complete": True,
+                        "start_at": "2026-07-25T13:00:00Z",
+                        "end_at": "2026-07-25T13:01:00Z",
+                        "training_eligible": False,
+                        "assignment_eligible": False,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry_path = tmp_path / "source_sets.json"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "factory-vision-review-source-sets-v1",
+                "fail_closed": True,
+                "sets": {
+                    "resolver_calibration": [],
+                    "ai_evaluation_holdout": [
+                        {
+                            "source_sha256": holdout_hash,
+                            "lineage_source_sha256": [holdout_hash],
+                            "lineage_is_transitive_complete": True,
+                            "start_at": "2026-07-25T13:00:00Z",
+                            "end_at": "2026-07-25T13:01:00Z",
+                        }
+                    ],
+                    "practice": [
+                        {
+                            "source_sha256": practice_hash,
+                            "lineage_source_sha256": [practice_hash],
+                            "lineage_is_transitive_complete": True,
+                            "start_at": "2026-07-25T14:00:00Z",
+                            "end_at": "2026-07-25T14:01:00Z",
+                        }
+                    ],
+                    "qualification": [],
+                },
+            }
+        ),
+        encoding="utf-8",
     )
 
-    assert dropped == 3
-    assert [row["segment_id"] for row in kept] == ["before", "after"]
+    train, holdout, dropped = partition_recorder_segments(
+        segments,
+        exam_firewall_path=exam_path,
+        source_set_registry_path=registry_path,
+    )
+
+    assert [row["segment_id"] for row in train] == ["filename-sorts-last-but-trains"]
+    assert train[0]["training_provenance"]["source_sha256"] == train_hash
+    assert [row["segment_id"] for row in holdout] == [
+        "filename-sorts-first-but-is-holdout"
+    ]
+    assert dropped == 1
 
 
 def _events(rows: list[tuple[str, int, float]]) -> list[dict[str, object]]:

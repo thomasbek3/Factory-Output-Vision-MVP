@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const payload = getNextChunk(reviewerId, now);
 
   if (!payload.chunk) {
-    return Response.json({ ...payload, message: "No eligible chunks." }, { status: 404 });
+    return Response.json({ chunk: null, message: "No eligible chunks." }, { status: 404 });
   }
 
   return Response.json({

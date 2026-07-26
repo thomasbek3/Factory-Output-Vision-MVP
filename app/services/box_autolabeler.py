@@ -252,6 +252,9 @@ def _label_event(
                     "label_semantic": "part_during_placement",
                     "label_authority_tier": "bronze",
                     "source_silver_item_id": silver_item.get("item_id"),
+                    "training_provenance": (packet.get("source_proposal") or {}).get(
+                        "training_provenance"
+                    ),
                 },
             }
         )

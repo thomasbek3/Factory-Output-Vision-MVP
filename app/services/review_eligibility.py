@@ -38,6 +38,7 @@ def review_interval_is_protected(
         )
         or assignment_overlaps_protected_source_set(
             source_windows,
+            source_sha256=source_sha256,
             lineage_source_sha256=lineage_source_sha256,
             lineage_is_transitive_complete=lineage_is_transitive_complete,
             start_at=start_at,

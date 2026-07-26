@@ -186,6 +186,7 @@ def test_assignment_inside_holdout_guard_band_is_blocked() -> None:
 
     assert assignment_overlaps_protected_source_set(
         windows,
+        source_sha256=holdout.source_sha256,
         lineage_source_sha256=holdout.lineage_source_sha256,
         lineage_is_transitive_complete=True,
         start_at=holdout.end_at + timedelta(seconds=1),
@@ -200,6 +201,7 @@ def test_assignment_outside_holdout_guard_band_is_allowed() -> None:
 
     assert not assignment_overlaps_protected_source_set(
         windows,
+        source_sha256=holdout.source_sha256,
         lineage_source_sha256=holdout.lineage_source_sha256,
         lineage_is_transitive_complete=True,
         start_at=holdout.end_at + timedelta(seconds=61),
@@ -214,6 +216,7 @@ def test_presented_context_inside_guard_band_is_blocked() -> None:
 
     assert assignment_overlaps_protected_source_set(
         windows,
+        source_sha256=holdout.source_sha256,
         lineage_source_sha256=holdout.lineage_source_sha256,
         lineage_is_transitive_complete=True,
         start_at=holdout.end_at + timedelta(seconds=61),

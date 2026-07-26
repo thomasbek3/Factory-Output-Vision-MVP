@@ -17,7 +17,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from app.services.training_exam_guard import validate_training_manifest
 
 
 def validate_reviewed_label_gate(manifest_path: Path) -> dict[str, int]:
@@ -40,18 +47,18 @@ def validate_reviewed_label_gate(manifest_path: Path) -> dict[str, int]:
 
 def resolve_reviewed_label_gate(
     reviewed_label_manifest: str | Path | None,
-    *,
-    allow_unreviewed_labels: bool = False,
 ) -> dict[str, int] | None:
-    """Require the AI review gate unless explicitly bypassed."""
+    """Require the AI review gate."""
     if reviewed_label_manifest is None:
-        if allow_unreviewed_labels:
-            return None
         raise ValueError(
-            "AI label QA manifest is required. Run scripts/research/factory2/review_labels_ai.py first, "
-            "or pass --allow-unreviewed-labels to bypass deliberately."
+            "AI label QA manifest is required. Run scripts/research/factory2/review_labels_ai.py first."
         )
     return validate_reviewed_label_gate(Path(reviewed_label_manifest))
+
+
+def validate_training_dataset_manifest(manifest_path: Path) -> None:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    validate_training_manifest(manifest)
 
 
 def main():
@@ -69,9 +76,10 @@ def main():
         help="Reviewed manifest from scripts/research/factory2/review_labels_ai.py; gates training to AI-approved labels",
     )
     parser.add_argument(
-        "--allow-unreviewed-labels",
-        action="store_true",
-        help="Explicit escape hatch: train without the AI label QA manifest",
+        "--training-manifest",
+        type=Path,
+        required=True,
+        help="Firewall-validated dataset manifest produced by the dataset builder",
     )
     args = parser.parse_args()
 
@@ -81,10 +89,8 @@ def main():
         print(f"Download your dataset from Roboflow and extract it first.")
         return
 
-    summary = resolve_reviewed_label_gate(
-        args.reviewed_label_manifest,
-        allow_unreviewed_labels=args.allow_unreviewed_labels,
-    )
+    summary = resolve_reviewed_label_gate(args.reviewed_label_manifest)
+    validate_training_dataset_manifest(args.training_manifest)
     if summary:
         print(
             "AI label QA gate passed: "

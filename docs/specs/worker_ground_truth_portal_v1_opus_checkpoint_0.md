@@ -104,6 +104,68 @@ lexicon drift, traversal-budget arithmetic, permissive missing
   download semantics from the read-only operations queue.
 - Renamed remaining seeded/demo-facing owner copy as historical review data.
 
+## Fourth High-Effort Review
+
+Session: `8462af5c-6fe8-4169-871e-3075c733bfc8`
+
+Canonical model: `claude-opus-5`
+
+Reported turns: 59
+
+Verdict: **REVISE**
+
+The reviewer verified every prior portal P0 closure, then found one repo-wide P0
+outside the Track B portal lane. The older Track A YOLO pipeline emitted and
+consumed `training_eligible=true`, trained weights, and split the
+`factory-live-day1` source by filename order without consuming either protected
+registry. The non-negotiable spec statement that every training path was
+firewalled was therefore false, and the six-file static test could never
+discover the older lane.
+
+The same review found that non-holdout composed-eligibility coverage was
+overstated, `CONTINUAR VIDEO` ambiguously meant both resume and return-to-edit,
+legacy copy checks targeted a re-export file with no strings, playback clamping
+could report a false success, the step-down target ignored the validated speed
+ladder, source-set eligibility had an asymmetric hash API, and the empty-queue
+API branch was not explicitly projected.
+
+## Fourth Remediation Applied
+
+- The Track A YOLO dataset builder now requires source path, exact SHA-256,
+  complete transitive lineage, and UTC source interval for every positive and
+  hard-negative sample. It validates every row against both registries before
+  emitting `training_eligible=true`.
+- The YOLO training runner revalidates the complete manifest before invoking the
+  trainer. A protected exam-source test proves rejection occurs before the
+  trainer callback can run.
+- The runner rejects empty manifests and binds the guarded manifest to the exact
+  requested `data.yaml`. Every training image and label must exist in the
+  declared split, `items` must equal the validated `samples`, and the manifest
+  must inventory every file YOLO can consume. Substituted YAML files, mismatched
+  rows, missing assets, and unlisted dataset files fail before the trainer.
+- Advisory teacher fusion, benchmark, deterministic AI review, and failed-run
+  conversion outputs now emit `training_candidate=true` and
+  `training_eligible=false`. Only guarded dataset builders can cross that
+  boundary.
+- The legacy trainer's unreviewed bypass was removed and it now requires a
+  firewall-validated training manifest.
+- The day-one pipeline no longer partitions by filenames or fractions. It uses
+  exact source hashes and UTC intervals from the tracked exam and source-set
+  registries, fails when no registered holdout exists, and carries verified
+  provenance through proposals, evidence packets, boxes, and dataset assembly.
+- An AST discovery test walks `app/` and `scripts/`, identifies literal training
+  eligibility emitters and trainer entry points, and requires every discovered
+  path to carry the composed guard. New paths fail until explicitly reviewed.
+- Synthetic tests populate resolver-calibration, holdout, practice, and
+  qualification sets, check the 60-second guard band, check an unrelated source,
+  and prove the explicit source hash is considered even when lineage omits it.
+- The summary action is now `VOLVER A EDITAR` / `BACK TO EDIT`; the problem
+  option is `Vista bloqueada` / `View blocked`.
+- Playback now reads back the browser's applied speed and walks down the
+  validated `5x -> 2x -> 1x` ladder after throws or silent clamping.
+- Both empty and populated next-chunk responses use explicit worker-safe
+  projections.
+
 ## Second Remediation Applied
 
 - Day-queue responses now contain only the caller's own leased or completed
@@ -156,20 +218,22 @@ lexicon drift, traversal-budget arithmetic, permissive missing
 
 ## Verification Before Closure Review
 
-- Backend: `662 passed`, 16 dependency warnings.
-- Focused firewall/training/copy suite: `46 passed`.
-- Console unit: `44 passed`.
+- Backend: `676 passed`, 16 dependency warnings.
+- Focused manifest/firewall suite: `34 passed`.
+- Console unit: `45 passed`.
 - Console lint: zero errors, 12 pre-existing warnings under `e2e-audit`.
 - Next production build: passed; the removed export route is absent.
 - Full browser suite: `63 passed`.
 - Browser: desktop and 390x844 `/review` render real factory footage, canonical
   Spanish copy, `+1 PIEZA`, and no worker answer/throughput data.
+- Browser: the Spanish summary shows `VOLVER A EDITAR`, contains no
+  `CONTINUAR VIDEO`, and the browser log is empty.
 - Browser: mobile document width equals viewport width and browser console is
   empty. Desktop review-table overflow is also absent.
 
 ## Re-Review Gate
 
-Checkpoint zero remains **REVISE** after three completed high-effort reviews and
+Checkpoint zero remains **REVISE** after four completed high-effort reviews and
 will not close until a fresh Opus 5 high-effort pass finds no open P0. This
 receipt records the independent finding and remediation rather than
 self-certifying closure.

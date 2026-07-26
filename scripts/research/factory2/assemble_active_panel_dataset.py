@@ -12,8 +12,19 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from app.services.training_exam_guard import (
+    DEFAULT_EXAM_FIREWALL_PATH,
+    DEFAULT_SOURCE_SET_REGISTRY_PATH,
+    validate_training_row,
+)
 
 SCHEMA_VERSION = "active-panel-yolo-dataset-v1"
 CLASS_NAMES = ["active_panel"]
@@ -101,7 +112,45 @@ def load_hard_negative_rows(path: Path | None) -> list[dict[str, Any]]:
     return list(payload.get("items") or [])
 
 
-def add_positive_label(*, label: dict[str, Any], reviewed_manifest_path: Path, out_dir: Path, index: int) -> dict[str, Any]:
+def _validated_training_provenance(
+    payload: dict[str, Any],
+    *,
+    base: Path,
+    exam_firewall_path: Path,
+    source_set_registry_path: Path,
+) -> dict[str, Any]:
+    provenance = payload.get("training_provenance")
+    if not isinstance(provenance, dict):
+        raise ValueError("training_provenance is required before a YOLO sample can be training eligible")
+    source = resolve_path(provenance.get("source"), base=base)
+    if source is None:
+        raise ValueError("training_provenance.source is required")
+    row = {
+        "training_eligible": True,
+        "source": str(source),
+        "source_sha256": provenance.get("source_sha256"),
+        "lineage_source_sha256": provenance.get("lineage_source_sha256"),
+        "lineage_is_transitive_complete": provenance.get("lineage_is_transitive_complete"),
+        "start_at": provenance.get("start_at"),
+        "end_at": provenance.get("end_at"),
+    }
+    validate_training_row(
+        row,
+        exam_firewall_path=exam_firewall_path,
+        source_set_registry_path=source_set_registry_path,
+    )
+    return row
+
+
+def add_positive_label(
+    *,
+    label: dict[str, Any],
+    reviewed_manifest_path: Path,
+    out_dir: Path,
+    index: int,
+    exam_firewall_path: Path,
+    source_set_registry_path: Path,
+) -> dict[str, Any]:
     metadata = label.get("metadata") or {}
     src = resolve_path(metadata.get("frame_path") or label.get("image_path"), base=reviewed_manifest_path.parent)
     if src is None:
@@ -119,6 +168,12 @@ def add_positive_label(*, label: dict[str, Any], reviewed_manifest_path: Path, o
     )
     label_dst.parent.mkdir(parents=True, exist_ok=True)
     label_dst.write_text(line + "\n", encoding="utf-8")
+    training_row = _validated_training_provenance(
+        metadata,
+        base=reviewed_manifest_path.parent,
+        exam_firewall_path=exam_firewall_path,
+        source_set_registry_path=source_set_registry_path,
+    )
     return {
         "kind": "positive",
         "label_id": label.get("label_id"),
@@ -127,10 +182,19 @@ def add_positive_label(*, label: dict[str, Any], reviewed_manifest_path: Path, o
         "label_path": str(label_dst),
         "split": split,
         "class_name": "active_panel",
+        **training_row,
     }
 
 
-def add_negative_row(*, row: dict[str, Any], hard_negative_export_path: Path, out_dir: Path, index: int) -> dict[str, Any]:
+def add_negative_row(
+    *,
+    row: dict[str, Any],
+    hard_negative_export_path: Path,
+    out_dir: Path,
+    index: int,
+    exam_firewall_path: Path,
+    source_set_registry_path: Path,
+) -> dict[str, Any]:
     src = resolve_path(row.get("exported_image_path") or row.get("source_asset_path"), base=hard_negative_export_path.parent)
     if src is None:
         raise ValueError(f"Hard negative row {row.get('negative_id')} is missing image asset path")
@@ -142,6 +206,15 @@ def add_negative_row(*, row: dict[str, Any], hard_negative_export_path: Path, ou
     copy_asset(src, image_dst)
     label_dst.parent.mkdir(parents=True, exist_ok=True)
     label_dst.write_text("", encoding="utf-8")
+    training_row = _validated_training_provenance(
+        {
+            "training_provenance": row.get("training_provenance")
+            or (row.get("evidence") or {}).get("training_provenance")
+        },
+        base=hard_negative_export_path.parent,
+        exam_firewall_path=exam_firewall_path,
+        source_set_registry_path=source_set_registry_path,
+    )
     return {
         "kind": "hard_negative",
         "negative_id": row.get("negative_id"),
@@ -151,6 +224,7 @@ def add_negative_row(*, row: dict[str, Any], hard_negative_export_path: Path, ou
         "image_path": str(image_dst),
         "label_path": str(label_dst),
         "split": split,
+        **training_row,
     }
 
 
@@ -161,6 +235,8 @@ def assemble_dataset(
     hard_negative_export: Path | None,
     force: bool = False,
     allow_negative_only: bool = False,
+    exam_firewall_path: Path = DEFAULT_EXAM_FIREWALL_PATH,
+    source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
 ) -> Path:
     if out_dir.exists() and any(out_dir.iterdir()) and not force:
         raise FileExistsError(f"Refusing to overwrite non-empty output directory: {out_dir}")
@@ -176,10 +252,28 @@ def assemble_dataset(
     rows: list[dict[str, Any]] = []
     if reviewed_label_manifest is not None:
         for index, label in enumerate(positives, start=1):
-            rows.append(add_positive_label(label=label, reviewed_manifest_path=reviewed_label_manifest, out_dir=out_dir, index=index))
+            rows.append(
+                add_positive_label(
+                    label=label,
+                    reviewed_manifest_path=reviewed_label_manifest,
+                    out_dir=out_dir,
+                    index=index,
+                    exam_firewall_path=exam_firewall_path,
+                    source_set_registry_path=source_set_registry_path,
+                )
+            )
     if hard_negative_export is not None:
         for index, row in enumerate(negatives, start=1):
-            rows.append(add_negative_row(row=row, hard_negative_export_path=hard_negative_export, out_dir=out_dir, index=index))
+            rows.append(
+                add_negative_row(
+                    row=row,
+                    hard_negative_export_path=hard_negative_export,
+                    out_dir=out_dir,
+                    index=index,
+                    exam_firewall_path=exam_firewall_path,
+                    source_set_registry_path=source_set_registry_path,
+                )
+            )
 
     data_yaml = write_data_yaml(out_dir)
     manifest_path = out_dir / "dataset_manifest.json"
@@ -191,6 +285,7 @@ def assemble_dataset(
                 "data_yaml_path": str(data_yaml),
                 "reviewed_label_manifest": str(reviewed_label_manifest) if reviewed_label_manifest else None,
                 "hard_negative_export": str(hard_negative_export) if hard_negative_export else None,
+                "training_eligible": bool(rows),
                 "summary": {
                     "positive_count": len(positives),
                     "hard_negative_count": len(negatives),
@@ -198,6 +293,7 @@ def assemble_dataset(
                     "empty_negative_labels": len(negatives),
                 },
                 "items": rows,
+                "samples": rows,
             },
             indent=2,
             sort_keys=True,

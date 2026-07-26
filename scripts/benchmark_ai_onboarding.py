@@ -304,7 +304,8 @@ def build_consensus(
                 "frame_path": cluster[0].get("frame_path"),
                 "label_authority_tier": "silver",
                 "validation_truth_eligible": False,
-                "training_eligible": True,
+                "training_candidate": True,
+                "training_eligible": False,
             }
         )
     return {
@@ -355,7 +356,8 @@ def write_consensus_dataset(
                 "source_event_ts": event["event_ts"],
                 "label_authority_tier": event["label_authority_tier"],
                 "validation_truth_eligible": False,
-                "training_eligible": True,
+                "training_candidate": True,
+                "training_eligible": False,
                 "split": "train",
             }
         )
@@ -367,12 +369,14 @@ def write_consensus_dataset(
         "schema_version": DATASET_SCHEMA_VERSION,
         "label_source": "ai_teacher_consensus",
         "validation_truth_eligible": False,
-        "training_eligible": bool(items),
+        "training_candidate": bool(items),
+        "training_eligible": False,
         "items": items,
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {
-        "ready_for_training": bool(items),
+        "ready_for_training": False,
+        "requires_registry_validation": bool(items),
         "positive_count": len(items),
         "data_yaml": data_yaml.as_posix(),
         "dataset_manifest": manifest_path.as_posix(),
@@ -576,7 +580,8 @@ def run_benchmark(
         "consensus_summary": {
             "consensus_event_count": consensus["consensus_event_count"],
             "unclear_cluster_count": consensus["unclear_cluster_count"],
-            "training_eligible": bool(dataset["ready_for_training"]),
+            "training_candidate": bool(dataset.get("requires_registry_validation")),
+            "training_eligible": False,
             "validation_truth_eligible": False,
         },
         "dataset": dataset,

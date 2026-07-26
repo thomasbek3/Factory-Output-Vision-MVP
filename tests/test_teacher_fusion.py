@@ -23,13 +23,15 @@ def test_teacher_fusion_promotes_only_asserted_state_change_to_silver(tmp_path: 
     assert payload["summary"]["silver_candidate_count"] == 1
     decisions = {row["packet_id"]: row for row in payload["decisions"]}
     assert decisions["packet-change"]["fusion_decision"] == "promote_to_silver_training_candidate"
-    assert decisions["packet-change"]["training_eligible"] is True
+    assert decisions["packet-change"]["training_candidate"] is True
+    assert decisions["packet-change"]["training_eligible"] is False
     assert decisions["packet-stable"]["fusion_decision"] == "hard_negative_candidate"
     assert decisions["packet-stable"]["training_eligible"] is False
     dataset = json.loads(silver_dataset.read_text(encoding="utf-8"))
     assert dataset["validation_truth_eligible"] is False
     assert dataset["requires_blind_replay_gate"] is True
-    assert dataset["training_eligible"] is True
+    assert dataset["training_candidate"] is True
+    assert dataset["training_eligible"] is False
 
 
 def test_fuse_teacher_verifications_cli_reports_errors(tmp_path: Path, capsys) -> None:

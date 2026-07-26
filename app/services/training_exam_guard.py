@@ -76,8 +76,8 @@ def validate_training_manifest(
     source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
 ) -> None:
     samples = manifest.get("samples")
-    if not isinstance(samples, list):
-        raise ValueError("training manifest samples must be a list")
+    if not isinstance(samples, list) or not samples:
+        raise ValueError("training manifest samples must be a list and must be non-empty")
     for row in samples:
         if not isinstance(row, dict):
             raise ValueError("training manifest rows must be objects")

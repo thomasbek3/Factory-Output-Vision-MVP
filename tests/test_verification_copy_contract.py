@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
@@ -91,24 +92,22 @@ def test_worker_copy_uses_the_versioned_release_anchor() -> None:
     lexicon = (
         REPO_ROOT / "console" / "lib" / "reviewLexicon.ts"
     ).read_text(encoding="utf-8")
-    strings = (
-        REPO_ROOT / "console" / "lib" / "reviewStrings.ts"
-    ).read_text(encoding="utf-8")
-
     assert "worker-ground-truth-es-419-v1" in lexicon
     assert "+1 PIEZA" in lexicon
     assert "primer cuadro en que el trabajador la suelta" in lexicon
     assert "queda en el área de salida indicada" in lexicon
-    assert "llegue al pallet" not in strings
-    assert "+1 CONTEO" not in strings
+    assert "llegue al pallet" not in lexicon
+    assert "+1 CONTEO" not in lexicon
     assert "Contexto del video anterior. No cuentes aquí." in lexicon
     assert "Contexto del siguiente video. No cuentes aquí." in lexicon
     assert (
         "Count one piece on the first frame where the worker has released the "
         "finished piece and it remains in the designated output area."
     ) in lexicon
-    assert "CONTINUAR VIDEO" in lexicon
+    assert "VOLVER A EDITAR" in lexicon
+    assert "BACK TO EDIT" in lexicon
     assert "COMENZAR SIGUIENTE VIDEO" in lexicon
+    assert "CONTINUAR VIDEO" not in lexicon
     assert re.search(r"\b(?:bloque|cola|colocación)\b", lexicon, flags=re.IGNORECASE) is None
 
 
@@ -145,27 +144,59 @@ def test_worker_payload_sources_omit_golden_and_throughput_fields() -> None:
 
 
 def test_training_paths_consume_the_registry_firewall() -> None:
-    guard = (
-        REPO_ROOT / "app" / "services" / "training_exam_guard.py"
-    ).read_text(encoding="utf-8")
-    eligibility = (
-        REPO_ROOT / "app" / "services" / "review_eligibility.py"
-    ).read_text(encoding="utf-8")
-    extractor = (
-        REPO_ROOT / "app" / "services" / "clip_dataset.py"
-    ).read_text(encoding="utf-8")
-    labeler = (REPO_ROOT / "scripts" / "label_clips.py").read_text(encoding="utf-8")
-    trainer = (
-        REPO_ROOT / "scripts" / "train_clip_student.py"
-    ).read_text(encoding="utf-8")
-    model_service = (
-        REPO_ROOT / "app" / "services" / "clip_models.py"
-    ).read_text(encoding="utf-8")
+    guarded_paths = {
+        "app/services/clip_dataset.py": "validate_training_row",
+        "app/services/clip_models.py": "validate_training_manifest",
+        "app/services/yolo26_training_runner.py": "validate_training_manifest",
+        "scripts/legacy/train_custom_model.py": "validate_training_manifest",
+        "scripts/research/factory2/assemble_active_panel_dataset.py": "validate_training_row",
+        "scripts/research/factory2/run_yolo26_training_eval.py": (
+            "from app.services.yolo26_training_runner import run_yolo26_training_eval"
+        ),
+    }
+    discovered: set[str] = set()
+    for root in (REPO_ROOT / "app", REPO_ROOT / "scripts"):
+        for path in root.rglob("*.py"):
+            relative = path.relative_to(REPO_ROOT).as_posix()
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Dict):
+                    for key, value in zip(node.keys, node.values):
+                        if (
+                            isinstance(key, ast.Constant)
+                            and key.value == "training_eligible"
+                            and isinstance(value, ast.Constant)
+                            and value.value is True
+                        ):
+                            discovered.add(relative)
+                if isinstance(node, ast.Call):
+                    call_name = (
+                        node.func.attr
+                        if isinstance(node.func, ast.Attribute)
+                        else node.func.id
+                        if isinstance(node.func, ast.Name)
+                        else ""
+                    )
+                    if call_name in {
+                        "fit",
+                        "train",
+                        "train_sequence_classifier",
+                        "run_yolo26_training_eval",
+                    }:
+                        discovered.add(relative)
 
-    assert "review_interval_is_protected" in guard
-    assert "assignment_overlaps_exam" in eligibility
-    assert "assignment_overlaps_protected_source_set" in eligibility
-    assert "validate_training_row" in extractor
-    assert "validate_training_manifest" in labeler
-    assert "validate_training_manifest" in trainer
-    assert "validate_training_manifest" in model_service
+    assert discovered == set(guarded_paths), (
+        "training-path discovery changed; every new emitter or trainer must be "
+        f"reviewed and firewall-wired: {sorted(discovered)}"
+    )
+    for relative, guard_token in guarded_paths.items():
+        source = (REPO_ROOT / relative).read_text(encoding="utf-8")
+        assert guard_token in source, f"{relative} is missing {guard_token}"
+
+    for relative in (
+        "app/services/onboarding_rehearsal.py",
+        "scripts/research/factory2/run_factory_day1_pipeline.py",
+    ):
+        source = (REPO_ROOT / relative).read_text(encoding="utf-8")
+        assert "run_yolo26_training_eval.py" in source
+        assert "dataset_manifest" in source

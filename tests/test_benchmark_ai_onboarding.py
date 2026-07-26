@@ -48,7 +48,8 @@ def test_teacher_consensus_requires_multiple_agreeing_teachers() -> None:
     assert consensus["consensus_event_count"] == 1
     assert consensus["events"][0]["teacher_agreement"] == 2
     assert consensus["events"][0]["validation_truth_eligible"] is False
-    assert consensus["events"][0]["training_eligible"] is True
+    assert consensus["events"][0]["training_candidate"] is True
+    assert consensus["events"][0]["training_eligible"] is False
 
 
 def test_holdout_grade_can_redact_expected_total() -> None:
@@ -150,4 +151,5 @@ def test_run_benchmark_keeps_holdout_truth_out_of_onboarding_artifacts(
     assert "expected_total" not in json.dumps(teacher_labels)
     assert "expected_total" not in json.dumps(consensus)
     assert written["consensus_summary"]["consensus_event_count"] == 1
-    assert written["dataset"]["ready_for_training"] is True
+    assert written["dataset"]["ready_for_training"] is False
+    assert written["dataset"]["requires_registry_validation"] is True

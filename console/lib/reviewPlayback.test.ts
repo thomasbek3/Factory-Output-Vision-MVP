@@ -12,7 +12,7 @@ describe("review playback rate", () => {
     expect(media.playbackRate).toBe(5);
   });
 
-  it("steps down to 1x when the requested rate throws", () => {
+  it("walks down the validated ladder when faster rates throw", () => {
     let effectiveRate = 1;
     const media = {
       get playbackRate() {
@@ -29,5 +29,23 @@ describe("review playback rate", () => {
       steppedDown: true,
     });
     expect(effectiveRate).toBe(1);
+  });
+
+  it("detects silent browser clamping and uses the next lower validated speed", () => {
+    let effectiveRate = 1;
+    const media = {
+      get playbackRate() {
+        return effectiveRate;
+      },
+      set playbackRate(value: number) {
+        effectiveRate = value === 5 ? 4 : value;
+      },
+    };
+
+    expect(applyValidatedPlaybackRate(media, 5)).toEqual({
+      effectiveRate: 2,
+      steppedDown: true,
+    });
+    expect(effectiveRate).toBe(2);
   });
 });

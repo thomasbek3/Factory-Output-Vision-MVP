@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from app.services.training_exam_guard import sha256_file
 from scripts.legacy import train_custom_model
 
 
@@ -54,11 +55,33 @@ def test_validate_reviewed_label_gate_rejects_bad_schema(tmp_path):
         train_custom_model.validate_reviewed_label_gate(manifest_path)
 
 
-def test_resolve_reviewed_label_gate_requires_manifest_unless_explicitly_bypassed():
+def test_resolve_reviewed_label_gate_has_no_bypass():
     with pytest.raises(ValueError, match="AI label QA manifest is required"):
-        train_custom_model.resolve_reviewed_label_gate(None, allow_unreviewed_labels=False)
+        train_custom_model.resolve_reviewed_label_gate(None)
 
-    assert train_custom_model.resolve_reviewed_label_gate(
-        None,
-        allow_unreviewed_labels=True,
-    ) is None
+
+def test_legacy_trainer_requires_firewall_validated_source_manifest(tmp_path):
+    source = tmp_path / "source.mp4"
+    source.write_bytes(b"ordinary-source")
+    source_hash = sha256_file(source)
+    manifest = tmp_path / "dataset.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "samples": [
+                    {
+                        "training_eligible": True,
+                        "source": str(source),
+                        "source_sha256": source_hash,
+                        "lineage_source_sha256": [source_hash],
+                        "lineage_is_transitive_complete": True,
+                        "start_at": "2026-07-25T12:00:00Z",
+                        "end_at": "2026-07-25T12:01:00Z",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    train_custom_model.validate_training_dataset_manifest(manifest)

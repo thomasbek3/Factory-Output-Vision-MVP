@@ -15,32 +15,86 @@ if str(REPO_ROOT) not in sys.path:
 PYTHON = str(REPO_ROOT / ".venv" / "bin" / "python")
 PROPOSAL_MODES = {"full_frame_motion", "output_zone_motion"}
 
+from app.services.exam_firewall import parse_utc_timestamp
+from app.services.review_eligibility import review_interval_is_protected
+from app.services.source_set_registry import load_source_sets
+from app.services.training_exam_guard import (
+    DEFAULT_EXAM_FIREWALL_PATH,
+    DEFAULT_SOURCE_SET_REGISTRY_PATH,
+)
+
+
+def partition_recorder_segments(
+    segments: list[dict[str, Any]],
+    *,
+    exam_firewall_path: Path = DEFAULT_EXAM_FIREWALL_PATH,
+    source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], int]:
+    windows = load_source_sets(source_set_registry_path, exam_firewall_path)
+    holdout_hashes = {
+        window.source_sha256
+        for window in windows
+        if window.source_set == "ai_evaluation_holdout"
+    }
+    train_segments: list[dict[str, Any]] = []
+    holdout_segments: list[dict[str, Any]] = []
+    excluded_segment_count = 0
+    for segment in segments:
+        source_sha256 = str(segment.get("sha256") or "")
+        start_at = parse_utc_timestamp(segment.get("start_wall_ts"))
+        end_at = parse_utc_timestamp(segment.get("end_wall_ts"))
+        lineage = segment.get("lineage_source_sha256") or [source_sha256]
+        if source_sha256 in holdout_hashes:
+            holdout_segments.append(segment)
+            continue
+        if review_interval_is_protected(
+            exam_firewall_path=exam_firewall_path,
+            source_set_registry_path=source_set_registry_path,
+            source_sha256=source_sha256,
+            lineage_source_sha256=frozenset(lineage),
+            lineage_is_transitive_complete=True,
+            start_at=start_at,
+            end_at=end_at,
+            presented_start_at=start_at,
+            presented_end_at=end_at,
+        ):
+            excluded_segment_count += 1
+            continue
+        train_segments.append(
+            {
+                **segment,
+                "training_provenance": {
+                    "source": str(segment["path"]),
+                    "source_sha256": source_sha256,
+                    "lineage_source_sha256": list(lineage),
+                    "lineage_is_transitive_complete": True,
+                    "start_at": start_at.isoformat().replace("+00:00", "Z"),
+                    "end_at": end_at.isoformat().replace("+00:00", "Z"),
+                },
+            }
+        )
+    return train_segments, holdout_segments, excluded_segment_count
+
 
 def split_recorder_manifest(
     *,
     segment_manifest_path: Path,
     work_dir: Path,
-    holdout_fraction: float,
-    exclude_segments_after: str | None = None,
-    exclude_segments_before: str | None = None,
+    exam_firewall_path: Path = DEFAULT_EXAM_FIREWALL_PATH,
+    source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
 ) -> dict[str, Path]:
-    """Split a recorder manifest into a train-portion manifest and a concatenated holdout exam clip.
-
-    No truth ledger exists on day 1, so the split is purely by segment count: the first
-    ~(1-fraction) of segments feed the training lane; the tail becomes the exam clip that a
-    human scrubs afterward to produce the answer key."""
+    """Partition recorder segments through the tracked protected-source registry."""
     manifest = json.loads(segment_manifest_path.read_text(encoding="utf-8"))
-    segments = sorted(manifest.get("segments") or [], key=lambda row: str(row.get("path")))
-    segments, excluded_segment_count = exclude_segments_by_filename_window(
+    segments = list(manifest.get("segments") or [])
+    train_segments, holdout_segments, excluded_segment_count = partition_recorder_segments(
         segments,
-        exclude_segments_after=exclude_segments_after,
-        exclude_segments_before=exclude_segments_before,
+        exam_firewall_path=exam_firewall_path,
+        source_set_registry_path=source_set_registry_path,
     )
-    if len(segments) < 4:
-        raise ValueError(f"only {len(segments)} segments; need at least 4 to split")
-    holdout_count = max(1, round(len(segments) * holdout_fraction))
-    train_segments = segments[: len(segments) - holdout_count]
-    holdout_segments = segments[len(segments) - holdout_count :]
+    if not train_segments:
+        raise ValueError("registry partition produced no training segments")
+    if not holdout_segments:
+        raise ValueError("registry partition found no populated ai_evaluation_holdout segments")
 
     work_dir.mkdir(parents=True, exist_ok=True)
     train_manifest_path = work_dir / "train_segment_manifest.json"
@@ -50,10 +104,8 @@ def split_recorder_manifest(
         "total_segments": len(segments),
         "train_segments": len(train_segments),
         "holdout_segments": len(holdout_segments),
-        "holdout_fraction": holdout_fraction,
         "excluded_segment_count": excluded_segment_count,
-        "exclude_segments_after": exclude_segments_after,
-        "exclude_segments_before": exclude_segments_before,
+        "partition_authority": "validation/review_portal/source_sets_v1.json",
     }
     train_manifest_path.write_text(json.dumps(train_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -83,30 +135,6 @@ def split_recorder_manifest(
         timeout=1800,
     )
     return {"train_manifest": train_manifest_path, "exam_clip": exam_clip, "holdout_count": len(holdout_segments)}
-
-
-def exclude_segments_by_filename_window(
-    segments: list[dict[str, Any]],
-    *,
-    exclude_segments_after: str | None,
-    exclude_segments_before: str | None,
-) -> tuple[list[dict[str, Any]], int]:
-    if exclude_segments_after is None and exclude_segments_before is None:
-        return segments, 0
-    if exclude_segments_after is None or exclude_segments_before is None:
-        raise ValueError("--exclude-segments-after and --exclude-segments-before must be supplied together")
-    if exclude_segments_after > exclude_segments_before:
-        raise ValueError("--exclude-segments-after must be <= --exclude-segments-before")
-
-    kept: list[dict[str, Any]] = []
-    dropped = 0
-    for segment in segments:
-        start_key = _segment_filename_start_key(segment)
-        if start_key is not None and exclude_segments_after <= start_key <= exclude_segments_before:
-            dropped += 1
-            continue
-        kept.append(segment)
-    return kept, dropped
 
 
 def cap_event_proposals(
@@ -226,13 +254,6 @@ def _cap_negatives(
     return kept, [row for row in negatives if id(row) not in kept_ids]
 
 
-def _segment_filename_start_key(segment: dict[str, Any]) -> str | None:
-    try:
-        return Path(str(segment["path"])).name.split("_", 1)[0]
-    except KeyError:
-        return None
-
-
 def _proposal_center_wall_time(proposal: dict[str, Any]) -> datetime | None:
     raw = proposal.get("source_start_wall_ts")
     if raw:
@@ -265,7 +286,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--segment-manifest", type=Path, required=True, help="recorder segment_manifest.json")
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--station-id", default="factory-live-day1")
-    parser.add_argument("--holdout-fraction", type=float, default=0.3)
     parser.add_argument("--teacher-provider", default="codex_cli")
     parser.add_argument("--allow-cloud", action="store_true")
     parser.add_argument("--teacher-batch-size", type=int, default=4)
@@ -273,8 +293,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--proposal-mode", choices=sorted(PROPOSAL_MODES), default="full_frame_motion")
     parser.add_argument("--zone-motion-threshold", type=float, default=0.04)
     parser.add_argument("--min-flash-ratio", type=float, default=None)
-    parser.add_argument("--exclude-segments-after", default=None, help="drop segments with filename starts >= this YYYYmmddTHHMMSS")
-    parser.add_argument("--exclude-segments-before", default=None, help="drop segments with filename starts <= this YYYYmmddTHHMMSS")
     parser.add_argument("--teacher-negative-cap", type=int, default=30)
     parser.add_argument("--base-model", type=Path, default=Path("yolov8n.pt"))
     parser.add_argument("--epochs", type=int, default=80)
@@ -287,9 +305,6 @@ def main(argv: list[str] | None = None) -> int:
     split = split_recorder_manifest(
         segment_manifest_path=args.segment_manifest,
         work_dir=work,
-        holdout_fraction=args.holdout_fraction,
-        exclude_segments_after=args.exclude_segments_after,
-        exclude_segments_before=args.exclude_segments_before,
     )
     print(json.dumps({"stage": "split", "status": "completed", "exam_clip": str(split["exam_clip"]), "holdout_segments": split["holdout_count"]}), flush=True)
     if args.split_only:

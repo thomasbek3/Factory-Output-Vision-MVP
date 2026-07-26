@@ -139,8 +139,10 @@ def test_reviewed_manifest_exports_only_accept_and_fix_as_trainable_labels(tmp_p
     assert exit_code == 0
     reviewed = json.loads(output_path.read_text(encoding="utf-8"))
     assert [item["label_id"] for item in reviewed["trainable_labels"]] == ["good", "fixed"]
-    assert reviewed["accepted"][0]["training_eligible"] is True
-    assert reviewed["fixed"][0]["training_eligible"] is True
+    assert reviewed["accepted"][0]["training_candidate"] is True
+    assert reviewed["accepted"][0]["training_eligible"] is False
+    assert reviewed["fixed"][0]["training_candidate"] is True
+    assert reviewed["fixed"][0]["training_eligible"] is False
     assert reviewed["rejected"][0]["training_eligible"] is False
     assert reviewed["uncertain"][0]["training_eligible"] is False
     assert reviewed["trainable_labels"][1]["box"] == [0, 6, 120, 96]

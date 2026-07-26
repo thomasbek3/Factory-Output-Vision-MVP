@@ -3,7 +3,20 @@ from pathlib import Path
 
 import pytest
 
+from app.services.training_exam_guard import sha256_file
 from scripts.research.factory2 import assemble_active_panel_dataset as assembler
+
+
+def _provenance(source: Path) -> dict:
+    source_hash = sha256_file(source)
+    return {
+        "source": str(source),
+        "source_sha256": source_hash,
+        "lineage_source_sha256": [source_hash],
+        "lineage_is_transitive_complete": True,
+        "start_at": "2026-07-25T12:00:00Z",
+        "end_at": "2026-07-25T12:01:00Z",
+    }
 
 
 def _write_reviewed_manifest(tmp_path: Path) -> Path:
@@ -22,7 +35,10 @@ def _write_reviewed_manifest(tmp_path: Path) -> Path:
                         "image_height": 50,
                         "class_name": "active_panel",
                         "box": [10, 5, 50, 25],
-                        "metadata": {"frame_path": str(image)},
+                        "metadata": {
+                            "frame_path": str(image),
+                            "training_provenance": _provenance(image),
+                        },
                     }
                 ],
             }
@@ -49,6 +65,7 @@ def _write_hard_negative_export(tmp_path: Path) -> Path:
                         "source_asset_path": str(image),
                         "exported_image_path": str(image),
                         "review_only": False,
+                        "training_provenance": _provenance(image),
                     }
                 ],
             }
@@ -87,6 +104,9 @@ def test_assemble_dataset_writes_positive_and_empty_negative_labels(tmp_path: Pa
     assert Path(positive["label_path"]).read_text(encoding="utf-8") == "0 0.300000 0.300000 0.400000 0.400000\n"
     assert Path(negative["image_path"]).read_text(encoding="utf-8") == "negative-image"
     assert Path(negative["label_path"]).read_text(encoding="utf-8") == ""
+    assert payload["training_eligible"] is True
+    assert payload["samples"] == payload["items"]
+    assert all(item["training_eligible"] is True for item in payload["items"])
     data_yaml = (out_dir / "data.yaml").read_text(encoding="utf-8")
     # absolute dataset root so ultralytics never resolves it against its global datasets_dir
     assert data_yaml.startswith(f"path: {out_dir.resolve().as_posix()}\ntrain: images/train")
@@ -108,7 +128,11 @@ def test_assemble_dataset_honors_positive_split_metadata(tmp_path: Path) -> None
                         "image_height": 50,
                         "class_name": "active_panel",
                         "box": [10, 5, 50, 25],
-                        "metadata": {"frame_path": str(image), "split": "val"},
+                        "metadata": {
+                            "frame_path": str(image),
+                            "split": "val",
+                            "training_provenance": _provenance(image),
+                        },
                     }
                 ],
             }
@@ -155,3 +179,17 @@ def test_refuses_to_overwrite_non_empty_dataset(tmp_path: Path) -> None:
 
     with pytest.raises(FileExistsError, match="Refusing"):
         assembler.assemble_dataset(out_dir=out_dir, reviewed_label_manifest=reviewed, hard_negative_export=None)
+
+
+def test_refuses_training_dataset_without_source_provenance(tmp_path: Path) -> None:
+    reviewed = _write_reviewed_manifest(tmp_path)
+    payload = json.loads(reviewed.read_text(encoding="utf-8"))
+    del payload["trainable_labels"][0]["metadata"]["training_provenance"]
+    reviewed.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="training_provenance"):
+        assembler.assemble_dataset(
+            out_dir=tmp_path / "dataset",
+            reviewed_label_manifest=reviewed,
+            hard_negative_export=None,
+        )

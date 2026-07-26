@@ -487,6 +487,7 @@ def _build_proposal(
         "duration_sec": round(end_sec - start_sec, 3),
         "source_start_wall_ts": segment.get("start_wall_ts"),
         "source_end_wall_ts": segment.get("end_wall_ts"),
+        "training_provenance": segment.get("training_provenance"),
         "label_status": "unreviewed",
         "label_authority_tier": "bronze",
         "evidence_role": "candidate_only_not_truth",

@@ -34,11 +34,12 @@ def build_teacher_fusion_report(
             "reconciliation_status": state.get("reconciliation_status"),
             "fusion_decision": decision,
             "validation_truth_eligible": False,
-            "training_eligible": decision == "promote_to_silver_training_candidate",
+            "training_candidate": decision == "promote_to_silver_training_candidate",
+            "training_eligible": False,
             "promotion_reason": _promotion_reason(decision),
         }
         decisions.append(row)
-        if row["training_eligible"]:
+        if row["training_candidate"]:
             silver_candidates.append(
                 {
                     "item_id": f"{packet_id}-silver",
@@ -49,7 +50,8 @@ def build_teacher_fusion_report(
                     "source_teacher_label_id": label.get("label_id"),
                     "source_state_diff_status": state.get("reconciliation_status"),
                     "validation_truth_eligible": False,
-                    "training_eligible": True,
+                    "training_candidate": True,
+                    "training_eligible": False,
                     "review_status": "pending_replay_gate",
                 }
             )
@@ -131,7 +133,8 @@ def _build_silver_dataset(
         "teacher_labels_path": str(teacher_labels_path),
         "state_diff_path": str(state_diff_path),
         "validation_truth_eligible": False,
-        "training_eligible": bool(silver_candidates),
+        "training_candidate": bool(silver_candidates),
+        "training_eligible": False,
         "requires_blind_replay_gate": True,
         "items": silver_candidates,
     }

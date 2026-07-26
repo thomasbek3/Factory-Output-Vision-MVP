@@ -103,11 +103,10 @@ Argparse: `--segment-manifest`, `--gold-positives validation/exam/exam_gold_posi
 - New/used CLI: `--zone-motion-threshold`, `--min-flash-ratio` (thread through to
   the proposer), and raise `--max-teacher-events` to 300 at call time (no default
   change). `--teacher-negative-cap` stays 30.
-- `--exclude-window "12:..."`? No — simpler: support `--exclude-segments-after
-  <YYYYmmddTHHMMSS>` and `--exclude-segments-before` so the day-1 run can exclude
-  the held-out exam hour (exclude segments with start >= `20260611T152150` and <=
-  `20260611T162733`). Keep it dead simple: drop any segment whose filename start
-  timestamp falls in the excluded [before,after] inclusive range.
+- Security amendment (2026-07-25): the filename-window split described in the
+  original day-3 plan is retired. The pipeline now partitions by exact source
+  hash and UTC interval through `exam_firewall_v2.json` and
+  `source_sets_v1.json`; missing or unregistered holdout rows fail closed.
 - Everything downstream (packets, teacher, local-negative labels, boxes, dataset,
   train, exam) unchanged.
 
@@ -130,8 +129,8 @@ Argparse: `--segment-manifest`, `--gold-positives validation/exam/exam_gold_posi
 - `tests/test_validate_miner_recall.py`: wall-clock derivation from
   segment_file + offset; caught/missed logic at the tolerance boundary; PASS at
   6/7, FAIL at 5/7.
-- Pipeline arg test: `--exclude-segments-before/after` removes exactly the
-  in-range segments and keeps the rest.
+- Pipeline partition test proves filename order cannot override the exam and
+  protected-source registries.
 - `.venv/bin/python -m pytest tests/ -q` — all green.
 
 ## Non-goals tonight (do NOT build)

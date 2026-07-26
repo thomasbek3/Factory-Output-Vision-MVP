@@ -135,6 +135,7 @@ def validate_source_sets_against_exam(
 def assignment_overlaps_protected_source_set(
     windows: tuple[SourceWindow, ...],
     *,
+    source_sha256: str,
     lineage_source_sha256: frozenset[str],
     lineage_is_transitive_complete: bool,
     start_at: datetime,
@@ -143,6 +144,8 @@ def assignment_overlaps_protected_source_set(
     presented_end_at: datetime | None = None,
     guard_band_seconds: float = 60,
 ) -> bool:
+    if not SHA256_PATTERN.fullmatch(source_sha256):
+        raise ValueError("assignment source_sha256 must be 64 lowercase hex characters")
     if not lineage_source_sha256:
         raise ValueError("assignment lineage_source_sha256 must be non-empty")
     if lineage_is_transitive_complete is not True:
@@ -171,8 +174,9 @@ def assignment_overlaps_protected_source_set(
         raise ValueError("presented interval start must precede end")
 
     guard = timedelta(seconds=guard_band_seconds)
+    source_hashes = {source_sha256, *lineage_source_sha256}
     return any(
-        not window.lineage_source_sha256.isdisjoint(lineage_source_sha256)
+        not window.lineage_source_sha256.isdisjoint(source_hashes)
         and visible_start_at < window.end_at + guard
         and window.start_at - guard < visible_end_at
         for window in windows

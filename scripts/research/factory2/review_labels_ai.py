@@ -86,7 +86,7 @@ def review_manifest(
         review_cards.append(build_review_card(label, outcome))
         reviewed_row = _reviewed_row(label, outcome)
         buckets[_bucket_name(outcome.decision)].append(reviewed_row)
-        if reviewed_row["training_eligible"]:
+        if reviewed_row["training_candidate"]:
             trainable_labels.append(_trainable_label_manifest(outcome.fixed_label or label))
 
     return {
@@ -120,13 +120,14 @@ def _optional_candidate(row: dict[str, Any] | None) -> CandidateLabel | None:
 
 
 def _reviewed_row(label: CandidateLabel, outcome: Any) -> dict[str, Any]:
-    training_eligible = outcome.decision in {ReviewDecision.ACCEPT, ReviewDecision.FIX}
+    training_candidate = outcome.decision in {ReviewDecision.ACCEPT, ReviewDecision.FIX}
     payload = {
         "label_id": label.label_id,
         "decision": outcome.decision.value,
         "reason_codes": outcome.reason_codes,
         "score": outcome.score,
-        "training_eligible": training_eligible,
+        "training_candidate": training_candidate,
+        "training_eligible": False,
         "label": label_to_manifest(label),
     }
     if outcome.fixed_label is not None:

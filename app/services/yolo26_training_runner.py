@@ -4,8 +4,16 @@ import json
 from pathlib import Path
 from typing import Any, Callable
 
+from app.services.training_exam_guard import (
+    DEFAULT_EXAM_FIREWALL_PATH,
+    DEFAULT_SOURCE_SET_REGISTRY_PATH,
+    validate_training_manifest,
+)
+
 
 SCHEMA_VERSION = "factory-vision-yolo26-training-eval-v1"
+DATASET_SCHEMA_VERSION = "active-panel-yolo-dataset-v1"
+YOLO_IMAGE_SUFFIXES = {".bmp", ".jpeg", ".jpg", ".png", ".webp"}
 Trainer = Callable[..., Path]
 Evaluator = Callable[..., dict[str, Any]]
 
@@ -29,6 +37,8 @@ def run_yolo26_training_eval(
     trainer: Trainer | None = None,
     positive_evaluator: Evaluator | None = None,
     hard_negative_evaluator: Evaluator | None = None,
+    exam_firewall_path: Path = DEFAULT_EXAM_FIREWALL_PATH,
+    source_set_registry_path: Path = DEFAULT_SOURCE_SET_REGISTRY_PATH,
 ) -> dict[str, Any]:
     if output_path.exists() and not force:
         raise FileExistsError(f"{output_path} already exists; pass --force to overwrite")
@@ -42,8 +52,28 @@ def run_yolo26_training_eval(
         raise FileNotFoundError(data_yaml)
     if dataset_manifest is not None and not dataset_manifest.exists():
         raise FileNotFoundError(dataset_manifest)
+    if execute_training and dataset_manifest is None:
+        raise ValueError("dataset_manifest is required for training")
     if execute_training and not allow_model_download and not base_model_path.exists():
         raise FileNotFoundError(f"{base_model_path} does not exist; pass allow_model_download only for explicit downloads")
+
+    firewall_validated = False
+    if dataset_manifest is not None:
+        try:
+            manifest_payload = json.loads(dataset_manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("dataset manifest is unavailable or invalid; training must fail closed") from exc
+        validate_training_manifest(
+            manifest_payload,
+            exam_firewall_path=exam_firewall_path,
+            source_set_registry_path=source_set_registry_path,
+        )
+        _validate_yolo_dataset_binding(
+            manifest=manifest_payload,
+            manifest_path=dataset_manifest,
+            data_yaml=data_yaml,
+        )
+        firewall_validated = True
 
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -70,6 +100,7 @@ def run_yolo26_training_eval(
         "promotion_allowed": False,
         "requires_blind_replay_gate": True,
         "refuses_validation_truth": True,
+        "training_firewall_validated": firewall_validated,
     }
     if not execute_training:
         _write_json(output_path, report)
@@ -122,6 +153,105 @@ def run_yolo26_training_eval(
     }
     _write_json(output_path, report)
     return report
+
+
+def _validate_yolo_dataset_binding(
+    *,
+    manifest: dict[str, Any],
+    manifest_path: Path,
+    data_yaml: Path,
+) -> None:
+    if manifest.get("schema_version") != DATASET_SCHEMA_VERSION:
+        raise ValueError(f"dataset manifest schema_version must be {DATASET_SCHEMA_VERSION}")
+
+    samples = manifest.get("samples")
+    items = manifest.get("items")
+    if not isinstance(items, list) or not items:
+        raise ValueError("dataset manifest items must be a non-empty list")
+    if items != samples:
+        raise ValueError("dataset manifest items must exactly match validated samples")
+
+    declared_data_yaml = manifest.get("data_yaml_path")
+    if not isinstance(declared_data_yaml, str) or not declared_data_yaml.strip():
+        raise ValueError("dataset manifest data_yaml_path is required")
+    declared_path = Path(declared_data_yaml).expanduser()
+    if not declared_path.is_absolute():
+        declared_path = manifest_path.parent / declared_path
+    if declared_path.resolve() != data_yaml.resolve():
+        raise ValueError("dataset manifest does not describe the requested data_yaml")
+
+    yaml_paths = _parse_yolo_data_paths(data_yaml)
+    dataset_root = (data_yaml.parent / yaml_paths["path"]).resolve()
+    allowed_pairs = {
+        split: (
+            (dataset_root / yaml_paths[split]).resolve(),
+            (dataset_root / yaml_paths[split].replace("images", "labels", 1)).resolve(),
+        )
+        for split in ("train", "val")
+    }
+    manifest_images: set[Path] = set()
+    manifest_labels: set[Path] = set()
+    for item in items:
+        split = item.get("split")
+        if split not in allowed_pairs:
+            raise ValueError("dataset manifest item split must be train or val")
+        image_path = _required_existing_path(item, "image_path")
+        label_path = _required_existing_path(item, "label_path")
+        image_root, label_root = allowed_pairs[split]
+        if not _is_relative_to(image_path, image_root):
+            raise ValueError("dataset manifest image_path is outside the requested data_yaml split")
+        if not _is_relative_to(label_path, label_root):
+            raise ValueError("dataset manifest label_path is outside the requested data_yaml split")
+        manifest_images.add(image_path)
+        manifest_labels.add(label_path)
+
+    yaml_images = {
+        path.resolve()
+        for image_root, _ in allowed_pairs.values()
+        if image_root.is_dir()
+        for path in image_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in YOLO_IMAGE_SUFFIXES
+    }
+    yaml_labels = {
+        path.resolve()
+        for _, label_root in allowed_pairs.values()
+        if label_root.is_dir()
+        for path in label_root.rglob("*.txt")
+        if path.is_file()
+    }
+    if manifest_images != yaml_images or manifest_labels != yaml_labels:
+        raise ValueError("dataset manifest must exactly inventory every data_yaml image and label")
+
+
+def _parse_yolo_data_paths(data_yaml: Path) -> dict[str, str]:
+    payload: dict[str, str] = {}
+    for raw_line in data_yaml.read_text(encoding="utf-8").splitlines():
+        if not raw_line or raw_line[0].isspace() or ":" not in raw_line:
+            continue
+        key, value = raw_line.split(":", 1)
+        if key in {"path", "train", "val"}:
+            payload[key] = value.strip().strip("\"'")
+    if not all(payload.get(key) for key in ("path", "train", "val")):
+        raise ValueError("data_yaml must declare path, train, and val")
+    return payload
+
+
+def _required_existing_path(item: dict[str, Any], key: str) -> Path:
+    value = item.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"dataset manifest item {key} is required")
+    path = Path(value).expanduser().resolve()
+    if not path.is_file():
+        raise ValueError(f"dataset manifest item {key} is unavailable")
+    return path
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+    return True
 
 
 def _train_with_ultralytics(
