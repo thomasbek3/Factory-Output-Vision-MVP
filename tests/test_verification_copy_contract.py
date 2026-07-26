@@ -200,3 +200,29 @@ def test_training_paths_consume_the_registry_firewall() -> None:
         source = (REPO_ROOT / relative).read_text(encoding="utf-8")
         assert "run_yolo26_training_eval.py" in source
         assert "dataset_manifest" in source
+
+
+def test_clip_trainer_firewall_is_not_conditional_on_manifest_content() -> None:
+    path = REPO_ROOT / "app" / "services" / "clip_models.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    parents: dict[ast.AST, ast.AST] = {}
+    for parent in ast.walk(tree):
+        for child in ast.iter_child_nodes(parent):
+            parents[child] = parent
+
+    guard_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "validate_training_manifest"
+    ]
+    assert guard_calls, "clip trainer must validate its training manifest"
+    for call in guard_calls:
+        ancestor = parents.get(call)
+        while ancestor is not None and not isinstance(ancestor, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            assert not isinstance(ancestor, ast.If), (
+                "clip trainer firewall must not depend on a caller-controlled "
+                "manifest field"
+            )
+            ancestor = parents.get(ancestor)

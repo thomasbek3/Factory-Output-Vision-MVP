@@ -25,6 +25,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.training_exam_guard import validate_training_manifest
+from app.services.yolo26_training_runner import validate_yolo_dataset_binding
 
 
 def validate_reviewed_label_gate(manifest_path: Path) -> dict[str, int]:
@@ -56,12 +57,17 @@ def resolve_reviewed_label_gate(
     return validate_reviewed_label_gate(Path(reviewed_label_manifest))
 
 
-def validate_training_dataset_manifest(manifest_path: Path) -> None:
+def validate_training_dataset_manifest(manifest_path: Path, data_yaml: Path) -> None:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     validate_training_manifest(manifest)
+    validate_yolo_dataset_binding(
+        manifest=manifest,
+        manifest_path=manifest_path,
+        data_yaml=data_yaml,
+    )
 
 
-def main():
+def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="Train custom YOLOv8n on wire mesh panel dataset")
     parser.add_argument("--data", type=str, required=True, help="Path to data.yaml from Roboflow export")
     parser.add_argument("--epochs", type=int, default=50, help="Training epochs (default: 50)")
@@ -81,7 +87,7 @@ def main():
         required=True,
         help="Firewall-validated dataset manifest produced by the dataset builder",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     data_path = Path(args.data)
     if not data_path.exists():
@@ -90,7 +96,7 @@ def main():
         return
 
     summary = resolve_reviewed_label_gate(args.reviewed_label_manifest)
-    validate_training_dataset_manifest(args.training_manifest)
+    validate_training_dataset_manifest(args.training_manifest, data_path)
     if summary:
         print(
             "AI label QA gate passed: "

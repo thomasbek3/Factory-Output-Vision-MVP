@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -11,9 +12,11 @@ from app.services.clip_models import (
     create_model,
     encodings_for_arch,
     load_student_judge,
+    labeled_rows,
     train_student,
     write_synthetic_clip_manifest,
 )
+from app.services.training_exam_guard import sha256_file
 from scripts.train_clip_student import synthetic_smoke_image_size
 
 
@@ -118,3 +121,33 @@ def test_each_available_arch_runs_one_epoch_synthetic_smoke_train(tmp_path: Path
         else:
             assert result["status"] == "skipped"
             assert result["reason"] == status.reason
+
+
+def test_manifest_cannot_self_declare_synthetic_smoke_to_bypass_firewall(tmp_path: Path) -> None:
+    source = tmp_path / "protected.mp4"
+    source.write_bytes(b"protected-source")
+    source_sha256 = sha256_file(source)
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "purpose": "synthetic_smoke",
+                "samples": [
+                    {
+                        "source": str(source),
+                        "source_sha256": source_sha256,
+                        "lineage_source_sha256": [source_sha256],
+                        "lineage_is_transitive_complete": True,
+                        "training_eligible": False,
+                        "start_at": "2026-07-25T12:00:00Z",
+                        "end_at": "2026-07-25T12:01:00Z",
+                        "label": "assert",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="training-ineligible"):
+        labeled_rows(manifest_path)

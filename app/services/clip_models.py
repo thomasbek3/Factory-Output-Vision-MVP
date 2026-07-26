@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
-from app.services.training_exam_guard import validate_training_manifest
+from app.services.training_exam_guard import sha256_file, validate_training_manifest
 
 ArchName = Literal["stack3_mobilenet", "video_x3d", "video_vmae", "twostream"]
 ARCHES: tuple[ArchName, ...] = ("stack3_mobilenet", "video_x3d", "video_vmae", "twostream")
@@ -475,8 +475,7 @@ def label_to_index(label: Any) -> int:
 
 def labeled_rows(manifest_path: Path) -> list[dict[str, Any]]:
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if payload.get("purpose") != "synthetic_smoke":
-        validate_training_manifest(payload)
+    validate_training_manifest(payload)
     rows = [row for row in payload.get("samples", []) if row.get("label") is not None]
     if not rows:
         raise ValueError("manifest has no labeled samples")
@@ -541,6 +540,9 @@ def write_synthetic_clip_manifest(path: Path, *, sample_count: int = 6, image_si
     rows = []
     asset_dir = path.parent / "synthetic_assets"
     asset_dir.mkdir(parents=True, exist_ok=True)
+    source_path = asset_dir / "generated-smoke-source.bin"
+    source_path.write_bytes(b"factory-vision-generated-synthetic-smoke-source-v1")
+    source_sha256 = sha256_file(source_path)
     for index in range(sample_count):
         label = "assert" if index % 2 == 0 else "refute"
         rng = np.random.default_rng(index)
@@ -559,7 +561,13 @@ def write_synthetic_clip_manifest(path: Path, *, sample_count: int = 6, image_si
         rows.append(
             {
                 "candidate_id": f"synthetic-{index:03d}",
-                "source": "synthetic",
+                "source": str(source_path),
+                "source_sha256": source_sha256,
+                "lineage_source_sha256": [source_sha256],
+                "lineage_is_transitive_complete": True,
+                "training_eligible": True,
+                "start_at": f"2030-01-01T00:{index:02d}:00Z",
+                "end_at": f"2030-01-01T00:{index:02d}:01Z",
                 "center_sec": float(index),
                 "start_sec": float(index),
                 "end_sec": float(index + 1),

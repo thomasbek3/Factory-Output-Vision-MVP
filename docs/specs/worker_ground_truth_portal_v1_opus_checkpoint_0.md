@@ -166,6 +166,41 @@ API branch was not explicitly projected.
 - Both empty and populated next-chunk responses use explicit worker-safe
   projections.
 
+## Fifth High-Effort Review
+
+Session: `ebd6508e-304f-42f5-aba4-9456b554ecc1`
+
+Canonical model: `claude-opus-5`
+
+Reported turns: 67
+
+Verdict: **REVISE**
+
+The reviewer confirmed all earlier P0 closures, including the Track A YOLO
+runner's exact manifest-to-dataset binding, then found two sibling training
+bypasses. The legacy YOLO CLI validated a guarded manifest but accepted an
+unrelated `data.yaml`, and the lowest-level clip trainer skipped all registry
+validation when an input manifest self-declared `purpose=synthetic_smoke`.
+
+Adjacent findings covered incomplete AST discovery of dynamic emitters and
+consumers, caller-injectable registry paths, a demo-media assignment seam that
+does not yet exist, timing and speed-copy drift, summary/resume copy-test scope,
+current-chunk queue wording, and the final `1x` playback readback.
+
+## Fifth Remediation Applied
+
+- The legacy YOLO CLI now uses the same exact manifest-to-`data.yaml` binding as
+  the primary YOLO runner. An end-to-end CLI test supplies a substituted YAML
+  and proves the YOLO constructor is never reached.
+- The clip trainer now validates every manifest unconditionally. A manifest
+  cannot disable the firewall by self-declaring a synthetic purpose.
+- In-process synthetic smoke manifests now carry a real generated source file,
+  exact SHA-256, complete lineage, explicit training eligibility, and UTC
+  intervals, so they pass the same fail-closed validator as every other
+  training manifest.
+- An AST regression test proves the lowest-level clip trainer's registry
+  validation is not nested beneath a caller-controlled conditional.
+
 ## Second Remediation Applied
 
 - Day-queue responses now contain only the caller's own leased or completed
@@ -218,8 +253,8 @@ API branch was not explicitly projected.
 
 ## Verification Before Closure Review
 
-- Backend: `676 passed`, 16 dependency warnings.
-- Focused manifest/firewall suite: `34 passed`.
+- Backend: `680 passed`, 16 dependency warnings.
+- Focused fifth-pass failure suite: `37 passed`, 2 dependency warnings.
 - Console unit: `45 passed`.
 - Console lint: zero errors, 12 pre-existing warnings under `e2e-audit`.
 - Next production build: passed; the removed export route is absent.
@@ -233,7 +268,7 @@ API branch was not explicitly projected.
 
 ## Re-Review Gate
 
-Checkpoint zero remains **REVISE** after four completed high-effort reviews and
+Checkpoint zero remains **REVISE** after five completed high-effort reviews and
 will not close until a fresh Opus 5 high-effort pass finds no open P0. This
-receipt records the independent finding and remediation rather than
+receipt records each independent finding and remediation rather than
 self-certifying closure.

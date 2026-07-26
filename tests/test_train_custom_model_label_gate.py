@@ -1,4 +1,6 @@
 import json
+import sys
+import types
 
 import pytest
 
@@ -64,24 +66,179 @@ def test_legacy_trainer_requires_firewall_validated_source_manifest(tmp_path):
     source = tmp_path / "source.mp4"
     source.write_bytes(b"ordinary-source")
     source_hash = sha256_file(source)
+    data_yaml = tmp_path / "data.yaml"
+    data_yaml.write_text(
+        "path: .\ntrain: images/train\nval: images/val\nnames:\n  0: active_panel\n",
+        encoding="utf-8",
+    )
+    image = tmp_path / "images" / "train" / "sample.jpg"
+    label = tmp_path / "labels" / "train" / "sample.txt"
+    image.parent.mkdir(parents=True)
+    label.parent.mkdir(parents=True)
+    image.write_bytes(b"reviewed-image")
+    label.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
+    sample = {
+        "kind": "positive",
+        "split": "train",
+        "image_path": str(image),
+        "label_path": str(label),
+        "training_eligible": True,
+        "source": str(source),
+        "source_sha256": source_hash,
+        "lineage_source_sha256": [source_hash],
+        "lineage_is_transitive_complete": True,
+        "start_at": "2026-07-25T12:00:00Z",
+        "end_at": "2026-07-25T12:01:00Z",
+    }
     manifest = tmp_path / "dataset.json"
     manifest.write_text(
         json.dumps(
             {
-                "samples": [
-                    {
-                        "training_eligible": True,
-                        "source": str(source),
-                        "source_sha256": source_hash,
-                        "lineage_source_sha256": [source_hash],
-                        "lineage_is_transitive_complete": True,
-                        "start_at": "2026-07-25T12:00:00Z",
-                        "end_at": "2026-07-25T12:01:00Z",
-                    }
-                ]
+                "schema_version": "active-panel-yolo-dataset-v1",
+                "data_yaml_path": str(data_yaml),
+                "items": [sample],
+                "samples": [sample],
             }
         ),
         encoding="utf-8",
     )
 
-    train_custom_model.validate_training_dataset_manifest(manifest)
+    train_custom_model.validate_training_dataset_manifest(manifest, data_yaml)
+
+
+def test_legacy_trainer_rejects_manifest_data_yaml_substitution(tmp_path):
+    source = tmp_path / "source.mp4"
+    source.write_bytes(b"ordinary-source")
+    source_hash = sha256_file(source)
+    guarded_yaml = tmp_path / "guarded" / "data.yaml"
+    guarded_yaml.parent.mkdir()
+    guarded_yaml.write_text(
+        "path: .\ntrain: images/train\nval: images/val\nnames:\n  0: active_panel\n",
+        encoding="utf-8",
+    )
+    image = guarded_yaml.parent / "images" / "train" / "sample.jpg"
+    label = guarded_yaml.parent / "labels" / "train" / "sample.txt"
+    image.parent.mkdir(parents=True)
+    label.parent.mkdir(parents=True)
+    image.write_bytes(b"reviewed-image")
+    label.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
+    sample = {
+        "kind": "positive",
+        "split": "train",
+        "image_path": str(image),
+        "label_path": str(label),
+        "training_eligible": True,
+        "source": str(source),
+        "source_sha256": source_hash,
+        "lineage_source_sha256": [source_hash],
+        "lineage_is_transitive_complete": True,
+        "start_at": "2026-07-25T12:00:00Z",
+        "end_at": "2026-07-25T12:01:00Z",
+    }
+    manifest = tmp_path / "dataset.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": "active-panel-yolo-dataset-v1",
+                "data_yaml_path": str(guarded_yaml),
+                "items": [sample],
+                "samples": [sample],
+            }
+        ),
+        encoding="utf-8",
+    )
+    substituted_yaml = tmp_path / "unreviewed" / "data.yaml"
+    substituted_yaml.parent.mkdir()
+    substituted_yaml.write_text(
+        "path: .\ntrain: images/train\nval: images/val\nnames:\n  0: active_panel\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="does not describe"):
+        train_custom_model.validate_training_dataset_manifest(manifest, substituted_yaml)
+
+
+def test_legacy_cli_rejects_substituted_yaml_before_yolo_is_constructed(
+    tmp_path,
+    monkeypatch,
+):
+    source = tmp_path / "source.mp4"
+    source.write_bytes(b"ordinary-source")
+    source_hash = sha256_file(source)
+    guarded_yaml = tmp_path / "guarded" / "data.yaml"
+    guarded_yaml.parent.mkdir()
+    guarded_yaml.write_text(
+        "path: .\ntrain: images/train\nval: images/val\nnames:\n  0: active_panel\n",
+        encoding="utf-8",
+    )
+    image = guarded_yaml.parent / "images" / "train" / "sample.jpg"
+    label = guarded_yaml.parent / "labels" / "train" / "sample.txt"
+    image.parent.mkdir(parents=True)
+    label.parent.mkdir(parents=True)
+    image.write_bytes(b"reviewed-image")
+    label.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
+    sample = {
+        "kind": "positive",
+        "split": "train",
+        "image_path": str(image),
+        "label_path": str(label),
+        "training_eligible": True,
+        "source": str(source),
+        "source_sha256": source_hash,
+        "lineage_source_sha256": [source_hash],
+        "lineage_is_transitive_complete": True,
+        "start_at": "2026-07-25T12:00:00Z",
+        "end_at": "2026-07-25T12:01:00Z",
+    }
+    manifest = tmp_path / "dataset.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": "active-panel-yolo-dataset-v1",
+                "data_yaml_path": str(guarded_yaml),
+                "items": [sample],
+                "samples": [sample],
+            }
+        ),
+        encoding="utf-8",
+    )
+    reviewed = tmp_path / "reviewed.json"
+    reviewed.write_text(
+        json.dumps(
+            {
+                "schema_version": "label-quality-reviewed-v1",
+                "trainable_labels": [{"label_id": "good"}],
+                "rejected": [],
+                "uncertain": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    substituted_yaml = tmp_path / "unreviewed" / "data.yaml"
+    substituted_yaml.parent.mkdir()
+    substituted_yaml.write_text(
+        "path: .\ntrain: images/train\nval: images/val\nnames:\n  0: active_panel\n",
+        encoding="utf-8",
+    )
+    yolo_constructed = False
+
+    class ForbiddenYolo:
+        def __init__(self, *_args, **_kwargs):
+            nonlocal yolo_constructed
+            yolo_constructed = True
+
+    monkeypatch.setitem(sys.modules, "ultralytics", types.SimpleNamespace(YOLO=ForbiddenYolo))
+
+    with pytest.raises(ValueError, match="does not describe"):
+        train_custom_model.main(
+            [
+                "--data",
+                str(substituted_yaml),
+                "--training-manifest",
+                str(manifest),
+                "--reviewed-label-manifest",
+                str(reviewed),
+            ]
+        )
+
+    assert yolo_constructed is False

@@ -68,7 +68,7 @@ def run_yolo26_training_eval(
             exam_firewall_path=exam_firewall_path,
             source_set_registry_path=source_set_registry_path,
         )
-        _validate_yolo_dataset_binding(
+        validate_yolo_dataset_binding(
             manifest=manifest_payload,
             manifest_path=dataset_manifest,
             data_yaml=data_yaml,
@@ -155,7 +155,7 @@ def run_yolo26_training_eval(
     return report
 
 
-def _validate_yolo_dataset_binding(
+def validate_yolo_dataset_binding(
     *,
     manifest: dict[str, Any],
     manifest_path: Path,
