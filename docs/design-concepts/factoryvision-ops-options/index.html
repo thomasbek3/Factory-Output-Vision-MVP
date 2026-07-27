@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FactoryVision Ops - Design Directions</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0c0e;
+        --panel: #111418;
+        --panel-2: #171b20;
+        --line: #272d34;
+        --text: #f2f4f5;
+        --muted: #9ba3ab;
+        --dim: #68717a;
+        --orange: #f2752a;
+        --green: #62c879;
+        --amber: #e9aa3b;
+        --blue: #6ca5dd;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      a {
+        font: inherit;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        min-height: 64px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(10, 12, 14, 0.94);
+        padding: 0 28px;
+        backdrop-filter: blur(12px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .mark {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border: 1px solid var(--line);
+        color: var(--orange);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .jump-nav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+      }
+
+      .jump-nav a {
+        border-radius: 4px;
+        padding: 8px 10px;
+        color: var(--muted);
+        font-size: 12px;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .jump-nav a:hover,
+      .jump-nav a:focus-visible {
+        background: var(--panel-2);
+        color: var(--text);
+        outline: none;
+      }
+
+      main {
+        width: min(1500px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 42px 0 80px;
+      }
+
+      .intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 440px);
+        gap: 48px;
+        align-items: end;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 36px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--orange);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin-bottom: 16px;
+        font-size: clamp(34px, 5vw, 58px);
+        line-height: 1.02;
+      }
+
+      .lede {
+        max-width: 740px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .recommendation {
+        border-left: 3px solid var(--orange);
+        padding: 4px 0 4px 20px;
+      }
+
+      .recommendation strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .recommendation p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .current {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+        padding: 34px 0 48px;
+      }
+
+      .current-copy {
+        position: sticky;
+        top: 92px;
+      }
+
+      .current-copy h2 {
+        margin-bottom: 10px;
+        font-size: 20px;
+      }
+
+      .current-copy p {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .issue-list {
+        display: grid;
+        gap: 10px;
+        margin: 20px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .issue-list li {
+        display: grid;
+        grid-template-columns: 6px 1fr;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .issue-list li::before {
+        width: 6px;
+        height: 6px;
+        margin-top: 6px;
+        border-radius: 50%;
+        background: var(--amber);
+        content: "";
+      }
+
+      .screen {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #050607;
+        cursor: zoom-in;
+      }
+
+      .screen img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .options {
+        display: grid;
+        gap: 56px;
+      }
+
+      .option {
+        scroll-margin-top: 84px;
+        border-top: 1px solid var(--line);
+        padding-top: 28px;
+      }
+
+      .option-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 460px);
+        gap: 28px;
+        align-items: start;
+        margin-bottom: 20px;
+      }
+
+      .option-number {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        color: var(--orange);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .badge {
+        border: 1px solid rgba(98, 200, 121, 0.45);
+        border-radius: 3px;
+        background: rgba(98, 200, 121, 0.08);
+        padding: 4px 7px;
+        color: var(--green);
+        font-size: 10px;
+      }
+
+      .option h2 {
+        margin-bottom: 8px;
+        font-size: 28px;
+      }
+
+      .option-summary {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .tradeoffs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .tradeoffs h3 {
+        margin-bottom: 8px;
+        color: var(--dim);
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      .tradeoffs p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .option-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
+
+      .full-link {
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 8px 12px;
+        color: var(--muted);
+        font-size: 12px;
+        text-decoration: none;
+      }
+
+      .full-link:hover {
+        border-color: var(--orange);
+        color: var(--text);
+      }
+
+      .decision {
+        margin-top: 64px;
+        border-top: 1px solid var(--line);
+        padding-top: 32px;
+      }
+
+      .decision h2 {
+        margin-bottom: 8px;
+        font-size: 26px;
+      }
+
+      .decision > p {
+        color: var(--muted);
+      }
+
+      table {
+        width: 100%;
+        margin-top: 24px;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 14px 12px;
+        text-align: left;
+      }
+
+      th {
+        color: var(--dim);
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      td {
+        color: var(--muted);
+      }
+
+      td:first-child {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .score {
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.92);
+        padding: 24px;
+      }
+
+      .modal.open {
+        display: grid;
+      }
+
+      .modal img {
+        max-width: 96vw;
+        max-height: 92vh;
+        border: 1px solid #30363d;
+        object-fit: contain;
+      }
+
+      .modal button {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        width: 40px;
+        height: 40px;
+        border: 1px solid #3a4149;
+        border-radius: 4px;
+        background: #111418;
+        color: #fff;
+        cursor: pointer;
+        font-size: 22px;
+      }
+
+      @media (max-width: 900px) {
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 14px 20px;
+        }
+
+        .jump-nav {
+          width: 100%;
+        }
+
+        main {
+          width: min(100% - 24px, 1500px);
+          padding-top: 28px;
+        }
+
+        .intro,
+        .current,
+        .option-head {
+          grid-template-columns: 1fr;
+        }
+
+        .current-copy {
+          position: static;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .tradeoffs {
+          grid-template-columns: 1fr;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">FV</span>
+        <span>FactoryVision Ops directions</span>
+      </div>
+      <nav class="jump-nav" aria-label="Design options">
+        <a href="#current">Current</a>
+        <a href="#option-1">01 Briefing</a>
+        <a href="#option-2">02 Queue</a>
+        <a href="#option-3">03 Daylight</a>
+        <a href="#option-4">04 Triage</a>
+        <a href="#option-5">05 Workforce</a>
+        <a href="#decision">Compare</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">FactoryVision design study</p>
+          <h1>Five better ways to run reviewer operations.</h1>
+          <p class="lede">
+            The same live data and workflows, reorganized around five different
+            operational priorities. Click any screen to inspect it full size.
+          </p>
+        </div>
+        <aside class="recommendation">
+          <strong>Recommended foundation: Option 4</strong>
+          <p>
+            Exception Triage gives the clearest answer to the daily ops
+            question: what needs attention, who owns it, and what happens next.
+            Option 1 is the safest conventional alternative.
+          </p>
+        </aside>
+      </section>
+
+      <section class="current" id="current">
+        <div class="current-copy">
+          <p class="eyebrow">Current screen</p>
+          <h2>Why it feels flat</h2>
+          <p>
+            The page has the right data, but nearly every element has the same
+            visual weight. The result is difficult to scan and slow to operate.
+          </p>
+          <ul class="issue-list">
+            <li>Five equal KPI cards dominate the first viewport.</li>
+            <li>Support requests consume too much horizontal space.</li>
+            <li>The oldest queue item is visible but not actionable.</li>
+            <li>Reviewer actions are cryptic icon buttons.</li>
+            <li>There is no clear daily priority or next action.</li>
+          </ul>
+        </div>
+        <figure class="screen" data-zoom>
+          <img
+            src="assets/current.png"
+            alt="Current FactoryVision operations dashboard"
+          />
+        </figure>
+      </section>
+
+      <div class="options">
+        <article class="option" id="option-1">
+          <div class="option-head">
+            <div>
+              <div class="option-number">Option 01</div>
+              <h2>Operations Briefing</h2>
+              <p class="option-summary">
+                A balanced overview with queue health, worker support, and the
+                reviewer roster visible together. Familiar, polished, and easy
+                to implement incrementally.
+              </p>
+            </div>
+            <div class="tradeoffs">
+              <div>
+                <h3>Best for</h3>
+                <p>General operations leads who need one stable home screen.</p>
+              </div>
+              <div>
+                <h3>Tradeoff</h3>
+                <p>Still dashboard-oriented rather than task-first.</p>
+              </div>
+            </div>
+          </div>
+          <figure class="screen" data-zoom>
+            <img
+              src="assets/option-1-operations-briefing.png"
+              alt="Option 1, Operations Briefing"
+            />
+          </figure>
+          <div class="option-actions">
+            <a
+              class="full-link"
+              href="assets/option-1-operations-briefing.png"
+              target="_blank"
+              rel="noreferrer"
+              >Open full size</a
+            >
+          </div>
+        </article>
+
+        <article class="option" id="option-2">
+          <div class="option-head">
+            <div>
+              <div class="option-number">Option 02</div>
+              <h2>Queue Command Center</h2>
+              <p class="option-summary">
+                Makes assignment throughput the primary job. The queue owns the
+                canvas while support and reviewer capacity remain visible in a
+                fixed operational sidebar.
+              </p>
+            </div>
+            <div class="tradeoffs">
+              <div>
+                <h3>Best for</h3>
+                <p>High-volume review operations and SLA management.</p>
+              </div>
+              <div>
+                <h3>Tradeoff</h3>
+                <p>More complex and less useful before queue volume grows.</p>
+              </div>
+            </div>
+          </div>
+          <figure class="screen" data-zoom>
+            <img
+              src="assets/option-2-queue-command-center.png"
+              alt="Option 2, Queue Command Center"
+            />
+          </figure>
+          <div class="option-actions">
+            <a
+              class="full-link"
+              href="assets/option-2-queue-command-center.png"
+              target="_blank"
+              rel="noreferrer"
+              >Open full size</a
+            >
+          </div>
+        </article>
+
+        <article class="option" id="option-3">
+          <div class="option-head">
+            <div>
+              <div class="option-number">Option 03</div>
+              <h2>Daylight Operations</h2>
+              <p class="option-summary">
+                A calm light-theme workspace for long daytime shifts. It
+                separates attention items from performance data and keeps the
+                roster easy to scan.
+              </p>
+            </div>
+            <div class="tradeoffs">
+              <div>
+                <h3>Best for</h3>
+                <p>Office teams working primarily in bright environments.</p>
+              </div>
+              <div>
+                <h3>Tradeoff</h3>
+                <p>Less visually connected to the current dark product.</p>
+              </div>
+            </div>
+          </div>
+          <figure class="screen" data-zoom>
+            <img
+              src="assets/option-3-daylight-operations.png"
+              alt="Option 3, Daylight Operations"
+            />
+          </figure>
+          <div class="option-actions">
+            <a
+              class="full-link"
+              href="assets/option-3-daylight-operations.png"
+              target="_blank"
+              rel="noreferrer"
+              >Open full size</a
+            >
+          </div>
+        </article>
+
+        <article class="option" id="option-4">
+          <div class="option-head">
+            <div>
+              <div class="option-number">
+                Option 04 <span class="badge">Recommended</span>
+              </div>
+              <h2>Exception Triage</h2>
+              <p class="option-summary">
+                Organizes the home screen around the issues that need action:
+                overdue work, missing setup, support, and reviewer readiness.
+                Every exception has an owner and next command.
+              </p>
+            </div>
+            <div class="tradeoffs">
+              <div>
+                <h3>Best for</h3>
+                <p>Daily operating discipline and fast issue resolution.</p>
+              </div>
+              <div>
+                <h3>Tradeoff</h3>
+                <p>Requires reliable severity and ownership rules.</p>
+              </div>
+            </div>
+          </div>
+          <figure class="screen" data-zoom>
+            <img
+              src="assets/option-4-exception-triage.png"
+              alt="Option 4, Exception Triage"
+            />
+          </figure>
+          <div class="option-actions">
+            <a
+              class="full-link"
+              href="assets/option-4-exception-triage.png"
+              target="_blank"
+              rel="noreferrer"
+              >Open full size</a
+            >
+          </div>
+        </article>
+
+        <article class="option" id="option-5">
+          <div class="option-head">
+            <div>
+              <div class="option-number">Option 05</div>
+              <h2>Workforce Board</h2>
+              <p class="option-summary">
+                Treats each reviewer as an operational lane, combining current
+                work, shift activity, support, and readiness in one place.
+              </p>
+            </div>
+            <div class="tradeoffs">
+              <div>
+                <h3>Best for</h3>
+                <p>Hands-on team leads managing a small reviewer workforce.</p>
+              </div>
+              <div>
+                <h3>Tradeoff</h3>
+                <p>Will need a different pattern once the team grows.</p>
+              </div>
+            </div>
+          </div>
+          <figure class="screen" data-zoom>
+            <img
+              src="assets/option-5-workforce-board.png"
+              alt="Option 5, Workforce Board"
+            />
+          </figure>
+          <div class="option-actions">
+            <a
+              class="full-link"
+              href="assets/option-5-workforce-board.png"
+              target="_blank"
+              rel="noreferrer"
+              >Open full size</a
+            >
+          </div>
+        </article>
+      </div>
+
+      <section class="decision" id="decision">
+        <p class="eyebrow">Decision guide</p>
+        <h2>Choose the operating model first.</h2>
+        <p>
+          Color, type, and component styling can be refined later. The important
+          choice is what the first screen should optimize for.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Direction</th>
+              <th>Daily clarity</th>
+              <th>Queue scale</th>
+              <th>Team visibility</th>
+              <th>Implementation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>01 Operations Briefing</td>
+              <td class="score">Strong</td>
+              <td>Good</td>
+              <td>Good</td>
+              <td>Easiest</td>
+            </tr>
+            <tr>
+              <td>02 Queue Command Center</td>
+              <td>Strong</td>
+              <td class="score">Best</td>
+              <td>Good</td>
+              <td>Most involved</td>
+            </tr>
+            <tr>
+              <td>03 Daylight Operations</td>
+              <td>Good</td>
+              <td>Good</td>
+              <td>Good</td>
+              <td>Moderate</td>
+            </tr>
+            <tr>
+              <td>04 Exception Triage</td>
+              <td class="score">Best</td>
+              <td>Strong</td>
+              <td>Strong</td>
+              <td>Moderate</td>
+            </tr>
+            <tr>
+              <td>05 Workforce Board</td>
+              <td>Good</td>
+              <td>Limited</td>
+              <td class="score">Best</td>
+              <td>Moderate</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Full-size design">
+      <button type="button" aria-label="Close full-size image">&times;</button>
+      <img src="" alt="" />
+    </div>
+
+    <script>
+      const modal = document.querySelector(".modal");
+      const modalImage = modal.querySelector("img");
+      const closeButton = modal.querySelector("button");
+
+      document.querySelectorAll("[data-zoom]").forEach((screen) => {
+        screen.addEventListener("click", () => {
+          const source = screen.querySelector("img");
+          modalImage.src = source.src;
+          modalImage.alt = source.alt;
+          modal.classList.add("open");
+          closeButton.focus();
+        });
+      });
+
+      function closeModal() {
+        modal.classList.remove("open");
+        modalImage.src = "";
+      }
+
+      closeButton.addEventListener("click", closeModal);
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeModal();
+      });
+    </script>
+  </body>
+</html>
