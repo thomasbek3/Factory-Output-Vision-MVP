@@ -42,14 +42,17 @@ Verdict: PASS for this checkpoint; not full worker-spec or production approval
 - `npm test -- --run` passed: 45 tests.
 - `npm run build` passed.
 - `python3 -m unittest tests/test_supabase_phase1_contract.py` passed: 23 tests.
-- Credentialed Playwright passed: 1 test, not skipped.
+- Canonical AI Mac `make test-backend` passed: 703 tests.
+- Credentialed Playwright passed against the canonical AI Mac launchd service
+  on port 3000: 1 test, not skipped.
 - The browser proved three distinct assignments for one chunk, no session token
   in local storage, signed private-media delivery, active frame advancement,
   tally/undo persistence, reload resume, offline recovery, and lost-response
   idempotency.
 - Desktop and 390x844 screenshots were visually inspected with no overlap.
-- Direct Supabase receipt for round 11: 3 assignments, 3 distinct reviewers,
+- Direct Supabase receipt for final round 12: 3 assignments, 3 distinct reviewers,
   4 tally actions, 1 undo, 1 immutable submission, submitted total 3.
+- The private rendition receipt reported 1 object and 6,894,523 stored bytes.
 - After submission, that reviewer received no new signed media URL.
 - Luna high-effort independent QA passed this narrow checkpoint.
 
