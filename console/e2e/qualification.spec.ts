@@ -59,7 +59,7 @@ test("qualification UI is obvious and usable before production activation", asyn
     await route.fulfill({
       status: 200,
       contentType: "video/mp4",
-      path: path.resolve("demo-media/review/gate-line-20260709-1208-web.mp4"),
+      path: path.resolve("demo-media/review/gate-line-20260709-1208.mp4"),
     });
   });
 
