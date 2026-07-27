@@ -18,6 +18,7 @@ dev.db
 /.playwright-cli/
 /test-results/
 /e2e-audit/
+/output/
 /playwright-report/
 /blob-report/
 /.playwright/

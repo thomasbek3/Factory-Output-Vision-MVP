@@ -581,7 +581,9 @@ export function ReviewTallyConsole() {
         <form className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6" onSubmit={handleSignIn}>
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-[20px] font-semibold">{language === "es" ? "Trabajo de hoy" : "Today&apos;s work"}</h1>
+              <h1 className="text-[20px] font-semibold">
+                {language === "es" ? "Trabajo de hoy" : "Today's work"}
+              </h1>
               <p className="mt-1 text-[13px] text-[var(--text-dim)]">{language === "es" ? "Inicia sesión para continuar." : "Sign in to continue."}</p>
             </div>
             <LanguageControl language={language} onChange={toggleLanguage} />
