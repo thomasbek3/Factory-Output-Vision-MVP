@@ -277,6 +277,46 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         self.assertIn("service_role retained truncate", self.live_fixture)
         self.assertNotIn("'pass' as phase1_live_fixture", self.live_fixture)
 
+    def test_worker_rpcs_derive_identity_and_never_accept_reviewer_id(self) -> None:
+        rpc_sql = self.sql.split(
+            "-- authenticated worker-loop rpcs. identity always comes from auth.uid().",
+            maxsplit=1,
+        )[1]
+        self.assertGreaterEqual(rpc_sql.count("actor_id uuid := auth.uid()"), 4)
+        self.assertNotRegex(rpc_sql, r"\bp_reviewer_id\b")
+        self.assertNotRegex(rpc_sql, r"\breviewer_id\s+text\b")
+        for function in (
+            "claim_worker_assignment",
+            "heartbeat_worker_assignment",
+            "append_worker_action",
+            "submit_worker_assignment",
+        ):
+            self.assertIn(f"grant execute on function public.{function}", rpc_sql)
+            self.assertRegex(
+                rpc_sql,
+                rf"revoke all on function public\.{function}\([^;]+from public, anon",
+            )
+
+    def test_worker_rpcs_hash_leases_and_preserve_lost_response_retry(self) -> None:
+        rpc_sql = self.sql.split(
+            "-- authenticated worker-loop rpcs. identity always comes from auth.uid().",
+            maxsplit=1,
+        )[1]
+        self.assertIn("digest(lease_token, 'sha256')", rpc_sql)
+        self.assertGreaterEqual(
+            rpc_sql.count("digest(p_lease_token, 'sha256')"),
+            3,
+        )
+        submit = rpc_sql.split(
+            "create or replace function public.submit_worker_assignment",
+            maxsplit=1,
+        )[1]
+        self.assertLess(
+            submit.index("if submission_row.id is not null then"),
+            submit.index("assignment is not submittable"),
+        )
+        self.assertIn("'alreadysubmitted', true", submit)
+
 
 if __name__ == "__main__":
     unittest.main()

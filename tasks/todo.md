@@ -1,3 +1,33 @@
+# Worker Portal Durable Loop - 2026-07-26
+
+## Objective
+
+Replace the `/review` demo identity and in-memory write path with an authenticated,
+Supabase-backed worker loop, then prove it with three blind reviewer accounts,
+representative factory footage, browser screenshots, database receipts, and an
+independent Luna high-effort QA pass.
+
+## Milestones
+
+- [x] WP-1 Add authenticated lease, heartbeat, append-action, resume, and idempotent
+  submission database functions with contract tests.
+- [x] WP-2 Wire `/review` to Supabase Auth and durable action receipts; remove every
+  client-supplied reviewer identity and expose clear save/retry state.
+- [x] WP-3 Seed one representative chunk and three separate reviewer assignments,
+  then run unit, lint, build, SQL, and Playwright tests after each slice.
+- [x] WP-4 Verify desktop/mobile screenshots, console logs, network recovery,
+  refresh/resume, lost-submit-response retry, and database isolation receipts.
+- [x] WP-5 Run independent Luna high-effort adversarial QA, repair every finding,
+  and record final proof boundaries.
+
+## Review
+
+Luna high-effort QA passed the narrow durable-loop checkpoint after the repair
+round. Final primary verification also required the signed video clock to advance
+and captured a direct Supabase row receipt. Full worker-spec acceptance remains
+open for server-enforced coverage, IndexedDB plus monotonic/page-epoch telemetry,
+MFA enrollment, three real human labels, and Tier C legal/staffing approval.
+
 # Console App CP4 - 2026-07-05
 
 ## Objective
