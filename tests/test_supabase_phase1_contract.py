@@ -375,6 +375,7 @@ class SupabasePhase1ContractTests(unittest.TestCase):
             "public.submit_worker_assignment_v2(uuid, text, uuid, text, text, text)",
             "public.worker_touch_work_session(uuid, text, integer)",
             "public.worker_close_work_session(uuid, text)",
+            "public.worker_daily_progress()",
         )
         compact = re.sub(r"\s+", " ", self.sql)
         compact = re.sub(r"\s*([(),])\s*", r"\1", compact)
@@ -393,6 +394,73 @@ class SupabasePhase1ContractTests(unittest.TestCase):
             "uuid,text,uuid,text,text,text)from authenticated",
             compact,
         )
+
+    def test_worker_daily_progress_is_personal_and_hides_peer_truth(self) -> None:
+        progress = self.sql.rsplit(
+            "create or replace function public.worker_daily_progress()",
+            maxsplit=1,
+        )[1].split("revoke all on function", maxsplit=1)[0]
+        self.assertIn("actor_id uuid := auth.uid()", progress)
+        self.assertIn("assignment.reviewer_id = actor_id", progress)
+        self.assertIn("submission.reviewer_id = actor_id", progress)
+        self.assertNotRegex(
+            progress,
+            r"\b(?:consensus|ai_events|human_finalizations|resolved_human)\b",
+        )
+
+    def test_worker_rendition_timeline_and_test_factory_guard_are_explicit(self) -> None:
+        claim = self.sql.rsplit(
+            "create or replace function public.claim_worker_assignment",
+            maxsplit=1,
+        )[1].split(
+            "create or replace function public.worker_daily_progress",
+            maxsplit=1,
+        )[0]
+        self.assertIn("'renditionsourcestartms', rendition.padded_start_ms", claim)
+        self.assertIn("'renditionsourceendms', rendition.padded_end_ms", claim)
+        self.assertIn("rendition.mapping_status = 'verified'", claim)
+        self.assertIn(
+            "(not lifecycle_row.is_test_account or factory.is_test)",
+            claim,
+        )
+        self.assertIn(
+            "add column if not exists is_test boolean not null default false",
+            self.sql,
+        )
+        self.assertIn(
+            "and not factory.is_test\n  and assignment.status in "
+            "('queued', 'leased', 'draft')",
+            self.sql,
+        )
+        latest_picker = self.sql.rsplit(
+            "create or replace function public.service_pick_reviewer",
+            maxsplit=1,
+        )[1].split("revoke all on function", maxsplit=1)[0]
+        self.assertIn("join public.factories factory", latest_picker)
+        self.assertIn(
+            "(not lifecycle.is_test_account or factory.is_test)",
+            latest_picker,
+        )
+        self.assertIn("reviewer_lifecycles_test_factory_guard", self.sql)
+        self.assertIn(
+            "test accounts require an explicitly marked test factory",
+            self.sql,
+        )
+
+    def test_qualification_attempt_window_is_consistent(self) -> None:
+        claim = self.sql.rsplit(
+            "create or replace function public.worker_claim_reviewer_qualification",
+            maxsplit=1,
+        )[1].split("revoke all on function", maxsplit=1)[0]
+        submit = self.sql.rsplit(
+            "create or replace function public.worker_submit_reviewer_qualification",
+            maxsplit=1,
+        )[1].split("create or replace function", maxsplit=1)[0]
+        for function_sql in (claim, submit):
+            self.assertIn(
+                "attempt.submitted_at > now() - interval '24 hours'",
+                function_sql,
+            )
 
     def test_invitation_delivery_and_work_evidence_are_traceable(self) -> None:
         self.assertIn("ops_mark_reviewer_invitation_delivery", self.sql)

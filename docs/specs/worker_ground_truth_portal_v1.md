@@ -10,6 +10,28 @@ Design contract: `DESIGN.md` and `docs/design/fv-live-a-approved.png`
 Review status: revised after an independent Fable unknown-unknowns pass. See
 `worker_ground_truth_portal_v1_fable_review.md`.
 
+## Employee UX Amendment: 2026-07-27
+
+This amendment is authoritative for the employee-facing route:
+
+- The first screen after login is `Today's work`, not footage and not an
+  operations dashboard.
+- The landing screen exposes only the reviewer's personal ready, in-progress,
+  and completed-today counts. It never exposes global queue depth, peer answers,
+  consensus state, AI output, or factory browsing.
+- The single primary action is `Start next video` or `Resume video`. The
+  assignment service chooses the footage.
+- `J` records an output event. Spacebar retains its standard play/pause
+  behavior. `Z` undoes the latest event and Left Arrow moves back 10 seconds.
+- Draft coverage restores the worker near the furthest server-saved source
+  position after a reload. Server-saved clicks remain visible.
+- The pre-submit screen lists every active click and allows replay and deletion
+  before `Submit count`.
+- Selecting a footage problem requires confirmation, closes that assignment as
+  a problem, and returns the worker to `Today's work`.
+- Production speeds remain 1x, 2x, and 5x. Higher speeds stay hidden until the
+  real-footage safety gate passes.
+
 ## Owner Amendment: 2026-07-26
 
 This amendment is authoritative when older text in this document conflicts with
@@ -234,8 +256,8 @@ The normal day is:
    sentence, shows the station alias and source-time range, and presents only
    the video, speed controls, running total, `+1`, undo, and problem action.
 5. Reach the end, inspect the reviewer's own timestamps, and confirm.
-6. See a brief saved confirmation. The next assignment opens automatically when
-   one is ready.
+6. See a brief saved confirmation and return to `Trabajo de hoy`, where the
+   next assignment is available through the same one obvious action.
 7. Finish the day with completed-today count, time worked, and an honest message
    saying whether more work is currently waiting.
 
@@ -450,16 +472,24 @@ draft clicks. The reviewer may resume an unexpired or recoverable assignment.
 
 ### 6.5 Reviewer tally experience
 
-The first screen after login is the work surface, not a dashboard.
+The first screen after login is the employee's `Today's work` inbox, not footage,
+a factory browser, or an operations dashboard.
 
-Header:
+Today's work:
 
 - FactoryVision wordmark.
-- Station alias and source time range.
-- Honest lag behind source time.
+- Personal ready, in-progress, and completed-today counts.
+- One `Start next video` or `Resume video` action.
+- Automatic refresh when personal work becomes ready.
 - Personal chunks completed today.
 - Spanish/English control.
 - Connection and draft-save status.
+
+Active-review header:
+
+- Station alias and source date/time range.
+- Explicit `Factory time` label.
+- Short assignment identifier.
 
 Video:
 
@@ -478,7 +508,8 @@ Primary controls:
 - One large Spanish-first `+1 PIEZA` button (`+1 COUNT` after the worker
   explicitly switches to English). The approved station noun may replace
   `PIEZA`.
-- Spacebar performs the same action.
+- `J` performs the same action.
+- Spacebar plays or pauses the video and can never record a count.
 - Undo removes only the latest unsubmitted click.
 - `Z` performs undo.
 - The summary allows any unsubmitted click to be replayed, moved, or deleted.
@@ -1297,8 +1328,9 @@ review. It must not reuse `globalThis` as production persistence.
   practice, qualification, and first real assignment without staff assistance.
 - `work_ready` automatically appears on the idle waiting screen without refresh.
 - New work never interrupts or replaces an active review.
-- Confirming one chunk automatically opens the next ready assignment.
-- Reviewer login, resume draft, tally by keyboard, undo, summary, confirm.
+- Confirming one chunk returns to `Today's work` with refreshed personal counts.
+- Reviewer login, work inbox, resume draft and source position, tally with `J`,
+  play/pause with Space, undo, per-event deletion, summary, and submit.
 - 1x/2x/5x playback on approved low-cost hardware; gated 10x/15x only after the
   named device/rendition class passes the Tier B safety screen.
 - Automatic speed downgrade on dropped-frame or bandwidth-health breach.

@@ -28,6 +28,8 @@ export type WorkerAssignment = {
     endIso: string;
     sourceStartMs: number;
     sourceEndMs: number;
+    renditionSourceStartMs?: number;
+    renditionSourceEndMs?: number;
     sourceSha256: string;
     renditionId: string;
     mediaUrl: string;

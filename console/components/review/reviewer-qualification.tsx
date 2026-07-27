@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Check,
+  LifeBuoy,
   Loader2,
   Play,
   RotateCcw,
@@ -16,12 +17,20 @@ import {
   type ReviewSession,
 } from "@/lib/reviewSupabase";
 import { reviewerDeviceHash } from "@/lib/reviewerDevice";
+import {
+  isCountableSourceTime,
+  timelineDurationMatches,
+  videoTimeToSourceMs,
+  type ReviewTimeline,
+} from "@/lib/reviewTimeline";
 
 type Qualification = {
   chunkId: string;
   stationName: string;
   sourceStartMs: number;
   sourceEndMs: number;
+  renditionSourceStartMs?: number;
+  renditionSourceEndMs?: number;
   mediaUrl: string;
 };
 
@@ -51,6 +60,10 @@ export function ReviewerQualification({
   const [speed, setSpeed] = useState(1);
   const [watchedToEnd, setWatchedToEnd] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [timelineIssue, setTimelineIssue] = useState(false);
+  const [helpState, setHelpState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
 
   useEffect(() => {
     void workerRpc<ClaimResult>(
@@ -74,9 +87,24 @@ export function ReviewerQualification({
 
   function markOutput() {
     if (!qualification || !videoRef.current) return;
+    const timeline: ReviewTimeline = {
+      canonicalStartMs: qualification.sourceStartMs,
+      canonicalEndMs: qualification.sourceEndMs,
+      renditionStartMs:
+        qualification.renditionSourceStartMs ?? qualification.sourceStartMs,
+      renditionEndMs:
+        qualification.renditionSourceEndMs ?? qualification.sourceEndMs,
+    };
+    const sourceTimeMs = videoTimeToSourceMs(
+      videoRef.current.currentTime,
+      videoRef.current.duration,
+      timeline,
+    );
+    if (!timelineDurationMatches(videoRef.current.duration, timeline)) return;
+    if (!isCountableSourceTime(sourceTimeMs, timeline)) return;
     setEventTimes((current) => [
       ...current,
-      qualification.sourceStartMs + Math.round(videoRef.current!.currentTime * 1000),
+      sourceTimeMs,
     ]);
   }
 
@@ -108,14 +136,36 @@ export function ReviewerQualification({
           ? "El resultado no coincidió. Mira el video completo e inténtalo otra vez."
           : "The result did not match. Watch the full video and try again.",
       );
-    } catch {
-      setError(
-        spanish
+    } catch (submitError) {
+      const attemptLimitReached =
+        submitError instanceof Error &&
+        /qualification attempt limit reached/i.test(submitError.message);
+      if (attemptLimitReached) setAttempts(3);
+      setError(attemptLimitReached
+        ? (spanish
+          ? "Alcanzaste el límite de tres intentos en 24 horas. Pide ayuda para continuar."
+          : "You reached the three-attempt limit for 24 hours. Request help to continue.")
+        : (spanish
           ? "No se pudo enviar la calificación. Inténtalo otra vez."
-          : "The qualification could not be submitted. Try again.",
-      );
+          : "The qualification could not be submitted. Try again."));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function requestHelp() {
+    setHelpState("sending");
+    try {
+      await workerRpc(session, "worker_request_support", {
+        p_assignment_id: null,
+        p_reason_code: "qualification",
+        p_message: timelineIssue
+          ? "Qualification video timing did not match its verified rendition timeline."
+          : "Reviewer reached the qualification attempt limit and needs help.",
+      });
+      setHelpState("sent");
+    } catch {
+      setHelpState("failed");
     }
   }
 
@@ -143,6 +193,59 @@ export function ReviewerQualification({
     );
   }
 
+  if (attempts >= 3) {
+    return (
+      <div className="mx-auto max-w-lg text-center">
+        <LifeBuoy className="mx-auto h-9 w-9 text-[var(--accent)]" />
+        <h2 className="mt-5 text-[24px] font-semibold">
+          {spanish ? "Calificación pausada" : "Qualification paused"}
+        </h2>
+        <p className="mt-3 text-[14px] leading-6 text-[var(--text-mut)]">
+          {spanish
+            ? "Usaste los tres intentos. Pide ayuda y el equipo te dará otra práctica."
+            : "You used all three attempts. Request help and the team will give you another practice."}
+        </p>
+        {helpState === "sent" ? (
+          <div role="status" className="mt-5 border border-[var(--good)]/40 bg-[var(--good-tint)] px-4 py-3 text-[13px] text-[var(--good)]">
+            {spanish ? "Solicitud enviada. El equipo se comunicará contigo." : "Request sent. The team will contact you."}
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={helpState === "sending"}
+            onClick={() => void requestHelp()}
+            className="mt-5 inline-flex h-12 items-center justify-center gap-2 bg-[var(--accent)] px-5 font-semibold text-black disabled:opacity-50"
+          >
+            <LifeBuoy className="h-4 w-4" />
+            {spanish ? "Pedir ayuda" : "Request help"}
+          </button>
+        )}
+        {helpState === "failed" ? (
+          <div role="alert" className="mt-4 text-[13px] text-[var(--bad)]">
+            {spanish ? "No se pudo enviar. Inténtalo otra vez." : "Could not send. Try again."}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const qualificationTimeline: ReviewTimeline = {
+    canonicalStartMs: qualification.sourceStartMs,
+    canonicalEndMs: qualification.sourceEndMs,
+    renditionStartMs:
+      qualification.renditionSourceStartMs ?? qualification.sourceStartMs,
+    renditionEndMs:
+      qualification.renditionSourceEndMs ?? qualification.sourceEndMs,
+  };
+  const currentSourceTimeMs =
+    duration > 0
+      ? videoTimeToSourceMs(currentTime, duration, qualificationTimeline)
+      : null;
+  const countEnabled =
+    !timelineIssue &&
+    currentSourceTimeMs !== null &&
+    isCountableSourceTime(currentSourceTimeMs, qualificationTimeline);
+
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-5">
@@ -168,6 +271,25 @@ export function ReviewerQualification({
               className="h-full w-full object-contain"
               muted
               playsInline
+              onLoadedMetadata={() => {
+                if (!videoRef.current) return;
+                setDuration(videoRef.current.duration);
+                const validTimeline = timelineDurationMatches(
+                  videoRef.current.duration,
+                  qualificationTimeline,
+                );
+                setTimelineIssue(!validTimeline);
+                if (!validTimeline) {
+                  setError(
+                    spanish
+                      ? "No se pudo verificar el tiempo del video. Pide ayuda."
+                      : "Video timing could not be verified. Request help.",
+                  );
+                }
+              }}
+              onTimeUpdate={() => {
+                if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+              }}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onEnded={() => {
@@ -184,6 +306,13 @@ export function ReviewerQualification({
               >
                 <Play className="ml-1 h-7 w-7 fill-current" />
               </button>
+            ) : null}
+            {duration > 0 && !countEnabled ? (
+              <div className="absolute inset-x-0 bottom-0 bg-black/80 px-4 py-3 text-center text-[13px] font-semibold text-white">
+                {timelineIssue
+                  ? (spanish ? "No cuentes. El tiempo del video no coincide." : "Do not count. The video timing does not match.")
+                  : (spanish ? "Contexto solamente. No cuentes aquí." : "Context only. Do not count here.")}
+              </div>
             ) : null}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -223,7 +352,8 @@ export function ReviewerQualification({
             <button
               type="button"
               onClick={markOutput}
-              className="flex h-20 items-center justify-center gap-2 bg-[var(--accent)] text-[20px] font-bold text-black"
+              disabled={!countEnabled}
+              className="flex h-20 items-center justify-center gap-2 bg-[var(--accent)] text-[20px] font-bold text-black disabled:bg-[var(--idle)] disabled:text-[var(--text-dim)]"
             >
               <Zap className="h-6 w-6 fill-current" />
               +1
@@ -240,7 +370,7 @@ export function ReviewerQualification({
             <button
               type="button"
               onClick={() => void submit()}
-              disabled={!watchedToEnd || submitting || attempts >= 3}
+              disabled={!watchedToEnd || submitting || attempts >= 3 || timelineIssue}
               className="mt-2 flex h-12 items-center justify-center gap-2 bg-[var(--good)] text-[13px] font-semibold text-black disabled:opacity-40"
             >
               {submitting ? (
@@ -257,6 +387,17 @@ export function ReviewerQualification({
         <div role="alert" className="mt-4 border-l-4 border-[var(--bad)] bg-[var(--bad-tint)] px-4 py-3 text-[13px] text-[var(--bad)]">
           {error}
         </div>
+      ) : null}
+      {timelineIssue && helpState !== "sent" ? (
+        <button
+          type="button"
+          disabled={helpState === "sending"}
+          onClick={() => void requestHelp()}
+          className="mt-4 inline-flex h-11 items-center justify-center gap-2 bg-[var(--accent)] px-4 text-[13px] font-semibold text-black disabled:opacity-50"
+        >
+          <LifeBuoy className="h-4 w-4" />
+          {spanish ? "Pedir ayuda" : "Request help"}
+        </button>
       ) : null}
     </div>
   );

@@ -111,3 +111,35 @@ select:focus-visible {
   background: var(--accent-tint);
   color: var(--text);
 }
+
+@keyframes worker-review-watermark-drift {
+  0%,
+  100% {
+    left: 4%;
+    top: 8%;
+  }
+  50% {
+    left: 68%;
+    top: 82%;
+  }
+}
+
+.worker-review-watermark {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  animation: worker-review-watermark-drift 24s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .worker-review-watermark {
+    animation: none;
+    left: 4%;
+    top: 8%;
+  }
+}

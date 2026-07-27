@@ -18,6 +18,7 @@ const workerFunctions = new Set([
   "worker_touch_work_session",
   "worker_close_work_session",
   "worker_register_active_device",
+  "worker_daily_progress",
   "worker_claim_reviewer_qualification",
   "worker_submit_reviewer_qualification",
 ]);

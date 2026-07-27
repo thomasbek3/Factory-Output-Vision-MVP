@@ -20,6 +20,10 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(qaPassword ?? "");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.locator("[data-review-route='today']")).toBeVisible({
+    timeout: 20_000,
+  });
+  await page.getByRole("button", { name: /next video|resume video/i }).click();
   await expect(page.locator("[data-review-route='ready']")).toBeVisible({
     timeout: 20_000,
   });
@@ -98,11 +102,11 @@ test.describe("/review durable worker loop", () => {
       expect(await expectVideoPlaying(pages[0], "video")).toBeTruthy();
 
       await pages[0].screenshot({
-        path: "e2e-audit/shots/worker-review-desktop.png",
+    path: "e2e-audit/shots/worker-live-review-desktop.png",
         fullPage: true,
       });
       await pages[2].screenshot({
-        path: "e2e-audit/shots/worker-review-mobile.png",
+    path: "e2e-audit/shots/worker-live-review-mobile.png",
         fullPage: true,
       });
       await pages[0].locator("video").evaluate((video: HTMLVideoElement) => video.pause());
@@ -110,8 +114,10 @@ test.describe("/review durable worker loop", () => {
       const worker = pages[0];
       await worker.locator("body").click();
       await worker.keyboard.press("Space");
-      await worker.keyboard.press("Space");
-      await worker.keyboard.press("Space");
+      await expect(worker.getByTestId("running-tally")).toHaveText("0");
+      await worker.keyboard.press("j");
+      await worker.keyboard.press("j");
+      await worker.keyboard.press("j");
       await worker.keyboard.press("z");
       await expect(worker.getByTestId("running-tally")).toHaveText("2");
       await expect(worker.getByTestId("save-state")).toContainText("Saved", {
@@ -119,13 +125,15 @@ test.describe("/review durable worker loop", () => {
       });
 
       await worker.reload();
+      await expect(worker.locator("[data-review-route='today']")).toBeVisible();
+      await worker.getByRole("button", { name: "Resume video" }).click();
       await expect(worker.locator("[data-review-route='ready']")).toBeVisible();
       await expect(worker.getByTestId("running-tally")).toHaveText("2");
 
       consoleErrors.forEach(assertNoConsoleErrors);
       consoleErrors.forEach((errors) => errors.splice(0));
       await contexts[0].setOffline(true);
-      await worker.keyboard.press("Space");
+      await worker.keyboard.press("j");
       await expect(worker.getByTestId("running-tally")).toHaveText("3");
       await expect(worker.getByTestId("save-state")).toContainText("unsaved", {
         timeout: 10_000,
@@ -144,6 +152,8 @@ test.describe("/review durable worker loop", () => {
       consoleErrors[0].splice(0);
 
       await worker.reload();
+      await expect(worker.locator("[data-review-route='today']")).toBeVisible();
+      await worker.getByRole("button", { name: "Resume video" }).click();
       await expect(worker.locator("[data-review-route='ready']")).toBeVisible();
       await expect(worker.getByTestId("running-tally")).toHaveText("3");
 
@@ -155,15 +165,15 @@ test.describe("/review durable worker loop", () => {
         committedResponseWasDropped = true;
         await route.abort("failed");
       });
-      await worker.getByRole("button", { name: /^confirm$/i }).click();
+      await worker.getByRole("button", { name: "Submit count" }).click();
       await expect(worker.getByRole("status")).toContainText("Confirm failed");
       expect(committedResponseWasDropped).toBeTruthy();
       expect(consoleErrors[0].every((message) => /ERR_FAILED/.test(message))).toBeTruthy();
       consoleErrors[0].splice(0);
 
       await worker.unroute("**/api/review/rpc/submit_worker_assignment_v2");
-      await worker.getByRole("button", { name: /^confirm$/i }).click();
-      await expect(worker.locator("[data-review-route='empty']")).toBeVisible({
+      await worker.getByRole("button", { name: "Submit count" }).click();
+      await expect(worker.locator("[data-review-route='today']")).toBeVisible({
         timeout: 15_000,
       });
 
