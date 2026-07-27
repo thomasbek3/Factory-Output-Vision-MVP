@@ -80,6 +80,13 @@ test.describe("/review durable worker loop", () => {
           pages[0].locator("video").evaluate((video: HTMLVideoElement) => video.readyState),
         )
         .toBeGreaterThanOrEqual(2);
+      await pages[0].getByRole("button", { name: "Get help" }).click();
+      await expect(pages[0].getByRole("dialog", { name: "Get help" })).toBeVisible();
+      await pages[0].getByLabel("What do you need?").fill("QA support request from live worker flow.");
+      await pages[0].getByRole("button", { name: "Send" }).click();
+      await expect(pages[0].getByRole("status")).toContainText(
+        "Your help request was sent.",
+      );
       await pages[0].getByRole("button", { name: "Play video" }).click();
       expect(await expectVideoPlaying(pages[0], "video")).toBeTruthy();
 
@@ -135,7 +142,7 @@ test.describe("/review durable worker loop", () => {
 
       await worker.getByRole("button", { name: "Finish video" }).click();
       let committedResponseWasDropped = false;
-      await worker.route("**/api/review/rpc/submit_worker_assignment", async (route) => {
+      await worker.route("**/api/review/rpc/submit_worker_assignment_v2", async (route) => {
         const response = await route.fetch();
         expect(response.ok()).toBeTruthy();
         committedResponseWasDropped = true;
@@ -147,7 +154,7 @@ test.describe("/review durable worker loop", () => {
       expect(consoleErrors[0].every((message) => /ERR_FAILED/.test(message))).toBeTruthy();
       consoleErrors[0].splice(0);
 
-      await worker.unroute("**/api/review/rpc/submit_worker_assignment");
+      await worker.unroute("**/api/review/rpc/submit_worker_assignment_v2");
       await worker.getByRole("button", { name: /^confirm$/i }).click();
       await expect(worker.locator("[data-review-route='empty']")).toBeVisible({
         timeout: 15_000,

@@ -23,6 +23,7 @@ export type WorkerAssignment = {
     id: string;
     stationId: string;
     stationName: string;
+    factoryTimezone: string;
     startIso: string;
     endIso: string;
     sourceStartMs: number;
@@ -33,6 +34,11 @@ export type WorkerAssignment = {
     posterUrl: string | null;
   };
   actions: DurableReviewAction[];
+  coverage?: {
+    pageEpoch: string;
+    ranges: Array<{ start_ms: number; end_ms: number }>;
+    clientActiveMs: number;
+  } | null;
 };
 
 async function sessionRequest(method: "GET" | "POST" | "DELETE", body?: object) {
@@ -52,6 +58,10 @@ async function sessionRequest(method: "GET" | "POST" | "DELETE", body?: object) 
 
 export async function signInReviewer(email: string, password: string) {
   return sessionRequest("POST", { email, password });
+}
+
+export async function acceptReviewerInviteSession(accessToken: string, refreshToken: string) {
+  return sessionRequest("POST", { accessToken, refreshToken });
 }
 
 export async function signOutReviewer() {
@@ -91,4 +101,43 @@ export async function workerRpc<T>(
     throw new Error(message);
   }
   return result as T;
+}
+
+export type ReviewerLifecycle = {
+  userId?: string;
+  displayName?: string;
+  email?: string;
+  locale?: "en" | "es-419";
+  state:
+    | "unregistered"
+    | "invited"
+    | "mfa_required"
+    | "terms_required"
+    | "training"
+    | "qualification"
+    | "active"
+    | "suspended"
+    | "offboarded";
+  termsVersion?: string | null;
+  termsAcceptedAt?: string | null;
+  mfaVerifiedAt?: string | null;
+  currentAal?: "aal1" | "aal2";
+  walkthroughCompletedAt?: string | null;
+  practiceCompletedAt?: string | null;
+  qualifiedAt?: string | null;
+  activatedAt?: string | null;
+  isTestAccount?: boolean;
+};
+
+export async function reviewerLifecycle(method: "GET" | "POST", body?: object) {
+  const response = await fetch("/api/review/onboarding", {
+    method,
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const result = (await response.json()) as ReviewerLifecycle & { error?: string };
+  if (!response.ok) throw new Error(result.error ?? `ONBOARDING_${response.status}`);
+  return result;
 }

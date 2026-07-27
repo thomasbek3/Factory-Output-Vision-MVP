@@ -35,7 +35,30 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const config = reviewServerConfig();
-  const body = (await request.json()) as { email?: string; password?: string };
+  const body = (await request.json()) as {
+    email?: string;
+    password?: string;
+    accessToken?: string;
+    refreshToken?: string;
+  };
+  if (body.accessToken && body.refreshToken) {
+    const userResponse = await fetch(`${config.projectUrl}/auth/v1/user`, {
+      headers: {
+        apikey: config.publishableKey,
+        Authorization: `Bearer ${body.accessToken}`,
+      },
+      cache: "no-store",
+    });
+    if (!userResponse.ok) {
+      return Response.json({ error: "Invite session is invalid or expired." }, { status: 401 });
+    }
+    const user = (await userResponse.json()) as { id: string; email?: string };
+    const output = NextResponse.json({
+      user: { id: user.id, email: user.email ?? "" },
+    });
+    setReviewerCookies(request, output, body.accessToken, body.refreshToken, 3600);
+    return output;
+  }
   const response = await fetch(
     `${config.projectUrl}/auth/v1/token?grant_type=password`,
     {

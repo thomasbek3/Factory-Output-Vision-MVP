@@ -50,7 +50,20 @@ class SupabasePhase1ContractTests(unittest.TestCase):
             "audit_log",
         }
         created = set(re.findall(r"create table public\.([a-z_]+)", self.sql))
-        self.assertEqual(required, created)
+        self.assertTrue(required.issubset(created), required - created)
+
+    def test_reviewer_lifecycle_and_quality_tables_exist(self) -> None:
+        required = {
+            "reviewer_lifecycles",
+            "reviewer_invitations",
+            "reviewer_device_registrations",
+            "reviewer_training_events",
+            "reviewer_work_sessions",
+            "review_coverage",
+            "reviewer_support_requests",
+        }
+        created = set(re.findall(r"create table public\.([a-z_]+)", self.sql))
+        self.assertTrue(required.issubset(created), required - created)
 
     def test_every_public_table_enables_rls(self) -> None:
         created = set(re.findall(r"create table public\.([a-z_]+)", self.sql))
@@ -316,6 +329,92 @@ class SupabasePhase1ContractTests(unittest.TestCase):
             submit.index("assignment is not submittable"),
         )
         self.assertIn("'alreadysubmitted', true", submit)
+
+    def test_production_reviewer_gates_fail_closed(self) -> None:
+        self.assertIn("coalesce(auth.jwt() ->> 'aal', '') = 'aal2'", self.sql)
+        self.assertIn("at least 98 percent of the video must be reviewed", self.sql)
+        self.assertIn(
+            "review completed faster than the enabled playback speed permits",
+            self.sql,
+        )
+        self.assertIn("reviewer_one_active_account_per_device_idx", self.sql)
+        self.assertIn("source_set_role = 'production'", self.sql)
+
+    def test_scheduler_assigns_three_and_never_uses_ai_to_resolve(self) -> None:
+        scheduler = self.sql.rsplit(
+            "create or replace function public.service_maintain_review_queue",
+            maxsplit=1,
+        )[1]
+        resolver = self.sql.split(
+            "create or replace function public.service_resolve_ready_rounds",
+            maxsplit=1,
+        )[1]
+        self.assertIn("for slot in 1..3 loop", scheduler)
+        self.assertIn("assignment.review_round = (", scheduler)
+        self.assertIn("next_round := round_row.review_round + 1", scheduler)
+        self.assertIn("review.round.replaced", scheduler)
+        self.assertIn("continue when eligible_count < 3", scheduler)
+        self.assertIn("having count(*) = 3", resolver)
+        self.assertIn("having count(*) >= 2", resolver)
+        self.assertIn("timestamp_ambiguity", resolver)
+        self.assertNotRegex(resolver, r"\bai_(?:run|event|count|total)\b")
+
+    def test_new_worker_rpcs_are_narrowly_granted(self) -> None:
+        signatures = (
+            "public.worker_lifecycle_state()",
+            "public.worker_record_onboarding_step(text, text, text, text)",
+            "public.save_worker_coverage(uuid, text, uuid, jsonb, bigint)",
+            "public.worker_request_support(uuid, text, text)",
+            "public.authorize_worker_media(uuid, text)",
+            "public.submit_worker_assignment_v2(uuid, text, uuid, text, text, text)",
+            "public.worker_touch_work_session(uuid, text, integer)",
+            "public.worker_close_work_session(uuid, text)",
+        )
+        compact = re.sub(r"\s+", " ", self.sql)
+        compact = re.sub(r"\s*([(),])\s*", r"\1", compact)
+        for signature in signatures:
+            signature = re.sub(r"\s*([(),])\s*", r"\1", signature)
+            self.assertIn(
+                f"revoke all on function {signature}from public,anon",
+                compact,
+            )
+            self.assertIn(
+                f"grant execute on function {signature}to authenticated",
+                compact,
+            )
+        self.assertIn(
+            "revoke execute on function public.submit_worker_assignment("
+            "uuid,text,uuid,text,text,text)from authenticated",
+            compact,
+        )
+
+    def test_invitation_delivery_and_work_evidence_are_traceable(self) -> None:
+        self.assertIn("ops_mark_reviewer_invitation_delivery", self.sql)
+        self.assertIn("'delivery_failed'", self.sql)
+        self.assertIn("reviewer_one_open_work_session_idx", self.sql)
+        self.assertIn("bounded_delta := greatest(0, least(", self.sql)
+        self.assertIn("reviewer_work_session_submission_count", self.sql)
+        self.assertIn("ops_reviewer_support_requests", self.sql)
+        self.assertIn("ops_set_reviewer_support_status", self.sql)
+        self.assertIn("service_close_stale_work_sessions", self.sql)
+        self.assertIn("factoryvision-work-session-cleanup", self.sql)
+        self.assertIn("support request limit reached", self.sql)
+
+    def test_qualification_is_server_scored_and_ready_chunks_are_immediate(self) -> None:
+        latest_ops = self.sql.rsplit(
+            "create or replace function public.ops_set_reviewer_state",
+            maxsplit=1,
+        )[1]
+        self.assertIn("server-scored qualification is required", latest_ops)
+        self.assertNotIn(
+            "qualified_at = case when p_state = 'active'",
+            latest_ops.split("create or replace function", 1)[0],
+        )
+        self.assertIn("service_record_reviewer_qualification", self.sql)
+        self.assertIn("private.reference_answers", self.sql)
+        self.assertIn("source_set_role = 'qualification'", self.sql)
+        self.assertIn("factoryvision-ready-chunk-scheduler", self.sql)
+        self.assertIn("chunk.source_end_at <= now()", self.sql)
 
 
 if __name__ == "__main__":

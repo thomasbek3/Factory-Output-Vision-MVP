@@ -7,7 +7,13 @@ const workerFunctions = new Set([
   "claim_worker_assignment",
   "heartbeat_worker_assignment",
   "append_worker_action",
-  "submit_worker_assignment",
+  "submit_worker_assignment_v2",
+  "save_worker_coverage",
+  "authorize_worker_media",
+  "worker_request_support",
+  "worker_touch_work_session",
+  "worker_close_work_session",
+  "worker_register_active_device",
 ]);
 
 type ClaimPayload = {
@@ -47,7 +53,7 @@ async function signAssignmentMedia(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ expiresIn: 15 * 60 }),
+      body: JSON.stringify({ expiresIn: 10 * 60 }),
       cache: "no-store",
     },
   );
@@ -61,6 +67,16 @@ async function signAssignmentMedia(
   delete chunk.mediaBucket;
   delete chunk.mediaPath;
   return payload;
+}
+
+async function signDirectMedia(
+  token: string,
+  payload: { mediaBucket?: string; mediaPath?: string },
+  config: ReturnType<typeof reviewServerConfig>,
+) {
+  const wrapped: ClaimPayload = { assignment: { chunk: { ...payload } } };
+  await signAssignmentMedia(token, wrapped, config);
+  return { mediaUrl: wrapped.assignment?.chunk?.mediaUrl };
 }
 
 export async function POST(
@@ -98,6 +114,12 @@ export async function POST(
   const output =
     functionName === "claim_worker_assignment" && payload
       ? await signAssignmentMedia(token, payload, config)
+      : functionName === "authorize_worker_media" && payload
+        ? await signDirectMedia(
+            token,
+            payload as { mediaBucket?: string; mediaPath?: string },
+            config,
+          )
       : payload;
   return Response.json(output);
 }

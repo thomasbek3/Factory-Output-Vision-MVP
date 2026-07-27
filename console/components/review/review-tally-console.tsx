@@ -5,31 +5,37 @@ import {
   AlertTriangle,
   Check,
   CloudOff,
+  LifeBuoy,
   LoaderCircle,
   LogOut,
   Play,
   RotateCcw,
   SkipBack,
+  X,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ReviewerOnboarding } from "@/components/review/reviewer-onboarding";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
 import { applyValidatedPlaybackRate } from "@/lib/reviewPlayback";
 import {
   restoreReviewerSession,
+  reviewerLifecycle,
   signInReviewer,
   signOutReviewer,
   workerRpc,
   type DurableReviewAction,
   type ReviewSession,
+  type ReviewerLifecycle,
   type WorkerAssignment,
 } from "@/lib/reviewSupabase";
 import { cn, isTypingTarget } from "@/lib/utils";
+import { reviewerDeviceHash } from "@/lib/reviewerDevice";
 
 const appVersion = "worker-portal-v1";
 const reviewSpeeds = [1, 2, 5] as const;
 type ReviewSpeed = (typeof reviewSpeeds)[number];
-type Screen = "auth" | "loading" | "empty" | "tally" | "summary";
+type Screen = "auth" | "loading" | "onboarding" | "empty" | "tally" | "summary";
 type SaveState = "saved" | "saving" | "offline";
 
 type ActiveClick = {
@@ -46,8 +52,40 @@ type PendingAction = {
   playbackRate: number;
 };
 
-function formatRange(assignment: WorkerAssignment) {
-  return `${assignment.chunk.startIso.slice(11, 16)}-${assignment.chunk.endIso.slice(11, 16)}`;
+type CoverageRange = { start_ms: number; end_ms: number };
+
+function mergeCoverage(ranges: CoverageRange[], next: CoverageRange) {
+  const sorted = [...ranges, next]
+    .filter((range) => range.end_ms > range.start_ms)
+    .sort((a, b) => a.start_ms - b.start_ms);
+  const merged: CoverageRange[] = [];
+  for (const range of sorted) {
+    const prior = merged.at(-1);
+    if (prior && range.start_ms <= prior.end_ms + 250) {
+      prior.end_ms = Math.max(prior.end_ms, range.end_ms);
+    } else {
+      merged.push({ ...range });
+    }
+  }
+  return merged.slice(-128);
+}
+
+function formatRange(assignment: WorkerAssignment, language: ReviewLanguage) {
+  const locale = language === "es" ? "es-419" : "en-US";
+  const timeZone = assignment.chunk.factoryTimezone || "UTC";
+  const date = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(assignment.chunk.startIso));
+  const time = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${date} · ${time.format(new Date(assignment.chunk.startIso))}-${time.format(new Date(assignment.chunk.endIso))}`;
 }
 
 function formatVideoTime(seconds: number) {
@@ -110,11 +148,22 @@ function submissionId(assignmentId: string) {
   return created;
 }
 
+function submissionCoverageKey(assignmentId: string) {
+  return `factoryvision-review-submit-coverage:${assignmentId}`;
+}
+
 export function ReviewTallyConsole() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const flushActive = useRef(false);
   const heartbeatFailures = useRef(0);
+  const coverageRanges = useRef<CoverageRange[]>([]);
+  const coveragePreviousMs = useRef<number | null>(null);
+  const coverageActiveStartedAt = useRef<number | null>(null);
+  const coverageActiveMs = useRef(0);
+  const pageEpoch = useRef("");
+  const workSessionId = useRef<string | null>(null);
   const [session, setSession] = useState<ReviewSession | null>(null);
+  const [lifecycle, setLifecycle] = useState<ReviewerLifecycle | null>(null);
   const [assignment, setAssignment] = useState<WorkerAssignment | null>(null);
   const [clicks, setClicks] = useState<ActiveClick[]>([]);
   const [screen, setScreen] = useState<Screen>("loading");
@@ -132,6 +181,10 @@ export function ReviewTallyConsole() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [supportReason, setSupportReason] = useState("assignment");
+  const [supportMessage, setSupportMessage] = useState("");
+  const [supportBusy, setSupportBusy] = useState(false);
 
   const strings = reviewStrings[language];
   const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
@@ -193,6 +246,11 @@ export function ReviewTallyConsole() {
         return;
       }
       const next = payload.assignment;
+      pageEpoch.current = window.crypto.randomUUID();
+      coverageRanges.current = next.coverage?.ranges ?? [];
+      coveragePreviousMs.current = null;
+      coverageActiveStartedAt.current = null;
+      coverageActiveMs.current = next.coverage?.clientActiveMs ?? 0;
       const pending = readOutbox(next.id);
       setAssignment(next);
       setPendingCount(pending.length);
@@ -210,6 +268,19 @@ export function ReviewTallyConsole() {
     }
   }, [flushOutbox]);
 
+  const beginReviewer = useCallback(async (activeSession: ReviewSession) => {
+    const state = await reviewerLifecycle("GET");
+    setLifecycle(state);
+    if (state.state === "active" && (state.isTestAccount || state.currentAal === "aal2")) {
+      await workerRpc(activeSession, "worker_register_active_device", {
+        p_device_id_hash: await reviewerDeviceHash(),
+      });
+      await loadNext(activeSession);
+    } else {
+      setScreen("onboarding");
+    }
+  }, [loadNext]);
+
   useEffect(() => {
     const savedLanguage = window.localStorage.getItem("factoryvision-review-language");
     if (savedLanguage === "es" || savedLanguage === "en") setLanguage(savedLanguage);
@@ -219,9 +290,12 @@ export function ReviewTallyConsole() {
         return;
       }
       setSession(restored);
-      void loadNext(restored);
+      void beginReviewer(restored).catch((error) => {
+        setStatus(error instanceof Error ? error.message : "Unable to load reviewer profile.");
+        setScreen("auth");
+      });
     });
-  }, [loadNext]);
+  }, [beginReviewer]);
 
   useEffect(() => {
     if (!assignment || !session) return;
@@ -238,6 +312,94 @@ export function ReviewTallyConsole() {
     }, 30_000);
     return () => window.clearInterval(timer);
   }, [assignment, session]);
+
+  useEffect(() => {
+    if (!assignment || !session) return;
+    let disposed = false;
+    let timer: number | null = null;
+    void reviewerDeviceHash()
+      .then(async (deviceIdHash) => {
+        const opened = await workerRpc<{ sessionId: string }>(
+          session,
+          "worker_touch_work_session",
+          {
+            p_session_id: workSessionId.current,
+            p_device_id_hash: deviceIdHash,
+            p_active_seconds_delta: 0,
+          },
+        );
+        if (disposed) {
+          await workerRpc(session, "worker_close_work_session", {
+            p_session_id: opened.sessionId,
+            p_close_reason: "screen_changed",
+          }).catch(() => undefined);
+          return;
+        }
+        workSessionId.current = opened.sessionId;
+        timer = window.setInterval(() => {
+          if (document.visibilityState !== "visible") return;
+          void workerRpc(session, "worker_touch_work_session", {
+            p_session_id: opened.sessionId,
+            p_device_id_hash: deviceIdHash,
+            p_active_seconds_delta: 30,
+          }).catch(() => undefined);
+        }, 30_000);
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+      if (timer !== null) window.clearInterval(timer);
+      const sessionId = workSessionId.current;
+      workSessionId.current = null;
+      if (sessionId) {
+        void workerRpc(session, "worker_close_work_session", {
+          p_session_id: sessionId,
+          p_close_reason: "assignment_closed",
+        }).catch(() => undefined);
+      }
+    };
+  }, [assignment, session]);
+
+  const saveCoverage = useCallback(async () => {
+    if (!assignment || !session || !pageEpoch.current) return;
+    const activeMs =
+      coverageActiveMs.current +
+      (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
+    await workerRpc(session, "save_worker_coverage", {
+      p_assignment_id: assignment.id,
+      p_lease_token: assignment.leaseToken,
+      p_page_epoch: pageEpoch.current,
+      p_ranges: coverageRanges.current,
+      p_client_active_ms: Math.round(activeMs),
+    });
+  }, [assignment, session]);
+
+  useEffect(() => {
+    if (!assignment || !session) return;
+    const timer = window.setInterval(() => void saveCoverage().catch(() => undefined), 5_000);
+    return () => window.clearInterval(timer);
+  }, [assignment, saveCoverage, session]);
+
+  useEffect(() => {
+    if (!assignment || !session) return;
+    const timer = window.setInterval(() => {
+      const video = videoRef.current;
+      const position = video?.currentTime ?? 0;
+      void workerRpc<{ mediaUrl: string }>(session, "authorize_worker_media", {
+        p_assignment_id: assignment.id,
+        p_lease_token: assignment.leaseToken,
+      }).then((result) => {
+        if (!video || !result.mediaUrl) return;
+        const wasPlaying = !video.paused;
+        video.src = result.mediaUrl;
+        video.currentTime = position;
+        if (wasPlaying) void video.play();
+      }).catch(() => {
+        setStatus(language === "es" ? "No se pudo renovar el video." : "Video access could not be refreshed.");
+      });
+    }, 8 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [assignment, language, session]);
 
   useEffect(() => {
     if (screen !== "empty" || !session) return;
@@ -268,7 +430,7 @@ export function ReviewTallyConsole() {
   const addCount = useCallback(() => {
     if (!assignment || !videoRef.current || screen !== "tally") return;
     const videoSec = Math.min(
-      (assignment.chunk.sourceEndMs - assignment.chunk.sourceStartMs) / 1000,
+      Math.max(0, (assignment.chunk.sourceEndMs - assignment.chunk.sourceStartMs - 1) / 1000),
       Math.max(0, videoRef.current.currentTime),
     );
     const clientActionId = window.crypto.randomUUID();
@@ -327,9 +489,14 @@ export function ReviewTallyConsole() {
       return;
     }
     try {
+      const coverageKey = submissionCoverageKey(assignment.id);
+      if (!window.localStorage.getItem(coverageKey)) {
+        await saveCoverage();
+        window.localStorage.setItem(coverageKey, "saved");
+      }
       const result = await workerRpc<{ totalCount: number | null; alreadySubmitted: boolean }>(
         session,
-        "submit_worker_assignment",
+        "submit_worker_assignment_v2",
         {
           p_assignment_id: assignment.id,
           p_lease_token: assignment.leaseToken,
@@ -361,7 +528,7 @@ export function ReviewTallyConsole() {
       const authenticated = await signInReviewer(email.trim(), password);
       setSession(authenticated);
       setPassword("");
-      await loadNext(authenticated);
+      await beginReviewer(authenticated);
     } catch {
       setStatus(language === "es" ? "No se pudo iniciar sesión." : "Could not sign in.");
     } finally {
@@ -372,6 +539,34 @@ export function ReviewTallyConsole() {
   function toggleLanguage(next: ReviewLanguage) {
     setLanguage(next);
     window.localStorage.setItem("factoryvision-review-language", next);
+  }
+
+  async function sendSupportRequest(event: React.FormEvent) {
+    event.preventDefault();
+    if (!assignment || !session || !supportMessage.trim()) return;
+    setSupportBusy(true);
+    try {
+      await workerRpc(session, "worker_request_support", {
+        p_assignment_id: assignment.id,
+        p_reason_code: supportReason,
+        p_message: supportMessage.trim(),
+      });
+      setSupportMessage("");
+      setSupportOpen(false);
+      setStatus(
+        language === "es"
+          ? "La solicitud de ayuda fue enviada."
+          : "Your help request was sent.",
+      );
+    } catch {
+      setStatus(
+        language === "es"
+          ? "No se pudo enviar la solicitud de ayuda."
+          : "The help request could not be sent.",
+      );
+    } finally {
+      setSupportBusy(false);
+    }
   }
 
   const saveLabel = useMemo(() => {
@@ -417,6 +612,24 @@ export function ReviewTallyConsole() {
     );
   }
 
+  if (screen === "onboarding" && lifecycle) {
+    return (
+      <ReviewerOnboarding
+        lifecycle={lifecycle}
+        onChange={(next) => {
+          setLifecycle(next);
+          if (next.state === "active" && session) void loadNext(session);
+        }}
+        onSignOut={() => {
+          void signOutReviewer();
+          setSession(null);
+          setLifecycle(null);
+          setScreen("auth");
+        }}
+      />
+    );
+  }
+
   if (screen === "empty" || !assignment) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] p-5 text-[var(--text)]" data-review-route="empty">
@@ -436,7 +649,7 @@ export function ReviewTallyConsole() {
     <main className="min-h-screen bg-[var(--bg)] p-4 text-[var(--text)] sm:p-5" data-review-route="ready" data-review-chunk={assignment.chunk.id} data-assignment-id={assignment.id}>
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
         <div>
-          <div className="text-[13px] font-semibold">{assignment.chunk.stationName} · {formatRange(assignment)}</div>
+          <div className="text-[13px] font-semibold">{assignment.chunk.stationName} · {formatRange(assignment, language)} · {language === "es" ? "hora de la fábrica" : "factory time"}</div>
           <div className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--text-dim)]" data-testid="save-state">
             {saveState === "offline" ? <CloudOff className="h-3.5 w-3.5 text-[var(--bad)]" /> : saveState === "saving" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 text-[var(--good)]" />}
             {saveLabel}
@@ -449,6 +662,14 @@ export function ReviewTallyConsole() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageControl language={language} onChange={toggleLanguage} />
+          <button
+            type="button"
+            title={language === "es" ? "Obtener ayuda" : "Get help"}
+            className="rounded-lg border border-[var(--border)] p-2 text-[var(--text-mut)]"
+            onClick={() => setSupportOpen(true)}
+          >
+            <LifeBuoy className="h-4 w-4" />
+          </button>
           <button type="button" title={language === "es" ? "Cerrar sesión" : "Sign out"} className="rounded-lg border border-[var(--border)] p-2 text-[var(--text-mut)]" onClick={() => { signOutReviewer(); setSession(null); setAssignment(null); setScreen("auth"); }}>
             <LogOut className="h-4 w-4" />
           </button>
@@ -465,8 +686,31 @@ export function ReviewTallyConsole() {
           <div className="relative aspect-video overflow-hidden rounded-lg bg-black ring-1 ring-[var(--border)]">
             <video ref={videoRef} src={assignment.chunk.mediaUrl} poster={assignment.chunk.posterUrl ?? undefined} className="h-full w-full bg-black object-contain" muted playsInline
               onLoadedMetadata={() => { if (!videoRef.current) return; setDuration(videoRef.current.duration); applyValidatedPlaybackRate(videoRef.current, speed); }}
-              onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
-              onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)}
+              onTimeUpdate={() => {
+                const video = videoRef.current;
+                if (!video) return;
+                setCurrentTime(video.currentTime);
+                const sourceMs = assignment.chunk.sourceStartMs + Math.round(video.currentTime * 1000);
+                const prior = coveragePreviousMs.current;
+                if (prior !== null && sourceMs >= prior && sourceMs - prior <= 3_000) {
+                  coverageRanges.current = mergeCoverage(coverageRanges.current, {
+                    start_ms: prior,
+                    end_ms: Math.min(assignment.chunk.sourceEndMs, sourceMs),
+                  });
+                }
+                coveragePreviousMs.current = sourceMs;
+              }}
+              onPlay={() => {
+                setIsPlaying(true);
+                coverageActiveStartedAt.current = performance.now();
+              }}
+              onPause={() => {
+                setIsPlaying(false);
+                if (coverageActiveStartedAt.current) {
+                  coverageActiveMs.current += performance.now() - coverageActiveStartedAt.current;
+                  coverageActiveStartedAt.current = null;
+                }
+              }}
               onEnded={() => { setIsPlaying(false); setScreen("summary"); }} />
             {!isPlaying && (
               <button type="button" className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--accent)] text-white" aria-label={strings.play} onClick={() => void videoRef.current?.play()}>
@@ -499,7 +743,7 @@ export function ReviewTallyConsole() {
           {screen === "summary" ? (
             <>
               <div>
-                <div className="text-[13px] font-semibold text-[var(--text-mut)]">{strings.summaryPrefix} {clicks.length} {strings.summaryIn} {formatRange(assignment)}</div>
+                <div className="text-[13px] font-semibold text-[var(--text-mut)]">{strings.summaryPrefix} {clicks.length} {strings.summaryIn} {formatRange(assignment, language)}</div>
                 <div className="mt-4 max-h-[290px] space-y-2 overflow-y-auto">
                   {clicks.map((click, index) => <button key={click.id} type="button" className="flex w-full justify-between rounded-lg border border-[var(--border-soft)] px-3 py-2 text-[13px]" onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.max(0, click.videoSec - 5); setScreen("tally"); }}><span>#{index + 1}</span><span>{formatVideoTime(click.videoSec)}</span></button>)}
                   {!clicks.length && <div className="text-[13px] text-[var(--text-dim)]">{strings.noClicks}</div>}
@@ -528,6 +772,70 @@ export function ReviewTallyConsole() {
           {status && <div role="status" className="mt-4 border-t border-[var(--border)] pt-3 text-[13px] text-[var(--text-mut)]">{status}</div>}
         </aside>
       </section>
+      {supportOpen ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={language === "es" ? "Obtener ayuda" : "Get help"}
+        >
+          <form
+            className="w-full max-w-md border border-[var(--border)] bg-[var(--panel)]"
+            onSubmit={sendSupportRequest}
+          >
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+              <div className="flex items-center gap-2 text-[14px] font-semibold">
+                <LifeBuoy className="h-4 w-4 text-[var(--accent)]" />
+                {language === "es" ? "Obtener ayuda" : "Get help"}
+              </div>
+              <button
+                type="button"
+                title={language === "es" ? "Cerrar" : "Close"}
+                onClick={() => setSupportOpen(false)}
+                className="p-2"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid gap-4 p-5">
+              <label className="grid gap-2 text-[12px] text-[var(--text-mut)]">
+                {language === "es" ? "Tema" : "Topic"}
+                <select
+                  value={supportReason}
+                  onChange={(event) => setSupportReason(event.target.value)}
+                  className="h-11 border border-[var(--border)] bg-[var(--bg)] px-3 text-[14px]"
+                >
+                  <option value="assignment">{language === "es" ? "Esta tarea" : "This assignment"}</option>
+                  <option value="account">{language === "es" ? "Mi cuenta" : "My account"}</option>
+                  <option value="mfa">{language === "es" ? "Código de seguridad" : "Security code"}</option>
+                  <option value="payment">{language === "es" ? "Pago" : "Payment"}</option>
+                  <option value="privacy">{language === "es" ? "Privacidad" : "Privacy"}</option>
+                  <option value="other">{language === "es" ? "Otro" : "Other"}</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-[12px] text-[var(--text-mut)]">
+                {language === "es" ? "¿Qué necesitas?" : "What do you need?"}
+                <textarea
+                  required
+                  maxLength={2000}
+                  rows={5}
+                  value={supportMessage}
+                  onChange={(event) => setSupportMessage(event.target.value)}
+                  className="resize-none border border-[var(--border)] bg-[var(--bg)] p-3 text-[14px]"
+                />
+              </label>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-[var(--border)] px-5 py-4">
+              <Button type="button" variant="secondary" onClick={() => setSupportOpen(false)}>
+                {language === "es" ? "Cancelar" : "Cancel"}
+              </Button>
+              <Button type="submit" variant="primary" disabled={supportBusy}>
+                {language === "es" ? "Enviar" : "Send"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </main>
   );
 }

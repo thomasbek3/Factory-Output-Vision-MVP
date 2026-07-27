@@ -17,6 +17,10 @@ export function reviewerAccessToken(request: NextRequest) {
   return request.cookies.get(reviewAccessCookie)?.value ?? null;
 }
 
+export function reviewerRefreshToken(request: NextRequest) {
+  return request.cookies.get(reviewRefreshCookie)?.value ?? null;
+}
+
 export function setReviewerCookies(
   request: NextRequest,
   response: NextResponse,
