@@ -116,8 +116,8 @@ evidence, suspension, and offboarding.
 
 ## WAITING ON THOMAS
 
-- Verified sending domain, sender name/address, Resend credential, Supabase
-  server key, public review URL, and staffed support address.
+- Verified sending domain, sender name/address, Resend credential, public review
+  URL, and staffed support address.
 - Approve the public review URL used by Supabase redirects. Thomas's Auth user,
   confirmed email, and permanent `ops` membership are already present.
 - Final worker country/classification, pay basis and rate, time-rounding policy,
