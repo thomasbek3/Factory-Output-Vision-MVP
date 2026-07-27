@@ -17,6 +17,9 @@ evidence, suspension, and offboarding.
   registration, invitation receipts, coverage, support requests, work sessions,
   automatic scheduling, expiry replacement, and human finalization are
   implemented.
+- The AI Mac server has the Supabase secret key configured in its private
+  environment. `thomas@paverturf.com` is provisioned as the first permanent
+  active `ops` membership and is awaiting email verification.
 - Ready 15-minute production chunks are scheduled to exactly three qualified
   reviewers without an additional one-hour delay. Logged-in empty queues poll
   every five seconds.
@@ -107,7 +110,7 @@ evidence, suspension, and offboarding.
    `qualification` chunk, and add its private gold reference answer.
 2. Configure the production host and email delivery values, send a real
    invitation to a controlled inbox, and prove its activate-account link.
-3. Provision Thomas's permanent ops membership, then run one full first-worker
+3. Accept Thomas's Supabase verification email, then run one full first-worker
    rehearsal from received email through qualification and three-person
    production resolution.
 
@@ -115,9 +118,8 @@ evidence, suspension, and offboarding.
 
 - Verified sending domain, sender name/address, Resend credential, Supabase
   server key, public review URL, and staffed support address.
-- Create `thomas@paverturf.com` in Supabase Auth and give that identity the
-  first permanent `ops` membership. The address is approved; the live project
-  currently has zero durable ops memberships.
+- Accept the pending Supabase invitation for `thomas@paverturf.com`. The Auth
+  user and permanent `ops` membership are already created.
 - Final worker country/classification, pay basis and rate, time-rounding policy,
   privacy/data-handling terms, support SLA, and owner for payroll disputes.
 - Approval of the gold qualification clip and pass thresholds.
@@ -127,8 +129,8 @@ evidence, suspension, and offboarding.
 ## OPEN RISKS
 
 - No production email was sent because no verified sender configuration exists.
-- No permanent ops account is provisioned, so the protected invitation and
-  workforce-management routes intentionally have no live human operator yet.
+- The permanent ops account is provisioned but cannot sign in until Thomas
+  accepts Supabase's verification email.
 - No normal worker can be activated until the qualification reference is
   created; this is an intentional launch gate.
 - Work-session seconds are bounded operational evidence, not a payroll ledger.
