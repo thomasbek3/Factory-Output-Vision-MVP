@@ -112,26 +112,21 @@ def test_worker_copy_uses_the_versioned_release_anchor() -> None:
 
 
 def test_worker_payload_sources_omit_golden_and_throughput_fields() -> None:
-    next_route = (
-        REPO_ROOT / "console" / "app" / "api" / "review" / "chunks" / "next" / "route.ts"
-    ).read_text(encoding="utf-8")
-    confirm_route = (
+    worker_sources = (
         REPO_ROOT
         / "console"
         / "app"
         / "api"
         / "review"
-        / "chunks"
-        / "[id]"
-        / "confirm"
-        / "route.ts"
-    ).read_text(encoding="utf-8")
-    chunks = (REPO_ROOT / "console" / "lib" / "reviewChunks.ts").read_text(encoding="utf-8")
-    reviewer = (
-        REPO_ROOT / "console" / "components" / "review" / "review-tally-console.tsx"
-    ).read_text(encoding="utf-8")
-
-    combined = "\n".join([next_route, confirm_route, chunks, reviewer])
+        / "rpc"
+        / "[functionName]"
+        / "route.ts",
+        REPO_ROOT / "console" / "app" / "api" / "review" / "session" / "route.ts",
+        REPO_ROOT / "console" / "lib" / "reviewServer.ts",
+        REPO_ROOT / "console" / "lib" / "reviewSupabase.ts",
+        REPO_ROOT / "console" / "components" / "review" / "review-tally-console.tsx",
+    )
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in worker_sources)
     for forbidden in (
         "isGolden",
         "goldenCount",
@@ -139,8 +134,10 @@ def test_worker_payload_sources_omit_golden_and_throughput_fields() -> None:
         "chunksPerHour",
         "nextChunk",
         "locked-by-other",
+        "reviewerId",
     ):
         assert forbidden not in combined
+    assert "/api/review/chunks" not in combined
 
 
 def test_training_paths_consume_the_registry_firewall() -> None:
