@@ -115,8 +115,9 @@ evidence, suspension, and offboarding.
 
 - Verified sending domain, sender name/address, Resend credential, Supabase
   server key, public review URL, and staffed support address.
-- The Supabase Auth identity that should receive the first permanent `ops`
-  membership. The live project currently has zero durable ops memberships.
+- Create `thomas@paverturf.com` in Supabase Auth and give that identity the
+  first permanent `ops` membership. The address is approved; the live project
+  currently has zero durable ops memberships.
 - Final worker country/classification, pay basis and rate, time-rounding policy,
   privacy/data-handling terms, support SLA, and owner for payroll disputes.
 - Approval of the gold qualification clip and pass thresholds.
