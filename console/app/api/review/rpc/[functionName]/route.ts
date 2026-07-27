@@ -1,5 +1,9 @@
 import { NextRequest } from "next/server";
-import { reviewServerConfig, reviewerAccessToken } from "@/lib/reviewServer";
+import {
+  authorizeReviewerAccessToken,
+  reviewServerConfig,
+  reviewerAccessToken,
+} from "@/lib/reviewServer";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +18,8 @@ const workerFunctions = new Set([
   "worker_touch_work_session",
   "worker_close_work_session",
   "worker_register_active_device",
+  "worker_claim_reviewer_qualification",
+  "worker_submit_reviewer_qualification",
 ]);
 
 type ClaimPayload = {
@@ -23,6 +29,14 @@ type ClaimPayload = {
       mediaPath?: string;
       mediaUrl?: string;
     };
+  } | null;
+};
+
+type QualificationPayload = {
+  qualification?: {
+    mediaBucket?: string;
+    mediaPath?: string;
+    mediaUrl?: string;
   } | null;
 };
 
@@ -79,6 +93,19 @@ async function signDirectMedia(
   return { mediaUrl: wrapped.assignment?.chunk?.mediaUrl };
 }
 
+async function signQualificationMedia(
+  token: string,
+  payload: QualificationPayload,
+  config: ReturnType<typeof reviewServerConfig>,
+) {
+  if (!payload.qualification) return payload;
+  const signed = await signDirectMedia(token, payload.qualification, config);
+  payload.qualification.mediaUrl = signed.mediaUrl;
+  delete payload.qualification.mediaBucket;
+  delete payload.qualification.mediaPath;
+  return payload;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ functionName: string }> },
@@ -89,6 +116,9 @@ export async function POST(
   }
   const token = reviewerAccessToken(request);
   if (!token) return Response.json({ error: "Authentication required." }, { status: 401 });
+  if (!(await authorizeReviewerAccessToken(token))) {
+    return Response.json({ error: "Reviewer access is disabled." }, { status: 403 });
+  }
   const config = reviewServerConfig();
   const response = await fetch(
     `${config.projectUrl}/rest/v1/rpc/${functionName}`,
@@ -110,10 +140,14 @@ export async function POST(
       headers: { "Content-Type": "application/json" },
     });
   }
-  const payload = text ? (JSON.parse(text) as ClaimPayload) : null;
+  const payload = text
+    ? (JSON.parse(text) as ClaimPayload & QualificationPayload)
+    : null;
   const output =
     functionName === "claim_worker_assignment" && payload
       ? await signAssignmentMedia(token, payload, config)
+      : functionName === "worker_claim_reviewer_qualification" && payload
+        ? await signQualificationMedia(token, payload, config)
       : functionName === "authorize_worker_media" && payload
         ? await signDirectMedia(
             token,

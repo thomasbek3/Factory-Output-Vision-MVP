@@ -3,18 +3,18 @@ import { assertNoConsoleErrors, collectConsoleErrors } from "./helpers";
 
 const opsQaEmail = process.env.FV_OPS_QA_EMAIL;
 const opsQaPassword = process.env.FV_OPS_QA_PASSWORD;
+const requireLiveQa = process.env.FV_REQUIRE_LIVE_QA === "1";
 
 test.describe("/ops", () => {
-  test("stat cards render from the snapshot", async ({ page }) => {
+  test("workforce metrics stay behind ops authentication", async ({ page, request }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/ops");
 
     await expect(page.locator("[data-ops-route='ready']")).toBeVisible();
-    await expect(page.getByText(/factories/i)).toBeVisible();
-    await expect(page.getByText(/cameras up/i)).toBeVisible();
-    await expect(page.getByText(/events today/i)).toBeVisible();
-
     await expect(page.getByText("Sign in to manage reviewers")).toBeVisible();
+    await expect(page.getByText("Open queue")).toHaveCount(0);
+    const snapshot = await request.get("/api/ops/snapshot");
+    expect(snapshot.status()).toBe(401);
     await expect(page.getByText(/model agreement/i)).toHaveCount(0);
     await expect(page.getByText(/held-out exam/i)).toHaveCount(0);
     await expect(page.getByText(/golden accuracy/i)).toHaveCount(0);
@@ -28,14 +28,6 @@ test.describe("/ops", () => {
     expect(response.status()).toBe(404);
   });
 
-  // G8 — ops legibility.
-  test("stat cards have explanatory subtitles", async ({ page }) => {
-    await page.goto("/ops");
-    await expect(page.getByText("historical review delay behind source time")).toBeVisible();
-    await expect(page.getByText(/historical review events on \w+ \d+/)).toBeVisible();
-    await expect(page.getByText("Sign in to manage reviewers")).toBeVisible();
-  });
-
   // G5 — internal back-link.
   test("has a Console back-link", async ({ page }) => {
     await page.goto("/ops");
@@ -47,6 +39,11 @@ test.describe("/ops", () => {
   test("authenticated ops can inspect the reviewer roster and invitation email", async ({
     page,
   }) => {
+    if ((!opsQaEmail || !opsQaPassword) && requireLiveQa) {
+      throw new Error(
+        "FV_OPS_QA_EMAIL and FV_OPS_QA_PASSWORD are required when FV_REQUIRE_LIVE_QA=1",
+      );
+    }
     test.skip(
       !opsQaEmail || !opsQaPassword,
       "FV_OPS_QA_EMAIL and FV_OPS_QA_PASSWORD are required",
@@ -58,6 +55,8 @@ test.describe("/ops", () => {
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page.getByText(/reviewer accounts/i)).toBeVisible();
+    await expect(page.getByText("active factories you can manage")).toBeVisible();
+    await expect(page.getByText("age of the oldest unfinished assignment")).toBeVisible();
     await expect(page.getByText("Email setup required")).toBeVisible();
     await expect(page.getByText("Worker support")).toBeVisible();
     await expect(

@@ -1,11 +1,18 @@
 import { NextRequest } from "next/server";
-import { reviewServerConfig, reviewerAccessToken } from "@/lib/reviewServer";
+import {
+  authorizeReviewerAccessToken,
+  reviewServerConfig,
+  reviewerAccessToken,
+} from "@/lib/reviewServer";
 
 export const dynamic = "force-dynamic";
 
 async function rpc(request: NextRequest, functionName: string, body: object) {
   const token = reviewerAccessToken(request);
   if (!token) throw new Error("AUTH_REQUIRED");
+  if (!(await authorizeReviewerAccessToken(token))) {
+    throw new Error("ACCESS_DISABLED");
+  }
   const config = reviewServerConfig();
   const response = await fetch(`${config.projectUrl}/rest/v1/rpc/${functionName}`, {
     method: "POST",
@@ -53,4 +60,3 @@ export async function POST(request: NextRequest) {
     return failed(error);
   }
 }
-

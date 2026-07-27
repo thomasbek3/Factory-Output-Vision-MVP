@@ -14,8 +14,10 @@ import {
 import {
   reviewerLifecycle,
   type ReviewerLifecycle,
+  type ReviewSession,
 } from "@/lib/reviewSupabase";
 import { reviewerDeviceHash } from "@/lib/reviewerDevice";
+import { ReviewerQualification } from "@/components/review/reviewer-qualification";
 
 async function api(path: string, method: "GET" | "POST", body?: object) {
   const response = await fetch(path, {
@@ -32,10 +34,12 @@ async function api(path: string, method: "GET" | "POST", body?: object) {
 
 export function ReviewerOnboarding({
   lifecycle,
+  session,
   onChange,
   onSignOut,
 }: {
   lifecycle: ReviewerLifecycle;
+  session: ReviewSession;
   onChange: (next: ReviewerLifecycle) => void;
   onSignOut: () => void;
 }) {
@@ -283,15 +287,10 @@ export function ReviewerOnboarding({
   }
 
   return shell(
-    <div className="mx-auto max-w-lg text-center">
-      <ShieldCheck className="mx-auto h-9 w-9 text-[var(--accent)]" />
-      <h2 className="mt-5 text-[24px] font-semibold">{spanish ? "Falta la calificación" : "Qualification is next"}</h2>
-      <p className="mt-3 text-[14px] leading-6 text-[var(--text-mut)]">
-        {spanish ? "FactoryVision debe asignarte y revisar un video de calificación antes de activar trabajo de producción." : "FactoryVision must assign and review a qualification video before production work is activated."}
-      </p>
-      <div className="mt-5 border border-[var(--border)] bg-[var(--panel)] px-4 py-4 text-[13px] text-[var(--text-mut)]">
-        {spanish ? "No recibirás videos reales hasta que aparezca la aprobación." : "You will not receive real production videos until approval appears."}
-      </div>
-    </div>,
+    <ReviewerQualification
+      lifecycle={lifecycle}
+      session={session}
+      onChange={onChange}
+    />,
   );
 }

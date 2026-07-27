@@ -1,9 +1,16 @@
 import { NextRequest } from "next/server";
-import { reviewServerConfig, reviewerAccessToken } from "@/lib/reviewServer";
+import {
+  authorizeReviewerAccessToken,
+  reviewServerConfig,
+  reviewerAccessToken,
+} from "@/lib/reviewServer";
 
 export async function POST(request: NextRequest) {
   const token = reviewerAccessToken(request);
   if (!token) return Response.json({ error: "AUTH_REQUIRED" }, { status: 401 });
+  if (!(await authorizeReviewerAccessToken(token))) {
+    return Response.json({ error: "ACCESS_DISABLED" }, { status: 403 });
+  }
   const body = (await request.json()) as { password?: string };
   if (!body.password || body.password.length < 12) {
     return Response.json({ error: "Password must contain at least 12 characters." }, { status: 422 });
@@ -25,4 +32,3 @@ export async function POST(request: NextRequest) {
   }
   return Response.json({ updated: true });
 }
-

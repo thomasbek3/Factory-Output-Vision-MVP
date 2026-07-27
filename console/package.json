@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "e2e": "playwright test",
+    "e2e:release": "FV_REQUIRE_LIVE_QA=1 playwright test e2e/review.spec.ts e2e/ops.spec.ts",
     "seed": "prisma db seed"
   },
   "dependencies": {

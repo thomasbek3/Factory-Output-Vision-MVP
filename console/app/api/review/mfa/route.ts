@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import {
+  authorizeReviewerAccessToken,
   reviewServerConfig,
   reviewerAccessToken,
   reviewerRefreshToken,
@@ -13,6 +14,9 @@ async function authenticatedClient(request: NextRequest) {
   const accessToken = reviewerAccessToken(request);
   const refreshToken = reviewerRefreshToken(request);
   if (!accessToken || !refreshToken) throw new Error("AUTH_REQUIRED");
+  if (!(await authorizeReviewerAccessToken(accessToken))) {
+    throw new Error("ACCESS_DISABLED");
+  }
   const config = reviewServerConfig();
   const client = createClient(config.projectUrl, config.publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -97,4 +101,3 @@ export async function POST(request: NextRequest) {
     return failed(error);
   }
 }
-

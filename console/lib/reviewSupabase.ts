@@ -60,8 +60,16 @@ export async function signInReviewer(email: string, password: string) {
   return sessionRequest("POST", { email, password });
 }
 
-export async function acceptReviewerInviteSession(accessToken: string, refreshToken: string) {
-  return sessionRequest("POST", { accessToken, refreshToken });
+export async function acceptReviewerInviteSession(
+  accessToken: string,
+  refreshToken: string,
+  invitationToken: string,
+) {
+  return sessionRequest("POST", {
+    accessToken,
+    refreshToken,
+    invitationToken,
+  });
 }
 
 export async function signOutReviewer() {

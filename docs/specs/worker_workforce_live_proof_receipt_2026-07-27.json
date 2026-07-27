@@ -1,0 +1,31 @@
+{
+  "date": "2026-07-27",
+  "supabase_project_ref": "jhoshtiffhwsgurntgxp",
+  "fixture_mode": "rollback_isolated",
+  "durable_fixture_rows_after": 0,
+  "executable_proof": "supabase/tests/worker_workforce_adversarial_live.sql",
+  "migrations": [
+    "20260727163000_adversarial_review_hardening",
+    "20260727164500_invitation_and_qualification_followup",
+    "20260727170000_resolver_publication_default",
+    "20260727171500_resolver_finalized_state_transition",
+    "20260727173000_monotonic_coverage_merge",
+    "20260727174500_session_and_invitation_idempotency"
+  ],
+  "executable_receipts": [
+    "qualification_claim_score_activate_passed",
+    "three_reviewers_human_2_of_3_lineage_passed",
+    "three_reviewers_no_majority_hold_passed",
+    "cross_attempt_invitation_idempotency_passed",
+    "suspended_and_offboarded_session_denial_passed"
+  ],
+  "observed_live_receipts": [
+    "cross_user_support_denied",
+    "one_time_invitation_consumption_passed",
+    "expired_and_revoked_invitation_denial_passed",
+    "session_authorization_gate_passed",
+    "authenticated_live_ops_metrics_passed",
+    "qualification_missing_gold_fails_closed",
+    "monotonic_stale_page_coverage_merge_passed"
+  ]
+}

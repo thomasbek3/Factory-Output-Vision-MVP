@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import {
   reviewerEmailReadiness,
   reviewerRoster,
+  revokeReviewerInvitation,
   sendReviewerInvite,
   updateReviewerState,
   updateReviewerSupportState,
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
+      requestKey?: string;
       email?: string;
       displayName?: string;
       locale?: "en" | "es-419";
@@ -42,11 +44,15 @@ export async function POST(request: NextRequest) {
       !body.displayName ||
       !body.factoryId ||
       !body.locale ||
+      !body.requestKey?.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      ) ||
       !body.email.includes("@")
     ) {
       return Response.json({ error: "INVALID_INVITATION" }, { status: 422 });
     }
     const result = await sendReviewerInvite(request, {
+      requestKey: body.requestKey,
       email: body.email.trim().toLowerCase(),
       displayName: body.displayName.trim(),
       locale: body.locale,
@@ -69,7 +75,13 @@ export async function PATCH(request: NextRequest) {
       reason?: string;
       supportRequestId?: string;
       supportStatus?: "acknowledged" | "closed";
+      revokeInvitationUserId?: string;
     };
+    if (body.revokeInvitationUserId) {
+      return Response.json(
+        await revokeReviewerInvitation(request, body.revokeInvitationUserId),
+      );
+    }
     if (body.supportRequestId && body.supportStatus) {
       const result = await updateReviewerSupportState(
         request,

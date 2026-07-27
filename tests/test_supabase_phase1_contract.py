@@ -10,6 +10,9 @@ MIGRATIONS = sorted((ROOT / "supabase/migrations").glob("*.sql"))
 SPEC = ROOT / "docs/specs/worker_ground_truth_portal_v1.md"
 ADR = ROOT / "docs/decisions/0006-supabase-worker-portal-control-and-media-plane.md"
 LIVE_FIXTURE = ROOT / "supabase/tests/worker_portal_phase1_live.sql"
+WORKFORCE_LIVE_PROOF = (
+    ROOT / "supabase/tests/worker_workforce_adversarial_live.sql"
+)
 
 
 class SupabasePhase1ContractTests(unittest.TestCase):
@@ -21,6 +24,9 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         cls.spec = SPEC.read_text(encoding="utf-8")
         cls.adr = ADR.read_text(encoding="utf-8")
         cls.live_fixture = LIVE_FIXTURE.read_text(encoding="utf-8").lower()
+        cls.workforce_live_proof = WORKFORCE_LIVE_PROOF.read_text(
+            encoding="utf-8"
+        ).lower()
 
     def test_owner_amendment_is_explicit(self) -> None:
         amendment = self.spec.split("## 1. Plain-English Summary", maxsplit=1)[0]
@@ -415,6 +421,122 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         self.assertIn("source_set_role = 'qualification'", self.sql)
         self.assertIn("factoryvision-ready-chunk-scheduler", self.sql)
         self.assertIn("chunk.source_end_at <= now()", self.sql)
+
+    def test_adversarial_review_security_gates_fail_closed(self) -> None:
+        latest_support = self.sql.rsplit(
+            "create or replace function public.worker_request_support",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("assignment.reviewer_id = actor_id", latest_support)
+        self.assertIn("assignment.factory_id = lifecycle_row.factory_id", latest_support)
+        self.assertIn("support assignment is not available to this reviewer", latest_support)
+
+        self.assertIn("invitation_token_hash", self.sql)
+        self.assertIn("worker_accept_reviewer_invitation", self.sql)
+        self.assertIn("worker_authorize_reviewer_session", self.sql)
+        self.assertIn("ops_revoke_reviewer_invitation", self.sql)
+        self.assertIn("reviewer_invitations_request_key_idx", self.sql)
+        self.assertIn("ops_reviewer_invitation_request", self.sql)
+        self.assertIn("ops_claim_reviewer_invitation_delivery", self.sql)
+        self.assertIn("'delivery_unknown'", self.sql)
+        acceptance = self.sql.rsplit(
+            "create or replace function public.worker_accept_reviewer_invitation",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("invitation.status = 'sent'", acceptance)
+        self.assertIn("invitation.expires_at > now()", acceptance)
+        self.assertIn("invitation.revoked_at is null", acceptance)
+        self.assertIn("status = 'accepted'", acceptance)
+
+        lifecycle = self.sql.rsplit(
+            "create or replace function public.worker_lifecycle_state",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertNotIn("update public.reviewer_invitations", lifecycle)
+
+        authorization = self.sql.rsplit(
+            "create or replace function public.worker_authorize_reviewer_session",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("lifecycle.state in ('suspended', 'offboarded')", authorization)
+        self.assertIn("reviewer access is disabled", authorization)
+
+    def test_workforce_live_proof_is_rerunnable_and_rollback_only(self) -> None:
+        proof = self.workforce_live_proof
+        self.assertIn("begin;", proof)
+        self.assertTrue(proof.rstrip().endswith("rollback;"))
+        self.assertIn("service_resolve_ready_rounds", proof)
+        self.assertIn("worker_submit_reviewer_qualification", proof)
+        self.assertIn("count(distinct source.submission_id)", proof)
+        for receipt in (
+            "three_reviewers_human_2_of_3_lineage_passed",
+            "three_reviewers_no_majority_hold_passed",
+            "qualification_claim_score_activate_passed",
+            "cross_attempt_invitation_idempotency_passed",
+            "suspended_and_offboarded_session_denial_passed",
+        ):
+            self.assertIn(receipt, proof)
+
+    def test_ops_metrics_and_work_time_use_authenticated_server_data(self) -> None:
+        metrics = self.sql.rsplit(
+            "create or replace function public.ops_workforce_metrics",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("if not public.actor_is_ops(null)", metrics)
+        self.assertIn("public.review_assignments", metrics)
+        self.assertIn("public.review_submissions", metrics)
+
+        touch = self.sql.rsplit(
+            "create or replace function public.worker_touch_work_session",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("clock_timestamp() - session_row.last_seen_at", touch)
+        self.assertIn("p_active_seconds_delta > 0", touch)
+        self.assertNotIn(
+            "least(coalesce(p_active_seconds_delta",
+            touch,
+        )
+
+        coverage = self.sql.rsplit(
+            "create or replace function public.save_worker_coverage",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("from public.review_coverage", coverage)
+        self.assertIn("for update", coverage)
+        self.assertIn("coalesce(coverage_row.ranges, '[]'::jsonb)", coverage)
+        self.assertIn("merged_ranges", coverage)
+
+    def test_worker_qualification_is_private_server_scored_and_operational(self) -> None:
+        self.assertIn("create table public.reviewer_qualification_attempts", self.sql)
+        self.assertIn("reviewer_qualification_attempts_immutable", self.sql)
+        self.assertIn("reviewer_qualification_attempts_reject_truncate", self.sql)
+        self.assertIn("worker_claim_reviewer_qualification", self.sql)
+        self.assertIn("worker_submit_reviewer_qualification", self.sql)
+        submit = self.sql.rsplit(
+            "create or replace function public.worker_submit_reviewer_qualification",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("private.reference_answers", submit)
+        self.assertIn("reference.answer_type = 'qualification'", submit)
+        self.assertIn("set state = case when passed then 'active'", submit)
+        self.assertNotIn("p_passed", submit)
+
+    def test_resolver_owner_projection_default_matches_insert_guard(self) -> None:
+        self.assertIn(
+            "alter column publication_status set default 'published'",
+            self.sql,
+        )
+        self.assertIn(
+            "owner projection rows must be published at insert",
+            self.sql,
+        )
+        latest_guard = self.sql.rsplit(
+            "create or replace function public.guard_chunk_state_transition",
+            maxsplit=1,
+        )[1].split("create or replace function", 1)[0]
+        self.assertIn("old.state = 'assigned'", latest_guard)
+        self.assertIn("new.state = 'resolved'", latest_guard)
+        self.assertIn("public.human_finalizations", latest_guard)
 
 
 if __name__ == "__main__":

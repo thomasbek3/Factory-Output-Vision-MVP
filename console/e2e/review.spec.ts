@@ -6,6 +6,7 @@ import {
 } from "./helpers";
 
 const qaPassword = process.env.FV_QA_PASSWORD;
+const requireLiveQa = process.env.FV_REQUIRE_LIVE_QA === "1";
 const qaEmails = [1, 2, 3].map(
   (index) => `thomas+factoryvision-reviewer${index}-20260726@paverturf.com`,
 );
@@ -25,11 +26,17 @@ async function signIn(page: Page, email: string) {
 }
 
 test.describe("/review durable worker loop", () => {
-  test.skip(!qaPassword, "FV_QA_PASSWORD is required for live Supabase E2E");
+  test.skip(
+    !qaPassword && !requireLiveQa,
+    "FV_QA_PASSWORD is required for live Supabase E2E",
+  );
 
   test("three blind reviewers share one chunk through separate durable assignments", async ({
     browser,
   }) => {
+    if (!qaPassword) {
+      throw new Error("FV_QA_PASSWORD is required when FV_REQUIRE_LIVE_QA=1");
+    }
     test.setTimeout(120_000);
     const contexts: BrowserContext[] = [];
     try {

@@ -11,19 +11,18 @@ import {
   Loader2,
   LogIn,
   Mail,
+  MailX,
   MessageSquare,
   Pause,
   Plus,
   RadioTower,
   ShieldCheck,
   TimerReset,
-  UserRoundCheck,
   UserRoundX,
   Users,
   X,
 } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
-import { demoSourceDay } from "@/lib/demoEvents";
 import {
   restoreReviewerSession,
   signInReviewer,
@@ -33,10 +32,10 @@ import {
 
 type OpsSnapshot = {
   factories: number;
-  camerasUp: number;
-  camerasTotal: number;
-  eventsToday: number;
-  verificationLagMinutes: number;
+  stationsUp: number;
+  stationsTotal: number;
+  submissionsToday: number;
+  oldestQueueMinutes: number;
   openQueueDepth: number;
   chunksTotal: number;
 };
@@ -85,6 +84,7 @@ type RosterResponse = {
     status: "open" | "acknowledged";
     createdAt: string;
   }>;
+  metrics: OpsSnapshot;
   email: { ready: boolean; sender: string | null; supportEmail: string | null };
   error?: string;
 };
@@ -139,13 +139,13 @@ async function rosterRequest(method: "GET" | "POST" | "PATCH", body?: object) {
 }
 
 export function OpsConsole() {
-  const [snapshot, setSnapshot] = useState<OpsSnapshot | null>(null);
   const [session, setSession] = useState<ReviewSession | null>(null);
   const [roster, setRoster] = useState<RosterResponse | null>(null);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteRequestKey, setInviteRequestKey] = useState<string | null>(null);
   const [previewLocale, setPreviewLocale] = useState<"en" | "es-419" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -155,13 +155,6 @@ export function OpsConsole() {
   }, []);
 
   useEffect(() => {
-    void fetch("/api/ops/snapshot", { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error(`snapshot ${response.status}`);
-        return response.json() as Promise<OpsSnapshot>;
-      })
-      .then(setSnapshot)
-      .catch(() => setNotice("Could not load the operational snapshot."));
     void restoreReviewerSession().then(async (restored) => {
       setSession(restored);
       if (restored) {
@@ -175,20 +168,16 @@ export function OpsConsole() {
   }, [loadRoster]);
 
   const cards = useMemo(() => {
-    if (!snapshot) return [];
-    const demoDayLabel = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Los_Angeles",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(`${demoSourceDay}T12:00:00-07:00`));
+    if (!roster) return [];
+    const snapshot = roster.metrics;
     return [
-      { label: "Factories", value: String(snapshot.factories), subtitle: "sites streaming to this console", icon: Factory },
-      { label: "Cameras up", value: `${snapshot.camerasUp}/${snapshot.camerasTotal}`, subtitle: "feeds online through the tunnel", icon: RadioTower },
-      { label: "Events today", value: String(snapshot.eventsToday), subtitle: `historical review events on ${demoDayLabel}`, icon: ShieldCheck },
-      { label: "Review lag", value: `${snapshot.verificationLagMinutes}m`, subtitle: "historical review delay behind source time", icon: TimerReset },
-      { label: "Open queue", value: String(snapshot.openQueueDepth), subtitle: "chunks still waiting for a reviewer", icon: ListChecks },
+      { label: "Factories", value: String(snapshot.factories), subtitle: "active factories you can manage", icon: Factory },
+      { label: "Stations up", value: `${snapshot.stationsUp}/${snapshot.stationsTotal}`, subtitle: "active production stations", icon: RadioTower },
+      { label: "Submissions today", value: String(snapshot.submissionsToday), subtitle: "human reviews received since midnight", icon: ShieldCheck },
+      { label: "Oldest queue item", value: `${snapshot.oldestQueueMinutes}m`, subtitle: "age of the oldest unfinished assignment", icon: TimerReset },
+      { label: "Open queue", value: String(snapshot.openQueueDepth), subtitle: "assignments waiting or in progress", icon: ListChecks },
     ];
-  }, [snapshot]);
+  }, [roster]);
 
   async function handleSignIn(event: FormEvent) {
     event.preventDefault();
@@ -206,17 +195,14 @@ export function OpsConsole() {
     }
   }
 
-  async function handleState(userId: string, state: "active" | "suspended" | "offboarded") {
-    const reason =
-      state === "active"
-        ? "Qualification approved by ops"
-        : window.prompt(`Reason for ${state}:`)?.trim();
-    if (state !== "active" && !reason) return;
+  async function handleState(userId: string, state: "suspended" | "offboarded") {
+    const reason = window.prompt(`Reason for ${state}:`)?.trim();
+    if (!reason) return;
     setBusy(true);
     try {
       await rosterRequest("PATCH", { userId, state, reason });
       await loadRoster();
-      setNotice(state === "active" ? "Reviewer activated." : `Reviewer ${state}.`);
+      setNotice(`Reviewer ${state}.`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "State change failed.");
     } finally {
@@ -239,6 +225,20 @@ export function OpsConsole() {
       );
     } catch {
       setNotice("Support request update failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRevokeInvitation(userId: string) {
+    if (!window.confirm("Revoke this invitation link?")) return;
+    setBusy(true);
+    try {
+      await rosterRequest("PATCH", { revokeInvitationUserId: userId });
+      await loadRoster();
+      setNotice("Invitation revoked.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Invitation revoke failed.");
     } finally {
       setBusy(false);
     }
@@ -272,9 +272,11 @@ export function OpsConsole() {
         ) : null}
       </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {cards.map((card) => <StatCard key={card.label} {...card} />)}
-      </section>
+      {roster ? (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {cards.map((card) => <StatCard key={card.label} {...card} />)}
+        </section>
+      ) : null}
 
       {!session || !roster ? (
         <section className="mt-6 border-y border-[var(--border)] py-8">
@@ -313,7 +315,10 @@ export function OpsConsole() {
               </div>
               <button
                 type="button"
-                onClick={() => setInviteOpen(true)}
+                onClick={() => {
+                  setInviteRequestKey(window.crypto.randomUUID());
+                  setInviteOpen(true);
+                }}
                 className="inline-flex h-10 items-center gap-2 bg-[var(--accent)] px-4 text-[13px] font-semibold text-black"
               >
                 <Plus className="h-4 w-4" />
@@ -415,9 +420,14 @@ export function OpsConsole() {
                     </td>
                     <td className="px-3 py-4">
                       <div className="flex justify-end gap-1">
-                        {reviewer.state === "qualification" && reviewer.qualifiedAt ? (
-                          <button type="button" title="Approve qualification" onClick={() => void handleState(reviewer.userId, "active")} className="border border-[var(--border)] p-2 hover:border-[var(--good)] hover:text-[var(--good)]">
-                            <UserRoundCheck className="h-4 w-4" />
+                        {reviewer.state === "invited" ? (
+                          <button
+                            type="button"
+                            title="Revoke invitation"
+                            onClick={() => void handleRevokeInvitation(reviewer.userId)}
+                            className="border border-[var(--border)] p-2 hover:border-[var(--bad)] hover:text-[var(--bad)]"
+                          >
+                            <MailX className="h-4 w-4" />
                           </button>
                         ) : null}
                         {reviewer.state === "active" ? (
@@ -442,12 +452,16 @@ export function OpsConsole() {
 
       {notice ? <div role="status" className="fixed bottom-5 right-5 max-w-sm border border-[var(--border)] bg-[var(--panel)] px-4 py-3 text-[12px] shadow-xl">{notice}</div> : null}
 
-      {inviteOpen && roster ? (
+      {inviteOpen && roster && inviteRequestKey ? (
         <InviteDialog
           factories={roster.factories}
+          requestKey={inviteRequestKey}
           emailReady={roster.email.ready}
           busy={busy}
-          onClose={() => setInviteOpen(false)}
+          onClose={() => {
+            setInviteOpen(false);
+            setInviteRequestKey(null);
+          }}
           onPreview={setPreviewLocale}
           onSubmit={async (payload) => {
             setBusy(true);
@@ -456,6 +470,7 @@ export function OpsConsole() {
               await rosterRequest("POST", payload);
               await loadRoster();
               setInviteOpen(false);
+              setInviteRequestKey(null);
               setNotice(`Invitation sent to ${payload.email}.`);
             } catch (error) {
               setNotice(error instanceof Error ? error.message : "Invitation failed.");
@@ -483,6 +498,7 @@ export function OpsConsole() {
 
 function InviteDialog({
   factories,
+  requestKey,
   emailReady,
   busy,
   onClose,
@@ -490,6 +506,7 @@ function InviteDialog({
   onSubmit,
 }: {
   factories: FactoryOption[];
+  requestKey: string;
   emailReady: boolean;
   busy: boolean;
   onClose: () => void;
@@ -509,7 +526,10 @@ function InviteDialog({
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/75 p-4" role="dialog" aria-modal="true" aria-label="Invite reviewer">
       <form
         className="max-h-[92vh] w-full max-w-[620px] overflow-y-auto border border-[var(--border)] bg-[var(--panel)]"
-        onSubmit={(event) => { event.preventDefault(); void onSubmit({ ...form, locale }); }}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSubmit({ ...form, locale, requestKey });
+        }}
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
           <div>

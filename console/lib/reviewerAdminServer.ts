@@ -1,6 +1,12 @@
 import { NextRequest } from "next/server";
 import { reviewServerConfig, reviewerAccessToken } from "@/lib/reviewServer";
 import { InviteLocale, reviewerInviteEmail } from "@/lib/reviewerEmail";
+import {
+  invitationIdempotencyKey,
+  invitationRedirectUrl,
+  invitationTokenHash,
+  newInvitationToken,
+} from "@/lib/reviewerInviteSecurity";
 
 type AdminLinkResult = {
   user?: { id?: string };
@@ -11,6 +17,7 @@ type AdminLinkResult = {
 };
 
 type SendInviteInput = {
+  requestKey: string;
   email: string;
   displayName: string;
   locale: InviteLocale;
@@ -20,7 +27,11 @@ type SendInviteInput = {
   payBasis: "" | "hourly" | "per_chunk";
 };
 
-async function opsRpc<T>(request: NextRequest, functionName: string, body: object) {
+export async function opsRpc<T>(
+  request: NextRequest,
+  functionName: string,
+  body: object,
+) {
   const token = reviewerAccessToken(request);
   if (!token) throw new Error("OPS_AUTH_REQUIRED");
   const config = reviewServerConfig();
@@ -66,11 +77,12 @@ export function reviewerEmailReadiness() {
 }
 
 export async function reviewerRoster(request: NextRequest) {
-  const [roster, supportRequests] = await Promise.all([
+  const [roster, supportRequests, metrics] = await Promise.all([
     opsRpc<Record<string, unknown>>(request, "ops_reviewer_roster", {}),
     opsRpc<unknown[]>(request, "ops_reviewer_support_requests", {}),
+    opsRpc<Record<string, number>>(request, "ops_workforce_metrics", {}),
   ]);
-  return { ...roster, supportRequests };
+  return { ...roster, supportRequests, metrics };
 }
 
 export async function updateReviewerState(
@@ -97,11 +109,49 @@ export async function updateReviewerSupportState(
   });
 }
 
+export async function revokeReviewerInvitation(
+  request: NextRequest,
+  userId: string,
+) {
+  return opsRpc(request, "ops_revoke_reviewer_invitation", {
+    p_user_id: userId,
+  });
+}
+
 export async function sendReviewerInvite(request: NextRequest, input: SendInviteInput) {
   const delivery = emailConfig();
   const config = reviewServerConfig();
+  const existing = await opsRpc<{
+    invitationId: string;
+    status: string;
+    deliveryId: string | null;
+    expiresAt: string;
+  } | null>(request, "ops_reviewer_invitation_request", {
+    p_request_key: input.requestKey,
+  });
+  if (existing?.status === "sent") {
+    return {
+      invitationId: existing.invitationId,
+      deliveryId: existing.deliveryId,
+      expiresAt: existing.expiresAt,
+      replayed: true,
+    };
+  }
+  if (existing) {
+    throw new Error(
+      existing.status === "delivery_failed"
+        ? "INVITATION_DELIVERY_FAILED_REISSUE"
+        : "INVITATION_DELIVERY_OUTCOME_UNKNOWN",
+    );
+  }
+
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-  const redirectTo = new URL("/review/welcome", delivery.baseUrl).toString();
+  const invitationToken = newInvitationToken();
+  const redirectTo = invitationRedirectUrl(
+    delivery.baseUrl,
+    invitationToken,
+    input.locale,
+  );
   const linkResponse = await fetch(`${config.projectUrl}/auth/v1/admin/generate_link`, {
     method: "POST",
     headers: {
@@ -150,8 +200,18 @@ export async function sendReviewerInvite(request: NextRequest, input: SendInvite
       p_expires_at: expiresAt,
       p_delivery_provider: null,
       p_delivery_id: null,
+      p_invitation_token_hash: invitationTokenHash(invitationToken),
+      p_request_key: input.requestKey,
     },
   );
+  const claim = await opsRpc<{ claimed: boolean; status: string }>(
+    request,
+    "ops_claim_reviewer_invitation_delivery",
+    { p_invitation_id: invitationId },
+  );
+  if (!claim.claimed) {
+    throw new Error("INVITATION_DELIVERY_OUTCOME_UNKNOWN");
+  }
 
   let sent: { id?: string; message?: string };
   try {
@@ -160,6 +220,7 @@ export async function sendReviewerInvite(request: NextRequest, input: SendInvite
       headers: {
         Authorization: `Bearer ${delivery.resendKey}`,
         "Content-Type": "application/json",
+        "Idempotency-Key": invitationIdempotencyKey(invitationId),
       },
       body: JSON.stringify({
         from: delivery.from,
@@ -168,9 +229,7 @@ export async function sendReviewerInvite(request: NextRequest, input: SendInvite
         subject: email.subject,
         html: email.html,
         text: email.text,
-        headers: {
-          "X-Entity-Ref-ID": crypto.randomUUID(),
-        },
+        headers: { "X-Entity-Ref-ID": invitationId },
       }),
       cache: "no-store",
     });

@@ -612,10 +612,11 @@ export function ReviewTallyConsole() {
     );
   }
 
-  if (screen === "onboarding" && lifecycle) {
+  if (screen === "onboarding" && lifecycle && session) {
     return (
       <ReviewerOnboarding
         lifecycle={lifecycle}
+        session={session}
         onChange={(next) => {
           setLifecycle(next);
           if (next.state === "active" && session) void loadNext(session);

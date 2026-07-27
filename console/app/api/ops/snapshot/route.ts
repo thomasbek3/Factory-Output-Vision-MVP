@@ -1,17 +1,14 @@
-import { demoNowIso } from "@/lib/demoData";
-import { opsSnapshot } from "@/lib/reviewStore";
+import { NextRequest } from "next/server";
+import { opsRpc } from "@/lib/reviewerAdminServer";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const snapshot = opsSnapshot(new Date(demoNowIso));
-  return Response.json({
-    factories: snapshot.factories,
-    camerasUp: snapshot.camerasUp,
-    camerasTotal: snapshot.camerasTotal,
-    eventsToday: snapshot.eventsToday,
-    verificationLagMinutes: snapshot.verificationLagMinutes,
-    openQueueDepth: snapshot.openQueueDepth,
-    chunksTotal: snapshot.chunksTotal,
-  });
+export async function GET(request: NextRequest) {
+  try {
+    return Response.json(
+      await opsRpc(request, "ops_workforce_metrics", {}),
+    );
+  } catch {
+    return Response.json({ error: "Ops authentication required." }, { status: 401 });
+  }
 }
