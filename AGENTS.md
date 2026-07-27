@@ -6,6 +6,21 @@ This file provides repo-local guidance for AI coding assistants working in this 
 
 When explaining output, results, or concepts to Thomas, always include a plain-English explanation using non-technical metaphors a layman can understand. Technical detail is fine, but it must come WITH the layman version, not instead of it. Example: don't just say "teacher precision 0.91 / recall 0.87" — say "out of every 10 things the teacher flagged, 9 were real (precision), and it caught about 9 of every 10 real events (recall)."
 
+## Attended Email And Authentication Authorization
+
+For attended Factory Vision work, Thomas authorizes agents to inspect his email
+and complete the intended authentication flow without asking again. Use the
+native Gmail connector first when it can access the required mailbox, then the
+authenticated `gog` Google Workspace CLI, then Chrome or Computer Use when a
+browser interaction is required. This authorization includes reading the
+relevant message and opening its invitation, verification, magic-link, or OTP
+destination for the Factory Vision account currently being configured.
+
+Keep this authorization scoped to the requested Factory Vision workflow. Do not
+send, forward, delete, archive, label, or otherwise reorganize unrelated email
+without an explicit request. Never echo passwords, API keys, access tokens, or
+verification codes into chat, logs, commits, or durable project documentation.
+
 ## Current Source Of Truth
 
 Start with the concise current docs before relying on older task logs or research notes:
