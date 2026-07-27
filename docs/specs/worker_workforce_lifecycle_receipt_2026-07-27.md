@@ -111,24 +111,25 @@ evidence, suspension, and offboarding.
 - Production browser verification passed for desktop and mobile worker login
   and the ops login. Both routes returned `200` with no browser console errors;
   the unauthenticated ops snapshot remained protected with `401`.
+- Supabase Auth now uses the Vercel portal as its Site URL and includes the
+  portal wildcard in its redirect allowlist.
+- Thomas's permanent ops account has a configured password and completed a
+  live authenticated `/ops` login. The credential is not stored in the
+  repository or this receipt.
 
 ## NEXT 3
 
 1. Curate and approve a disjoint 90-second qualification video, upload it as a
    `qualification` chunk, and add its private gold reference answer.
-2. Correct the Supabase Auth Site URL and redirect allowlist to the deployed
-   Vercel portal, then prove a controlled recovery or activation link.
-3. Configure production email delivery, finish Thomas's password/MFA setup,
-   then run one full first-worker rehearsal through qualification and
-   three-person production resolution.
+2. Configure production email delivery, send a controlled worker invitation,
+   and prove its activate-account link.
+3. Decide whether ops must enforce MFA, then run one full first-worker rehearsal
+   through qualification and three-person production resolution.
 
 ## WAITING ON THOMAS
 
 - Verified sending domain, sender name/address, Resend credential, and staffed
   support address.
-- A working Supabase Auth URL configuration save. The Vercel URL is proven, but
-  the dashboard save did not persist. Thomas's Auth user, confirmed email, and
-  permanent `ops` membership are already present.
 - Final worker country/classification, pay basis and rate, time-rounding policy,
   privacy/data-handling terms, support SLA, and owner for payroll disputes.
 - Approval of the gold qualification clip and pass thresholds.
@@ -138,10 +139,8 @@ evidence, suspension, and offboarding.
 ## OPEN RISKS
 
 - No production email was sent because no verified sender configuration exists.
-- The permanent ops account is confirmed, and the review portal is publicly
-  reachable, but Supabase Auth still does not use that portal as its Site URL.
-  Password/MFA setup remains blocked until that configuration persists or an
-  explicit recovery flow is added.
+- The permanent ops account and password login are proven, but ops MFA is not
+  currently enforced or enrolled.
 - No normal worker can be activated until the qualification reference is
   created; this is an intentional launch gate.
 - Work-session seconds are bounded operational evidence, not a payroll ledger.
