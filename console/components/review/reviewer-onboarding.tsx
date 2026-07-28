@@ -54,7 +54,12 @@ export function ReviewerOnboarding({
   const [code, setCode] = useState("");
 
   useEffect(() => {
-    if (!passwordSet || lifecycle.mfaVerifiedAt || factorId) return;
+    if (
+      !passwordSet ||
+      lifecycle.isTestAccount ||
+      lifecycle.mfaVerifiedAt ||
+      factorId
+    ) return;
     setBusy(true);
     void api("/api/review/mfa", "POST", { action: "enroll" })
       .then((result) => {
@@ -64,10 +69,46 @@ export function ReviewerOnboarding({
       })
       .catch((caught) => setError(caught instanceof Error ? caught.message : "MFA setup failed."))
       .finally(() => setBusy(false));
-  }, [factorId, lifecycle.mfaVerifiedAt, passwordSet]);
+  }, [
+    factorId,
+    lifecycle.isTestAccount,
+    lifecycle.mfaVerifiedAt,
+    passwordSet,
+  ]);
 
   useEffect(() => {
-    if (!lifecycle.mfaVerifiedAt || lifecycle.currentAal === "aal2" || factorId) return;
+    if (
+      !passwordSet ||
+      !lifecycle.isTestAccount ||
+      lifecycle.mfaVerifiedAt
+    ) return;
+    setBusy(true);
+    void reviewerDeviceHash()
+      .then((deviceIdHash) => reviewerLifecycle("POST", {
+        step: "mfa_verified",
+        deviceIdHash,
+      }))
+      .then(onChange)
+      .catch((caught) => setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not open the test workspace.",
+      ))
+      .finally(() => setBusy(false));
+  }, [
+    lifecycle.isTestAccount,
+    lifecycle.mfaVerifiedAt,
+    onChange,
+    passwordSet,
+  ]);
+
+  useEffect(() => {
+    if (
+      lifecycle.isTestAccount ||
+      !lifecycle.mfaVerifiedAt ||
+      lifecycle.currentAal === "aal2" ||
+      factorId
+    ) return;
     setBusy(true);
     void api("/api/review/mfa", "GET")
       .then((result) => {
@@ -77,7 +118,12 @@ export function ReviewerOnboarding({
       })
       .catch((caught) => setError(caught instanceof Error ? caught.message : "MFA challenge failed."))
       .finally(() => setBusy(false));
-  }, [factorId, lifecycle.currentAal, lifecycle.mfaVerifiedAt]);
+  }, [
+    factorId,
+    lifecycle.currentAal,
+    lifecycle.isTestAccount,
+    lifecycle.mfaVerifiedAt,
+  ]);
 
   async function run(action: () => Promise<ReviewerLifecycle>) {
     setBusy(true);
@@ -174,6 +220,17 @@ export function ReviewerOnboarding({
     );
   }
 
+  if (!lifecycle.mfaVerifiedAt && lifecycle.isTestAccount) {
+    return shell(
+      <div className="mx-auto max-w-md text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-[var(--accent)]" />
+        <h2 className="mt-5 text-[24px] font-semibold">
+          {spanish ? "Abriendo tu espacio de trabajo" : "Opening your workspace"}
+        </h2>
+      </div>,
+    );
+  }
+
   if (!lifecycle.mfaVerifiedAt) {
     return shell(
       <form className="mx-auto max-w-xl" onSubmit={verifyMfa}>
@@ -245,7 +302,7 @@ export function ReviewerOnboarding({
         <h2 className="mt-5 text-[24px] font-semibold">{spanish ? "Cómo revisar un video" : "How to review a video"}</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[
-            spanish ? ["1", "Mira todo el video", "Puedes usar 1x, 2x o 5x."] : ["1", "Watch the full video", "You can use 1x, 2x, or 5x."],
+            spanish ? ["1", "Mira todo el video", "Puedes usar 1x, 2x, 5x, 10x, 15x o 20x."] : ["1", "Watch the full video", "You can use 1x, 2x, 5x, 10x, 15x, or 20x."],
             spanish ? ["2", "Marca cada pieza", "Presiona +1 cuando la pieza queda en el área de salida."] : ["2", "Mark every piece", "Press +1 when the piece remains in the output area."],
             spanish ? ["3", "Revisa y confirma", "Corrige tus marcas antes de enviar."] : ["3", "Review and confirm", "Correct your marks before submitting."],
           ].map(([number, title, detail]) => (

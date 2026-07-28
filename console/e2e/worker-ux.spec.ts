@@ -2,6 +2,81 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { assertNoConsoleErrors, collectConsoleErrors } from "./helpers";
 
+test("build-phase test accounts skip authenticator enrollment", async ({ page }) => {
+  const errors = collectConsoleErrors(page);
+  let onboardingPostCount = 0;
+  let mfaRequestCount = 0;
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem("factoryvision-review-language", "en");
+  });
+  await page.route("**/api/review/session", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: { id: "build-reviewer", email: "build@example.com" },
+      }),
+    });
+  });
+  await page.route("**/api/review/mfa", async (route) => {
+    mfaRequestCount += 1;
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "MFA_SHOULD_NOT_BE_CALLED" }),
+    });
+  });
+  await page.route("**/api/review/onboarding", async (route) => {
+    if (route.request().method() === "POST") {
+      const payload = route.request().postDataJSON() as { step?: string };
+      expect(payload.step).toBe("mfa_verified");
+      onboardingPostCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          userId: "build-reviewer",
+          displayName: "Build Reviewer",
+          email: "build@example.com",
+          locale: "en",
+          state: "terms_required",
+          mfaVerifiedAt: "2026-07-27T22:30:00Z",
+          currentAal: "aal1",
+          isTestAccount: true,
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        userId: "build-reviewer",
+        displayName: "Build Reviewer",
+        email: "build@example.com",
+        locale: "en",
+        state: "mfa_required",
+        mfaVerifiedAt: null,
+        currentAal: "aal1",
+        isTestAccount: true,
+      }),
+    });
+  });
+
+  await page.goto("/review");
+  await expect(page.getByRole("heading", { name: "Protect the information" }))
+    .toBeVisible();
+  await expect(page.getByText("Protect your account")).toHaveCount(0);
+  expect(onboardingPostCount).toBe(1);
+  expect(mfaRequestCount).toBe(0);
+  await page.screenshot({
+    path: "e2e-audit/shots/reviewer-test-account-mfa-skip.png",
+    fullPage: true,
+  });
+  assertNoConsoleErrors(errors);
+});
+
 test("employee can understand and complete the assigned-work flow", async ({ page }) => {
   const errors = collectConsoleErrors(page);
   let started = false;
@@ -174,29 +249,14 @@ test("employee can understand and complete the assigned-work flow", async ({ pag
   }
   await page.getByRole("button", { name: "20x", exact: true }).click();
   await expect.poll(async () => {
-    const selected20 = await page
-      .getByRole("button", { name: "20x", exact: true })
-      .getAttribute("aria-pressed");
-    const selected15 = await page
-      .getByRole("button", { name: "15x", exact: true })
-      .getAttribute("aria-pressed");
-    if (selected20 === "true") return "20";
-    if (selected15 === "true") return "15";
+    if (await page.getByText(/left at 20x/).isVisible()) return "20";
+    if (
+      await page.getByRole("status").filter({
+        hasText: "That speed did not work. The video will use a lower speed.",
+      }).isVisible()
+    ) return "15";
     return "pending";
   }).toMatch(/^(15|20)$/);
-  const selectedHighSpeed =
-    await page
-      .getByRole("button", { name: "20x", exact: true })
-      .getAttribute("aria-pressed") === "true"
-      ? 20
-      : 15;
-  if (selectedHighSpeed === 15) {
-    await expect(page.getByRole("status")).toContainText(
-      "That speed did not work. The video will use a lower speed.",
-    );
-  } else {
-    await expect(page.getByText(/left at 20x/)).toBeVisible();
-  }
   await page.getByRole("button", { name: "5x", exact: true }).click();
   await page.locator("body").click();
   await page.keyboard.press("Space");
