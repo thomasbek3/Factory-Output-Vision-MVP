@@ -871,8 +871,8 @@ export function ReviewTallyConsole() {
             ? "Práctica terminada con un problema. No se guardó como dato de entrenamiento."
             : "Practice ended with a problem. Nothing was saved as training data."
           : language === "es"
-            ? `Práctica terminada: ${total} piezas. No se guardó como dato de entrenamiento.`
-            : `Practice complete: ${total} outputs. Nothing was saved as training data.`,
+            ? `Práctica terminada: ${total} ${total === 1 ? "pieza" : "piezas"}. No se guardó como dato de entrenamiento.`
+            : `Practice complete: ${total} ${total === 1 ? "output" : "outputs"}. Nothing was saved as training data.`,
       );
       setScreen("today");
       setSubmitting(false);
