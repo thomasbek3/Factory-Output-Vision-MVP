@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyValidatedPlaybackRate } from "@/lib/reviewPlayback";
+import {
+  applyValidatedPlaybackRate,
+  compensatedPlaybackTarget,
+} from "@/lib/reviewPlayback";
 
 describe("review playback rate", () => {
   it("keeps an accepted validated speed", () => {
@@ -7,6 +10,8 @@ describe("review playback rate", () => {
 
     expect(applyValidatedPlaybackRate(media, 5)).toEqual({
       effectiveRate: 5,
+      nativeRate: 5,
+      compensated: false,
       steppedDown: false,
     });
     expect(media.playbackRate).toBe(5);
@@ -26,6 +31,8 @@ describe("review playback rate", () => {
 
     expect(applyValidatedPlaybackRate(media, 5)).toEqual({
       effectiveRate: 1,
+      nativeRate: 1,
+      compensated: false,
       steppedDown: true,
     });
     expect(effectiveRate).toBe(1);
@@ -44,12 +51,14 @@ describe("review playback rate", () => {
 
     expect(applyValidatedPlaybackRate(media, 5)).toEqual({
       effectiveRate: 2,
+      nativeRate: 2,
+      compensated: false,
       steppedDown: true,
     });
     expect(effectiveRate).toBe(2);
   });
 
-  it("falls back to 15x when the browser rejects a native 20x rate", () => {
+  it("bridges native 15x playback to an effective 20x mode", () => {
     let effectiveRate = 1;
     const media = {
       get playbackRate() {
@@ -64,10 +73,18 @@ describe("review playback rate", () => {
     };
 
     expect(applyValidatedPlaybackRate(media, 20)).toEqual({
-      effectiveRate: 15,
-      steppedDown: true,
+      effectiveRate: 20,
+      nativeRate: 15,
+      compensated: true,
+      steppedDown: false,
     });
     expect(effectiveRate).toBe(15);
+  });
+
+  it("anchors compensated playback to elapsed wall time", () => {
+    expect(compensatedPlaybackTarget(10, 20, 2_000, 900)).toBe(50);
+    expect(compensatedPlaybackTarget(890, 20, 2_000, 900)).toBe(900);
+    expect(compensatedPlaybackTarget(10, 20, -1, 900)).toBe(10);
   });
 });
 

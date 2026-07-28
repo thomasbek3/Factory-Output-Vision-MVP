@@ -30,6 +30,7 @@ import { ReviewerOnboarding } from "@/components/review/reviewer-onboarding";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
 import {
   applyValidatedPlaybackRate,
+  compensatedPlaybackTarget,
   coverageGapToleranceMs,
 } from "@/lib/reviewPlayback";
 import {
@@ -219,6 +220,8 @@ export function ReviewTallyConsole() {
   const [screen, setScreen] = useState<Screen>("loading");
   const [language, setLanguage] = useState<ReviewLanguage>("en");
   const [speed, setSpeed] = useState<ReviewSpeed>(1);
+  const [nativePlaybackRate, setNativePlaybackRate] = useState(1);
+  const [playbackAnchorVersion, setPlaybackAnchorVersion] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -394,6 +397,53 @@ export function ReviewTallyConsole() {
     }
   }, [flushOutbox, refreshWorkSummary]);
 
+  const loadPracticePreview = useCallback(async () => {
+    setScreen("loading");
+    setStatus(null);
+    try {
+      const preview = await reviewerPreviewAccess();
+      if (!preview.allowed || !preview.practice) {
+        setAssignment(null);
+        setWorkSummary({
+          ready: 0,
+          inProgress: 0,
+          completedToday: 0,
+          observedAt: new Date().toISOString(),
+        });
+        setScreen("today");
+        return;
+      }
+      const next = preview.practice;
+      pageEpoch.current = window.crypto.randomUUID();
+      coverageRanges.current = [];
+      coveragePreviousMs.current = null;
+      coverageActiveStartedAt.current = null;
+      coverageActiveMs.current = 0;
+      resumeSourceMs.current = next.chunk.sourceStartMs;
+      appliedInitialResume.current = false;
+      setAssignment(next);
+      setPendingCount(0);
+      clicksRef.current = [];
+      setClicks([]);
+      setCurrentTime(0);
+      setDuration(0);
+      setIsPlaying(false);
+      setShowProblems(false);
+      setShowZeroGuard(false);
+      setPendingProblem(null);
+      setAssignmentUnavailable(false);
+      setVideoIssue(false);
+      setTimelineIssue(false);
+      setSaveState("saved");
+      setScreen("tally");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Unable to load practice footage.",
+      );
+      setScreen("today");
+    }
+  }, []);
+
   const beginReviewer = useCallback(async (activeSession: ReviewSession) => {
     const state = await reviewerLifecycle("GET");
     setLifecycle(state);
@@ -401,7 +451,9 @@ export function ReviewTallyConsole() {
     if (savedLanguage !== "en" && savedLanguage !== "es") {
       setLanguage(state.locale === "es-419" ? "es" : "en");
     }
-    if (state.state === "unregistered" && await reviewerPreviewAccess()) {
+    const preview =
+      state.state === "unregistered" ? await reviewerPreviewAccess() : null;
+    if (state.state === "unregistered" && preview?.allowed) {
       setPreviewMode(true);
       setLifecycle({
         ...state,
@@ -412,7 +464,7 @@ export function ReviewTallyConsole() {
         isTestAccount: true,
       });
       setWorkSummary({
-        ready: 0,
+        ready: preview.practice ? 1 : 0,
         inProgress: 0,
         completedToday: 0,
         observedAt: new Date().toISOString(),
@@ -449,7 +501,7 @@ export function ReviewTallyConsole() {
   }, [beginReviewer]);
 
   useEffect(() => {
-    if (!assignment || !session) return;
+    if (previewMode || !assignment || !session) return;
     const timer = window.setInterval(() => {
       void workerRpc(session, "heartbeat_worker_assignment", {
         p_assignment_id: assignment.id,
@@ -463,10 +515,10 @@ export function ReviewTallyConsole() {
       });
     }, 30_000);
     return () => window.clearInterval(timer);
-  }, [assignment, session]);
+  }, [assignment, previewMode, session]);
 
   useEffect(() => {
-    if (!assignment || !session) return;
+    if (previewMode || !assignment || !session) return;
     let disposed = false;
     let timer: number | null = null;
     void reviewerDeviceHash()
@@ -510,10 +562,10 @@ export function ReviewTallyConsole() {
         }).catch(() => undefined);
       }
     };
-  }, [assignment, session]);
+  }, [assignment, previewMode, session]);
 
   const saveCoverage = useCallback(async () => {
-    if (!assignment || !session || !pageEpoch.current) return;
+    if (previewMode || !assignment || !session || !pageEpoch.current) return;
     const activeMs =
       coverageActiveMs.current +
       (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
@@ -524,23 +576,32 @@ export function ReviewTallyConsole() {
       p_ranges: coverageRanges.current,
       p_client_active_ms: Math.round(activeMs),
     });
-  }, [assignment, session]);
+  }, [assignment, previewMode, session]);
 
   useEffect(() => {
-    if (!assignment || !session) return;
+    if (previewMode || !assignment || !session) return;
     const timer = window.setInterval(() => void saveCoverage().catch(() => undefined), 5_000);
     return () => window.clearInterval(timer);
-  }, [assignment, saveCoverage, session]);
+  }, [assignment, previewMode, saveCoverage, session]);
 
   const refreshMedia = useCallback(async () => {
     if (!assignment || !session) return;
     const video = videoRef.current;
     const position = video?.currentTime ?? 0;
     try {
-      const result = await workerRpc<{ mediaUrl: string }>(session, "authorize_worker_media", {
-        p_assignment_id: assignment.id,
-        p_lease_token: assignment.leaseToken,
-      });
+      const result = previewMode
+        ? {
+            mediaUrl:
+              (await reviewerPreviewAccess()).practice?.chunk.mediaUrl ?? "",
+          }
+        : await workerRpc<{ mediaUrl: string }>(
+            session,
+            "authorize_worker_media",
+            {
+              p_assignment_id: assignment.id,
+              p_lease_token: assignment.leaseToken,
+            },
+          );
       if (!video || !result.mediaUrl) return;
       const wasPlaying = !video.paused;
       video.src = result.mediaUrl;
@@ -557,7 +618,7 @@ export function ReviewTallyConsole() {
           : "The video needs a new connection.",
       );
     }
-  }, [assignment, language, session]);
+  }, [assignment, language, previewMode, session]);
 
   useEffect(() => {
     if (!assignment || !session) return;
@@ -568,18 +629,19 @@ export function ReviewTallyConsole() {
   }, [assignment, refreshMedia, session]);
 
   useEffect(() => {
-    if (screen !== "today" || !session) return;
+    if (previewMode || screen !== "today" || !session) return;
     const timer = window.setInterval(() => {
       void refreshWorkSummary(session).catch(() => undefined);
     }, 5_000);
     return () => window.clearInterval(timer);
-  }, [refreshWorkSummary, screen, session]);
+  }, [previewMode, refreshWorkSummary, screen, session]);
 
   const applyReviewSpeed = useCallback((
     video: HTMLVideoElement,
     requestedSpeed: ReviewSpeed,
   ) => {
     const result = applyValidatedPlaybackRate(video, requestedSpeed);
+    setNativePlaybackRate(result.nativeRate);
     if (result.steppedDown) {
       setSpeed(result.effectiveRate as ReviewSpeed);
       setStatus(strings.speedSteppedDown);
@@ -591,14 +653,67 @@ export function ReviewTallyConsole() {
     applyReviewSpeed(videoRef.current, speed);
   }, [applyReviewSpeed, speed, assignment]);
 
+  useEffect(() => {
+    if (screen !== "tally" || speed <= nativePlaybackRate) return;
+    const video = videoRef.current;
+    if (!video) return;
+    let anchorWallMs: number | null = null;
+    let anchorVideoSeconds = 0;
+    const resetAnchor = () => {
+      anchorWallMs = performance.now();
+      anchorVideoSeconds = video.currentTime;
+    };
+    const clearAnchor = () => {
+      anchorWallMs = null;
+    };
+    video.addEventListener("play", resetAnchor);
+    video.addEventListener("pause", clearAnchor);
+    if (!video.paused) resetAnchor();
+    const timer = window.setInterval(() => {
+      if (
+        video.paused ||
+        video.ended ||
+        anchorWallMs === null ||
+        !Number.isFinite(video.duration)
+      ) {
+        return;
+      }
+      const target = compensatedPlaybackTarget(
+        anchorVideoSeconds,
+        speed,
+        performance.now() - anchorWallMs,
+        video.duration,
+      );
+      if (!video.seeking && target - video.currentTime >= 1) {
+        video.currentTime = target;
+      }
+    }, 1_000);
+    return () => {
+      window.clearInterval(timer);
+      video.removeEventListener("play", resetAnchor);
+      video.removeEventListener("pause", clearAnchor);
+    };
+  }, [
+    assignment,
+    nativePlaybackRate,
+    playbackAnchorVersion,
+    screen,
+    speed,
+  ]);
+
   const queueAction = useCallback((action: PendingAction) => {
     if (!assignment || !session) return;
+    if (previewMode) {
+      setPendingCount(0);
+      setSaveState("saved");
+      return;
+    }
     const pending = [...readOutbox(assignment.id), action];
     writeOutbox(assignment.id, pending);
     setPendingCount(pending.length);
     setSaveState("saving");
     void flushOutbox(session, assignment);
-  }, [assignment, flushOutbox, session]);
+  }, [assignment, flushOutbox, previewMode, session]);
 
   const addCount = useCallback(() => {
     if (!assignment || !videoRef.current || screen !== "tally") return;
@@ -656,7 +771,10 @@ export function ReviewTallyConsole() {
   }, [queueAction, speed]);
 
   const backTen = useCallback(() => {
-    if (videoRef.current) videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
+      setPlaybackAnchorVersion((value) => value + 1);
+    }
   }, []);
 
   const togglePlayback = useCallback(() => {
@@ -694,6 +812,30 @@ export function ReviewTallyConsole() {
   async function submit(problemCode?: string) {
     if (!assignment || !session) return;
     setSubmitting(true);
+    if (previewMode) {
+      const total = clicksRef.current.length;
+      setAssignment(null);
+      clicksRef.current = [];
+      setClicks([]);
+      setWorkSummary((current) => ({
+        ready: current?.ready ?? 1,
+        inProgress: 0,
+        completedToday: (current?.completedToday ?? 0) + 1,
+        observedAt: new Date().toISOString(),
+      }));
+      setStatus(
+        problemCode
+          ? language === "es"
+            ? "Práctica terminada con un problema. No se guardó como dato de entrenamiento."
+            : "Practice ended with a problem. Nothing was saved as training data."
+          : language === "es"
+            ? `Práctica terminada: ${total} piezas. No se guardó como dato de entrenamiento.`
+            : `Practice complete: ${total} outputs. Nothing was saved as training data.`,
+      );
+      setScreen("today");
+      setSubmitting(false);
+      return;
+    }
     const saved = await flushOutbox(session, assignment);
     if (!saved && readOutbox(assignment.id).length) {
       setStatus(language === "es" ? "Sin conexión. Guarda los cambios antes de enviar." : "Offline. Save changes before submitting.");
@@ -810,10 +952,11 @@ export function ReviewTallyConsole() {
   }
 
   const saveLabel = useMemo(() => {
+    if (previewMode) return language === "es" ? "Solo práctica" : "Practice only";
     if (saveState === "saving") return language === "es" ? "Guardando..." : "Saving...";
     if (saveState === "offline") return language === "es" ? `${pendingCount} sin guardar` : `${pendingCount} unsaved`;
     return language === "es" ? "Guardado" : "Saved";
-  }, [language, pendingCount, saveState]);
+  }, [language, pendingCount, previewMode, saveState]);
 
   const supportDialog = supportOpen ? (
     <div
@@ -999,8 +1142,8 @@ export function ReviewTallyConsole() {
           {previewMode ? (
             <div className="mt-6 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent-tint)] px-4 py-3 text-[13px] text-[var(--text-mut)]">
               {language === "es"
-                ? "Vista previa del portal del empleado. No recibirás tareas."
-                : "Employee portal preview. You will not receive assignments."}
+                ? "Práctica con video real. Tus clics no se guardan como datos de entrenamiento."
+                : "Practice with real footage. Your clicks are not saved as training data."}
             </div>
           ) : null}
 
@@ -1033,12 +1176,20 @@ export function ReviewTallyConsole() {
                   <button
                     type="button"
                     className="mt-7 flex h-16 w-full items-center justify-center gap-3 rounded-lg bg-[var(--accent)] px-6 text-[18px] font-bold text-[#11100d] transition-colors hover:bg-[var(--accent-hi)]"
-                    onClick={() => session && void loadNext(session)}
+                    onClick={() => {
+                      if (previewMode) {
+                        void loadPracticePreview();
+                      } else if (session) {
+                        void loadNext(session);
+                      }
+                    }}
                   >
                     <Play className="h-5 w-5 fill-current" />
                     {inProgress > 0
                       ? (language === "es" ? "Continuar video" : "Resume video")
-                      : (language === "es" ? "Comenzar siguiente video" : "Start next video")}
+                      : previewMode
+                        ? (language === "es" ? "Comenzar práctica" : "Start practice")
+                        : (language === "es" ? "Comenzar siguiente video" : "Start next video")}
                   </button>
                 ) : (
                   <div className="mt-7 flex items-center gap-3 border-t border-[var(--border)] pt-5 text-[13px] text-[var(--text-dim)]">
@@ -1105,8 +1256,16 @@ export function ReviewTallyConsole() {
         lifecycle={lifecycle}
         onLanguageChange={toggleLanguage}
         onHelp={() => {
-          setSupportReason("assignment");
-          setSupportOpen(true);
+          if (previewMode) {
+            setStatus(
+              language === "es"
+                ? "La ayuda no está disponible en la práctica."
+                : "Help is not available during practice.",
+            );
+          } else {
+            setSupportReason("assignment");
+            setSupportOpen(true);
+          }
         }}
         onSignOut={() => {
           void signOutReviewer();

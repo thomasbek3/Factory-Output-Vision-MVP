@@ -179,19 +179,28 @@ export async function reviewerLifecycle(method: "GET" | "POST", body?: object) {
   return result;
 }
 
-export async function reviewerPreviewAccess() {
+export type ReviewerPreview = {
+  allowed: boolean;
+  practice: WorkerAssignment | null;
+};
+
+export async function reviewerPreviewAccess(): Promise<ReviewerPreview> {
   const response = await fetch("/api/review/preview", {
     method: "GET",
     credentials: "same-origin",
     cache: "no-store",
   });
-  if (response.status === 403) return false;
+  if (response.status === 403) return { allowed: false, practice: null };
   const result = (await response.json()) as {
     allowed?: boolean;
+    practice?: WorkerAssignment | null;
     error?: string;
   };
   if (!response.ok) {
     throw new Error(result.error ?? `PREVIEW_ACCESS_${response.status}`);
   }
-  return result.allowed === true;
+  return {
+    allowed: result.allowed === true,
+    practice: result.practice ?? null,
+  };
 }
