@@ -16,6 +16,10 @@ This amendment is authoritative for the employee-facing route:
 
 - The first screen after login is `Today's work`, not footage and not an
   operations dashboard.
+- Routine reviewer login is passwordless: an existing reviewer enters their
+  email and receives a one-click Supabase magic link. The flow must never create
+  an account, bypass invitation/lifecycle authorization, or remove production
+  MFA requirements.
 - The landing screen exposes only the reviewer's personal ready, in-progress,
   and completed-today counts. It never exposes global queue depth, peer answers,
   consensus state, AI output, or factory browsing.

@@ -104,6 +104,36 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         )
         self.assertNotRegex(self.sql, r"grant .*private\..* to (?:anon|authenticated)")
 
+    def test_passwordless_rate_limit_keeps_identity_data_private(self) -> None:
+        self.assertIn(
+            "create table private.passwordless_login_requests",
+            self.sql,
+        )
+        self.assertIn(
+            "alter table private.passwordless_login_requests enable row level security",
+            self.sql,
+        )
+        self.assertIn(
+            "alter table private.passwordless_login_requests force row level security",
+            self.sql,
+        )
+        self.assertIn(
+            "revoke all on private.passwordless_login_requests from public, anon, authenticated",
+            self.sql,
+        )
+        self.assertIn("p_email_hash text", self.sql)
+        self.assertIn("p_ip_hash text", self.sql)
+        self.assertIn("interval '60 seconds'", self.sql)
+        self.assertIn("interval '1 hour'", self.sql)
+        self.assertIn(
+            "grant execute on function public.check_passwordless_login_rate(text, text)\n  to anon",
+            self.sql,
+        )
+        self.assertIn(
+            "revoke all on function public.check_passwordless_login_rate(text, text)\n  from public, authenticated",
+            self.sql,
+        )
+
     def test_immutable_human_lineage_has_guards(self) -> None:
         for table in (
             "review_actions",

@@ -15,11 +15,11 @@ async function signIn(page: Page, email: string) {
   await page.addInitScript(() => {
     window.localStorage.setItem("factoryvision-review-language", "en");
   });
+  const response = await page.request.post("/api/review/session", {
+    data: { email, password: qaPassword },
+  });
+  expect(response.ok()).toBeTruthy();
   await page.goto("/review");
-  await expect(page.locator("[data-review-route='auth']")).toBeVisible();
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(qaPassword ?? "");
-  await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.locator("[data-review-route='today']")).toBeVisible({
     timeout: 20_000,
   });

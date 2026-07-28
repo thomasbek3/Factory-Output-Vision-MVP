@@ -43,7 +43,10 @@ export type WorkerAssignment = {
   } | null;
 };
 
-async function sessionRequest(method: "GET" | "POST" | "DELETE", body?: object) {
+async function sessionRequest<T = ReviewSession>(
+  method: "GET" | "POST" | "DELETE",
+  body?: object,
+): Promise<T> {
   const response = await fetch("/api/review/session", {
     method,
     credentials: "same-origin",
@@ -51,15 +54,39 @@ async function sessionRequest(method: "GET" | "POST" | "DELETE", body?: object) 
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const result = (await response.json()) as ReviewSession & { error?: string };
+  const result = (await response.json()) as T & { error?: string };
   if (!response.ok) {
     throw new Error(result.error ?? `AUTH_${response.status}`);
   }
   return result;
 }
 
+export async function requestReviewerSignInLink(
+  email: string,
+  language: "en" | "es",
+) {
+  return sessionRequest<{ sent: true }>("POST", {
+    action: "requestPasswordless",
+    email,
+    language,
+  });
+}
+
 export async function signInReviewer(email: string, password: string) {
   return sessionRequest("POST", { email, password });
+}
+
+export async function acceptReviewerPasswordlessSession(
+  accessToken: string,
+  refreshToken: string,
+  expiresIn: number,
+) {
+  return sessionRequest("POST", {
+    action: "completePasswordless",
+    accessToken,
+    refreshToken,
+    expiresIn,
+  });
 }
 
 export async function acceptReviewerInviteSession(

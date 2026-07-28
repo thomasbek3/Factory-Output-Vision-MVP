@@ -3,8 +3,13 @@ import { ReviewerWelcome } from "@/components/review/reviewer-welcome";
 export default async function ReviewerWelcomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; mode?: string }>;
 }) {
-  const { lang } = await searchParams;
-  return <ReviewerWelcome spanish={lang === "es"} />;
+  const { lang, mode } = await searchParams;
+  return (
+    <ReviewerWelcome
+      spanish={lang === "es"}
+      passwordless={mode === "login"}
+    />
+  );
 }

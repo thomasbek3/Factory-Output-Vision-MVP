@@ -25,9 +25,9 @@ import { ReviewerOnboarding } from "@/components/review/reviewer-onboarding";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
 import { applyValidatedPlaybackRate } from "@/lib/reviewPlayback";
 import {
+  requestReviewerSignInLink,
   restoreReviewerSession,
   reviewerLifecycle,
-  signInReviewer,
   signOutReviewer,
   workerRpc,
   type DurableReviewAction,
@@ -219,8 +219,8 @@ export function ReviewTallyConsole() {
   const [pendingCount, setPendingCount] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
+  const [authLinkSent, setAuthLinkSent] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [supportReason, setSupportReason] = useState("assignment");
   const [supportMessage, setSupportMessage] = useState("");
@@ -715,14 +715,24 @@ export function ReviewTallyConsole() {
   async function handleSignIn(event: React.FormEvent) {
     event.preventDefault();
     setAuthBusy(true);
+    setAuthLinkSent(false);
     setStatus(null);
     try {
-      const authenticated = await signInReviewer(email.trim(), password);
-      setSession(authenticated);
-      setPassword("");
-      await beginReviewer(authenticated);
-    } catch {
-      setStatus(language === "es" ? "No se pudo iniciar sesión." : "Could not sign in.");
+      await requestReviewerSignInLink(email.trim(), language);
+      setAuthLinkSent(true);
+      setStatus(
+        language === "es"
+          ? "Revisa tu correo y abre el enlace de FactoryVision."
+          : "Check your email and open the FactoryVision sign-in link.",
+      );
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : language === "es"
+            ? "No se pudo enviar el enlace."
+            : "Could not send the sign-in link.",
+      );
     } finally {
       setAuthBusy(false);
     }
@@ -841,7 +851,11 @@ export function ReviewTallyConsole() {
               <h1 className="text-[20px] font-semibold">
                 {language === "es" ? "Trabajo de hoy" : "Today's work"}
               </h1>
-              <p className="mt-1 text-[13px] text-[var(--text-dim)]">{language === "es" ? "Inicia sesión para continuar." : "Sign in to continue."}</p>
+              <p className="mt-1 text-[13px] text-[var(--text-dim)]">
+                {language === "es"
+                  ? "Escribe tu correo. No necesitas contraseña."
+                  : "Enter your email. No password needed."}
+              </p>
             </div>
             <LanguageControl language={language} onChange={toggleLanguage} />
           </div>
@@ -849,14 +863,17 @@ export function ReviewTallyConsole() {
             {language === "es" ? "Correo" : "Email"}
             <input className="mt-2 h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-[14px] outline-none focus:border-[var(--accent)]" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
           </label>
-          <label className="mt-4 block text-[12px] font-semibold text-[var(--text-mut)]">
-            {language === "es" ? "Contraseña" : "Password"}
-            <input className="mt-2 h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-[14px] outline-none focus:border-[var(--accent)]" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
-          </label>
-          {status && <div role="alert" className="mt-4 text-[13px] text-[var(--bad)]">{status}</div>}
+          {status && (
+            <div
+              role={authLinkSent ? "status" : "alert"}
+              className={`mt-4 text-[13px] ${authLinkSent ? "text-[var(--good)]" : "text-[var(--bad)]"}`}
+            >
+              {status}
+            </div>
+          )}
           <Button type="submit" variant="primary" className="mt-5 h-12 w-full justify-center" disabled={authBusy}>
             {authBusy && <LoaderCircle className="h-4 w-4 animate-spin" />}
-            {language === "es" ? "Iniciar sesión" : "Sign in"}
+            {language === "es" ? "Enviarme un enlace" : "Email me a sign-in link"}
           </Button>
         </form>
       </main>
