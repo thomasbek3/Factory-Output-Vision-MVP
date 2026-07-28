@@ -2,6 +2,58 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { assertNoConsoleErrors, collectConsoleErrors } from "./helpers";
 
+test("ops account can preview the employee portal without reviewer enrollment", async ({
+  page,
+}) => {
+  const errors = collectConsoleErrors(page);
+  let mfaRequestCount = 0;
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem("factoryvision-review-language", "en");
+  });
+  await page.route("**/api/review/session", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: { id: "ops-preview", email: "owner@example.com" },
+      }),
+    });
+  });
+  await page.route("**/api/review/onboarding", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ state: "unregistered" }),
+    });
+  });
+  await page.route("**/api/review/preview", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ allowed: true }),
+    });
+  });
+  await page.route("**/api/review/mfa", async (route) => {
+    mfaRequestCount += 1;
+    await route.fulfill({ status: 500, body: "MFA_SHOULD_NOT_BE_CALLED" });
+  });
+
+  await page.goto("/review");
+  await expect(page.locator("[data-review-route='today']")).toBeVisible();
+  await expect(page.getByText("Employee portal preview. You will not receive assignments."))
+    .toBeVisible();
+  await expect(page.getByText("Preview mode")).toBeVisible();
+  await expect(page.getByText("No assignments waiting")).toBeVisible();
+  await expect(page.getByText("Protect your account")).toHaveCount(0);
+  expect(mfaRequestCount).toBe(0);
+  await page.screenshot({
+    path: "e2e-audit/shots/worker-ops-preview-no-mfa.png",
+    fullPage: true,
+  });
+  assertNoConsoleErrors(errors);
+});
+
 test("build-phase test accounts skip authenticator enrollment", async ({ page }) => {
   const errors = collectConsoleErrors(page);
   let onboardingPostCount = 0;

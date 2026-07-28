@@ -36,6 +36,7 @@ import {
   requestReviewerSignInLink,
   restoreReviewerSession,
   reviewerLifecycle,
+  reviewerPreviewAccess,
   signOutReviewer,
   workerRpc,
   type DurableReviewAction,
@@ -213,6 +214,7 @@ export function ReviewTallyConsole() {
   const [lifecycle, setLifecycle] = useState<ReviewerLifecycle | null>(null);
   const [assignment, setAssignment] = useState<WorkerAssignment | null>(null);
   const [workSummary, setWorkSummary] = useState<WorkSummary | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
   const [clicks, setClicks] = useState<ActiveClick[]>([]);
   const [screen, setScreen] = useState<Screen>("loading");
   const [language, setLanguage] = useState<ReviewLanguage>("en");
@@ -399,7 +401,28 @@ export function ReviewTallyConsole() {
     if (savedLanguage !== "en" && savedLanguage !== "es") {
       setLanguage(state.locale === "es-419" ? "es" : "en");
     }
-    if (state.state === "active" && (state.isTestAccount || state.currentAal === "aal2")) {
+    if (state.state === "unregistered" && await reviewerPreviewAccess()) {
+      setPreviewMode(true);
+      setLifecycle({
+        ...state,
+        state: "active",
+        displayName: activeSession.user.email.split("@")[0],
+        email: activeSession.user.email,
+        currentAal: "aal1",
+        isTestAccount: true,
+      });
+      setWorkSummary({
+        ready: 0,
+        inProgress: 0,
+        completedToday: 0,
+        observedAt: new Date().toISOString(),
+      });
+      setScreen("today");
+    } else if (
+      state.state === "active" &&
+      (state.isTestAccount || state.currentAal === "aal2")
+    ) {
+      setPreviewMode(false);
       await workerRpc(activeSession, "worker_register_active_device", {
         p_device_id_hash: await reviewerDeviceHash(),
       });
@@ -935,13 +958,22 @@ export function ReviewTallyConsole() {
           lifecycle={lifecycle}
           onLanguageChange={toggleLanguage}
           onHelp={() => {
-            setSupportReason("account");
-            setSupportOpen(true);
+            if (previewMode) {
+              setStatus(
+                language === "es"
+                  ? "La ayuda no está disponible en la vista previa."
+                  : "Help is not available in preview mode.",
+              );
+            } else {
+              setSupportReason("account");
+              setSupportOpen(true);
+            }
           }}
           onSignOut={() => {
             void signOutReviewer();
             setSession(null);
             setWorkSummary(null);
+            setPreviewMode(false);
             setScreen("auth");
           }}
         />
@@ -958,9 +990,19 @@ export function ReviewTallyConsole() {
             </div>
             <div className="flex w-fit items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px] font-semibold text-[var(--good)]">
               <span className="h-2 w-2 rounded-full bg-[var(--good)]" />
-              {language === "es" ? "Cuenta activa" : "Account active"}
+              {previewMode
+                ? (language === "es" ? "Vista previa" : "Preview mode")
+                : (language === "es" ? "Cuenta activa" : "Account active")}
             </div>
           </div>
+
+          {previewMode ? (
+            <div className="mt-6 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent-tint)] px-4 py-3 text-[13px] text-[var(--text-mut)]">
+              {language === "es"
+                ? "Vista previa del portal del empleado. No recibirás tareas."
+                : "Employee portal preview. You will not receive assignments."}
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
             <article className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)]">

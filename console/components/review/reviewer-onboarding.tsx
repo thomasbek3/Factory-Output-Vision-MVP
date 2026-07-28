@@ -56,6 +56,7 @@ export function ReviewerOnboarding({
   useEffect(() => {
     if (
       !passwordSet ||
+      lifecycle.state === "unregistered" ||
       lifecycle.isTestAccount ||
       lifecycle.mfaVerifiedAt ||
       factorId
@@ -73,12 +74,14 @@ export function ReviewerOnboarding({
     factorId,
     lifecycle.isTestAccount,
     lifecycle.mfaVerifiedAt,
+    lifecycle.state,
     passwordSet,
   ]);
 
   useEffect(() => {
     if (
       !passwordSet ||
+      lifecycle.state === "unregistered" ||
       !lifecycle.isTestAccount ||
       lifecycle.mfaVerifiedAt
     ) return;
@@ -98,6 +101,7 @@ export function ReviewerOnboarding({
   }, [
     lifecycle.isTestAccount,
     lifecycle.mfaVerifiedAt,
+    lifecycle.state,
     onChange,
     passwordSet,
   ]);
@@ -198,6 +202,22 @@ export function ReviewerOnboarding({
         <h2 className="mt-5 text-[24px] font-semibold">{spanish ? "El acceso está pausado" : "Access is paused"}</h2>
         <p className="mt-3 text-[14px] leading-6 text-[var(--text-mut)]">
           {spanish ? "Comunícate con soporte de FactoryVision antes de continuar." : "Contact FactoryVision support before continuing."}
+        </p>
+      </div>,
+    );
+  }
+
+  if (lifecycle.state === "unregistered") {
+    return shell(
+      <div className="mx-auto max-w-lg text-center">
+        <LockKeyhole className="mx-auto h-9 w-9 text-[var(--warn)]" />
+        <h2 className="mt-5 text-[24px] font-semibold">
+          {spanish ? "Sin acceso de empleado" : "No employee access"}
+        </h2>
+        <p className="mt-3 text-[14px] leading-6 text-[var(--text-mut)]">
+          {spanish
+            ? "Esta cuenta no está configurada como revisora."
+            : "This account is not configured as a reviewer."}
         </p>
       </div>,
     );

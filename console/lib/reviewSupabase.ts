@@ -178,3 +178,20 @@ export async function reviewerLifecycle(method: "GET" | "POST", body?: object) {
   if (!response.ok) throw new Error(result.error ?? `ONBOARDING_${response.status}`);
   return result;
 }
+
+export async function reviewerPreviewAccess() {
+  const response = await fetch("/api/review/preview", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  if (response.status === 403) return false;
+  const result = (await response.json()) as {
+    allowed?: boolean;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(result.error ?? `PREVIEW_ACCESS_${response.status}`);
+  }
+  return result.allowed === true;
+}
