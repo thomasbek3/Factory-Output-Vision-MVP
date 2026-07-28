@@ -40,7 +40,7 @@ type OpsSnapshot = {
   chunksTotal: number;
 };
 
-type FactoryOption = { id: string; name: string; timezone: string };
+export type FactoryOption = { id: string; name: string; timezone: string };
 type ReviewerState =
   | "invited"
   | "mfa_required"
@@ -496,7 +496,7 @@ export function OpsConsole() {
   );
 }
 
-function InviteDialog({
+export function InviteDialog({
   factories,
   requestKey,
   emailReady,

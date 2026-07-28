@@ -1,5 +1,5 @@
-import { OpsConsole } from "@/components/ops/ops-console";
+import { OpsCommandCenter } from "@/components/ops/ops-command-center";
 
 export default function OpsPage() {
-  return <OpsConsole />;
+  return <OpsCommandCenter />;
 }

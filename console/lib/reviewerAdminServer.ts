@@ -77,12 +77,13 @@ export function reviewerEmailReadiness() {
 }
 
 export async function reviewerRoster(request: NextRequest) {
-  const [roster, supportRequests, metrics] = await Promise.all([
+  const [roster, supportRequests, metrics, commandCenter] = await Promise.all([
     opsRpc<Record<string, unknown>>(request, "ops_reviewer_roster", {}),
     opsRpc<unknown[]>(request, "ops_reviewer_support_requests", {}),
     opsRpc<Record<string, number>>(request, "ops_workforce_metrics", {}),
+    opsRpc<Record<string, unknown>>(request, "ops_command_center", {}),
   ]);
-  return { ...roster, supportRequests, metrics };
+  return { ...roster, supportRequests, metrics, commandCenter };
 }
 
 export async function updateReviewerState(
@@ -119,6 +120,9 @@ export async function revokeReviewerInvitation(
 }
 
 export async function sendReviewerInvite(request: NextRequest, input: SendInviteInput) {
+  await opsRpc<boolean>(request, "ops_assert_access", {
+    p_factory_id: input.factoryId,
+  });
   const delivery = emailConfig();
   const config = reviewServerConfig();
   const existing = await opsRpc<{

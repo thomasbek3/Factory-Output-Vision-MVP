@@ -13,6 +13,9 @@ LIVE_FIXTURE = ROOT / "supabase/tests/worker_portal_phase1_live.sql"
 WORKFORCE_LIVE_PROOF = (
     ROOT / "supabase/tests/worker_workforce_adversarial_live.sql"
 )
+OPS_COMMAND_CENTER_LIVE_PROOF = (
+    ROOT / "supabase/tests/ops_command_center_live.sql"
+)
 
 
 class SupabasePhase1ContractTests(unittest.TestCase):
@@ -27,6 +30,9 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         cls.workforce_live_proof = WORKFORCE_LIVE_PROOF.read_text(
             encoding="utf-8"
         ).lower()
+        cls.ops_command_center_live_proof = (
+            OPS_COMMAND_CENTER_LIVE_PROOF.read_text(encoding="utf-8").lower()
+        )
 
     def test_owner_amendment_is_explicit(self) -> None:
         amendment = self.spec.split("## 1. Plain-English Summary", maxsplit=1)[0]
@@ -400,7 +406,7 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         resolver = self.sql.split(
             "create or replace function public.service_resolve_ready_rounds",
             maxsplit=1,
-        )[1]
+        )[1].split("create or replace function", 1)[0]
         self.assertIn("for slot in 1..3 loop", scheduler)
         self.assertIn("assignment.review_round = (", scheduler)
         self.assertIn("next_round := round_row.review_round + 1", scheduler)
@@ -619,6 +625,62 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         self.assertIn("for update", coverage)
         self.assertIn("coalesce(coverage_row.ranges, '[]'::jsonb)", coverage)
         self.assertIn("merged_ranges", coverage)
+
+    def test_ops_command_center_preserves_truth_and_ai_boundaries(self) -> None:
+        projection = self.sql.split(
+            "create or replace function public.ops_command_center",
+            maxsplit=1,
+        )[1].split("revoke all on function", 1)[0]
+        self.assertIn("if not public.actor_is_ops(null)", projection)
+        self.assertIn("'queue'", projection)
+        self.assertIn("'labels'", projection)
+        self.assertIn("'humantotals'", projection)
+        self.assertIn("public.consensus_runs", projection)
+        self.assertIn("private.human_ai_comparisons", projection)
+        self.assertNotIn("update public.review_submissions", projection)
+        self.assertNotIn("update public.consensus_runs", projection)
+        self.assertNotIn("insert into public.human_finalizations", projection)
+
+        safe_projection = self.sql.rsplit(
+            "create or replace function public.ops_command_center",
+            maxsplit=1,
+        )[1].split("revoke all on function", 1)[0]
+        self.assertIn("label ->> 'humanfinalat' is null", safe_projection)
+        self.assertIn("'locked_until_human_final'", safe_projection)
+        self.assertIn("- 'aieventcount'", safe_projection)
+        self.assertIn("- 'comparisonmetrics'", safe_projection)
+        self.assertIn("public.ops_command_center_internal_v1()", safe_projection)
+
+        access_gate = self.sql.rsplit(
+            "create or replace function public.ops_assert_access",
+            maxsplit=1,
+        )[1].split("revoke all on function", 1)[0]
+        self.assertIn("if not public.actor_is_ops(p_factory_id)", access_gate)
+        self.assertIn(
+            "grant execute on function public.ops_assert_access(uuid) to authenticated",
+            self.sql,
+        )
+        self.assertIn(
+            "grant execute on function public.ops_command_center() to authenticated",
+            self.sql,
+        )
+        self.assertIn(
+            "non-ops reviewer reached ops_assert_access",
+            self.ops_command_center_live_proof,
+        )
+        self.assertIn(
+            "non-ops reviewer reached ops_command_center",
+            self.ops_command_center_live_proof,
+        )
+        self.assertIn(
+            "ops_command_center_internal_v1()",
+            self.ops_command_center_live_proof,
+        )
+        self.assertIn(
+            "unfinalized ai output was not fully redacted",
+            self.ops_command_center_live_proof,
+        )
+        self.assertIn("rollback;", self.ops_command_center_live_proof)
 
     def test_worker_qualification_is_private_server_scored_and_operational(self) -> None:
         self.assertIn("create table public.reviewer_qualification_attempts", self.sql)

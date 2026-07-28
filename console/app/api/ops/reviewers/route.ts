@@ -15,7 +15,14 @@ function errorResponse(error: unknown) {
   const status = message.includes("AUTH") || message.includes("ops access") ? 403
     : message.includes("EMAIL_DELIVERY_NOT_CONFIGURED") ? 503
       : 400;
-  return Response.json({ error: message }, { status });
+  const publicCode = status === 403 ? "OPS_ACCESS_REQUIRED"
+    : status === 503 ? "EMAIL_DELIVERY_NOT_CONFIGURED"
+      : message.includes("INVITATION_DELIVERY_FAILED_REISSUE")
+        ? "INVITATION_DELIVERY_FAILED_REISSUE"
+        : message.includes("INVITATION_DELIVERY_OUTCOME_UNKNOWN")
+          ? "INVITATION_DELIVERY_OUTCOME_UNKNOWN"
+          : "OPS_REQUEST_FAILED";
+  return Response.json({ error: publicCode }, { status });
 }
 
 export async function GET(request: NextRequest) {
@@ -90,7 +97,11 @@ export async function PATCH(request: NextRequest) {
       );
       return Response.json(result);
     }
-    if (!body.userId || !body.state) {
+    if (
+      !body.userId ||
+      !body.state ||
+      !["qualification", "active", "suspended", "offboarded"].includes(body.state)
+    ) {
       return Response.json({ error: "INVALID_STATE_CHANGE" }, { status: 422 });
     }
     const result = await updateReviewerState(
