@@ -485,19 +485,61 @@ export function ReviewTallyConsole() {
   }, [refreshWorkSummary]);
 
   useEffect(() => {
+    let disposed = false;
     const savedLanguage = window.localStorage.getItem("factoryvision-review-language");
     if (savedLanguage === "es" || savedLanguage === "en") setLanguage(savedLanguage);
-    void restoreReviewerSession().then((restored) => {
+
+    async function initializeReviewer() {
+      const preview = await reviewerPreviewAccess().catch(() => ({
+        allowed: false,
+        practice: null,
+      }));
+      if (disposed) return;
+      if (preview.allowed) {
+        const previewSession: ReviewSession = {
+          user: {
+            id: "practice-preview",
+            email: "preview@factoryvision.local",
+          },
+        };
+        setSession(previewSession);
+        setPreviewMode(true);
+        setLifecycle({
+          state: "active",
+          displayName: "preview",
+          email: previewSession.user.email,
+          currentAal: "aal1",
+          isTestAccount: true,
+        });
+        setWorkSummary({
+          ready: preview.practice ? 1 : 0,
+          inProgress: 0,
+          completedToday: 0,
+          observedAt: new Date().toISOString(),
+        });
+        setScreen("today");
+        return;
+      }
+      const restored = await restoreReviewerSession();
+      if (disposed) return;
       if (!restored) {
         setScreen("auth");
         return;
       }
       setSession(restored);
-      void beginReviewer(restored).catch((error) => {
+      await beginReviewer(restored).catch((error) => {
+        if (disposed) return;
         setStatus(error instanceof Error ? error.message : "Unable to load reviewer profile.");
         setScreen("auth");
       });
+    }
+
+    void initializeReviewer().catch(() => {
+      if (!disposed) setScreen("auth");
     });
+    return () => {
+      disposed = true;
+    };
   }, [beginReviewer]);
 
   useEffect(() => {

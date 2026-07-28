@@ -682,6 +682,29 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         )
         self.assertIn("rollback;", self.ops_command_center_live_proof)
 
+    def test_service_preview_is_practice_only_and_service_role_only(self) -> None:
+        normalized_sql = re.sub(r"\s+", " ", self.sql)
+        preview = self.sql.rsplit(
+            "create or replace function public.service_latest_practice_preview",
+            maxsplit=1,
+        )[1].split("revoke all on function", 1)[0]
+        self.assertIn("security invoker", preview)
+        self.assertIn("chunk.source_set_role = 'practice'", preview)
+        self.assertIn("not chunk.assignment_eligible", preview)
+        self.assertIn("chunk.state = 'ready'", preview)
+        self.assertIn("rendition.mapping_status = 'verified'", preview)
+        self.assertIn("media.status = 'verified'", preview)
+        self.assertIn(
+            "revoke execute on function public.service_latest_practice_preview() "
+            "from anon, authenticated",
+            normalized_sql,
+        )
+        self.assertIn(
+            "grant execute on function public.service_latest_practice_preview() "
+            "to service_role",
+            normalized_sql,
+        )
+
     def test_worker_qualification_is_private_server_scored_and_operational(self) -> None:
         self.assertIn("create table public.reviewer_qualification_attempts", self.sql)
         self.assertIn("reviewer_qualification_attempts_immutable", self.sql)

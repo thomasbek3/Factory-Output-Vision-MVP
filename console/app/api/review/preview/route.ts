@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { opsRpc } from "@/lib/reviewerAdminServer";
+import { hasReviewPreviewPass } from "@/lib/reviewPreviewPass";
 import { reviewServerConfig } from "@/lib/reviewServer";
 
 export const dynamic = "force-dynamic";
@@ -74,16 +75,46 @@ async function signPracticeMedia(chunk: PracticeChunk) {
   };
 }
 
+async function servicePracticeChunk() {
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (!secretKey) throw new Error("PRACTICE_PREVIEW_NOT_CONFIGURED");
+  const config = reviewServerConfig();
+  const response = await fetch(
+    `${config.projectUrl}/rest/v1/rpc/service_latest_practice_preview`,
+    {
+      method: "POST",
+      headers: {
+        apikey: secretKey,
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      cache: "no-store",
+    },
+  );
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || `PRACTICE_PREVIEW_RPC_${response.status}`);
+  }
+  return (text ? JSON.parse(text) : null) as PracticeChunk | null;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    await opsRpc<boolean>(request, "ops_assert_access", {
-      p_factory_id: null,
-    });
-    const chunk = await opsRpc<PracticeChunk | null>(
-      request,
-      "ops_latest_practice_preview",
-      {},
-    );
+    const previewPass = hasReviewPreviewPass(request);
+    let chunk: PracticeChunk | null;
+    if (previewPass) {
+      chunk = await servicePracticeChunk();
+    } else {
+      await opsRpc<boolean>(request, "ops_assert_access", {
+        p_factory_id: null,
+      });
+      chunk = await opsRpc<PracticeChunk | null>(
+        request,
+        "ops_latest_practice_preview",
+        {},
+      );
+    }
     const practice = chunk ? await signPracticeMedia(chunk) : null;
     return Response.json({ allowed: true, practice });
   } catch {

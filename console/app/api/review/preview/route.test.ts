@@ -2,13 +2,17 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const opsRpc = vi.fn();
+const hasReviewPreviewPass = vi.fn();
 
 vi.mock("@/lib/reviewerAdminServer", () => ({ opsRpc }));
+vi.mock("@/lib/reviewPreviewPass", () => ({ hasReviewPreviewPass }));
 
 describe("ops practice preview route", () => {
   beforeEach(() => {
     vi.resetModules();
     opsRpc.mockReset();
+    hasReviewPreviewPass.mockReset();
+    hasReviewPreviewPass.mockReturnValue(false);
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "publishable-key";
     process.env.SUPABASE_SECRET_KEY = "secret-key";
@@ -85,5 +89,46 @@ describe("ops practice preview route", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ allowed: true, practice: null });
+  });
+
+  it("uses the service-only practice lookup for a valid preview pass", async () => {
+    hasReviewPreviewPass.mockReturnValue(true);
+    const chunk = {
+      chunkId: "chunk-id",
+      stationId: "station-id",
+      stationName: "Pallet A",
+      factoryTimezone: "America/New_York",
+      startIso: "2026-07-14T20:00:35Z",
+      endIso: "2026-07-14T20:15:35Z",
+      sourceStartMs: 0,
+      sourceEndMs: 900000,
+      renditionSourceStartMs: 0,
+      renditionSourceEndMs: 900000,
+      sourceSha256: "c".repeat(64),
+      renditionId: "rendition-id",
+      mediaBucket: "review-renditions",
+      mediaPath: "review/pallet-a.mp4",
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(chunk))
+      .mockResolvedValueOnce(
+        Response.json({ signedURL: "/object/sign/review-renditions/token" }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const { GET } = await import("@/app/api/review/preview/route");
+
+    const response = await GET(
+      new NextRequest("https://factoryvision-review.vercel.app/api/review/preview"),
+    );
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).practice.chunk.stationName).toBe("Pallet A");
+    expect(opsRpc).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://project.supabase.co/rest/v1/rpc/service_latest_practice_preview",
+      expect.objectContaining({ method: "POST", body: "{}" }),
+    );
   });
 });
