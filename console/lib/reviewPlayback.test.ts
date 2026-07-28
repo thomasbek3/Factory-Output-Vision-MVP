@@ -48,4 +48,33 @@ describe("review playback rate", () => {
     });
     expect(effectiveRate).toBe(2);
   });
+
+  it("falls back to 15x when the browser rejects a native 20x rate", () => {
+    let effectiveRate = 1;
+    const media = {
+      get playbackRate() {
+        return effectiveRate;
+      },
+      set playbackRate(value: number) {
+        if (value > 15) {
+          throw new DOMException("unsupported", "NotSupportedError");
+        }
+        effectiveRate = value;
+      },
+    };
+
+    expect(applyValidatedPlaybackRate(media, 20)).toEqual({
+      effectiveRate: 15,
+      steppedDown: true,
+    });
+    expect(effectiveRate).toBe(15);
+  });
+});
+
+describe("high-speed review playback", () => {
+  it("scales coverage tolerance with the selected playback rate", async () => {
+    const { coverageGapToleranceMs } = await import("@/lib/reviewPlayback");
+    expect(coverageGapToleranceMs(1)).toBe(3_000);
+    expect(coverageGapToleranceMs(20)).toBe(12_000);
+  });
 });

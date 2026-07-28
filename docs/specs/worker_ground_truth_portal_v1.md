@@ -33,8 +33,16 @@ This amendment is authoritative for the employee-facing route:
   before `Submit count`.
 - Selecting a footage problem requires confirmation, closes that assignment as
   a problem, and returns the worker to `Today's work`.
-- Production speeds remain 1x, 2x, and 5x. Higher speeds stay hidden until the
-  real-footage safety gate passes.
+- The employee player exposes exactly 1x, 2x, 5x, 10x, 15x, and 20x. This owner
+  override supersedes older speed-gating language in this specification.
+- A speed is active only when the browser accepts it natively. Unsupported
+  speeds visibly step down to the highest accepted speed and never receive
+  synthetic seek-based coverage credit.
+- The server accepts a completed 15-minute review no faster than the selected
+  20x ceiling while preserving the 98-percent source-coverage requirement.
+- The `Today's work` screen includes a real account menu and settings dialog
+  with reviewer identity, language preference, sign-in method, help, and sign
+  out. It does not expose factory-wide or peer-review data.
 
 ## Owner Amendment: 2026-07-26
 
@@ -172,8 +180,7 @@ requires a new architecture decision record.
   video-file selection.
 - Automatic arrival of newly ready 15-minute work without a browser refresh.
 - Fifteen-minute source chunks.
-- Playback at 1x, 2x, and 5x. Shipped 10x and 15x controls remain gated off
-  until the real-footage/device safety criteria in section 6.5 pass.
+- Playback at 1x, 2x, 5x, 10x, 15x, and 20x.
 - Three blind primary reviews per chunk.
 - Automatic 2-of-3 count agreement and event matching.
 - An internal exception queue for cases without a two-reviewer majority.
@@ -498,8 +505,7 @@ Active-review header:
 Video:
 
 - Clean 16:9 or source-aspect playback.
-- Speed controls: 1x, 2x, and 5x. The 10x and 15x controls are present only for
-  a device/rendition class whose Tier B safety gate in section 6.5 has passed.
+- Speed controls: 1x, 2x, 5x, 10x, 15x, and 20x.
 - Play/pause.
 - Back 10 source seconds.
 - Timeline with the reviewer's own click markers.
@@ -549,18 +555,19 @@ dropped frames, current source position, buffered ranges, playback rate, and
 stall duration. This telemetry is untrusted operational evidence, not proof of
 attention.
 
-The pilot starts with 5x as the maximum production speed. A device/rendition
-class may expose 10x or 15x only after a reference-event test on the real worker
-hardware and network shows:
+The pilot exposes the owner-approved speed ladder through 20x. Operations still
+audits each device/rendition class against real worker hardware and network
+using:
 
 - zero missed events in at least 200 representative reference events;
 - p95 dropped-frame ratio under 1 percent;
 - rendition/source-time error within the bound in section 6.2.
 
-The 200-event gate is a zero-miss safety screen, not evidence of a
-0.5-percentage-point non-inferiority claim. Any finer comparison requires a
-pre-registered power calculation and the resulting sample size. CI playback
-tests are regression evidence only and cannot enable a production speed.
+The 200-event screen is not evidence of a 0.5-percentage-point non-inferiority
+claim. Any finer comparison requires a pre-registered power calculation and the
+resulting sample size. CI proves functional behavior only. The owner has
+approved exposing the full ladder during the controlled pilot; real-device
+audits determine whether each high speed remains enabled.
 
 If playback health crosses its validated bound, the player automatically steps
 down to the highest validated speed and records the reason.
@@ -1335,8 +1342,7 @@ review. It must not reuse `globalThis` as production persistence.
 - Confirming one chunk returns to `Today's work` with refreshed personal counts.
 - Reviewer login, work inbox, resume draft and source position, tally with `J`,
   play/pause with Space, undo, per-event deletion, summary, and submit.
-- 1x/2x/5x playback on approved low-cost hardware; gated 10x/15x only after the
-  named device/rendition class passes the Tier B safety screen.
+- 1x/2x/5x/10x/15x/20x playback on approved low-cost hardware.
 - Automatic speed downgrade on dropped-frame or bandwidth-health breach.
 - Connection loss and URL refresh.
 - Spanish UI at desktop and narrow widths.
@@ -1455,7 +1461,7 @@ These are explicit launch gates, not implementation ambiguities:
   planning floor.
 - Real reviewer hardware, browser, bandwidth, and accessibility profile.
 - Measured event-alignment tolerance at each allowed speed.
-- Measured reference-event miss rate and frame drops before enabling 10x or 15x.
+- Measured reference-event miss rate and frame drops at 10x, 15x, and 20x.
 - Maximum acceptable cost per resolved chunk.
 - Screen-recording residual-risk acceptance and reviewer confidentiality terms.
 - Whether deletion obligations include trained model weights and the resulting

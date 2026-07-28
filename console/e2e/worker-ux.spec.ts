@@ -122,9 +122,26 @@ test("employee can understand and complete the assigned-work flow", async ({ pag
 
   await page.goto("/review");
   await expect(page.locator("[data-review-route='today']")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Today's work" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Jordan/ })).toBeVisible();
   await expect(page.getByText("1 video is ready")).toBeVisible();
-  await expect(page.getByText("New videos appear here automatically.")).toBeVisible();
+  await expect(page.getByText("15-minute video review")).toBeVisible();
+  await expect(page.getByText("Today's progress")).toBeVisible();
+  await page.getByRole("button", { name: "Open account menu" }).click();
+  await expect(page.getByRole("menu", { name: "Account" })).toBeVisible();
+  await expect(page.getByText("worker@example.com")).toBeVisible();
+  await page.screenshot({
+    path: "e2e-audit/shots/worker-account-menu-desktop.png",
+    fullPage: true,
+  });
+  await page.getByRole("menuitem", { name: "Profile and settings" }).click();
+  await expect(page.getByRole("dialog", { name: "Account settings" })).toBeVisible();
+  await expect(page.getByText("Email link")).toBeVisible();
+  await expect(page.getByText("Test account")).toBeVisible();
+  await page.getByRole("button", { name: "Español" }).click();
+  await expect(page.getByRole("dialog", { name: "Configuración de cuenta" })).toBeVisible();
+  await page.getByRole("button", { name: "English" }).click();
+  await page.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("dialog", { name: "Account settings" })).toHaveCount(0);
   await page.screenshot({
     path: "e2e-audit/shots/worker-ux-today-desktop.png",
     fullPage: true,
@@ -135,6 +152,14 @@ test("employee can understand and complete the assigned-work flow", async ({ pag
     path: "e2e-audit/shots/worker-ux-today-mobile.png",
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Open account menu" }).click();
+  await page.getByRole("menuitem", { name: "Profile and settings" }).click();
+  await expect(page.getByRole("dialog", { name: "Account settings" })).toBeVisible();
+  await page.screenshot({
+    path: "e2e-audit/shots/worker-settings-mobile.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Done" }).click();
   await page.setViewportSize({ width: 1280, height: 720 });
 
   await page.getByRole("button", { name: "Start next video" }).click();
@@ -144,6 +169,34 @@ test("employee can understand and complete the assigned-work flow", async ({ pag
   await expect(page.getByText("Task #4821c9d2")).toBeVisible();
   await expect(page.getByRole("button", { name: "+1 Output" })).toBeDisabled();
   await expect(page.getByText("Context from the previous video. Do not count here.")).toBeVisible();
+  for (const rate of ["1x", "2x", "5x", "10x", "15x", "20x"]) {
+    await expect(page.getByRole("button", { name: rate, exact: true })).toBeVisible();
+  }
+  await page.getByRole("button", { name: "20x", exact: true }).click();
+  await expect.poll(async () => {
+    const selected20 = await page
+      .getByRole("button", { name: "20x", exact: true })
+      .getAttribute("aria-pressed");
+    const selected15 = await page
+      .getByRole("button", { name: "15x", exact: true })
+      .getAttribute("aria-pressed");
+    if (selected20 === "true") return "20";
+    if (selected15 === "true") return "15";
+    return "pending";
+  }).toMatch(/^(15|20)$/);
+  const selectedHighSpeed =
+    await page
+      .getByRole("button", { name: "20x", exact: true })
+      .getAttribute("aria-pressed") === "true"
+      ? 20
+      : 15;
+  if (selectedHighSpeed === 15) {
+    await expect(page.getByRole("status")).toContainText(
+      "That speed did not work. The video will use a lower speed.",
+    );
+  } else {
+    await expect(page.getByText(/left at 20x/)).toBeVisible();
+  }
   await page.getByRole("button", { name: "5x", exact: true }).click();
   await page.locator("body").click();
   await page.keyboard.press("Space");
@@ -191,7 +244,10 @@ test("employee can understand and complete the assigned-work flow", async ({ pag
 
   await expect(page.locator("[data-review-route='today']")).toBeVisible();
   await expect(page.getByRole("status")).toContainText("submitted");
-  await expect(page.getByText("Completed today")).toBeVisible();
+  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
   await expect(page.getByTestId("completed-today")).toHaveText("1");
+  await page.getByRole("button", { name: "Open account menu" }).click();
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
+  await expect(page.locator("[data-review-route='auth']")).toBeVisible();
   assertNoConsoleErrors(errors);
 });

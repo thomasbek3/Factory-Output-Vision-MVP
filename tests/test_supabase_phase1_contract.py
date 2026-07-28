@@ -134,6 +134,22 @@ class SupabasePhase1ContractTests(unittest.TestCase):
             self.sql,
         )
 
+    def test_owner_approved_20x_speed_keeps_submission_integrity_gates(self) -> None:
+        latest_submit = self.sql.rsplit(
+            "create or replace function public.submit_worker_assignment_v2",
+            1,
+        )[1]
+        self.assertIn("usable_ms / 20000.0", latest_submit)
+        self.assertIn("covered_ms * 100 < usable_ms * 98", latest_submit)
+        self.assertIn(
+            "coalesce(auth.jwt() ->> 'aal', '') <> 'aal2'",
+            latest_submit,
+        )
+        self.assertIn("active reviewer with mfa required", latest_submit)
+        amendment = self.spec.split("## Owner Amendment", maxsplit=1)[0]
+        self.assertIn("1x, 2x, 5x, 10x, 15x, and 20x", amendment)
+        self.assertIn("real account menu and settings dialog", amendment)
+
     def test_immutable_human_lineage_has_guards(self) -> None:
         for table in (
             "review_actions",

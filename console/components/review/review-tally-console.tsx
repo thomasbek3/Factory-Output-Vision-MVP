@@ -6,24 +6,32 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronDown,
   CirclePlay,
   Clock3,
   CloudOff,
   LifeBuoy,
   LoaderCircle,
   LogOut,
+  Mail,
   Pause,
   Play,
   RotateCcw,
+  Settings,
+  ShieldCheck,
   SkipBack,
   Trash2,
+  UserRound,
   X,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReviewerOnboarding } from "@/components/review/reviewer-onboarding";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
-import { applyValidatedPlaybackRate } from "@/lib/reviewPlayback";
+import {
+  applyValidatedPlaybackRate,
+  coverageGapToleranceMs,
+} from "@/lib/reviewPlayback";
 import {
   requestReviewerSignInLink,
   restoreReviewerSession,
@@ -46,7 +54,7 @@ import {
 } from "@/lib/reviewTimeline";
 
 const appVersion = "worker-portal-v2";
-const reviewSpeeds = [1, 2, 5] as const;
+const reviewSpeeds = [1, 2, 5, 10, 15, 20] as const;
 type ReviewSpeed = (typeof reviewSpeeds)[number];
 type Screen = "auth" | "loading" | "onboarding" | "today" | "tally" | "summary";
 type SaveState = "saved" | "saving" | "offline";
@@ -544,14 +552,21 @@ export function ReviewTallyConsole() {
     return () => window.clearInterval(timer);
   }, [refreshWorkSummary, screen, session]);
 
-  useEffect(() => {
-    if (!videoRef.current) return;
-    const result = applyValidatedPlaybackRate(videoRef.current, speed);
+  const applyReviewSpeed = useCallback((
+    video: HTMLVideoElement,
+    requestedSpeed: ReviewSpeed,
+  ) => {
+    const result = applyValidatedPlaybackRate(video, requestedSpeed);
     if (result.steppedDown) {
-      setSpeed(1);
+      setSpeed(result.effectiveRate as ReviewSpeed);
       setStatus(strings.speedSteppedDown);
     }
-  }, [speed, assignment, strings.speedSteppedDown]);
+  }, [strings.speedSteppedDown]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    applyReviewSpeed(videoRef.current, speed);
+  }, [applyReviewSpeed, speed, assignment]);
 
   const queueAction = useCallback((action: PendingAction) => {
     if (!assignment || !session) return;
@@ -916,6 +931,8 @@ export function ReviewTallyConsole() {
       <main className="min-h-screen bg-[var(--bg)] text-[var(--text)]" data-review-route="today">
         <WorkerHeader
           language={language}
+          session={session}
+          lifecycle={lifecycle}
           onLanguageChange={toggleLanguage}
           onHelp={() => {
             setSupportReason("account");
@@ -928,66 +945,99 @@ export function ReviewTallyConsole() {
             setScreen("auth");
           }}
         />
-        <section className="mx-auto flex min-h-[calc(100vh-73px)] w-full max-w-4xl flex-col items-center px-5 pb-10 pt-[clamp(56px,10vh,104px)] text-center">
-          <h1 className="text-[34px] font-semibold">{language === "es" ? "Trabajo de hoy" : "Today's work"}</h1>
-          <div className="mt-2 flex items-center gap-2 text-[14px] text-[var(--text-dim)]">
-            <CalendarDays className="h-4 w-4" />
-            {formatCurrentDate(language)}
+        <section className="mx-auto min-h-[calc(100vh-73px)] w-full max-w-5xl px-5 pb-12 pt-9 sm:pt-14">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <div className="flex items-center gap-2 text-[13px] text-[var(--text-dim)]">
+                <CalendarDays className="h-4 w-4" />
+                {formatCurrentDate(language)}
+              </div>
+              <h1 className="mt-3 text-[30px] font-semibold sm:text-[34px]">
+                {formatWorkerGreeting(language, lifecycle?.displayName)}
+              </h1>
+            </div>
+            <div className="flex w-fit items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px] font-semibold text-[var(--good)]">
+              <span className="h-2 w-2 rounded-full bg-[var(--good)]" />
+              {language === "es" ? "Cuenta activa" : "Account active"}
+            </div>
           </div>
 
-          <div className={cn(
-            "mt-7 flex items-center gap-2 text-[18px] font-medium",
-            hasWork ? "text-[var(--good)]" : "text-[var(--text-mut)]",
-          )}>
-            {hasWork ? <CirclePlay className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
-            {inProgress > 0
-              ? (language === "es" ? "Tienes un video en curso" : "You have a video in progress")
-              : ready > 0
-                ? language === "es"
-                  ? `${ready} ${ready === 1 ? "video está listo" : "videos están listos"}`
-                  : `${ready} ${ready === 1 ? "video is ready" : "videos are ready"}`
-                : (language === "es" ? "No hay videos listos" : "No videos are ready")}
+          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <article className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)]">
+              <div className="h-1.5 bg-[var(--accent)]" />
+              <div className="p-5 sm:p-7">
+                <div className="text-[12px] font-semibold uppercase text-[var(--text-dim)]">
+                  {language === "es" ? "Siguiente tarea" : "Next assignment"}
+                </div>
+                <div className={cn(
+                  "mt-5 flex items-center gap-2 text-[16px] font-semibold",
+                  hasWork ? "text-[var(--good)]" : "text-[var(--text-mut)]",
+                )}>
+                  {hasWork ? <CirclePlay className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+                  {inProgress > 0
+                    ? (language === "es" ? "Video en curso" : "Video in progress")
+                    : ready > 0
+                      ? language === "es"
+                        ? `${ready} ${ready === 1 ? "video listo" : "videos listos"}`
+                        : `${ready} ${ready === 1 ? "video is ready" : "videos are ready"}`
+                      : (language === "es" ? "Todo terminado por ahora" : "All caught up for now")}
+                </div>
+                <h2 className="mt-3 text-[24px] font-semibold sm:text-[28px]">
+                  {hasWork
+                    ? (language === "es" ? "Revisión de video de 15 minutos" : "15-minute video review")
+                    : (language === "es" ? "No hay tareas pendientes" : "No assignments waiting")}
+                </h2>
+                {hasWork ? (
+                  <button
+                    type="button"
+                    className="mt-7 flex h-16 w-full items-center justify-center gap-3 rounded-lg bg-[var(--accent)] px-6 text-[18px] font-bold text-[#11100d] transition-colors hover:bg-[var(--accent-hi)]"
+                    onClick={() => session && void loadNext(session)}
+                  >
+                    <Play className="h-5 w-5 fill-current" />
+                    {inProgress > 0
+                      ? (language === "es" ? "Continuar video" : "Resume video")
+                      : (language === "es" ? "Comenzar siguiente video" : "Start next video")}
+                  </button>
+                ) : (
+                  <div className="mt-7 flex items-center gap-3 border-t border-[var(--border)] pt-5 text-[13px] text-[var(--text-dim)]">
+                    <CheckCircle2 className="h-5 w-5 text-[var(--good)]" />
+                    {language === "es" ? "Tu trabajo de hoy está al día." : "Your work is up to date."}
+                  </div>
+                )}
+              </div>
+            </article>
+
+            <aside aria-labelledby="today-progress-heading">
+              <div className="flex items-center justify-between">
+                <h2 id="today-progress-heading" className="text-[18px] font-semibold">
+                  {language === "es" ? "Progreso de hoy" : "Today's progress"}
+                </h2>
+                <span className="text-[12px] text-[var(--text-dim)]">
+                  {formatObservedAt(workSummary?.observedAt, language)}
+                </span>
+              </div>
+              <div className="mt-4 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+                <WorkMetricRow
+                  label={language === "es" ? "Listos" : "Ready"}
+                  value={ready}
+                  icon={<CirclePlay className="h-5 w-5" />}
+                />
+                <WorkMetricRow
+                  label={language === "es" ? "En curso" : "In progress"}
+                  value={inProgress}
+                  icon={<Clock3 className="h-5 w-5" />}
+                />
+                <WorkMetricRow
+                  label={language === "es" ? "Completados" : "Completed"}
+                  value={completedToday}
+                  testId="completed-today"
+                  icon={<CheckCircle2 className="h-5 w-5" />}
+                />
+              </div>
+            </aside>
           </div>
-
-          {hasWork ? (
-            <button
-              type="button"
-              className="mt-8 flex h-20 w-full max-w-lg items-center justify-center gap-3 rounded-lg bg-[var(--accent)] px-6 text-[21px] font-bold text-[#11100d] transition-colors hover:bg-[var(--accent-hi)]"
-              onClick={() => session && void loadNext(session)}
-            >
-              <Play className="h-6 w-6 fill-current" />
-              {inProgress > 0
-                ? (language === "es" ? "Continuar video" : "Resume video")
-                : (language === "es" ? "Comenzar siguiente video" : "Start next video")}
-            </button>
-          ) : null}
-
-          <div className="mt-9 grid w-full grid-cols-3 divide-x divide-[var(--border)] rounded-lg border border-[var(--border)] bg-[var(--panel)]">
-            <WorkMetric
-              label={language === "es" ? "Listos" : "Ready"}
-              value={ready}
-              icon={<CirclePlay className="h-5 w-5" />}
-            />
-            <WorkMetric
-              label={language === "es" ? "En curso" : "In progress"}
-              value={inProgress}
-              icon={<Clock3 className="h-5 w-5" />}
-            />
-            <WorkMetric
-              label={language === "es" ? "Completados hoy" : "Completed today"}
-              value={completedToday}
-              testId="completed-today"
-              icon={<CheckCircle2 className="h-5 w-5" />}
-            />
-          </div>
-
-          <p className="mt-8 text-[14px] text-[var(--text-dim)]">
-            {language === "es"
-              ? "Los videos nuevos aparecen aquí automáticamente."
-              : "New videos appear here automatically."}
-          </p>
           {status ? (
-            <div role="status" className="mt-5 rounded-lg border border-[var(--border)] bg-[var(--panel)] px-4 py-3 text-[13px] text-[var(--text-mut)]">
+            <div role="status" className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--panel)] px-4 py-3 text-[13px] text-[var(--text-mut)]">
               {status}
             </div>
           ) : null}
@@ -1009,6 +1059,8 @@ export function ReviewTallyConsole() {
     <main className="min-h-screen bg-[var(--bg)] text-[var(--text)]" data-review-route="ready" data-review-chunk={assignment.chunk.id} data-assignment-id={assignment.id}>
       <WorkerHeader
         language={language}
+        session={session}
+        lifecycle={lifecycle}
         onLanguageChange={toggleLanguage}
         onHelp={() => {
           setSupportReason("assignment");
@@ -1074,7 +1126,7 @@ export function ReviewTallyConsole() {
                     Math.max(0, video.duration - 0.1),
                   );
                 }
-                applyValidatedPlaybackRate(video, speed);
+                applyReviewSpeed(video, speed);
               }}
               onTimeUpdate={() => {
                 const video = videoRef.current;
@@ -1094,7 +1146,7 @@ export function ReviewTallyConsole() {
                   countable &&
                   prior !== null &&
                   sourceMs >= prior &&
-                  sourceMs - prior <= 3_000
+                  sourceMs - prior <= coverageGapToleranceMs(speed)
                 ) {
                   coverageRanges.current = mergeCoverage(coverageRanges.current, {
                     start_ms: prior,
@@ -1171,8 +1223,21 @@ export function ReviewTallyConsole() {
                 : (language === "es" ? "Reproducir" : "Play")}
             </Button>
             <Button type="button" variant="secondary" onClick={backTen}><SkipBack className="h-4 w-4" />{strings.back10}</Button>
-            <div className="flex rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-1" aria-label={language === "es" ? "Velocidad" : "Speed"}>
-              {reviewSpeeds.map((value) => <button key={value} type="button" className={cn("rounded px-3 py-1.5 text-[13px] font-semibold", speed === value ? "bg-[var(--accent)] text-[#11100d]" : "text-[var(--text-mut)]")} onClick={() => setSpeed(value)}>{value}x</button>)}
+            <div className="grid w-full grid-cols-6 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-1 sm:w-auto" aria-label={language === "es" ? "Velocidad" : "Speed"}>
+              {reviewSpeeds.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={speed === value}
+                  className={cn(
+                    "h-9 min-w-0 rounded px-1.5 text-[12px] font-semibold sm:w-11 sm:text-[13px]",
+                    speed === value ? "bg-[var(--accent)] text-[#11100d]" : "text-[var(--text-mut)]",
+                  )}
+                  onClick={() => setSpeed(value)}
+                >
+                  {value}x
+                </button>
+              ))}
             </div>
             <Button type="button" variant="secondary" onClick={() => setScreen("summary")}>{strings.endChunk}</Button>
             <div className="relative">
@@ -1326,53 +1391,366 @@ function formatCurrentDate(language: ReviewLanguage) {
   }).format(new Date());
 }
 
+function formatWorkerGreeting(
+  language: ReviewLanguage,
+  displayName: string | undefined,
+) {
+  const firstName = displayName?.trim().split(/\s+/)[0];
+  const hour = new Date().getHours();
+  const greeting =
+    language === "es"
+      ? hour < 12
+        ? "Buenos días"
+        : hour < 18
+          ? "Buenas tardes"
+          : "Buenas noches"
+      : hour < 12
+        ? "Good morning"
+        : hour < 18
+          ? "Good afternoon"
+          : "Good evening";
+  return firstName ? `${greeting}, ${firstName}` : greeting;
+}
+
+function formatObservedAt(
+  observedAt: string | undefined,
+  language: ReviewLanguage,
+) {
+  if (!observedAt) return language === "es" ? "Actualizando" : "Updating";
+  return new Intl.DateTimeFormat(language === "es" ? "es-419" : "en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(observedAt));
+}
+
+function reviewerDisplayName(
+  session: ReviewSession | null,
+  lifecycle: ReviewerLifecycle | null,
+) {
+  return lifecycle?.displayName?.trim() ||
+    session?.user.email.split("@")[0] ||
+    "Reviewer";
+}
+
+function reviewerInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
 function WorkerHeader({
   language,
+  session,
+  lifecycle,
   onLanguageChange,
   onHelp,
   onSignOut,
 }: {
   language: ReviewLanguage;
+  session: ReviewSession | null;
+  lifecycle: ReviewerLifecycle | null;
   onLanguageChange: (language: ReviewLanguage) => void;
   onHelp: () => void;
   onSignOut: () => void;
 }) {
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const displayName = reviewerDisplayName(session, lifecycle);
+  const email = lifecycle?.email || session?.user.email || "";
+
+  useEffect(() => {
+    if (!accountOpen) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (
+        event.target instanceof Node &&
+        !accountMenuRef.current?.contains(event.target)
+      ) {
+        setAccountOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountOpen]);
+
   return (
-    <header className="border-b border-[var(--border)] bg-[var(--bg-rail)]">
-      <div className="mx-auto flex h-[73px] w-full max-w-[1240px] items-center justify-between px-4 sm:px-5">
-        <div className="flex items-center gap-3 text-[17px] font-semibold">
-          <span className="grid h-6 w-6 place-items-center border-2 border-[var(--accent)]">
-            <span className="h-2.5 w-2.5 border border-[var(--accent)]" />
-          </span>
-          <span>FactoryVision</span>
+    <>
+      <header className="border-b border-[var(--border)] bg-[var(--bg-rail)]">
+        <div className="mx-auto flex h-[73px] w-full max-w-[1240px] items-center justify-between px-4 sm:px-5">
+          <div className="flex items-center gap-3 text-[16px] font-semibold sm:text-[17px]">
+            <span className="grid h-6 w-6 shrink-0 place-items-center border-2 border-[var(--accent)]">
+              <span className="h-2.5 w-2.5 border border-[var(--accent)]" />
+            </span>
+            <span>FactoryVision</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <LanguageControl language={language} onChange={onLanguageChange} />
+            <button
+              type="button"
+              aria-label={language === "es" ? "Obtener ayuda" : "Get help"}
+              className="grid h-10 w-10 place-items-center rounded-lg text-[var(--text-mut)] hover:bg-white/[.04] hover:text-[var(--text)]"
+              onClick={onHelp}
+            >
+              <LifeBuoy className="h-4 w-4" />
+            </button>
+            <div ref={accountMenuRef} className="relative">
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+                aria-label={language === "es" ? "Abrir menú de cuenta" : "Open account menu"}
+                className="flex h-11 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] px-1.5 pr-2 text-left hover:bg-white/[.04]"
+                onClick={() => setAccountOpen((open) => !open)}
+              >
+                <span className="grid h-8 w-8 place-items-center rounded bg-[var(--accent-tint)] text-[12px] font-bold text-[var(--accent)]">
+                  {reviewerInitials(displayName)}
+                </span>
+                <span className="hidden max-w-28 truncate text-[12px] font-semibold sm:block">
+                  {displayName}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-[var(--text-dim)]" />
+              </button>
+              {accountOpen ? (
+                <div
+                  role="menu"
+                  aria-label={language === "es" ? "Cuenta" : "Account"}
+                  className="absolute right-0 z-40 mt-2 w-[min(320px,calc(100vw-32px))] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)] shadow-2xl"
+                >
+                  <div className="border-b border-[var(--border)] p-4">
+                    <div className="truncate text-[14px] font-semibold">{displayName}</div>
+                    <div className="mt-1 truncate text-[12px] text-[var(--text-dim)]">{email}</div>
+                  </div>
+                  <div className="p-1.5">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-3 rounded px-3 py-2.5 text-left text-[13px] hover:bg-white/[.04]"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        setSettingsOpen(true);
+                      }}
+                    >
+                      <Settings className="h-4 w-4 text-[var(--text-mut)]" />
+                      {language === "es" ? "Perfil y configuración" : "Profile and settings"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-3 rounded px-3 py-2.5 text-left text-[13px] hover:bg-white/[.04]"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        onHelp();
+                      }}
+                    >
+                      <LifeBuoy className="h-4 w-4 text-[var(--text-mut)]" />
+                      {language === "es" ? "Obtener ayuda" : "Get help"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-3 rounded px-3 py-2.5 text-left text-[13px] text-[var(--bad)] hover:bg-[var(--bad-tint)]"
+                      onClick={onSignOut}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {language === "es" ? "Cerrar sesión" : "Sign out"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <LanguageControl language={language} onChange={onLanguageChange} />
-          <button
-            type="button"
-            aria-label={language === "es" ? "Obtener ayuda" : "Get help"}
-            className="flex h-10 items-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-[var(--text-mut)] hover:bg-white/[.04] hover:text-[var(--text)]"
-            onClick={onHelp}
-          >
-            <LifeBuoy className="h-4 w-4" />
-            <span className="hidden sm:inline">{language === "es" ? "Ayuda" : "Help"}</span>
-          </button>
-          <button
-            type="button"
-            title={language === "es" ? "Cerrar sesión" : "Sign out"}
-            aria-label={language === "es" ? "Cerrar sesión" : "Sign out"}
-            className="grid h-10 w-10 place-items-center rounded-lg text-[var(--text-mut)] hover:bg-white/[.04] hover:text-[var(--text)]"
-            onClick={onSignOut}
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </header>
+      </header>
+      {settingsOpen ? (
+        <AccountSettingsDialog
+          language={language}
+          displayName={displayName}
+          email={email}
+          lifecycle={lifecycle}
+          onLanguageChange={onLanguageChange}
+          onClose={() => setSettingsOpen(false)}
+          onHelp={() => {
+            setSettingsOpen(false);
+            onHelp();
+          }}
+          onSignOut={onSignOut}
+        />
+      ) : null}
+    </>
   );
 }
 
-function WorkMetric({
+function AccountSettingsDialog({
+  language,
+  displayName,
+  email,
+  lifecycle,
+  onLanguageChange,
+  onClose,
+  onHelp,
+  onSignOut,
+}: {
+  language: ReviewLanguage;
+  displayName: string;
+  email: string;
+  lifecycle: ReviewerLifecycle | null;
+  onLanguageChange: (language: ReviewLanguage) => void;
+  onClose: () => void;
+  onHelp: () => void;
+  onSignOut: () => void;
+}) {
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/75 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={language === "es" ? "Configuración de cuenta" : "Account settings"}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className="w-full max-w-lg overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)] shadow-2xl">
+        <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+          <div>
+            <h2 className="text-[18px] font-semibold">
+              {language === "es" ? "Configuración de cuenta" : "Account settings"}
+            </h2>
+            <p className="mt-1 text-[12px] text-[var(--text-dim)]">
+              {language === "es" ? "Perfil y preferencias" : "Profile and preferences"}
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label={language === "es" ? "Cerrar" : "Close"}
+            className="grid h-9 w-9 place-items-center rounded-lg text-[var(--text-mut)] hover:bg-white/[.04] hover:text-[var(--text)]"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        <div className="p-5">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-[var(--accent-tint)] text-[15px] font-bold text-[var(--accent)]">
+              {reviewerInitials(displayName)}
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-[16px] font-semibold">{displayName}</div>
+              <div className="mt-1 truncate text-[12px] text-[var(--text-dim)]">{email}</div>
+            </div>
+            <span className="ml-auto rounded border border-[var(--good)]/30 bg-[var(--good-tint)] px-2 py-1 text-[11px] font-semibold text-[var(--good)]">
+              {language === "es" ? "Activa" : "Active"}
+            </span>
+          </div>
+
+          <div className="mt-6 border-t border-[var(--border)] pt-5">
+            <div className="flex items-center gap-2 text-[13px] font-semibold">
+              <UserRound className="h-4 w-4 text-[var(--accent)]" />
+              {language === "es" ? "Preferencias" : "Preferences"}
+            </div>
+            <div className="mt-4 flex flex-col justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-4 sm:flex-row sm:items-center">
+              <div>
+                <div className="text-[13px] font-semibold">
+                  {language === "es" ? "Idioma" : "Language"}
+                </div>
+                <div className="mt-1 text-[12px] text-[var(--text-dim)]">
+                  {language === "es" ? "Idioma de la interfaz" : "Interface language"}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-1">
+                <button
+                  type="button"
+                  aria-pressed={language === "en"}
+                  className={cn(
+                    "h-9 rounded px-3 text-[12px] font-semibold",
+                    language === "en" ? "bg-[var(--accent)] text-[#11100d]" : "text-[var(--text-mut)]",
+                  )}
+                  onClick={() => onLanguageChange("en")}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={language === "es"}
+                  className={cn(
+                    "h-9 rounded px-3 text-[12px] font-semibold",
+                    language === "es" ? "bg-[var(--accent)] text-[#11100d]" : "text-[var(--text-mut)]",
+                  )}
+                  onClick={() => onLanguageChange("es")}
+                >
+                  Español
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 border-t border-[var(--border)] pt-5 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-4">
+              <Mail className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+              <div>
+                <div className="text-[12px] text-[var(--text-dim)]">
+                  {language === "es" ? "Inicio de sesión" : "Sign-in method"}
+                </div>
+                <div className="mt-1 text-[13px] font-semibold">
+                  {language === "es" ? "Enlace por correo" : "Email link"}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-4">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[var(--good)]" />
+              <div>
+                <div className="text-[12px] text-[var(--text-dim)]">
+                  {language === "es" ? "Seguridad" : "Security"}
+                </div>
+                <div className="mt-1 text-[13px] font-semibold">
+                  {lifecycle?.currentAal === "aal2"
+                    ? (language === "es" ? "Verificada" : "Verified")
+                    : (language === "es" ? "Cuenta de prueba" : "Test account")}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer className="flex flex-col-reverse gap-2 border-t border-[var(--border)] bg-[var(--panel-2)] px-5 py-4 sm:flex-row sm:justify-between">
+          <Button type="button" variant="ghost" onClick={onSignOut}>
+            <LogOut className="h-4 w-4" />
+            {language === "es" ? "Cerrar sesión" : "Sign out"}
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={onHelp}>
+              <LifeBuoy className="h-4 w-4" />
+              {language === "es" ? "Obtener ayuda" : "Get help"}
+            </Button>
+            <Button type="button" variant="primary" onClick={onClose}>
+              {language === "es" ? "Listo" : "Done"}
+            </Button>
+          </div>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function WorkMetricRow({
   label,
   value,
   icon,
@@ -1384,10 +1762,12 @@ function WorkMetric({
   testId?: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col items-center px-3 py-5 sm:px-6">
-      <div className="text-[var(--text-dim)]">{icon}</div>
-      <div className="mt-2 text-[13px] text-[var(--text-mut)]">{label}</div>
-      <div className="mt-2 text-[28px] font-semibold" data-testid={testId}>{value}</div>
+    <div className="flex min-w-0 items-center gap-3 py-4">
+      <div className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--panel)] text-[var(--text-dim)]">
+        {icon}
+      </div>
+      <div className="text-[13px] text-[var(--text-mut)]">{label}</div>
+      <div className="ml-auto text-[24px] font-semibold" data-testid={testId}>{value}</div>
     </div>
   );
 }

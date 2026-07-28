@@ -1,4 +1,4 @@
-const VALIDATED_PLAYBACK_RATES = [1, 2, 5] as const;
+const VALIDATED_PLAYBACK_RATES = [1, 2, 5, 10, 15, 20] as const;
 
 export function applyValidatedPlaybackRate(
   media: Pick<HTMLMediaElement, "playbackRate">,
@@ -22,4 +22,8 @@ export function applyValidatedPlaybackRate(
 
   media.playbackRate = 1;
   return { effectiveRate: 1, steppedDown: requested !== 1 };
+}
+
+export function coverageGapToleranceMs(playbackRate: number) {
+  return Math.max(3_000, Math.ceil(playbackRate * 600));
 }
