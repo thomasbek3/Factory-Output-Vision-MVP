@@ -1,12 +1,10 @@
-import { PlaceholderPage } from "@/components/chrome/placeholder-page";
+import { OwnerSurfaceState } from "@/components/owner-v2/owner-surface-state";
 
 export default function SettingsPage() {
   return (
-    <PlaceholderPage
+    <OwnerSurfaceState
       title="Settings"
-      body="Workspace settings — cameras, stations, crew, and alert thresholds — arrive in the next update. Until then, reach us any time and we'll adjust them for you."
-      actionLabel="Go to Live"
-      actionHref="/"
+      description="Factory timezone, verification-lag thresholds, retention, and authorized owner access will be managed here with an audit trail."
     />
   );
 }

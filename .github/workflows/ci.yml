@@ -5,6 +5,55 @@ on:
   pull_request:
 
 jobs:
+  owner-full-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v2
+        with:
+          version: 2.110.0
+          github-token: ${{ github.token }}
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: supabase start
+      - run: supabase db reset --local --no-seed
+      - name: Run worker and owner rollback fixtures
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/worker_portal_phase1_live.sql
+          psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/owner_v2_live.sql
+
+  owner-schedule-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: bash console/scripts/test-owner-schedule-sql.sh
+      - run: bash console/scripts/test-owner-worker-sql.sh
+      - run: bash console/scripts/test-owner-downtime-sql.sh
+      - run: bash console/scripts/test-owner-history-sql.sh
+      - run: bash console/scripts/test-owner-storage-sql.sh
+
   backend-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -35,4 +84,80 @@ jobs:
       - run: npm test -- --run
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test e2e/language.spec.ts e2e/ops.spec.ts e2e/qualification.spec.ts
+      - run: npx playwright test
+      - name: Capture first deterministic owner set
+        run: |
+          mkdir -p e2e-audit/determinism/first \
+            e2e-audit/determinism/second
+          cp -p e2e-audit/shots/owner-v2-today-desktop.png \
+            e2e-audit/shots/owner-v2-new-project-desktop.png \
+            e2e-audit/shots/owner-v2-station-desktop.png \
+            e2e-audit/shots/owner-v2-history-desktop.png \
+            e2e-audit/determinism/first/
+      - name: Verify owner visuals remain byte-identical after 90 seconds
+        run: |
+          sleep 90
+          npx playwright test e2e/owner-v2.spec.ts --project=chromium \
+            --grep 'renders the approved Today|completes the three-step|matches the station|reconciles immutable'
+          cp -p e2e-audit/shots/owner-v2-today-desktop.png \
+            e2e-audit/shots/owner-v2-new-project-desktop.png \
+            e2e-audit/shots/owner-v2-station-desktop.png \
+            e2e-audit/shots/owner-v2-history-desktop.png \
+            e2e-audit/determinism/second/
+          npm run visual:owner-determinism -- \
+            e2e-audit/determinism/first \
+            e2e-audit/determinism/second
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owner-v2-visual-proof
+          path: |
+            console/e2e-audit/shots/owner-v2-*.png
+            console/e2e-audit/overlays/*
+            console/e2e-audit/determinism/owner-v2-determinism.receipt.json
+
+  owner-live-qa:
+    if: github.event_name == 'push' && github.repository == 'thomasbek3/Factory-Output-Vision-MVP' && github.ref == 'refs/heads/main'
+    environment: owner-live-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: console
+    env:
+      FV_REQUIRE_LIVE_OWNER_QA: "1"
+      FV_OWNER_QA_EMAIL: ${{ secrets.FV_OWNER_QA_EMAIL }}
+      FV_OWNER_QA_PASSWORD: ${{ secrets.FV_OWNER_QA_PASSWORD }}
+      FV_OWNER_QA_FACTORY_ID: ${{ secrets.FV_OWNER_QA_FACTORY_ID }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FV_OWNER_QA_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.FV_OWNER_QA_SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: console/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run e2e:owner-release
+
+  seeded-adversarial-live:
+    if: github.event_name == 'push' && github.repository == 'thomasbek3/Factory-Output-Vision-MVP' && github.ref == 'refs/heads/main'
+    environment: owner-live-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.FV_OWNER_QA_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Require isolated seeded QA database
+        run: test -n "${DATABASE_URL}"
+      - name: Run rollback-only workforce and ops adversarial proofs
+        run: |
+          psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/worker_workforce_adversarial_live.sql
+          psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/ops_command_center_live.sql

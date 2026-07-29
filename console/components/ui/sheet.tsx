@@ -33,13 +33,13 @@ const SheetContent = forwardRef<
     <SheetPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col border-l border-[var(--border)] bg-[linear-gradient(180deg,var(--panel),var(--panel-2))] p-0 shadow-[0_20px_60px_rgba(0,0,0,.65)] outline-none",
+        "fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col border-l border-[var(--border)] bg-[var(--panel)] p-0 shadow-[0_20px_60px_rgba(0,0,0,.65)] outline-none",
         className,
       )}
       {...props}
     >
       {children}
-      <SheetPrimitive.Close className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-mut)] hover:bg-white/[.04] hover:text-[var(--text)]">
+      <SheetPrimitive.Close className="absolute right-4 top-4 flex size-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-mut)] hover:bg-white/[.04] hover:text-[var(--text)] md:size-9">
         <X className="h-4 w-4" strokeWidth={1.75} />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>

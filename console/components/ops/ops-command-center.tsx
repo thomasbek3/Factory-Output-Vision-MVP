@@ -1,18 +1,15 @@
 "use client";
 
 import {
-  FormEvent,
   type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
-  ArrowLeft,
   Bot,
   Check,
   ChevronRight,
@@ -38,12 +35,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-import {
-  restoreReviewerSession,
-  signInReviewer,
-  signOutReviewer,
-  type ReviewSession,
-} from "@/lib/reviewSupabase";
 import { InviteDialog } from "@/components/ops/ops-console";
 
 type OpsTab = "overview" | "queue" | "labels" | "reviewers" | "ai";
@@ -340,11 +331,8 @@ function SectionHeading({
 }
 
 export function OpsCommandCenter() {
-  const [session, setSession] = useState<ReviewSession | null>(null);
   const [roster, setRoster] = useState<RosterResponse | null>(null);
   const [activeTab, setActiveTab] = useState<OpsTab>("overview");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -361,18 +349,22 @@ export function OpsCommandCenter() {
   }, []);
 
   useEffect(() => {
-    void restoreReviewerSession().then(async (restored) => {
-      setSession(restored);
-      if (restored) {
-        try {
-          await loadRoster();
-        } catch {
-          setRoster(null);
-        }
-      }
-      setLoading(false);
-    });
+    void loadRoster()
+      .catch(() => {
+        setRoster(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [loadRoster]);
+
+  async function signOut() {
+    try {
+      await fetch("/api/ops/session", { method: "DELETE" });
+    } finally {
+      window.location.replace("/ops/sign-in");
+    }
+  }
 
   const command = roster?.commandCenter;
   const filteredLabels = useMemo(() => {
@@ -389,22 +381,6 @@ export function OpsCommandCenter() {
       ].some((value) => value.toLowerCase().includes(query)),
     );
   }, [command, search]);
-
-  async function handleSignIn(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setNotice(null);
-    try {
-      const authenticated = await signInReviewer(authEmail.trim(), authPassword);
-      setSession(authenticated);
-      setAuthPassword("");
-      await loadRoster();
-    } catch {
-      setNotice("This account does not have FactoryVision ops access.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function refresh() {
     setBusy(true);
@@ -475,53 +451,26 @@ export function OpsCommandCenter() {
     );
   }
 
-  if (!session || !roster || !command) {
+  if (!roster || !command) {
     return (
-      <main className="min-h-screen bg-[var(--bg)] text-[var(--text)]" data-ops-route="ready">
-        <header className="border-b border-[var(--border)] px-5 py-4">
-          <Link href="/" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[var(--text-mut)]">
-            <ArrowLeft className="h-4 w-4" />
-            Console
-          </Link>
-        </header>
-        <section className="mx-auto flex min-h-[calc(100vh-65px)] max-w-md items-center px-5 py-12">
-          <div className="w-full border border-[var(--border)] bg-[var(--panel)] p-6">
-            <div className="flex h-10 w-10 items-center justify-center border border-[var(--border)] bg-[var(--panel-2)] text-[var(--accent)]">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <h1 className="mt-6 text-[24px] font-semibold">Sign in to manage reviewers</h1>
-            <form className="mt-6 grid gap-4" onSubmit={handleSignIn}>
-              <label className="grid gap-1.5 text-[12px] text-[var(--text-mut)]">
-                Email
-                <input
-                  className="h-11 border border-[var(--border)] bg-[var(--bg)] px-3 text-[14px] text-[var(--text)] outline-none focus:border-[var(--accent)]"
-                  type="email"
-                  value={authEmail}
-                  onChange={(event) => setAuthEmail(event.target.value)}
-                  required
-                />
-              </label>
-              <label className="grid gap-1.5 text-[12px] text-[var(--text-mut)]">
-                Password
-                <input
-                  className="h-11 border border-[var(--border)] bg-[var(--bg)] px-3 text-[14px] text-[var(--text)] outline-none focus:border-[var(--accent)]"
-                  type="password"
-                  value={authPassword}
-                  onChange={(event) => setAuthPassword(event.target.value)}
-                  required
-                />
-              </label>
-              <button
-                className="mt-1 inline-flex h-11 items-center justify-center gap-2 bg-[var(--accent)] px-4 text-[14px] font-semibold text-black disabled:opacity-50"
-                disabled={busy}
-              >
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                Sign in
-              </button>
-            </form>
-          </div>
-        </section>
-        {notice ? <StatusNotice notice={notice} /> : null}
+      <main
+        className="grid min-h-screen place-items-center bg-[var(--bg)] px-5 text-[var(--text)]"
+        data-ops-route="ready"
+      >
+        <div className="max-w-sm text-center">
+          <AlertTriangle className="mx-auto h-6 w-6 text-[var(--warn)]" />
+          <h1 className="mt-4 text-xl font-semibold">Operations data unavailable</h1>
+          <p className="mt-2 text-sm text-[var(--text-mut)]">
+            Your session is valid, but the operations service did not respond.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-5 h-10 bg-[var(--accent)] px-4 text-sm font-semibold text-black"
+          >
+            Retry
+          </button>
+        </div>
       </main>
     );
   }
@@ -566,10 +515,7 @@ export function OpsCommandCenter() {
             </button>
             <button
               type="button"
-              onClick={() => void signOutReviewer().then(() => {
-                setSession(null);
-                setRoster(null);
-              })}
+              onClick={() => void signOut()}
               title="Sign out"
               className="inline-flex h-9 w-9 items-center justify-center border border-[var(--border)] text-[var(--text-mut)] hover:text-[var(--text)]"
             >

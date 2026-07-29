@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { opsRpc } from "@/lib/reviewerAdminServer";
+import { authorizeOps } from "@/lib/opsServer";
 import { hasReviewPreviewPass } from "@/lib/reviewPreviewPass";
 import { reviewServerConfig } from "@/lib/reviewServer";
 
@@ -100,15 +101,26 @@ async function servicePracticeChunk() {
 }
 
 export async function GET(request: NextRequest) {
+  const previewPass = hasReviewPreviewPass(request);
+  if (!previewPass) {
+    try {
+      const authorization = await authorizeOps(request);
+      if (!authorization.authorized) {
+        return Response.json({ allowed: false, practice: null });
+      }
+    } catch {
+      return Response.json(
+        { error: "PRACTICE_PREVIEW_UNAVAILABLE" },
+        { status: 503 },
+      );
+    }
+  }
+
   try {
-    const previewPass = hasReviewPreviewPass(request);
     let chunk: PracticeChunk | null;
     if (previewPass) {
       chunk = await servicePracticeChunk();
     } else {
-      await opsRpc<boolean>(request, "ops_assert_access", {
-        p_factory_id: null,
-      });
       chunk = await opsRpc<PracticeChunk | null>(
         request,
         "ops_latest_practice_preview",
@@ -118,6 +130,9 @@ export async function GET(request: NextRequest) {
     const practice = chunk ? await signPracticeMedia(chunk) : null;
     return Response.json({ allowed: true, practice });
   } catch {
-    return Response.json({ error: "OPS_ACCESS_REQUIRED" }, { status: 403 });
+    return Response.json(
+      { error: "PRACTICE_PREVIEW_UNAVAILABLE" },
+      { status: 503 },
+    );
   }
 }

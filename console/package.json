@@ -9,10 +9,14 @@
     "lint": "eslint",
     "test": "vitest run",
     "e2e": "playwright test",
-    "e2e:release": "FV_REQUIRE_LIVE_QA=1 playwright test e2e/review.spec.ts e2e/ops.spec.ts",
+    "visual:owner-overlays": "node scripts/generate-owner-overlays.mjs",
+    "visual:owner-determinism": "node scripts/verify-owner-visual-determinism.mjs",
+    "e2e:release": "FV_REQUIRE_LIVE_QA=1 FV_REQUIRE_LIVE_OWNER_QA=1 playwright test e2e/integration-boundaries.spec.ts e2e/review.spec.ts e2e/ops.spec.ts e2e/owner-v2.spec.ts e2e/owner-v2-live.spec.ts",
+    "e2e:owner-release": "FV_REQUIRE_LIVE_OWNER_QA=1 playwright test e2e/owner-v2.spec.ts e2e/owner-v2-live.spec.ts",
     "seed": "prisma db seed"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "@prisma/adapter-better-sqlite3": "7.8.0",
     "@prisma/client": "7.8.0",
     "@radix-ui/react-dialog": "1.1.15",
@@ -33,6 +37,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "4.3.2",
     "@types/node": "20.19.43",
@@ -44,6 +49,7 @@
     "playwright": "^1.61.1",
     "prisma": "7.8.0",
     "shadcn": "4.13.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "4.3.2",
     "tsx": "4.20.6",
     "typescript": "5.9.3",

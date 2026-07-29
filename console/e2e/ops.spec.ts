@@ -5,18 +5,65 @@ const opsQaEmail = process.env.FV_OPS_QA_EMAIL;
 const opsQaPassword = process.env.FV_OPS_QA_PASSWORD;
 const requireLiveQa = process.env.FV_REQUIRE_LIVE_QA === "1";
 
+async function signInOps(
+  page: import("@playwright/test").Page,
+  baseURL: string | undefined,
+) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!opsQaEmail || !opsQaPassword || !supabaseUrl || !publishableKey) {
+    throw new Error(
+      "Ops QA requires its email, password, and Supabase public configuration.",
+    );
+  }
+  const tokenResponse = await page.request.post(
+    `${supabaseUrl}/auth/v1/token?grant_type=password`,
+    {
+      headers: {
+        apikey: publishableKey,
+        "Content-Type": "application/json",
+      },
+      data: { email: opsQaEmail, password: opsQaPassword },
+    },
+  );
+  expect(tokenResponse.ok()).toBe(true);
+  const token = (await tokenResponse.json()) as {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  };
+  const origin = new URL(baseURL as string).origin;
+  const sessionResponse = await page.request.post("/api/ops/session", {
+    headers: {
+      Origin: origin,
+      "Content-Type": "application/json",
+    },
+    data: {
+      action: "completePasswordless",
+      accessToken: token.access_token,
+      refreshToken: token.refresh_token,
+      expiresIn: token.expires_in,
+    },
+  });
+  expect(sessionResponse.ok()).toBe(true);
+  await page.goto("/ops");
+}
+
 test.describe("/ops", () => {
   test("workforce metrics stay behind ops authentication", async ({ page, request }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/ops");
 
-    await expect(page.locator("[data-ops-route='ready']")).toBeVisible();
-    await expect(page.getByText("Sign in to manage reviewers")).toBeVisible();
+    await expect(page).toHaveURL(/\/ops\/sign-in$/);
+    await expect(page.getByText("Internal operations", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Sign in to your workspace" }),
+    ).toBeVisible();
     await expect(page.getByText("Open queue")).toHaveCount(0);
     const snapshot = await request.get("/api/ops/snapshot");
     expect(snapshot.status()).toBe(401);
     const reviewerAdmin = await request.get("/api/ops/reviewers");
-    expect(reviewerAdmin.status()).toBe(403);
+    expect(reviewerAdmin.status()).toBe(401);
     const inviteAttempt = await request.post("/api/ops/reviewers", {
       data: {
         requestKey: "bd58d672-86f8-4f02-84d2-6b94bb8a29ea",
@@ -26,7 +73,7 @@ test.describe("/ops", () => {
         factoryId: "3a4d8990-6616-47f2-8d99-fb1ff3463ec1",
       },
     });
-    expect(inviteAttempt.status()).toBe(403);
+    expect(inviteAttempt.status()).toBe(401);
     await expect(page.getByText(/model agreement/i)).toHaveCount(0);
     await expect(page.getByText(/held-out exam/i)).toHaveCount(0);
     await expect(page.getByText(/golden accuracy/i)).toHaveCount(0);
@@ -35,21 +82,26 @@ test.describe("/ops", () => {
     assertNoConsoleErrors(errors);
   });
 
-  test("legacy ungated label export route is absent", async ({ request }) => {
-    const response = await request.post("/api/ops/labels/export");
+  test("legacy ungated label export route is absent", async ({
+    page,
+    baseURL,
+  }) => {
+    await page.context().addCookies([
+      {
+        name: "fv_ops_access",
+        value: "route-existence-probe",
+        url: new URL(baseURL as string).origin,
+        httpOnly: true,
+        sameSite: "Strict",
+      },
+    ]);
+    const response = await page.request.post("/api/ops/labels/export");
     expect(response.status()).toBe(404);
-  });
-
-  // G5 — internal back-link.
-  test("has a Console back-link", async ({ page }) => {
-    await page.goto("/ops");
-    await expect(page.getByRole("link", { name: /Console/ }).first()).toBeVisible();
-    await page.getByRole("link", { name: /Console/ }).first().click();
-    await expect(page).toHaveURL(/\/$/);
   });
 
   test("authenticated ops can inspect the reviewer roster and invitation email", async ({
     page,
+    baseURL,
   }) => {
     if ((!opsQaEmail || !opsQaPassword) && requireLiveQa) {
       throw new Error(
@@ -61,12 +113,10 @@ test.describe("/ops", () => {
       "FV_OPS_QA_EMAIL and FV_OPS_QA_PASSWORD are required",
     );
     const errors = collectConsoleErrors(page);
-    await page.goto("/ops");
-    await page.getByLabel("Email").fill(opsQaEmail ?? "");
-    await page.getByLabel("Password").fill(opsQaPassword ?? "");
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await signInOps(page, baseURL);
 
     await expect(page.getByText("Operations command center")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Console/ }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Review queue" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Label output" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "AI evaluation" }).first()).toBeVisible();
@@ -119,7 +169,10 @@ test.describe("/ops", () => {
     assertNoConsoleErrors(errors);
   });
 
-  test("authenticated ops workspace remains usable on mobile", async ({ page }) => {
+  test("authenticated ops workspace remains usable on mobile", async ({
+    page,
+    baseURL,
+  }) => {
     if ((!opsQaEmail || !opsQaPassword) && requireLiveQa) {
       throw new Error(
         "FV_OPS_QA_EMAIL and FV_OPS_QA_PASSWORD are required when FV_REQUIRE_LIVE_QA=1",
@@ -131,10 +184,7 @@ test.describe("/ops", () => {
     );
     const errors = collectConsoleErrors(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/ops");
-    await page.getByLabel("Email").fill(opsQaEmail ?? "");
-    await page.getByLabel("Password").fill(opsQaPassword ?? "");
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await signInOps(page, baseURL);
 
     await expect(page.getByText("Operations command center")).toBeVisible();
     await expect(page.getByRole("button", { name: "Label output" }).first()).toBeVisible();

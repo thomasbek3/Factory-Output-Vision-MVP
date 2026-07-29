@@ -3,14 +3,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const opsRpc = vi.fn();
 const hasReviewPreviewPass = vi.fn();
+const authorizeOps = vi.fn();
 
 vi.mock("@/lib/reviewerAdminServer", () => ({ opsRpc }));
 vi.mock("@/lib/reviewPreviewPass", () => ({ hasReviewPreviewPass }));
+vi.mock("@/lib/opsServer", () => ({ authorizeOps }));
 
 describe("ops practice preview route", () => {
   beforeEach(() => {
     vi.resetModules();
     opsRpc.mockReset();
+    authorizeOps.mockReset();
+    authorizeOps.mockResolvedValue({
+      authorized: true,
+      accessToken: "ops-token",
+    });
     hasReviewPreviewPass.mockReset();
     hasReviewPreviewPass.mockReturnValue(false);
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
@@ -25,7 +32,6 @@ describe("ops practice preview route", () => {
 
   it("returns a signed, non-durable practice assignment to an ops user", async () => {
     opsRpc
-      .mockResolvedValueOnce(true)
       .mockResolvedValueOnce({
         chunkId: "chunk-id",
         stationId: "station-id",
@@ -72,7 +78,7 @@ describe("ops practice preview route", () => {
       },
     });
     expect(opsRpc).toHaveBeenNthCalledWith(
-      2,
+      1,
       expect.any(NextRequest),
       "ops_latest_practice_preview",
       {},
@@ -80,7 +86,7 @@ describe("ops practice preview route", () => {
   });
 
   it("returns no practice assignment when none is configured", async () => {
-    opsRpc.mockResolvedValueOnce(true).mockResolvedValueOnce(null);
+    opsRpc.mockResolvedValueOnce(null);
     const { GET } = await import("@/app/api/review/preview/route");
 
     const response = await GET(
@@ -89,6 +95,36 @@ describe("ops practice preview route", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ allowed: true, practice: null });
+  });
+
+  it("returns a clean negative capability response without an ops session", async () => {
+    authorizeOps.mockResolvedValue({ authorized: false, status: 401 });
+    const { GET } = await import("@/app/api/review/preview/route");
+
+    const response = await GET(
+      new NextRequest("https://factoryvision-review.vercel.app/api/review/preview"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      allowed: false,
+      practice: null,
+    });
+    expect(opsRpc).not.toHaveBeenCalled();
+  });
+
+  it("reports an unavailable capability service separately from denial", async () => {
+    authorizeOps.mockRejectedValue(new Error("provider unavailable"));
+    const { GET } = await import("@/app/api/review/preview/route");
+
+    const response = await GET(
+      new NextRequest("https://factoryvision-review.vercel.app/api/review/preview"),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: "PRACTICE_PREVIEW_UNAVAILABLE",
+    });
   });
 
   it("uses the service-only practice lookup for a valid preview pass", async () => {
@@ -125,6 +161,7 @@ describe("ops practice preview route", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).practice.chunk.stationName).toBe("Pallet A");
     expect(opsRpc).not.toHaveBeenCalled();
+    expect(authorizeOps).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "https://project.supabase.co/rest/v1/rpc/service_latest_practice_preview",

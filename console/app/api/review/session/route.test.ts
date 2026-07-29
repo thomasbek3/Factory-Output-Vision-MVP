@@ -165,4 +165,25 @@ describe("reviewer passwordless session route", () => {
     expect(response.status).toBe(401);
     expect(response.headers.get("set-cookie")).toBeNull();
   });
+
+  it("allows same-origin sign out and rejects cross-origin sign out", async () => {
+    const { DELETE } = await import("@/app/api/review/session/route");
+    const allowed = await DELETE(
+      new NextRequest("https://factoryvision-review.vercel.app/api/review/session", {
+        method: "DELETE",
+        headers: { origin: "https://factoryvision-review.vercel.app" },
+      }),
+    );
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers.get("set-cookie")).toContain("fv_review_access=");
+
+    const denied = await DELETE(
+      new NextRequest("https://factoryvision-review.vercel.app/api/review/session", {
+        method: "DELETE",
+        headers: { origin: "https://attacker.example" },
+      }),
+    );
+    expect(denied.status).toBe(403);
+    expect(denied.headers.get("set-cookie")).toBeNull();
+  });
 });

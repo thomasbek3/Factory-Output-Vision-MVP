@@ -66,6 +66,10 @@ function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function isSameOrigin(request: NextRequest) {
+  return request.headers.get("origin") === request.nextUrl.origin;
+}
+
 async function passwordlessRequestAllowed(
   request: NextRequest,
   email: string,
@@ -291,6 +295,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  if (!isSameOrigin(request)) {
+    return Response.json({ error: "REVIEW_SESSION_INVALID" }, { status: 403 });
+  }
   const output = NextResponse.json({ ok: true });
   clearReviewerCookies(request, output);
   return output;

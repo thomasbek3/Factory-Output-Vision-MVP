@@ -9,7 +9,18 @@ import { defineConfig, devices } from "@playwright/test";
  * specs test the SAME artifact the owner hits through the funnel.
  */
 const PORT = process.env.FV_CONSOLE_PORT ?? "3000";
-const BASE_URL = `http://127.0.0.1:${PORT}`;
+const BASE_URL = `http://localhost:${PORT}`;
+const OWNER_LIVE_ENV = [
+  "FV_OWNER_QA_EMAIL",
+  "FV_OWNER_QA_PASSWORD",
+  "FV_OWNER_QA_FACTORY_ID",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+] as const;
+const OWNER_LIVE_CONFIGURED = OWNER_LIVE_ENV.every(
+  (name) => Boolean(process.env[name]),
+);
+const OWNER_STORAGE_STATE = "test-results/.auth/owner.json";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -29,12 +40,32 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: [
+        /owner-v2-live\.setup\.ts/,
+        /owner-v2-live\.spec\.ts/,
+      ],
+    },
+    {
+      name: "owner-auth-setup",
+      testMatch: /owner-v2-live\.setup\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "owner-live",
+      testMatch: /owner-v2-live\.spec\.ts/,
+      dependencies: ["owner-auth-setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: OWNER_LIVE_CONFIGURED
+          ? OWNER_STORAGE_STATE
+          : undefined,
+      },
     },
   ],
   webServer: {
     command: "bash scripts/serve.sh",
     url: BASE_URL,
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
 });

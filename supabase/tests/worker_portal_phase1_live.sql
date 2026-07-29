@@ -11,12 +11,14 @@ values
   ('60000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-reviewer-3@example.invalid', now(), now()),
   ('60000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-owner@example.invalid', now(), now()),
   ('60000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-other-reviewer@example.invalid', now(), now()),
-  ('60000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-other-owner@example.invalid', now(), now());
+  ('60000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-other-owner@example.invalid', now(), now()),
+  ('60000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-qualification@example.invalid', now(), now()),
+  ('60000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fv-real-qualification@example.invalid', now(), now());
 
-insert into public.factories (id, name, timezone)
+insert into public.factories (id, name, timezone, is_test)
 values
-  ('10000000-0000-0000-0000-000000000001', 'Rollback-only fixture', 'America/New_York'),
-  ('10000000-0000-0000-0000-000000000002', 'Cross-tenant fixture', 'America/Chicago');
+  ('10000000-0000-0000-0000-000000000001', 'Rollback-only fixture', 'America/New_York', true),
+  ('10000000-0000-0000-0000-000000000002', 'Cross-tenant fixture', 'America/Chicago', false);
 
 insert into public.profiles (id, display_name, locale, status)
 values
@@ -25,7 +27,9 @@ values
   ('60000000-0000-0000-0000-000000000003', 'Reviewer 3', 'es-419', 'active'),
   ('60000000-0000-0000-0000-000000000004', 'Owner', 'en', 'active'),
   ('60000000-0000-0000-0000-000000000005', 'Other reviewer', 'es-419', 'active'),
-  ('60000000-0000-0000-0000-000000000006', 'Other owner', 'en', 'active');
+  ('60000000-0000-0000-0000-000000000006', 'Other owner', 'en', 'active'),
+  ('60000000-0000-0000-0000-000000000007', 'Qualification test reviewer', 'en', 'active'),
+  ('60000000-0000-0000-0000-000000000008', 'Qualification real reviewer', 'en', 'active');
 
 insert into public.factory_memberships (factory_id, user_id, role)
 values
@@ -34,7 +38,9 @@ values
   ('10000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000003', 'reviewer'),
   ('10000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000004', 'owner'),
   ('10000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000005', 'reviewer'),
-  ('10000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000006', 'owner');
+  ('10000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000006', 'owner'),
+  ('10000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000007', 'reviewer'),
+  ('10000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000008', 'reviewer');
 
 insert into public.stations (id, factory_id, alias)
 values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'Station 1');
@@ -71,6 +77,34 @@ values
     900000,
     'verified',
     now()
+  ),
+  (
+    '30000000-0000-0000-0000-000000000003',
+    '10000000-0000-0000-0000-000000000001',
+    '20000000-0000-0000-0000-000000000001',
+    'factory-originals',
+    'fixture/qualification-original.mp4',
+    repeat('c', 64),
+    repeat('c', 64),
+    'video/mp4',
+    1000,
+    900000,
+    'verified',
+    now()
+  ),
+  (
+    '30000000-0000-0000-0000-000000000004',
+    '10000000-0000-0000-0000-000000000001',
+    '20000000-0000-0000-0000-000000000001',
+    'review-renditions',
+    'fixture/qualification-review.mp4',
+    repeat('d', 64),
+    repeat('c', 64),
+    'video/mp4',
+    500,
+    900000,
+    'verified',
+    now()
   );
 
 insert into public.media_renditions (
@@ -92,6 +126,35 @@ values (
   27000,
   '{}'::jsonb,
   'verified'
+), (
+  '40000000-0000-0000-0000-000000000002',
+  '10000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000003',
+  '30000000-0000-0000-0000-000000000004',
+  1,
+  0,
+  900000,
+  0,
+  900000,
+  'constant',
+  27000,
+  '{}'::jsonb,
+  'verified'
+);
+
+insert into storage.objects (bucket_id, name, owner_id, metadata)
+values
+(
+  'review-renditions',
+  'fixture/review.mp4',
+  '60000000-0000-0000-0000-000000000001',
+  '{"mimetype":"video/mp4","size":500}'::jsonb
+),
+(
+  'review-renditions',
+  'fixture/qualification-review.mp4',
+  '60000000-0000-0000-0000-000000000007',
+  '{"mimetype":"video/mp4","size":500}'::jsonb
 );
 
 insert into public.video_chunks (
@@ -115,6 +178,60 @@ values (
   'ready'
 );
 
+insert into public.video_chunks (
+  id, factory_id, station_id, source_media_object_id, review_rendition_id,
+  source_sha256, source_start_at, source_end_at, source_start_ms, source_end_ms,
+  source_set_role, assignment_eligible, state
+) values (
+  '50000000-0000-0000-0000-000000000002',
+  '10000000-0000-0000-0000-000000000001',
+  '20000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000003',
+  '40000000-0000-0000-0000-000000000002',
+  repeat('c', 64),
+  '2026-07-25T12:00:00Z',
+  '2026-07-25T12:15:00Z',
+  0,
+  900000,
+  'qualification',
+  false,
+  'ready'
+);
+
+insert into private.reference_answers (
+  factory_id, chunk_id, answer_type, total_count, event_times_ms, source_sha256
+) values (
+  '10000000-0000-0000-0000-000000000001',
+  '50000000-0000-0000-0000-000000000002',
+  'qualification',
+  1,
+  '[1000]'::jsonb,
+  repeat('c', 64)
+);
+
+insert into public.reviewer_lifecycles (
+  user_id, factory_id, email, state, mfa_verified_at,
+  practice_completed_at, is_test_account
+) values
+(
+  '60000000-0000-0000-0000-000000000007',
+  '10000000-0000-0000-0000-000000000001',
+  'fv-qualification@example.invalid',
+  'qualification',
+  now(),
+  now(),
+  true
+),
+(
+  '60000000-0000-0000-0000-000000000008',
+  '10000000-0000-0000-0000-000000000001',
+  'fv-real-qualification@example.invalid',
+  'qualification',
+  now(),
+  now(),
+  false
+);
+
 insert into public.review_assignments (
   id, factory_id, chunk_id, rendition_id, reviewer_id, review_round,
   status, lease_expires_at, app_version
@@ -123,6 +240,164 @@ values
   ('70000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001', 1, 'leased', now() + interval '1 hour', 'fixture'),
   ('70000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', 1, 'leased', now() + interval '1 hour', 'fixture'),
   ('70000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000003', 1, 'leased', now() + interval '1 hour', 'fixture');
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"60000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  if not public.can_read_assignment_media(
+    'review-renditions',
+    'fixture/review.mp4'
+  ) then
+    raise exception 'leased reviewer assignment media authorization failed';
+  end if;
+  if (
+    select count(*)
+    from storage.objects
+    where bucket_id = 'review-renditions'
+      and name = 'fixture/review.mp4'
+  ) <> 1 then
+    raise exception 'leased reviewer could not read assigned rendition';
+  end if;
+  if exists (
+    select 1 from storage.objects
+    where bucket_id = 'review-renditions'
+      and name = 'fixture/qualification-review.mp4'
+  ) then
+    raise exception 'leased reviewer could read qualification rendition';
+  end if;
+  if (
+    select count(*)
+    from storage.objects
+    where bucket_id in ('factory-originals', 'evidence-clips')
+  ) <> 0 then
+    raise exception 'reviewer storage policy exposed a protected non-rendition';
+  end if;
+end;
+$$;
+reset role;
+
+insert into public.video_chunks (
+  id, factory_id, station_id, source_media_object_id, review_rendition_id,
+  source_sha256, source_start_at, source_end_at, source_start_ms, source_end_ms,
+  source_set_role, assignment_eligible, state
+) values (
+  '50000000-0000-0000-0000-000000000003',
+  '10000000-0000-0000-0000-000000000001',
+  '20000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000003',
+  '40000000-0000-0000-0000-000000000002',
+  repeat('c', 64),
+  '2026-07-24T12:00:00Z',
+  '2026-07-24T12:15:00Z',
+  0,
+  900000,
+  'production',
+  true,
+  'ready'
+);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"60000000-0000-0000-0000-000000000007","role":"authenticated","aal":"aal1"}',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  if public.can_read_qualification_media(
+    'review-renditions',
+    'fixture/qualification-review.mp4'
+  ) or (select count(*) from storage.objects) <> 0 then
+    raise exception 'mixed production and qualification lineage was exposed';
+  end if;
+end;
+$$;
+reset role;
+delete from public.video_chunks
+where id = '50000000-0000-0000-0000-000000000003';
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"60000000-0000-0000-0000-000000000007","role":"authenticated","aal":"aal1"}',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  if public.can_read_assignment_media(
+    'review-renditions',
+    'fixture/qualification-review.mp4'
+  ) then
+    raise exception 'qualification reviewer inherited assignment media access';
+  end if;
+  if not public.can_read_qualification_media(
+    'review-renditions',
+    'fixture/qualification-review.mp4'
+  ) then
+    raise exception 'qualification reviewer media authorization failed';
+  end if;
+  if (
+    select count(*)
+    from storage.objects
+    where bucket_id = 'review-renditions'
+      and name = 'fixture/qualification-review.mp4'
+  ) <> 1 then
+    raise exception 'qualification reviewer could not read qualification media';
+  end if;
+  if exists (
+    select 1 from storage.objects
+    where bucket_id = 'review-renditions'
+      and name = 'fixture/review.mp4'
+  ) then
+    raise exception 'qualification reviewer could read production rendition';
+  end if;
+end;
+$$;
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"60000000-0000-0000-0000-000000000008","role":"authenticated","aal":"aal1"}',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  if public.can_read_qualification_media(
+    'review-renditions',
+    'fixture/qualification-review.mp4'
+  ) or (select count(*) from storage.objects) <> 0 then
+    raise exception 'non-test qualification reviewer bypassed aal2';
+  end if;
+end;
+$$;
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"60000000-0000-0000-0000-000000000008","role":"authenticated","aal":"aal2"}',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  if not public.can_read_qualification_media(
+    'review-renditions',
+    'fixture/qualification-review.mp4'
+  ) or (
+    select count(*) from storage.objects
+    where bucket_id = 'review-renditions'
+      and name = 'fixture/qualification-review.mp4'
+  ) <> 1 then
+    raise exception 'non-test aal2 qualification reviewer was denied';
+  end if;
+end;
+$$;
+reset role;
 
 do $$
 begin
@@ -759,6 +1034,249 @@ values (
 
 set constraints all immediate;
 
+-- A resolved production chunk without a complete finalization quarantines with
+-- explicit no-coverage truth and remains eligible for pre-publication repair.
+insert into public.video_chunks (
+  id, factory_id, station_id, source_media_object_id, review_rendition_id,
+  source_sha256, source_start_at, source_end_at, source_start_ms, source_end_ms,
+  source_set_role, assignment_eligible, state
+)
+values (
+  '50000000-0000-0000-0000-000000000004',
+  '10000000-0000-0000-0000-000000000001',
+  '20000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
+  '40000000-0000-0000-0000-000000000001',
+  repeat('a', 64),
+  '2026-07-26 12:15:00-04',
+  '2026-07-26 12:30:00-04',
+  0,
+  900000,
+  'production',
+  false,
+  'resolved'
+);
+select public.service_publish_resolved_chunks(25);
+do $$
+begin
+  if (
+    select state
+    from public.video_chunks
+    where id = '50000000-0000-0000-0000-000000000004'
+  ) <> 'quarantined' then
+    raise exception 'incomplete resolved chunk did not quarantine';
+  end if;
+  if (
+    select count(*)
+    from public.owner_verification_intervals
+    where chunk_id = '50000000-0000-0000-0000-000000000004'
+      and status = 'no_published_coverage'
+  ) <> 1 then
+    raise exception 'incomplete resolved chunk lacks no-coverage interval';
+  end if;
+  if exists (
+    select 1
+    from public.owner_production_events
+    where chunk_id = '50000000-0000-0000-0000-000000000004'
+  ) then
+    raise exception 'incomplete resolved chunk projected owner events';
+  end if;
+end;
+$$;
+update public.video_chunks
+set state = 'transcoding'
+where id = '50000000-0000-0000-0000-000000000004';
+
+update public.video_chunks
+set state = 'assigned'
+where id = '50000000-0000-0000-0000-000000000001';
+
+update public.video_chunks
+set state = 'resolved'
+where id = '50000000-0000-0000-0000-000000000001';
+
+-- A bad source timeline must quarantine without owner events. The deliberate
+-- exception rolls this scenario back so the same complete fixture can publish.
+do $$
+begin
+  begin
+    update public.video_chunks
+    set gap_map = '[{"source_start_ms":300000,"source_end_ms":301000}]'::jsonb
+    where id = '50000000-0000-0000-0000-000000000001';
+    perform public.service_publish_resolved_chunks(25);
+    if (
+      select state
+      from public.video_chunks
+      where id = '50000000-0000-0000-0000-000000000001'
+    ) <> 'quarantined' then
+      raise exception 'untrusted timeline did not quarantine';
+    end if;
+    if (
+      select count(*)
+      from public.owner_verification_intervals
+      where chunk_id = '50000000-0000-0000-0000-000000000001'
+        and status = 'timeline_untrusted'
+    ) <> 1 then
+      raise exception 'untrusted timeline lacks verification gap';
+    end if;
+    if exists (
+      select 1
+      from public.owner_production_events
+      where chunk_id = '50000000-0000-0000-0000-000000000001'
+    ) then
+      raise exception 'untrusted timeline projected owner events';
+    end if;
+    raise exception 'timeline-untrusted fixture accepted';
+  exception when raise_exception then
+    if sqlerrm <> 'timeline-untrusted fixture accepted' then
+      raise;
+    end if;
+  end;
+end;
+$$;
+
+update public.video_chunks
+set state = 'published',
+    published_at = now()
+where id = '50000000-0000-0000-0000-000000000001';
+
+-- A no-op retry never duplicates immutable owner projection rows.
+update public.video_chunks
+set state = 'published',
+    published_at = published_at
+where id = '50000000-0000-0000-0000-000000000001';
+do $$
+begin
+  if (
+    select count(*)
+    from public.owner_production_events
+    where chunk_id = '50000000-0000-0000-0000-000000000001'
+  ) <> 1 or (
+    select count(*)
+    from public.owner_verification_intervals
+    where chunk_id = '50000000-0000-0000-0000-000000000001'
+  ) <> 1 then
+    raise exception 'owner projection retry duplicated immutable rows';
+  end if;
+end;
+$$;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"60000000-0000-0000-0000-000000000004","role":"authenticated"}',
+  true
+);
+set local role authenticated;
+select public.owner_upsert_worker(
+  '10000000-0000-0000-0000-000000000001',
+  null,
+  'Closeout Fixture Worker',
+  null,
+  'active'
+);
+select public.owner_start_project(
+  '10000000-0000-0000-0000-000000000001',
+  'Published Truth Closeout',
+  'Fixture Customer',
+  1,
+  10000,
+  1000,
+  2000,
+  2000,
+  '2026-07-26T16:00:00Z',
+  '2026-07-26T17:00:00Z',
+  '{"timezone":"America/New_York","shifts":[{"weekday":7,"start":"12:00","end":"13:00"}]}'::jsonb,
+  2500,
+  'open',
+  '20000000-0000-0000-0000-000000000001',
+  (
+    select array_agg(worker.id)
+    from public.owner_workers worker
+    where worker.display_name = 'Closeout Fixture Worker'
+  )
+);
+select public.owner_close_project(
+  '10000000-0000-0000-0000-000000000001',
+  (
+    select project.id
+    from public.owner_projects project
+    where project.name = 'Published Truth Closeout'
+  ),
+  1000,
+  '2026-07-26T16:30:00Z'
+);
+do $$
+begin
+  if not exists (
+    select 1
+    from public.owner_project_closeouts closeout
+    join public.owner_projects project on project.id = closeout.project_id
+    where project.name = 'Published Truth Closeout'
+      and closeout.verified_good_units = 1
+      and closeout.production_value_cents = 10000
+      and closeout.verified_through_at is not null
+  ) then
+    raise exception 'published truth closeout did not persist verified production';
+  end if;
+end;
+$$;
+create temporary table owner_closeout_before_revocation
+on commit drop
+as
+select closeout.id, closeout.margin_after_direct_costs_cents
+from public.owner_project_closeouts closeout
+join public.owner_projects project on project.id = closeout.project_id
+where project.name = 'Published Truth Closeout';
+reset role;
+
+update public.video_chunks
+set state = 'quarantined'
+where id = '50000000-0000-0000-0000-000000000001';
+do $$
+declare
+  prior_verification_id uuid;
+begin
+  select id
+  into prior_verification_id
+  from public.owner_verification_intervals
+  where chunk_id = '50000000-0000-0000-0000-000000000001'
+    and revision = 1;
+  if (
+    select count(*)
+    from public.owner_verification_intervals
+    where chunk_id = '50000000-0000-0000-0000-000000000001'
+  ) <> 2 or not exists (
+    select 1
+    from public.owner_verification_intervals
+    where chunk_id = '50000000-0000-0000-0000-000000000001'
+      and revision = 2
+      and status = 'coverage_revoked'
+      and supersedes_id = prior_verification_id
+  ) then
+    raise exception 'coverage revocation did not append a superseding revision';
+  end if;
+  if (
+    select closeout.margin_after_direct_costs_cents
+    from public.owner_project_closeouts closeout
+    join public.owner_projects project on project.id = closeout.project_id
+    where project.name = 'Published Truth Closeout'
+  ) is distinct from (
+    select margin_after_direct_costs_cents
+    from owner_closeout_before_revocation
+  ) then
+    raise exception 'coverage revocation restated immutable closeout cents';
+  end if;
+  begin
+    update public.video_chunks
+    set state = 'transcoding'
+    where id = '50000000-0000-0000-0000-000000000001';
+    raise exception 'publication-locked chunk reprocessed after quarantine';
+  exception when sqlstate '55000' then
+    null;
+  end;
+end;
+$$;
+
 insert into public.internal_review_cases (
   id, factory_id, chunk_id, review_round, sequence, event_type, reason_code,
   actor_user_id
@@ -931,8 +1449,15 @@ set local role authenticated;
 
 do $$
 begin
-  if (select count(*) from public.resolved_human_count_events) <> 1 then
-    raise exception 'owner cannot read the published human projection';
+  if (select count(*) from public.owner_production_events) <> 1 then
+    raise exception 'owner cannot read the owner-safe production projection';
+  end if;
+  if (select count(*) from public.owner_verification_intervals
+      where status = 'verified') <> 1 then
+    raise exception 'owner cannot read the verified coverage interval';
+  end if;
+  if (select count(*) from public.resolved_human_count_events) <> 0 then
+    raise exception 'owner RLS exposed raw resolved human events';
   end if;
   if (select count(*) from public.factories) <> 1
      or (select count(*) from public.stations) <> 1 then
@@ -940,6 +1465,16 @@ begin
   end if;
   if (select count(*) from public.consensus_events) <> 0 then
     raise exception 'owner RLS exposed raw consensus';
+  end if;
+  begin
+    if (select count(*) from public.video_chunks) <> 0 then
+      raise exception 'owner RLS exposed raw video chunks';
+    end if;
+  exception when insufficient_privilege then
+    null;
+  end;
+  if (select count(*) from public.review_submissions) <> 0 then
+    raise exception 'owner RLS exposed reviewer submissions';
   end if;
 end;
 $$;
@@ -954,8 +1489,9 @@ set local role authenticated;
 
 do $$
 begin
-  if (select count(*) from public.resolved_human_count_events) <> 0 then
-    raise exception 'cross-tenant owner can read first-factory projection';
+  if (select count(*) from public.owner_production_events) <> 0
+     or (select count(*) from public.owner_verification_intervals) <> 0 then
+    raise exception 'cross-tenant owner can read first-factory owner projection';
   end if;
 end;
 $$;
@@ -974,7 +1510,8 @@ set local role authenticated;
 
 do $$
 begin
-  if (select count(*) from public.resolved_human_count_events) <> 0
+  if (select count(*) from public.owner_production_events) <> 0
+     or (select count(*) from public.owner_verification_intervals) <> 0
      or (select count(*) from public.factories) <> 0
      or (select count(*) from public.stations) <> 0 then
     raise exception 'disabled owner retained tenant access';

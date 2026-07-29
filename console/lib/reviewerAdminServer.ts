@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { reviewServerConfig, reviewerAccessToken } from "@/lib/reviewServer";
+import { reviewServerConfig } from "@/lib/reviewServer";
+import { opsRpc } from "@/lib/opsServer";
 import { InviteLocale, reviewerInviteEmail } from "@/lib/reviewerEmail";
 import {
   invitationIdempotencyKey,
@@ -27,28 +28,7 @@ type SendInviteInput = {
   payBasis: "" | "hourly" | "per_chunk";
 };
 
-export async function opsRpc<T>(
-  request: NextRequest,
-  functionName: string,
-  body: object,
-) {
-  const token = reviewerAccessToken(request);
-  if (!token) throw new Error("OPS_AUTH_REQUIRED");
-  const config = reviewServerConfig();
-  const response = await fetch(`${config.projectUrl}/rest/v1/rpc/${functionName}`, {
-    method: "POST",
-    headers: {
-      apikey: config.publishableKey,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-  const text = await response.text();
-  if (!response.ok) throw new Error(text || `OPS_RPC_${response.status}`);
-  return (text ? JSON.parse(text) : null) as T;
-}
+export { opsRpc };
 
 function emailConfig() {
   const secretKey = process.env.SUPABASE_SECRET_KEY;

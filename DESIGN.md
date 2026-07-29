@@ -40,8 +40,7 @@ surfaces and do not inherit the owner navigation or project economics.
 - Voice: plain English a factory owner reads in one pass. Project pace labels
   are `AHEAD`, `ON TRACK`, and `BEHIND`; money is labeled `margin after direct
   costs`, never profit. Every negative state includes a recovery sentence, such
-  as "Need 63 units/day to recover." Trust line everywhere: "Verification
-  source and through-time are shown with every resolved count."
+  as "Need 63 units/day to recover." Trust line everywhere: "Verification source and through-time are shown with every resolved count."
 
 ## 2. Color tokens
 
@@ -233,8 +232,15 @@ Desktop grid:
   recover projection, deadline target, and exact actual/required labels.
 - Every chart series comes from real records. No synthetic trend values are
   permitted.
+- Recorded downtime does not move the deadline or retarget required pace. It is
+  shown as lost scheduled capacity. Direct labor continues during scheduled
+  downtime when workers remain checked in, but never accrues through off-shift
+  nights or weekends.
+- Source events enter time-based charts only when media time maps provably to
+  factory wall time. Camera gaps or clock drift appear as verification gaps;
+  events are never shifted onto an assumed timeline.
 - Attention rail is 324px wide and contains exceptions only: verification lag,
-  behind pace, camera offline, missing assignment, or disputed counts.
+  behind pace, camera offline, missing assignment, or verification gaps.
 - Station table fills the remaining width and begins immediately below the
   chart. Columns: station/evidence thumbnail, units/hour, output/labor hour,
   current project, status.
@@ -259,12 +265,13 @@ Golden reference:
 - Step 2 fields: station, start date/time, deadline, and shift calendar.
   Detection may preselect a station only as an explicit suggestion with
   confidence and a `Change` action.
-- Step 3 fields: assigned team, loaded hourly labor rate, optional target
+- Step 3 fields: assigned team, optional loaded hourly labor rate, optional target
   margin.
 - On step 3, steps 1 and 2 remain visible as compact summaries with Edit links.
 - Feasibility panel states: required units/day or hour, station baseline,
-  `Feasible`/`Tight`/`Not feasible`, and projected margin after materials and
-  direct labor.
+  `Feasible`/`Tight`/`Not feasible`, and planned margin after materials and
+  budgeted direct labor. This is not called projected margin until verified
+  production supplies a forecast rate.
 - Footer is fixed inside the drawer: secondary `Save draft`, primary orange
   `Start project`.
 - Starting a project requires confirmation of any auto-detected station. The
@@ -308,6 +315,15 @@ Golden reference:
 - Main surface is a dense table, not a card grid.
 - Columns: project, customer, completed date, units plan→actual, labor
   plan→actual, materials plan→actual, margin plan→actual, on-time result, grade.
+- `On time` is true only when the immutable closeout reached planned units and
+  completed at or before its deadline instant. History uses only the highest
+  closeout revision for each project. The summary percentage is on-time latest
+  revisions divided by filtered completed projects; superseded revisions never
+  add rows or denominator entries.
+- Grades use immutable closeout actuals: `C−` for negative margin after direct
+  costs; `A` when on time and actual margin meets or beats plan; `B` when on
+  time or actual margin reaches at least 80% of plan; otherwise `C`. Planned
+  labor, materials, or margin must never be shown as actual.
 - Standard rows are 56–60px high. The selected row uses orange project text and
   expands inline.
 - Expanded closeout has three columns:
@@ -316,10 +332,15 @@ Golden reference:
   3. append-only audit trail.
 - Closeout metrics: units, schedule duration, labor cost, materials cost, and
   margin after direct costs.
-- Closed records remain fixed. Corrections append an audit entry with timestamp,
-  actor type, prior value, and new value.
+- Closed records are never mutated in place. A correction appends a new
+  closeout revision plus an audit entry with timestamp, actor type, prior value,
+  and new value; the row displays the latest revision and the expanded audit
+  trail preserves prior revisions.
 - `Evidence clips N` opens only clips attached to records or exceptions. History
   is not a raw-footage browser.
+- When source media has expired under the factory retention policy, the
+  permanent record remains fixed and the evidence action becomes a disabled
+  `Evidence expired` state with its recorded retention date.
 
 ### 9.7 Terminology and truthful states
 
@@ -329,12 +350,18 @@ Golden reference:
   State that overhead, indirect labor, rent, freight, taxes, and other expenses
   are excluded.
 - Pace math evaluates through `verified_through_at`, not wall-clock now.
+- Verification continuity ignores off-shift time and recorded downtime.
+  Trailing unpublished coverage is lag; only a scheduled hole with later
+  verified coverage is a verification gap.
+- Adjacent coverage may bridge at most one second of chunk-boundary timestamp
+  jitter. A larger scheduled hole remains an explicit verification gap.
 - Provisional AI output is visually separate and never included silently in a
   verified total.
 - Verification lag receives a visible attention state before it can cause a
   false `BEHIND` verdict.
 - Good units exclude verified scrap and duplicate rework.
-- Downtime and non-working shift hours pause expected-production accumulation.
+- Non-working shift hours pause expected-production accumulation. Recorded
+  downtime remains lost capacity against the fixed deadline.
 - Every owner count links to supporting evidence or a clear reason evidence is
   unavailable.
 - Owners never see reviewer identities, votes, model shadow verdicts, tripwire
@@ -351,7 +378,7 @@ Golden reference:
 - Evidence clip: open the global ClipDrawer; closing returns focus to the
   invoking control.
 - Loading uses stable skeleton geometry. Empty, offline, pending, lagged,
-  disputed, and error states must not collapse the page layout.
+  verification-gap, and error states must not collapse the page layout.
 - Every interaction supports keyboard use and has a visible focus state.
 
 ### 9.9 Responsive contract
