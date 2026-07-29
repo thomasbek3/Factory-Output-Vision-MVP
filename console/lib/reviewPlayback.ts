@@ -78,6 +78,13 @@ export function compensatedPlaybackTarget(
   return Math.min(Math.max(0, durationSeconds), target);
 }
 
+export function clampPlaybackTime(seconds: number, durationSeconds: number) {
+  if (!Number.isFinite(seconds) || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    return 0;
+  }
+  return Math.min(durationSeconds, Math.max(0, seconds));
+}
+
 export function coverageGapToleranceMs(playbackRate: number) {
   return Math.max(3_000, Math.ceil(playbackRate * 600));
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyValidatedPlaybackRate,
+  clampPlaybackTime,
   compensatedPlaybackTarget,
 } from "@/lib/reviewPlayback";
 
@@ -85,6 +86,14 @@ describe("review playback rate", () => {
     expect(compensatedPlaybackTarget(10, 20, 2_000, 900)).toBe(50);
     expect(compensatedPlaybackTarget(890, 20, 2_000, 900)).toBe(900);
     expect(compensatedPlaybackTarget(10, 20, -1, 900)).toBe(10);
+  });
+
+  it("clamps timeline seeks to the loaded video", () => {
+    expect(clampPlaybackTime(360, 900)).toBe(360);
+    expect(clampPlaybackTime(-10, 900)).toBe(0);
+    expect(clampPlaybackTime(910, 900)).toBe(900);
+    expect(clampPlaybackTime(Number.NaN, 900)).toBe(0);
+    expect(clampPlaybackTime(10, Number.NaN)).toBe(0);
   });
 });
 

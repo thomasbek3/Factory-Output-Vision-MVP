@@ -136,6 +136,49 @@ select:focus-visible {
   animation: worker-review-watermark-drift 24s linear infinite;
 }
 
+.review-timeline {
+  appearance: none;
+  background: transparent;
+}
+
+.review-timeline::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+}
+
+.review-timeline::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  appearance: none;
+  border: 2px solid var(--bg);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.review-timeline::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+.review-timeline::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--bg);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.review-timeline:hover::-webkit-slider-thumb {
+  background: var(--accent-hi);
+}
+
+.review-timeline:hover::-moz-range-thumb {
+  background: var(--accent-hi);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .worker-review-watermark {
     animation: none;

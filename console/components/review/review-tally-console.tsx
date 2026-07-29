@@ -30,6 +30,7 @@ import { ReviewerOnboarding } from "@/components/review/reviewer-onboarding";
 import { reviewStrings, type ReviewLanguage } from "@/lib/reviewStrings";
 import {
   applyValidatedPlaybackRate,
+  clampPlaybackTime,
   compensatedPlaybackTarget,
   coverageGapToleranceMs,
 } from "@/lib/reviewPlayback";
@@ -812,12 +813,23 @@ export function ReviewTallyConsole() {
     });
   }, [queueAction, speed]);
 
-  const backTen = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
-      setPlaybackAnchorVersion((value) => value + 1);
-    }
+  const seekTo = useCallback((seconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const target = clampPlaybackTime(seconds, video.duration);
+    video.currentTime = target;
+    setCurrentTime(target);
+    coveragePreviousMs.current = null;
+    setPlaybackAnchorVersion((value) => value + 1);
   }, []);
+
+  const seekBy = useCallback((seconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    seekTo(video.currentTime + seconds);
+  }, [seekTo]);
+
+  const backTen = useCallback(() => seekBy(-10), [seekBy]);
 
   const togglePlayback = useCallback(() => {
     const video = videoRef.current;
@@ -845,11 +857,14 @@ export function ReviewTallyConsole() {
       } else if (event.key === "ArrowLeft") {
         event.preventDefault();
         backTen();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        seekBy(10);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [addCount, backTen, togglePlayback, undo]);
+  }, [addCount, backTen, seekBy, togglePlayback, undo]);
 
   async function submit(problemCode?: string) {
     if (!assignment || !session) return;
@@ -1453,7 +1468,26 @@ export function ReviewTallyConsole() {
               FV REVIEW · {assignment.id.slice(0, 8)}
             </div>
           </div>
-          <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[.08]"><div className="h-full bg-[var(--accent)]" style={{ width: `${progress * 100}%` }} /></div>
+          <div className="relative mt-2 h-7">
+            <div className="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-white/[.08]">
+              <div
+                className="h-full bg-[var(--accent)]"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={duration > 0 ? duration : 0}
+              step={0.1}
+              value={duration > 0 ? clampPlaybackTime(currentTime, duration) : 0}
+              disabled={duration <= 0}
+              aria-label={language === "es" ? "Línea de tiempo del video" : "Video timeline"}
+              aria-valuetext={`${formatVideoTime(currentTime)} / ${formatVideoTime(duration)}`}
+              className="review-timeline absolute inset-0 h-full w-full cursor-pointer disabled:cursor-not-allowed"
+              onChange={(event) => seekTo(Number(event.currentTarget.value))}
+            />
+          </div>
           <div className="mt-2 flex justify-between text-[12px] tabular-nums text-[var(--text-dim)]">
             <span>{formatVideoTime(currentTime)} / {formatVideoTime(duration)}</span>
             <span>~{formatVideoTime(timeLeft)} {strings.leftAt} {speed}x</span>
@@ -1536,7 +1570,7 @@ export function ReviewTallyConsole() {
                 <div className="mt-4 max-h-[290px] space-y-2 overflow-y-auto">
                   {clicks.map((click, index) => (
                     <div key={click.id} className="flex items-center rounded-lg border border-[var(--border-soft)]">
-                      <button type="button" className="flex min-w-0 flex-1 justify-between px-3 py-2 text-[13px]" onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.max(0, click.videoSec - 5); setScreen("tally"); }}>
+                      <button type="button" className="flex min-w-0 flex-1 justify-between px-3 py-2 text-[13px]" onClick={() => { seekTo(click.videoSec - 5); setScreen("tally"); }}>
                         <span>#{index + 1}</span>
                         <span>{formatVideoTime(click.videoSec)}</span>
                       </button>
