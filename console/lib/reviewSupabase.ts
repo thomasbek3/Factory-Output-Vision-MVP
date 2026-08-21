@@ -114,6 +114,35 @@ export async function restoreReviewerSession(): Promise<ReviewSession | null> {
   }
 }
 
+export class RpcError extends Error {
+  readonly code: string | null;
+  readonly domainCode: string;
+
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = "RpcError";
+    this.code = code;
+    this.domainCode = domainCodeForSqlState(code);
+  }
+}
+
+function domainCodeForSqlState(code: string | null): string {
+  switch (code) {
+    case "42501":
+      return "LEASE_UNAVAILABLE";
+    case "23514":
+      return "CHECK_VIOLATION";
+    case "55000":
+      return "INVALID_STATE";
+    case "54000":
+      return "RATE_LIMITED";
+    case "28000":
+      return "AUTH_INVALID";
+    default:
+      return "UNKNOWN";
+  }
+}
+
 export async function workerRpc<T>(
   _session: ReviewSession,
   functionName: string,
@@ -129,13 +158,29 @@ export async function workerRpc<T>(
     body: JSON.stringify(body),
   });
   const text = await response.text();
-  const result: unknown = text ? JSON.parse(text) : null;
+  let result: unknown = null;
+  try {
+    result = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`RPC_${response.status}`);
+  }
   if (!response.ok) {
-    const message =
+    const structured =
+      result && typeof result === "object" && "code" in result && "message" in result
+        ? (result as { code?: unknown; message?: unknown })
+        : null;
+    if (structured && typeof structured.message === "string") {
+      throw new RpcError(
+        structured.message,
+        typeof structured.code === "string" ? structured.code : null,
+      );
+    }
+    throw new RpcError(
       result && typeof result === "object" && "message" in result
         ? String(result.message)
-        : `RPC_${response.status}`;
-    throw new Error(message);
+        : `RPC_${response.status}`,
+      null,
+    );
   }
   return result as T;
 }

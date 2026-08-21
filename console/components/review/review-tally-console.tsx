@@ -41,6 +41,7 @@ import {
   reviewerPreviewAccess,
   signOutReviewer,
   workerRpc,
+  RpcError,
   type DurableReviewAction,
   type ReviewSession,
   type ReviewerLifecycle,
@@ -135,11 +136,17 @@ function assignmentTimeline(assignment: WorkerAssignment): ReviewTimeline {
 }
 
 function isAssignmentUnavailable(error: unknown) {
+  if (error instanceof RpcError) return error.domainCode === "LEASE_UNAVAILABLE";
   const message = error instanceof Error ? error.message : String(error);
   return /lease|assignment.*(?:unavailable|expired|not submittable)|access disabled/i.test(message);
 }
 
 function isCoverageIncomplete(error: unknown) {
+  if (error instanceof RpcError) {
+    // SQL raises both coverage and pace failures as CHECK violations (23514).
+    const message = error.message;
+    return /coverage|98 percent|faster than the enabled playback speed/i.test(message);
+  }
   const message = error instanceof Error ? error.message : String(error);
   return /coverage|98 percent|faster than the enabled playback speed/i.test(message);
 }
