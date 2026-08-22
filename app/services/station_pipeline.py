@@ -2,10 +2,10 @@
 
 Deep module over the existing onboarding stages. `build_station_stages`
 (onboarding_rehearsal) already owns the full YOLO-era stage chain with the
-truth-leakage guard; this module adds the missing Track B lane — tripwire
-mining -> recall validation -> clip extraction -> labeling -> training ->
-blind exam — as composable stage dicts in the SAME shape, so one executor,
-one artifact-cache rule, and one truth-leak guard cover both lanes.
+truth-leakage guard; this module adds the missing Track B lane —
+mine -> extract -> label -> train -> recall -> exam — as composable stage
+dicts in the SAME shape, so one executor, one artifact-cache rule, and one
+truth-leak guard cover both lanes.
 
 ADR-0004: clip action-recognition is the live lane. ADR-0002: the exam gate
 is the promotion gate. The exam and recall stages consume ONLY the sealed

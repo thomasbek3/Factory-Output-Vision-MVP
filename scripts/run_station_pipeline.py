@@ -1,4 +1,4 @@
-"""One-command Track B onboarding: tripwire -> recall -> clips -> label -> train -> exam.
+"""One-command Track B onboarding: mine -> extract -> label -> train -> recall -> exam.
 
 Thin CLI over app.services.station_pipeline. The stage graph is declarative;
 this file only parses flags and prints results.
