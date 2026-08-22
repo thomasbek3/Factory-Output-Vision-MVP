@@ -552,7 +552,13 @@ class VisionWorker:
                             source_timestamp_sec=frame_snapshot.source_timestamp_sec,
                         )
                         if self._live_clip_counter is not clip_counter:
-                            increment, debug_artifact = 0, {"mode": "live_clip", "discarded_after_reset": True}
+                            increment, debug_artifact = 0, {
+                                "mode": "live_clip",
+                                "discarded_after_reset": True,
+                                "detections": [],
+                                "tracks": [],
+                                "person_boxes": [],
+                            }
                         if increment > 0:
                             logger.info(
                                 "LIVE_CLIP_COUNT: +%d (total hour: %d)",
