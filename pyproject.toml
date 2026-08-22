@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Test configuration lives here because the repo has no pytest.ini/setup.cfg
+# and tests are 129 flat files under tests/. `pytest` runs the full suite;
+# `pytest -m "not slow"` skips the opencv/subprocess-heavy tiers (CI-friendly).
+# The slow marker is opt-in per test file — nothing is marked yet; adopt it as
+# you touch heavy tests.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+markers = [
+    "slow: opencv-heavy or subprocess-heavy tests (deselect with -m 'not slow')",
+]

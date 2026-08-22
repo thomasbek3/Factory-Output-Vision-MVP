@@ -35,6 +35,17 @@ When docs conflict, prefer this order:
 | `16_LIVE_RECORDING_RUNBOOK.md` | Live recording and artifact capture runbook |
 | `KNOWN_LIMITATIONS.md` | Honest current product limitations |
 
+## Legacy Layer (superseded — read-only provenance)
+
+The unnumbered top-level files below are the pre-July 2026 generation. They
+differ from the archived twins in `ARCHIVED_DONOTREAD/` (two stale generations
+were kept side by side); the newer of each pair is preserved in `archived/`,
+and the originals stay here until the next docs sweep decides file-by-file.
+Do not update them; the numbered docs above own their topics.
+
+`API_SPEC`, `ARCHITECTURE`, `BUILD_PLAN`, `PROJECT_SPEC`, `TEST_PLAN`,
+`UX_SPEC`, `COMPETITORS`, plus the older PRD/roadmap/market files.
+
 ## Specs
 
 These specs document the Track B pivot work and approved implementation targets.
@@ -78,15 +89,14 @@ Decision records are required when a change affects:
 | `validation/registry.json` | Verified/promoted case registry |
 | `validation/test_cases/*.json` | Per-case manifests |
 | `validation/learning_registry.json` | Failed/diagnostic learning cases |
-| `validation/schemas/*.schema.json` | Artifact contracts |
 
-## Historical References
+## Archives
 
-Older product specs, roadmaps, PRDs, and archived docs remain useful as evidence, but they are not current source of truth unless a current doc explicitly points to them.
+- `archived/` — merged archive: superseded doc generations, obsolete PRDs,
+  historical handoffs, April factory2 research, and old plans
+  (`superpowers/plans/` 2026-04 worklogs included).
+- `ARCHIVED_DONOTREAD/` — frozen oldest generation; kept only so history is
+  diffable. Nothing here is current; do not copy content out of it.
+- `IMPLEMENTATION/2026-03-11/` — March implementation sprint logs.
 
-Historical areas:
-
-- `docs/ARCHIVED_DONOTREAD/`
-- `docs/archived/`
-- older unnumbered docs in `docs/`
-- `tasks/`
+Nothing under these three trees should be edited or referenced as current.

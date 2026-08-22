@@ -12,7 +12,13 @@ frontend/node_modules/
 frontend/dist/
 frontend/test-results/
 node_modules/
+# data/ is the working cache (see docs/07_ARTIFACT_STORAGE.md). The 155
+# tracked files under it are deliberate: small JSON/CSV manifests and proof
+# images that validation cases reference by relative path. New bulk media or
+# generated artifacts must NOT be committed here — they belong in the local
+# artifact root with hashes recorded in versioned manifests.
 data/
+models/*.pt
 build/
 dist/
 /runs/
