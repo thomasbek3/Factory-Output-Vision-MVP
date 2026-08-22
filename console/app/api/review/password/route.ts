@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import {
   authorizeReviewerAccessToken,
-  reviewServerConfig,
   reviewerAccessToken,
 } from "@/lib/reviewServer";
+import { authFetch } from "@/lib/workerPortalServer";
 
 export async function POST(request: NextRequest) {
   const token = reviewerAccessToken(request);
@@ -15,16 +15,10 @@ export async function POST(request: NextRequest) {
   if (!body.password || body.password.length < 12) {
     return Response.json({ error: "Password must contain at least 12 characters." }, { status: 422 });
   }
-  const config = reviewServerConfig();
-  const response = await fetch(`${config.projectUrl}/auth/v1/user`, {
+  const response = await authFetch("/user", {
     method: "PUT",
-    headers: {
-      apikey: config.publishableKey,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    bearerToken: token,
     body: JSON.stringify({ password: body.password }),
-    cache: "no-store",
   });
   if (!response.ok) {
     const result = (await response.json()) as { msg?: string; message?: string };

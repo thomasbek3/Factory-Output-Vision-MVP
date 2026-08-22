@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   authorizeReviewerAccessToken,
   clearReviewerCookies,
-  reviewServerConfig,
   reviewerAccessToken,
   setReviewerCookies,
 } from "@/lib/reviewServer";
+import { authFetch, callWorkerRpc, supabaseFetch } from "@/lib/workerPortalServer";
 import {
   isPlausibleReviewerEmail,
   normalizeReviewerEmail,
@@ -27,31 +27,13 @@ type AuthPayload = {
   msg?: string;
 };
 
-async function consumeInvitation(
-  accessToken: string,
-  invitationToken: string,
-  config: ReturnType<typeof reviewServerConfig>,
-) {
-  const response = await fetch(
-    `${config.projectUrl}/rest/v1/rpc/worker_accept_reviewer_invitation`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.publishableKey,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ p_invitation_token: invitationToken }),
-      cache: "no-store",
-    },
-  );
-  const result = (await response.json()) as {
-    accepted?: boolean;
-    reason?: string;
-  };
-  if (!response.ok || !result.accepted) {
-    throw new Error(result.reason ?? "invalid");
-  }
+async function consumeInvitation(accessToken: string, invitationToken: string) {
+  await callWorkerRpc("worker_accept_reviewer_invitation", { p_invitation_token: invitationToken }, {
+    accessToken,
+  }).then((result) => {
+    const accepted = (result as { accepted?: boolean; reason?: string }) ?? {};
+    if (!accepted.accepted) throw new Error(accepted.reason ?? "invalid");
+  });
 }
 
 function requestIp(request: NextRequest) {
@@ -66,26 +48,15 @@ function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-async function passwordlessRequestAllowed(
-  request: NextRequest,
-  email: string,
-  config: ReturnType<typeof reviewServerConfig>,
-) {
-  const response = await fetch(
-    `${config.projectUrl}/rest/v1/rpc/check_passwordless_login_rate`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.publishableKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        p_email_hash: sha256(email),
-        p_ip_hash: sha256(requestIp(request)),
-      }),
-      cache: "no-store",
-    },
-  );
+async function passwordlessRequestAllowed(request: NextRequest, email: string) {
+  // Rate-limit RPC is anonymous (no bearer): plain Supabase POST.
+  const response = await supabaseFetch("/rest/v1/rpc/check_passwordless_login_rate", {
+    method: "POST",
+    body: JSON.stringify({
+      p_email_hash: sha256(email),
+      p_ip_hash: sha256(requestIp(request)),
+    }),
+  });
   if (!response.ok) throw new Error("PASSWORDLESS_RATE_LIMIT_UNAVAILABLE");
   return (await response.json()) === true;
 }
@@ -93,14 +64,7 @@ async function passwordlessRequestAllowed(
 export async function GET(request: NextRequest) {
   const token = reviewerAccessToken(request);
   if (!token) return Response.json({ user: null });
-  const config = reviewServerConfig();
-  const response = await fetch(`${config.projectUrl}/auth/v1/user`, {
-    headers: {
-      apikey: config.publishableKey,
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
+  const response = await authFetch("/user", { bearerToken: token });
   if (!response.ok) return Response.json({ user: null });
   const user = (await response.json()) as { id: string; email?: string };
   if (!(await authorizeReviewerAccessToken(token))) {
@@ -112,7 +76,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const config = reviewServerConfig();
   const body = (await request.json()) as {
     action?: "requestPasswordless" | "completePasswordless";
     email?: string;
@@ -133,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
     let allowed = false;
     try {
-      allowed = await passwordlessRequestAllowed(request, email, config);
+      allowed = await passwordlessRequestAllowed(request, email);
     } catch {
       return Response.json(
         { error: "Sign-in is temporarily unavailable." },
@@ -154,20 +117,15 @@ export async function POST(request: NextRequest) {
       ),
       body.language === "es" ? "es" : "en",
     );
-    const response = await fetch(
-      `${config.projectUrl}/auth/v1/otp?redirect_to=${encodeURIComponent(redirectTo)}`,
+    const response = await authFetch(
+      `/otp?redirect_to=${encodeURIComponent(redirectTo)}`,
       {
         method: "POST",
-        headers: {
-          apikey: config.publishableKey,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           email,
           data: {},
           create_user: false,
         }),
-        cache: "no-store",
       },
     );
     if (!response.ok) {
@@ -189,13 +147,7 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
-    const userResponse = await fetch(`${config.projectUrl}/auth/v1/user`, {
-      headers: {
-        apikey: config.publishableKey,
-        Authorization: `Bearer ${body.accessToken}`,
-      },
-      cache: "no-store",
-    });
+    const userResponse = await authFetch("/user", { bearerToken: body.accessToken });
     if (!userResponse.ok) {
       return Response.json(
         {
@@ -209,11 +161,7 @@ export async function POST(request: NextRequest) {
     const user = (await userResponse.json()) as { id: string; email?: string };
     try {
       if (!completingPasswordless) {
-        await consumeInvitation(
-          body.accessToken,
-          body.invitationToken as string,
-          config,
-        );
+        await consumeInvitation(body.accessToken, body.invitationToken as string);
       }
       if (!(await authorizeReviewerAccessToken(body.accessToken))) {
         throw new Error("SESSION_NOT_AUTHORIZED");
@@ -246,18 +194,10 @@ export async function POST(request: NextRequest) {
     );
     return output;
   }
-  const response = await fetch(
-    `${config.projectUrl}/auth/v1/token?grant_type=password`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.publishableKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: body.email, password: body.password }),
-      cache: "no-store",
-    },
-  );
+  const response = await authFetch("/token?grant_type=password", {
+    method: "POST",
+    body: JSON.stringify({ email: body.email, password: body.password }),
+  });
   const result = (await response.json()) as AuthPayload;
   if (
     !response.ok ||

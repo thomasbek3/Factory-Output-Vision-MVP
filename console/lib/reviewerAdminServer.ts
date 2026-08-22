@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { reviewServerConfig, reviewerAccessToken } from "@/lib/reviewServer";
+import { reviewerAccessToken } from "@/lib/reviewServer";
+import { authFetch, supabaseFetch } from "@/lib/workerPortalServer";
 import { InviteLocale, reviewerInviteEmail } from "@/lib/reviewerEmail";
 import {
   invitationIdempotencyKey,
@@ -34,16 +35,10 @@ export async function opsRpc<T>(
 ) {
   const token = reviewerAccessToken(request);
   if (!token) throw new Error("OPS_AUTH_REQUIRED");
-  const config = reviewServerConfig();
-  const response = await fetch(`${config.projectUrl}/rest/v1/rpc/${functionName}`, {
+  const response = await supabaseFetch(`/rest/v1/rpc/${functionName}`, {
     method: "POST",
-    headers: {
-      apikey: config.publishableKey,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(body),
-    cache: "no-store",
+    accessToken: token,
   });
   const text = await response.text();
   if (!response.ok) throw new Error(text || `OPS_RPC_${response.status}`);
@@ -124,7 +119,6 @@ export async function sendReviewerInvite(request: NextRequest, input: SendInvite
     p_factory_id: input.factoryId,
   });
   const delivery = emailConfig();
-  const config = reviewServerConfig();
   const existing = await opsRpc<{
     invitationId: string;
     status: string;
@@ -156,13 +150,9 @@ export async function sendReviewerInvite(request: NextRequest, input: SendInvite
     invitationToken,
     input.locale,
   );
-  const linkResponse = await fetch(`${config.projectUrl}/auth/v1/admin/generate_link`, {
+  const linkResponse = await authFetch("/admin/generate_link", {
     method: "POST",
-    headers: {
-      apikey: delivery.secretKey,
-      Authorization: `Bearer ${delivery.secretKey}`,
-      "Content-Type": "application/json",
-    },
+    serviceRole: true,
     body: JSON.stringify({
       type: "invite",
       email: input.email,
@@ -173,7 +163,6 @@ export async function sendReviewerInvite(request: NextRequest, input: SendInvite
         factory_id: input.factoryId,
       },
     }),
-    cache: "no-store",
   });
   const link = (await linkResponse.json()) as AdminLinkResult;
   const actionUrl = link.properties?.action_link ?? link.action_link;

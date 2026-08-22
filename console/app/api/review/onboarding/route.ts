@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import {
   authorizeReviewerAccessToken,
-  reviewServerConfig,
   reviewerAccessToken,
 } from "@/lib/reviewServer";
+import { callWorkerRpc, workerPortalError } from "@/lib/workerPortalServer";
 
 export const dynamic = "force-dynamic";
 
@@ -13,20 +13,15 @@ async function rpc(request: NextRequest, functionName: string, body: object) {
   if (!(await authorizeReviewerAccessToken(token))) {
     throw new Error("ACCESS_DISABLED");
   }
-  const config = reviewServerConfig();
-  const response = await fetch(`${config.projectUrl}/rest/v1/rpc/${functionName}`, {
-    method: "POST",
-    headers: {
-      apikey: config.publishableKey,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-  const text = await response.text();
-  if (!response.ok) throw new Error(text || `ONBOARDING_${response.status}`);
-  return text ? JSON.parse(text) : null;
+  try {
+    return await callWorkerRpc(functionName, body, { accessToken: token });
+  } catch (error) {
+    const status = (error as { status?: number }).status;
+    throw workerPortalError(
+      error instanceof Error ? error.message : `ONBOARDING_${status ?? "FAILED"}`,
+      status,
+    );
+  }
 }
 
 function failed(error: unknown) {

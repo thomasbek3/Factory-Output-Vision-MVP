@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseFetch } from "@/lib/workerPortalServer";
 
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -22,20 +23,11 @@ export function reviewerRefreshToken(request: NextRequest) {
 }
 
 export async function authorizeReviewerAccessToken(accessToken: string) {
-  const config = reviewServerConfig();
-  const response = await fetch(
-    `${config.projectUrl}/rest/v1/rpc/worker_authorize_reviewer_session`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.publishableKey,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: "{}",
-      cache: "no-store",
-    },
-  );
+  const response = await supabaseFetch("/rest/v1/rpc/worker_authorize_reviewer_session", {
+    method: "POST",
+    body: "{}",
+    accessToken,
+  });
   if (!response.ok) return false;
   const result = (await response.json()) as { authorized?: boolean };
   return result.authorized === true;
