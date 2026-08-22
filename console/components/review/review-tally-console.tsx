@@ -136,7 +136,17 @@ function assignmentTimeline(assignment: WorkerAssignment): ReviewTimeline {
 }
 
 function isAssignmentUnavailable(error: unknown) {
-  if (error instanceof RpcError) return error.domainCode === "LEASE_UNAVAILABLE";
+  if (error instanceof RpcError) {
+    // MFA gate has its own typed code and must NOT read as "task expired".
+    if (error.domainCode === "MFA_REQUIRED") return false;
+    if (error.domainCode === "LEASE_UNAVAILABLE") return true;
+    // Legacy server fallback: pre-typed-migration deployments raise bare
+    // 42501 for both lease and MFA failures, so classify by prose.
+    if (error.code === "42501" || error.domainCode === "UNKNOWN") {
+      return /lease|assignment.*(?:unavailable|expired|not submittable)|access disabled/i.test(error.message);
+    }
+    return false;
+  }
   const message = error instanceof Error ? error.message : String(error);
   return /lease|assignment.*(?:unavailable|expired|not submittable)|access disabled/i.test(message);
 }

@@ -15,9 +15,9 @@ if str(REPO_ROOT) not in sys.path:
 from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_segment_manifest, run_tripwire_on_video
 
 PASS_THRESHOLD = 6
-# Gold offsets are owned by the exam kernel (app.services.exam_gate); re-exported
-# here for backwards compatibility with existing callers.
-DEFAULT_EXAM_CLIP_OFFSETS_SEC = [165.0, 510.0, 781.0, 1104.0, 1475.0, 1822.0, 2172.0]
+# Gold offsets are owned by the exam kernel (app.services.exam_gate); this
+# module-level alias exists only so existing callers keep importing from here.
+from app.services.exam_gate import DEFAULT_EXAM_CLIP_OFFSETS_SEC
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -80,7 +80,7 @@ begin
        not lifecycle_row.is_test_account
        and coalesce(auth.jwt() ->> 'aal', '') <> 'aal2'
      ) then
-    raise exception 'active reviewer with MFA required' using errcode = '42501';
+    raise exception 'active reviewer with MFA required' using errcode = 'MF000';
   end if;
   select * into chunk_row
   from public.video_chunks
@@ -95,7 +95,7 @@ begin
         using errcode = 'CV000';
     end if;
     select coalesce(sum(range_row.end_ms - range_row.start_ms), 0)
-      into covered_ms
+    into covered_ms
     from jsonb_to_recordset(coverage_row.ranges)
       as range_row(start_ms bigint, end_ms bigint);
     usable_ms := chunk_row.source_end_ms - chunk_row.source_start_ms;
@@ -154,18 +154,6 @@ begin
     p_idempotency_key
   )
   returning * into submission_row;
-
-  update public.review_assignments assignment
-  set status = 'submitted',
-      submitted_at = now(),
-      lease_expires_at = now()
-  where assignment.id = assignment_row.id;
-
-  perform public.record_work_session_event(
-    actor_id,
-    assignment_row.id,
-    'submit'
-  );
 
   return jsonb_build_object(
     'submissionId', submission_row.id,

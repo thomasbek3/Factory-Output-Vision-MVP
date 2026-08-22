@@ -145,6 +145,8 @@ function domainCodeForSqlState(code: string | null): string {
       return "COVERAGE_INCOMPLETE";
     case "CV002":
       return "COVERAGE_TOO_FAST";
+    case "MF000":
+      return "MFA_REQUIRED";
     default:
       return "UNKNOWN";
   }

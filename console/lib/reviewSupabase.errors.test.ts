@@ -44,6 +44,7 @@ describe("workerRpc typed errors", () => {
       ["CV000", "COVERAGE_MISSING"],
       ["CV001", "COVERAGE_INCOMPLETE"],
       ["CV002", "COVERAGE_TOO_FAST"],
+      ["MF000", "MFA_REQUIRED"],
     ];
     for (const [sqlstate, expected] of cases) {
       mockFetch(400, { code: sqlstate, message: "anything" });

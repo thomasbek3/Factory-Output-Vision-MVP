@@ -7,7 +7,7 @@ import pytest
 
 from app.services.clip_dataset import extract_clip_dataset
 from scripts.label_clips import guard_no_exam_rows
-from scripts.validate_tripwire_recall import DEFAULT_EXAM_CLIP_OFFSETS_SEC
+from app.services.exam_gate import DEFAULT_EXAM_CLIP_OFFSETS_SEC
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

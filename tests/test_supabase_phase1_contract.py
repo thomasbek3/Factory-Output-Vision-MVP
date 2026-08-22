@@ -158,7 +158,8 @@ class SupabasePhase1ContractTests(unittest.TestCase):
 
     def test_typed_coverage_gate_error_codes_are_stable(self) -> None:
         # The worker UI branches on these codes (review-tally-console.tsx
-        # isCoverageIncomplete); changing them breaks lease/coverage UX.
+        # isCoverageIncomplete / isAssignmentUnavailable); changing them
+        # breaks lease/coverage/MFA UX.
         latest_submit = self.sql.rsplit(
             "create or replace function public.submit_worker_assignment_v2",
             1,
@@ -167,11 +168,36 @@ class SupabasePhase1ContractTests(unittest.TestCase):
             ("cv000", "video coverage has not been saved"),
             ("cv001", "at least 98 percent of the video must be reviewed"),
             ("cv002", "faster than the enabled playback speed permits"),
+            ("mf000", "active reviewer with mfa required"),
         ):
             raise_at = latest_submit.index(message)
             errcode_at = latest_submit.rindex(f"errcode = '{code}'", 0, raise_at + 400)
             self.assertLess(errcode_at, raise_at + 200)
             self.assertGreater(errcode_at, raise_at - 200)
+        # The three coverage gates must no longer share bare 23514.
+        self.assertNotIn("errcode = '23514'", latest_submit)
+
+    def test_typed_migration_differs_from_20x_only_in_errcodes(self) -> None:
+        # Guard against body drift: strip comments, extract both function
+        # bodies, normalize the errcode tokens, and require equality.
+        import re
+
+        def body(path: str) -> str:
+            text = (ROOT / path).read_text(encoding="utf-8")
+            text = "\n".join(
+                line for line in text.splitlines()
+                if not line.strip().startswith("--")
+            )
+            start = text.index("create or replace function public.submit_worker_assignment_v2")
+            return text[start:].strip().lower()
+
+        typed = re.sub(r"errcode = '(cv00[012]|mf000|42501)'", "errcode = 'X'", body(
+            "supabase/migrations/20260821190000_typed_coverage_gate_error_codes.sql"
+        ))
+        baseline = re.sub(r"errcode = '23514'|errcode = '42501'", "errcode = 'X'", body(
+            "supabase/migrations/20260728012044_worker_review_speed_20x.sql"
+        ))
+        self.assertEqual(typed, baseline)
 
     def test_client_maps_coverage_gate_codes_without_prose_matching(self) -> None:
         supabase = (ROOT / "console/lib/reviewSupabase.ts").read_text(encoding="utf-8")
