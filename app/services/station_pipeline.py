@@ -7,9 +7,13 @@ mining -> recall validation -> clip extraction -> labeling -> training ->
 blind exam — as composable stage dicts in the SAME shape, so one executor,
 one artifact-cache rule, and one truth-leak guard cover both lanes.
 
-ADR-0004: clip action-recognition is the live lane; ADR-0002: the exam gate
-is the promotion gate. The exam stage here consumes gold positives derived
-ONLY from reviewed placement times, never from teacher proposals.
+ADR-0004: clip action-recognition is the live lane. ADR-0002: the exam gate
+is the promotion gate. The exam and recall stages consume ONLY the sealed
+exam key at validation/exam/exam_gold_positives.json (schema
+exam_gold_positives_v1, `training_eligible: false`) — NEVER teacher labels,
+candidate data, or anything a training stage reads. reviewed_labels.json is
+the TRAIN manifest only; if it ever appears in an exam/recall argv that is a
+truth leak.
 """
 
 from __future__ import annotations
@@ -23,15 +27,37 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.onboarding_rehearsal import (  # noqa: E402
-    TRUTH_TOUCHING_STAGES,
     StageOutcome,
     default_stage_runner,
     run_station,
 )
 
-TRACK_B_TRUTH_TOUCHING_STAGES = {"label", "exam"}
+# Repo-sealed exam key: the ONLY gold both recall and exam may consume.
+EXAM_GOLD_POSITIVES = REPO_ROOT / "validation" / "exam" / "exam_gold_positives.json"
 
-StageRunner = Any
+TRAIN_MANIFEST_NAME = "reviewed_labels.json"
+
+
+def assert_no_truth_leakage_track_b(stages: list[dict[str, Any]]) -> None:
+    """Fail closed if any exam/recall stage consumes the train manifest, or if
+    any train-side stage (extract/label/train) consumes the sealed exam key."""
+    for stage in stages:
+        command = stage.get("command", [])
+        name = stage.get("name", "?")
+        if name in {"recall", "exam"}:
+            gold_index = command.index("--gold-positives")
+            gold_path = Path(command[gold_index + 1])
+            if gold_path.name == TRAIN_MANIFEST_NAME:
+                raise AssertionError(
+                    f"TRUTH LEAK: stage '{name}' uses {TRAIN_MANIFEST_NAME} as gold; "
+                    f"exam gold must be the sealed key ({EXAM_GOLD_POSITIVES.name})"
+                )
+        elif name in {"extract", "label", "train"}:
+            if any(str(EXAM_GOLD_POSITIVES) == str(part) for part in command):
+                raise AssertionError(
+                    f"TRUTH LEAK: stage '{name}' references the sealed exam key; "
+                    "training lanes must never read it"
+                )
 
 
 def build_track_b_stages(
@@ -53,22 +79,19 @@ def build_track_b_stages(
 ) -> list[dict[str, Any]]:
     """Build the Track B stage list for one station.
 
-    Gold positives for the exam are the reviewed placement times recorded by
-    `label` (reviewed_labels.json), NOT raw tripwire candidates: candidates are
-    high-recall hints, labels are the promotion-grade truth.
+    Order: mine -> extract -> label -> train -> recall -> exam.
+    Recall runs against the SEALED exam key after training so the report shows
+    candidate quality vs promotion truth without ever feeding it to training.
+    Exam gold is always the sealed key; reviewed labels are train-only.
     """
     if python is None:
         candidate = REPO_ROOT / ".venv" / "bin" / "python"
         python = str(candidate) if candidate.exists() else sys.executable
     work = work_root / station_id
-    suffix = video.suffix or ".mp4"
-    split_dir = work / "split"
-    train_clip = split_dir / f"{station_id}_train{suffix}"
-    segment_manifest = work / "recordings" / station_id / "segment_manifest.json"
     tripwire_candidates = work / "tripwire_candidates.json"
     recall_report = work / "tripwire_recall.json"
     clip_manifest = work / "clips" / "clip_manifest.json"
-    reviewed_labels = work / "reviewed_labels.json"
+    reviewed_labels = work / TRAIN_MANIFEST_NAME
     model_dir = work / "train" / "student"
     exam_report = work / "clip_exam.json"
 
@@ -89,26 +112,6 @@ def build_track_b_stages(
                 f"{bracket_sec:g}",
                 "--out",
                 str(tripwire_candidates),
-            ],
-        },
-        {
-            "name": "recall",
-            "artifact": str(recall_report),
-            # Recall is measured against reviewed placements (promotion-grade
-            # truth), not raw candidates.
-            "command": [
-                python,
-                "scripts/validate_tripwire_recall.py",
-                "--tripwire-candidates",
-                str(tripwire_candidates),
-                "--gold-positives",
-                str(reviewed_labels),
-                "--station-calibration",
-                str(calibration),
-                "--match-tolerance-sec",
-                f"{match_tolerance_sec:g}",
-                "--out",
-                str(recall_report),
             ],
         },
         {
@@ -145,7 +148,15 @@ def build_track_b_stages(
                 labeler,
                 "--votes",
                 str(label_votes),
-            ],
+            ]
+            + (
+                [
+                    "--times",
+                    placement_times,
+                ]
+                if placement_times is not None
+                else []
+            ),
         },
         {
             "name": "train",
@@ -167,18 +178,38 @@ def build_track_b_stages(
             ],
         },
         {
+            "name": "recall",
+            "artifact": str(recall_report),
+            # Recall of tripwire candidates vs the SEALED exam key: this is a
+            # measurement report, never a training input.
+            "command": [
+                python,
+                "scripts/validate_tripwire_recall.py",
+                "--tripwire-candidates",
+                str(tripwire_candidates),
+                "--gold-positives",
+                str(EXAM_GOLD_POSITIVES),
+                "--station-calibration",
+                str(calibration),
+                "--match-tolerance-sec",
+                f"{match_tolerance_sec:g}",
+                "--out",
+                str(recall_report),
+            ],
+        },
+        {
             "name": "exam",
             "artifact": str(exam_report),
-            # Blind exam: gold positives come from reviewed placements, the
-            # student never saw holdout clips (exam firewall lives inside
-            # label_clips/train via held-out manifest entries).
+            # Blind exam: gold positives come from the sealed exam key only.
+            # The student trained on reviewed_labels (exam rows are firewalled
+            # out by validate_training_manifest inside train_clip_student).
             "command": [
                 python,
                 "scripts/run_clip_exam.py",
                 "--video",
                 str(video),
                 "--gold-positives",
-                str(reviewed_labels),
+                str(EXAM_GOLD_POSITIVES),
                 "--station-calibration",
                 str(calibration),
                 "--model",
@@ -194,12 +225,14 @@ def build_track_b_stages(
             ],
         },
     ]
+    assert_no_truth_leakage_track_b(stages)
     return stages
 
 
 __all__ = [
-    "TRACK_B_TRUTH_TOUCHING_STAGES",
-    "TRUTH_TOUCHING_STAGES",
+    "EXAM_GOLD_POSITIVES",
+    "TRAIN_MANIFEST_NAME",
+    "assert_no_truth_leakage_track_b",
     "build_track_b_stages",
     "default_stage_runner",
     "run_station",

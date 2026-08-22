@@ -21,7 +21,7 @@ describe("workerPortalServer transport", () => {
     vi.restoreAllMocks();
   });
 
-  it("supabaseFetch sends canonical headers with no-store and no bearer when anonymous", async () => {
+  it("supabaseFetch sends dual-anon headers with no-store when anonymous", async () => {
     fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
     await supabaseFetch("/rest/v1/rpc/some_fn", { method: "POST", body: "{}" });
     const [url, init] = fetchMock.mock.calls[0];
