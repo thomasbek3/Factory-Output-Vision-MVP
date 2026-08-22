@@ -14,7 +14,11 @@ produced. ABSORBED = logic now lives in app/services or a current script.
 | validate_miner_recall.py | HISTORICAL | recall bar (6/7) now owned by the exam kernel contract; current: scripts/validate_tripwire_recall.py |
 | build_holdout_case.py | ABSORBED | still invoked by onboarding_rehearsal "split" stage |
 | apply_live_activation.py | HISTORICAL | one-time June activation |
-| ... | | Full inventory below |
+
+NOTE: only the four rows above are classified so far. Every row in the
+auto-generated inventory below has status `?` — classify during the next
+docs/scripts sweep. Nothing in this directory is current tooling regardless
+of status.
 
 ## Inventory (auto-generated 2026-08-22)
 
