@@ -141,11 +141,20 @@ function isAssignmentUnavailable(error: unknown) {
   return /lease|assignment.*(?:unavailable|expired|not submittable)|access disabled/i.test(message);
 }
 
+// Coverage-gate failures are typed end to end: the SQL migration raises
+// CV000/CV001/CV002, the RPC layer maps them to stable domain codes. The
+// prose fallback only fires against a server that predates the typed
+// migration, so an old deployment still gets the right UX.
 function isCoverageIncomplete(error: unknown) {
   if (error instanceof RpcError) {
-    // SQL raises both coverage and pace failures as CHECK violations (23514).
-    const message = error.message;
-    return /coverage|98 percent|faster than the enabled playback speed/i.test(message);
+    return (
+      error.domainCode === "COVERAGE_MISSING" ||
+      error.domainCode === "COVERAGE_INCOMPLETE" ||
+      error.domainCode === "COVERAGE_TOO_FAST" ||
+      // Legacy server: pre-typed-migration deployments raise bare 23514.
+      (error.domainCode === "CHECK_VIOLATION" &&
+        /coverage|98 percent|faster than the enabled playback speed/i.test(error.message))
+    );
   }
   const message = error instanceof Error ? error.message : String(error);
   return /coverage|98 percent|faster than the enabled playback speed/i.test(message);

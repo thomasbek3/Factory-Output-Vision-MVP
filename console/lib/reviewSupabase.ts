@@ -138,6 +138,13 @@ function domainCodeForSqlState(code: string | null): string {
       return "RATE_LIMITED";
     case "28000":
       return "AUTH_INVALID";
+    // Typed coverage-gate codes (20260821190000_typed_coverage_gate_error_codes.sql).
+    case "CV000":
+      return "COVERAGE_MISSING";
+    case "CV001":
+      return "COVERAGE_INCOMPLETE";
+    case "CV002":
+      return "COVERAGE_TOO_FAST";
     default:
       return "UNKNOWN";
   }

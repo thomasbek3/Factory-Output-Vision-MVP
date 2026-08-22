@@ -156,6 +156,34 @@ class SupabasePhase1ContractTests(unittest.TestCase):
         self.assertIn("1x, 2x, 5x, 10x, 15x, and 20x", amendment)
         self.assertIn("real account menu and settings dialog", amendment)
 
+    def test_typed_coverage_gate_error_codes_are_stable(self) -> None:
+        # The worker UI branches on these codes (review-tally-console.tsx
+        # isCoverageIncomplete); changing them breaks lease/coverage UX.
+        latest_submit = self.sql.rsplit(
+            "create or replace function public.submit_worker_assignment_v2",
+            1,
+        )[1]
+        for code, message in (
+            ("cv000", "video coverage has not been saved"),
+            ("cv001", "at least 98 percent of the video must be reviewed"),
+            ("cv002", "faster than the enabled playback speed permits"),
+        ):
+            raise_at = latest_submit.index(message)
+            errcode_at = latest_submit.rindex(f"errcode = '{code}'", 0, raise_at + 400)
+            self.assertLess(errcode_at, raise_at + 200)
+            self.assertGreater(errcode_at, raise_at - 200)
+
+    def test_client_maps_coverage_gate_codes_without_prose_matching(self) -> None:
+        supabase = (ROOT / "console/lib/reviewSupabase.ts").read_text(encoding="utf-8")
+        component = (
+            ROOT / "console/components/review/review-tally-console.tsx"
+        ).read_text(encoding="utf-8")
+        for domain_code in ("COVERAGE_MISSING", "COVERAGE_INCOMPLETE", "COVERAGE_TOO_FAST"):
+            self.assertIn(f'"{domain_code}"', supabase)
+            self.assertIn(f'"{domain_code}"', component)
+        # The typed branch must not regex prose; only the legacy fallback may.
+        self.assertIn('error.domainCode === "COVERAGE_INCOMPLETE"', component)
+
     def test_immutable_human_lineage_has_guards(self) -> None:
         for table in (
             "review_actions",
