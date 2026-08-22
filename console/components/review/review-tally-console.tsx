@@ -476,25 +476,29 @@ export function ReviewTallyConsole() {
     };
   }, [beginReviewer]);
 
-  const saveCoverage = useCallback(async () => {
-    if (previewMode || !assignment || !session || !pageEpoch.current) return;
+  const coverageSnapshot = useCallback(() => {
     const activeMs =
       coverageActiveMs.current +
       (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
+    return {
+      ranges: coverageRanges.current,
+      clientActiveMs: Math.round(activeMs),
+    };
+  }, []);
+
+  const saveCoverage = useCallback(async () => {
+    if (previewMode || !assignment || !session || !pageEpoch.current) return;
+    const snap = coverageSnapshot();
     await workerRpc(session, "save_worker_coverage", {
       p_assignment_id: assignment.id,
       p_lease_token: assignment.leaseToken,
       p_page_epoch: pageEpoch.current,
-      p_ranges: coverageRanges.current,
-      p_client_active_ms: Math.round(activeMs),
+      p_ranges: snap.ranges,
+      p_client_active_ms: snap.clientActiveMs,
     });
-  }, [assignment, previewMode, session]);
+  }, [assignment, coverageSnapshot, previewMode, session]);
 
-  useEffect(() => {
-    if (previewMode || !assignment || !session) return;
-    const timer = window.setInterval(() => void saveCoverage().catch(() => undefined), 5_000);
-    return () => window.clearInterval(timer);
-  }, [assignment, previewMode, saveCoverage, session]);
+  // The 5s coverage autosave moved into AssignmentKeepAlive (engine).
 
   const refreshMedia = useCallback(async () => {
     if (!assignment || !session) return;
@@ -534,18 +538,19 @@ export function ReviewTallyConsole() {
 
   // Lease-liveness timers (heartbeat, work session, coverage autosave, media
   // refresh) are owned by AssignmentKeepAlive in lib/reviewSessionEngine.
-  const coverageSnapshot = useCallback(() => {
-    const activeMs =
-      coverageActiveMs.current +
-      (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
-    return {
-      ranges: coverageRanges.current,
-      clientActiveMs: Math.round(activeMs),
-    };
-  }, []);
+  // Lease-liveness timers (heartbeat, work session, coverage autosave, media
+  // refresh) are owned by AssignmentKeepAlive in lib/reviewSessionEngine.
+  // refreshMedia is read through a ref so a language toggle (which changes
+  // its identity) does NOT tear down the work session or restart the other
+  // clocks - matching pre-refactor behavior where only the media timer
+  // depended on it.
+  const refreshMediaRef = useRef(refreshMedia);
   useEffect(() => {
-    if (previewMode || !assignment || !session) return;
-    const keepAlive = new AssignmentKeepAlive({
+    refreshMediaRef.current = refreshMedia;
+  }, [refreshMedia]);
+  const keepAlive = useMemo(() => {
+    if (!assignment || !session) return null;
+    return new AssignmentKeepAlive({
       session,
       assignment,
       enabled: !previewMode,
@@ -557,22 +562,30 @@ export function ReviewTallyConsole() {
       onHeartbeatDegraded: () => setSaveState("offline"),
       saveCoverage: async () => {
         if (!pageEpoch.current) return;
-        const snap = coverageSnapshot();
+        const activeMs =
+          coverageActiveMs.current +
+          (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
         await workerRpc(session, "save_worker_coverage", {
           p_assignment_id: assignment.id,
           p_lease_token: assignment.leaseToken,
           p_page_epoch: pageEpoch.current,
-          p_ranges: snap.ranges,
-          p_client_active_ms: snap.clientActiveMs,
+          p_ranges: coverageRanges.current,
+          p_client_active_ms: Math.round(activeMs),
         });
       },
-      refreshMedia: () => refreshMedia(),
+      refreshMedia: () => refreshMediaRef.current(),
     });
+    // Rebuilt only when the lease identity changes - not on language toggles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignment?.id, previewMode, session]);
+
+  useEffect(() => {
+    if (!keepAlive) return;
     keepAlive.start();
     return () => {
       void keepAlive.stop();
     };
-  }, [assignment, coverageSnapshot, previewMode, refreshMedia, session]);
+  }, [keepAlive]);
 
   useEffect(() => {
     if (previewMode || screen !== "today" || !session) return;

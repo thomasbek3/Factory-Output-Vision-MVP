@@ -288,8 +288,15 @@ export class AssignmentKeepAlive {
 
   start(): void {
     const timers = { ...DEFAULT_KEEP_ALIVE, ...(this.deps.timers ?? {}) };
-    const { session, assignment, enabled } = this.deps;
-    if (!enabled || !assignment || !session) return;
+    const { session, assignment } = this.deps;
+    if (!assignment || !session) return;
+
+    // Media reauthorization (signed URLs expire) runs in production AND
+    // practice mode - practice URLs expire just like leased ones.
+    this.every(timers.mediaRefreshMs, () => this.deps.refreshMedia().catch(() => undefined));
+
+    // Lease-liveness timers only apply to real assignments.
+    if (!this.deps.enabled) return;
 
     // Lease heartbeat.
     this.every(timers.heartbeatMs, async () => {
@@ -313,9 +320,6 @@ export class AssignmentKeepAlive {
     this.every(timers.coverageSaveMs, () =>
       this.deps.saveCoverage().catch(() => undefined),
     );
-
-    // Media reauthorization (signed URLs expire).
-    this.every(timers.mediaRefreshMs, () => this.deps.refreshMedia().catch(() => undefined));
   }
 
   private async startWorkSession(assignment: WorkerAssignment): Promise<void> {
