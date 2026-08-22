@@ -135,39 +135,19 @@ function assignmentTimeline(assignment: WorkerAssignment): ReviewTimeline {
   };
 }
 
+// Error-classification helpers live in lib/review-tally-console-classifiers.ts
+// (unit-testable); the component imports them below.
+import {
+  isAssignmentUnavailable as importedIsAssignmentUnavailable,
+  isCoverageIncomplete as importedIsCoverageIncomplete,
+} from "@/lib/review-tally-console-classifiers";
+
 function isAssignmentUnavailable(error: unknown) {
-  if (error instanceof RpcError) {
-    // MFA gate has its own typed code and must NOT read as "task expired".
-    if (error.domainCode === "MFA_REQUIRED") return false;
-    if (error.domainCode === "LEASE_UNAVAILABLE") return true;
-    // Legacy server fallback: pre-typed-migration deployments raise bare
-    // 42501 for both lease and MFA failures, so classify by prose.
-    if (error.code === "42501" || error.domainCode === "UNKNOWN") {
-      return /lease|assignment.*(?:unavailable|expired|not submittable)|access disabled/i.test(error.message);
-    }
-    return false;
-  }
-  const message = error instanceof Error ? error.message : String(error);
-  return /lease|assignment.*(?:unavailable|expired|not submittable)|access disabled/i.test(message);
+  return importedIsAssignmentUnavailable(error);
 }
 
-// Coverage-gate failures are typed end to end: the SQL migration raises
-// CV000/CV001/CV002, the RPC layer maps them to stable domain codes. The
-// prose fallback only fires against a server that predates the typed
-// migration, so an old deployment still gets the right UX.
 function isCoverageIncomplete(error: unknown) {
-  if (error instanceof RpcError) {
-    return (
-      error.domainCode === "COVERAGE_MISSING" ||
-      error.domainCode === "COVERAGE_INCOMPLETE" ||
-      error.domainCode === "COVERAGE_TOO_FAST" ||
-      // Legacy server: pre-typed-migration deployments raise bare 23514.
-      (error.domainCode === "CHECK_VIOLATION" &&
-        /coverage|98 percent|faster than the enabled playback speed/i.test(error.message))
-    );
-  }
-  const message = error instanceof Error ? error.message : String(error);
-  return /coverage|98 percent|faster than the enabled playback speed/i.test(message);
+  return importedIsCoverageIncomplete(error);
 }
 
 function outboxKey(assignmentId: string) {

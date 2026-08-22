@@ -15,10 +15,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.services.exam_gate import (
-    DEFAULT_EXAM_CLIP_OFFSETS_SEC,
     load_gold_clip_offsets,
     run_exam_from_candidates,
-    score_counts_against_gold,
     split_edge_truncated_candidates,
 )
 from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_video, write_tripwire_payload

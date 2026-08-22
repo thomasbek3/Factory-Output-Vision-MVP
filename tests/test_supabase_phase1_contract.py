@@ -201,14 +201,19 @@ class SupabasePhase1ContractTests(unittest.TestCase):
 
     def test_client_maps_coverage_gate_codes_without_prose_matching(self) -> None:
         supabase = (ROOT / "console/lib/reviewSupabase.ts").read_text(encoding="utf-8")
+        classifiers = (
+            ROOT / "console/lib/review-tally-console-classifiers.ts"
+        ).read_text(encoding="utf-8")
         component = (
             ROOT / "console/components/review/review-tally-console.tsx"
         ).read_text(encoding="utf-8")
         for domain_code in ("COVERAGE_MISSING", "COVERAGE_INCOMPLETE", "COVERAGE_TOO_FAST"):
             self.assertIn(f'"{domain_code}"', supabase)
-            self.assertIn(f'"{domain_code}"', component)
+            self.assertIn(f'"{domain_code}"', classifiers)
         # The typed branch must not regex prose; only the legacy fallback may.
-        self.assertIn('error.domainCode === "COVERAGE_INCOMPLETE"', component)
+        self.assertIn('error.domainCode === "COVERAGE_INCOMPLETE"', classifiers)
+        # The component must classify through the extracted module.
+        self.assertIn("review-tally-console-classifiers", component)
 
     def test_immutable_human_lineage_has_guards(self) -> None:
         for table in (
