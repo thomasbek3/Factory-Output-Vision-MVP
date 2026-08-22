@@ -14,9 +14,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.services.placement_counter import PlacementVerdict, count_placements
+from app.services.exam_gate import (
+    DEFAULT_EXAM_CLIP_OFFSETS_SEC,
+    load_gold_clip_offsets,
+    run_exam_from_candidates,
+    score_counts_against_gold,
+    split_edge_truncated_candidates,
+)
 from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_video, write_tripwire_payload
-from scripts.validate_tripwire_recall import DEFAULT_EXAM_CLIP_OFFSETS_SEC, load_gold_clip_offsets
 
 StudentJudge = Callable[[dict[str, Any]], dict[str, Any]]
 LOGGER = logging.getLogger(__name__)
@@ -157,123 +162,9 @@ def load_tripwire_candidates_payload(path: Path) -> dict[str, Any]:
     return payload
 
 
-def split_edge_truncated_candidates(
-    *,
-    candidates: list[dict[str, Any]],
-    duration_sec: float,
-    bracket_sec: float,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    ready: list[dict[str, Any]] = []
-    refutes: list[dict[str, Any]] = []
-    expected_span = bracket_sec * 2.0
-    for candidate in candidates:
-        start_sec = float(candidate.get("start_sec", candidate.get("start_offset_sec", 0.0)))
-        end_sec = float(candidate.get("end_sec", candidate.get("end_offset_sec", start_sec)))
-        touches_edge = start_sec <= 0.0 or (duration_sec > 0 and end_sec >= duration_sec)
-        if touches_edge and end_sec - start_sec < expected_span - 1e-6:
-            candidate_id = str(candidate.get("candidate_id", ""))
-            reason = "clip window truncated at video edge"
-            LOGGER.warning("%s judged refute: %s", candidate_id or "<unknown>", reason)
-            refute = dict(candidate)
-            refute["skip_judge_reason"] = reason
-            refutes.append(refute)
-            continue
-        ready.append(candidate)
-    return ready, refutes
-
-
-def run_exam_from_candidates(
-    *,
-    candidates: list[dict[str, Any]],
-    gold_offsets: list[float] | None = None,
-    judge: StudentJudge,
-    debounce_sec: float = 25.0,
-    match_tolerance_sec: float = 20.0,
-    model_name: str = "student",
-    finalize_at_end: bool = False,
-) -> dict[str, Any]:
-    gold_offsets = gold_offsets or list(DEFAULT_EXAM_CLIP_OFFSETS_SEC)
-    verdicts = []
-    for candidate in sorted(candidates, key=lambda row: float(row.get("center_sec", 0.0))):
-        if candidate.get("skip_judge_reason"):
-            judged = {"decision": "refute", "score": 0.0}
-        else:
-            judged = judge(candidate)
-        decision = str(judged.get("decision", "refute"))
-        verdicts.append(
-            PlacementVerdict(
-                center_sec=float(candidate.get("center_sec", candidate.get("center_offset_sec", 0.0))),
-                decision="assert" if decision == "assert" else "refute",
-                score=float(judged.get("score", 0.0)),
-                candidate_id=str(candidate.get("candidate_id", "")),
-            )
-        )
-    events = count_placements(verdicts, debounce_sec=debounce_sec, finalize_at_end=finalize_at_end)
-    count_times = [event.center_sec for event in events]
-    score = score_counts_against_gold(
-        count_times=count_times,
-        gold_times=gold_offsets,
-        match_tolerance_sec=match_tolerance_sec,
-    )
-    return {
-        "schema_version": "factory-vision-clip-exam-v1",
-        "model": model_name,
-        "candidate_count": len(candidates),
-        "counts": [
-            {
-                "count": event.count,
-                "center_sec": round(event.center_sec, 3),
-                "start_sec": round(event.start_sec, 3),
-                "end_sec": round(event.end_sec, 3),
-                "candidate_ids": event.candidate_ids,
-            }
-            for event in events
-        ],
-        "count_times": [round(value, 3) for value in count_times],
-        "matched": score["matched"],
-        "missed": score["missed"],
-        "false_counts": score["false_counts"],
-        "passed": score["passed"],
-        "matches": score["matches"],
-    }
-
-
-def score_counts_against_gold(
-    *,
-    count_times: list[float],
-    gold_times: list[float],
-    match_tolerance_sec: float,
-) -> dict[str, Any]:
-    unmatched_counts = set(range(len(count_times)))
-    matches = []
-    for gold_index, gold_time in enumerate(gold_times):
-        best_index = None
-        best_delta = None
-        for count_index in unmatched_counts:
-            delta = float(count_times[count_index]) - float(gold_time)
-            if best_delta is None or abs(delta) < abs(best_delta):
-                best_delta = delta
-                best_index = count_index
-        if best_index is not None and best_delta is not None and abs(best_delta) <= match_tolerance_sec:
-            unmatched_counts.remove(best_index)
-            matches.append(
-                {
-                    "gold_index": gold_index,
-                    "gold_sec": round(float(gold_time), 3),
-                    "count_sec": round(float(count_times[best_index]), 3),
-                    "delta_sec": round(best_delta, 3),
-                }
-            )
-    matched = len(matches)
-    missed = len(gold_times) - matched
-    false_counts = len(unmatched_counts)
-    return {
-        "matched": matched,
-        "missed": missed,
-        "false_counts": false_counts,
-        "passed": matched == len(gold_times) and false_counts == 0,
-        "matches": matches,
-    }
+# The exam kernel (split_edge_truncated_candidates, run_exam_from_candidates,
+# score_counts_against_gold) lives in app/services/exam_gate.py; this CLI is a
+# thin shell over it so the runtime and tests share one implementation.
 
 
 if __name__ == "__main__":

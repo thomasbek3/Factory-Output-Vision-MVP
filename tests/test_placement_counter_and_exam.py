@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.services.placement_counter import PlacementCounter, PlacementVerdict, count_placements
-from scripts.run_clip_exam import run_exam_from_candidates, score_counts_against_gold, split_edge_truncated_candidates
+from app.services.exam_gate import run_exam_from_candidates, score_counts_against_gold, split_edge_truncated_candidates
 
 
 def test_placement_counter_counts_quiet_placement_quiet_and_debounces_double_trigger() -> None:

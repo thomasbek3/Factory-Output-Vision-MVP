@@ -15,6 +15,8 @@ if str(REPO_ROOT) not in sys.path:
 from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_segment_manifest, run_tripwire_on_video
 
 PASS_THRESHOLD = 6
+# Gold offsets are owned by the exam kernel (app.services.exam_gate); re-exported
+# here for backwards compatibility with existing callers.
 DEFAULT_EXAM_CLIP_OFFSETS_SEC = [165.0, 510.0, 781.0, 1104.0, 1475.0, 1822.0, 2172.0]
 
 
@@ -237,21 +239,9 @@ def candidate_count_summary(tripwire_payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_gold_clip_offsets(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    rows = payload.get("events") or []
-    loaded = []
-    for index, row in enumerate(rows):
-        if "clip_offset_sec" in row:
-            loaded.append({"id": row.get("id", f"gold-{index + 1:02d}"), "time": float(row["clip_offset_sec"])})
-        elif "offset_sec" in row:
-            loaded.append({"id": row.get("id", f"gold-{index + 1:02d}"), "time": float(row["offset_sec"])})
-    if loaded:
-        return loaded
-    if payload.get("schema") == "exam_gold_positives_v1" and len(rows) == 7:
-        return [
-            {"id": rows[index].get("id", f"exam-gold-{index + 1:02d}"), "time": offset}
-            for index, offset in enumerate(DEFAULT_EXAM_CLIP_OFFSETS_SEC)
-        ]
-    raise ValueError("gold positives do not include clip offsets")
+    from app.services.exam_gate import load_gold_clip_offsets as _kernel_load
+
+    return _kernel_load(payload)
 
 
 def load_gold_wall_times(payload: dict[str, Any]) -> list[dict[str, Any]]:

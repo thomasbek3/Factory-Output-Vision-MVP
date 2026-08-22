@@ -40,8 +40,7 @@ surfaces and do not inherit the owner navigation or project economics.
 - Voice: plain English a factory owner reads in one pass. Project pace labels
   are `AHEAD`, `ON TRACK`, and `BEHIND`; money is labeled `margin after direct
   costs`, never profit. Every negative state includes a recovery sentence, such
-  as "Need 63 units/day to recover." Trust line everywhere: "Verification
-  source and through-time are shown with every resolved count."
+  as "Need 63 units/day to recover." Trust line everywhere: "Verification source and through-time are shown with every resolved count."
 
 ## 2. Color tokens
 
