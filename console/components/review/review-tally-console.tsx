@@ -56,6 +56,7 @@ import {
 } from "@/lib/reviewTimeline";
 import {
   activeClicks,
+  AssignmentKeepAlive,
   mergeCoverage,
   readOutbox,
   submissionId,
@@ -475,70 +476,6 @@ export function ReviewTallyConsole() {
     };
   }, [beginReviewer]);
 
-  useEffect(() => {
-    if (previewMode || !assignment || !session) return;
-    const timer = window.setInterval(() => {
-      void workerRpc(session, "heartbeat_worker_assignment", {
-        p_assignment_id: assignment.id,
-        p_lease_token: assignment.leaseToken,
-      }).then(() => {
-        heartbeatFailures.current = 0;
-        if (readOutbox(assignment.id).length === 0) setSaveState("saved");
-      }).catch(() => {
-        heartbeatFailures.current += 1;
-        if (heartbeatFailures.current >= 2) setSaveState("offline");
-      });
-    }, 30_000);
-    return () => window.clearInterval(timer);
-  }, [assignment, previewMode, session]);
-
-  useEffect(() => {
-    if (previewMode || !assignment || !session) return;
-    let disposed = false;
-    let timer: number | null = null;
-    void reviewerDeviceHash()
-      .then(async (deviceIdHash) => {
-        const opened = await workerRpc<{ sessionId: string }>(
-          session,
-          "worker_touch_work_session",
-          {
-            p_session_id: workSessionId.current,
-            p_device_id_hash: deviceIdHash,
-            p_active_seconds_delta: 0,
-          },
-        );
-        if (disposed) {
-          await workerRpc(session, "worker_close_work_session", {
-            p_session_id: opened.sessionId,
-            p_close_reason: "screen_changed",
-          }).catch(() => undefined);
-          return;
-        }
-        workSessionId.current = opened.sessionId;
-        timer = window.setInterval(() => {
-          if (document.visibilityState !== "visible") return;
-          void workerRpc(session, "worker_touch_work_session", {
-            p_session_id: opened.sessionId,
-            p_device_id_hash: deviceIdHash,
-            p_active_seconds_delta: 30,
-          }).catch(() => undefined);
-        }, 30_000);
-      })
-      .catch(() => undefined);
-    return () => {
-      disposed = true;
-      if (timer !== null) window.clearInterval(timer);
-      const sessionId = workSessionId.current;
-      workSessionId.current = null;
-      if (sessionId) {
-        void workerRpc(session, "worker_close_work_session", {
-          p_session_id: sessionId,
-          p_close_reason: "assignment_closed",
-        }).catch(() => undefined);
-      }
-    };
-  }, [assignment, previewMode, session]);
-
   const saveCoverage = useCallback(async () => {
     if (previewMode || !assignment || !session || !pageEpoch.current) return;
     const activeMs =
@@ -595,13 +532,47 @@ export function ReviewTallyConsole() {
     }
   }, [assignment, language, previewMode, session]);
 
+  // Lease-liveness timers (heartbeat, work session, coverage autosave, media
+  // refresh) are owned by AssignmentKeepAlive in lib/reviewSessionEngine.
+  const coverageSnapshot = useCallback(() => {
+    const activeMs =
+      coverageActiveMs.current +
+      (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
+    return {
+      ranges: coverageRanges.current,
+      clientActiveMs: Math.round(activeMs),
+    };
+  }, []);
   useEffect(() => {
-    if (!assignment || !session) return;
-    const timer = window.setInterval(() => {
-      void refreshMedia();
-    }, 8 * 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, [assignment, refreshMedia, session]);
+    if (previewMode || !assignment || !session) return;
+    const keepAlive = new AssignmentKeepAlive({
+      session,
+      assignment,
+      enabled: !previewMode,
+      heartbeatFailures,
+      workSessionId,
+      onHeartbeatHealthy: () => {
+        if (readOutbox(assignment.id).length === 0) setSaveState("saved");
+      },
+      onHeartbeatDegraded: () => setSaveState("offline"),
+      saveCoverage: async () => {
+        if (!pageEpoch.current) return;
+        const snap = coverageSnapshot();
+        await workerRpc(session, "save_worker_coverage", {
+          p_assignment_id: assignment.id,
+          p_lease_token: assignment.leaseToken,
+          p_page_epoch: pageEpoch.current,
+          p_ranges: snap.ranges,
+          p_client_active_ms: snap.clientActiveMs,
+        });
+      },
+      refreshMedia: () => refreshMedia(),
+    });
+    keepAlive.start();
+    return () => {
+      void keepAlive.stop();
+    };
+  }, [assignment, coverageSnapshot, previewMode, refreshMedia, session]);
 
   useEffect(() => {
     if (previewMode || screen !== "today" || !session) return;
