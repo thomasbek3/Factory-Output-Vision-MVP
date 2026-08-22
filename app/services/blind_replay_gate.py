@@ -91,7 +91,7 @@ def _build_gate_report(*, manifest_path: Path, execute: bool, validation_result:
         "passed": passed,
         "count_authority": "existing_yolo_event_runtime_only",
         "teacher_labels_used_as_truth": False,
-        "runtime_path": "scripts.validate_video.run_validation",
+        "runtime_path": "app.services.validation_runner.run_validation",
         "validation_result_mode": validation_result.get("mode"),
         "validation_report_path": validation_result.get("validation_report"),
         "observed_event_count": observed_event_count,
