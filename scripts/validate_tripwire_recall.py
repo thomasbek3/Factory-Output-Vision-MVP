@@ -14,6 +14,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.services.zone_tripwire import TripwireConfig, load_output_zone_polygon, run_tripwire_on_segment_manifest, run_tripwire_on_video
 
+# Recall pass bar: 6 of 7 exam placements must be caught. Owned by the exam
+# kernel contract (same 7-gold layout as app.services.exam_gate).
 PASS_THRESHOLD = 6
 # Gold offsets are owned by the exam kernel (app.services.exam_gate); this
 # module-level alias exists only so existing callers keep importing from here.

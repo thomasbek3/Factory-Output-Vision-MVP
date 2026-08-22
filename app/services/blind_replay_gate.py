@@ -45,7 +45,7 @@ def run_blind_replay_gate(
 
 
 def _run_manifest_validation(**kwargs: Any) -> dict[str, Any]:
-    from scripts.validate_video import run_validation
+    from app.services.validation_runner import run_validation
 
     return run_validation(**kwargs)
 
