@@ -164,7 +164,7 @@ class LiveClipCounter:
         self._last_close_sec: float | None = None
         self._frame_index = 0
         self._prev_gray: Any | None = None
-        self._baseline_gray: Any | None = None
+        self._consecutive_motion = 0
         # Rolling pixel memory covering >= 2 x bracket so a judged window has
         # both before- and after-bracket pixels.
         buffer_frames = max(32, int(2 * settings.bracket_sec * 30))
@@ -182,35 +182,47 @@ class LiveClipCounter:
         if frame is not None:
             gray = _to_gray(frame)
 
-        # Open on ANY change vs the previous frame. While a window is open,
-        # "busy" means changed vs the PRE-PLACEMENT BASELINE: the busy->calm
-        # transition itself must read as calm, or the cooldown can never start
-        # (a consecutive-frame diff flags the transition as change forever).
+        # Motion detection vs the previous frame, both states:
+        # - no window open: any motion opens one;
+        # - window open: motion extends it; STILLNESS (still-vs-still) lets
+        #   the cooldown run down, so a clip closes after the scene calms.
+        # The busy->calm transition itself diffs against the last busy frame
+        # once, which just nudges last_trigger forward one frame; the bracket
+        # absorbs it. Never compare against a frozen pre-placement baseline:
+        # real stations KEEP the placed output in view, so a frozen baseline
+        # would read busy forever and never emit a count.
         triggered = False
         change_ratio = 0.0
         if gray is not None:
-            if self._pending is None:
-                reference = self._prev_gray
-            else:
-                reference = self._baseline_gray
-            if reference is not None and reference.shape == gray.shape:
-                change_ratio = _change_ratio(reference, gray, self._settings.roi_polygon)
+            if self._prev_gray is not None and self._prev_gray.shape == gray.shape:
+                change_ratio = _change_ratio(self._prev_gray, gray, self._settings.roi_polygon)
                 triggered = change_ratio >= self._settings.pixel_change_threshold
             self._prev_gray = gray
-            if self._pending is None and not triggered:
-                self._baseline_gray = gray
 
         count_events: list[dict[str, Any]] = []
         verdict_payload: dict[str, Any] | None = None
 
+        # Opening stays single-frame sensitive (high recall). Extending an
+        # OPEN window requires SUSTAINED motion (>= 2 consecutive motion
+        # frames): the busy->calm transition itself reads as motion for
+        # exactly one frame and must not push the close deadline out another
+        # full cooldown. The opening frame's own motion never counts toward
+        # the window-busy streak.
         if triggered:
+            self._consecutive_motion += 1
+        else:
+            self._consecutive_motion = 0
+
+        if self._pending is None:
+            if triggered:
+                self._open_or_extend(source_timestamp_sec)
+                self._consecutive_motion = 0
+        elif triggered and self._consecutive_motion >= 2:
             self._open_or_extend(source_timestamp_sec)
-        elif self._pending is not None and self._cooldown_elapsed(source_timestamp_sec):
+        elif self._cooldown_elapsed(source_timestamp_sec):
             verdict_payload, count_events = self._close_and_judge(
                 quiet_sec=source_timestamp_sec
             )
-            if self._pending is None:
-                self._baseline_gray = gray
 
         if count_events:
             self.total_count = count_events[-1]["count"]
@@ -385,12 +397,9 @@ class LiveClipCounter:
         self._recent_frames.append((float(timestamp_sec), small))
 
     def _slice_buffered_frames(self, start_sec: float, end_sec: float) -> list[Any]:
-        picked: list[Any] = []
+        in_range = [frame for ts, frame in self._recent_frames if start_sec <= ts <= end_sec]
         stride = self._settings.sample_stride
-        for index, (ts, frame) in enumerate(self._recent_frames):
-            if start_sec <= ts <= end_sec and index % stride == 0:
-                picked.append(frame)
-        return picked
+        return [frame for index, frame in enumerate(in_range) if index % stride == 0]
 
 def _to_gray(frame: Any) -> Any:
     import cv2

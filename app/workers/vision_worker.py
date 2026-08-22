@@ -114,6 +114,7 @@ class VisionWorker:
         self._event_tracker: CentroidTracker | None = None
         self._live_clip_counter: LiveClipCounter | None = None
         self._live_clip_error: str | None = None
+        self._live_clip_judge_factory = _stub_refuting_judge
         if live_clip_counter_enabled():
             try:
                 settings = load_settings_from_env()
@@ -121,7 +122,7 @@ class VisionWorker:
                     settings=settings,
                     # Promoted bundles need rendered pixels; ship the honest
                     # stub until a renderer exists (swap factory, not module).
-                    judge_factory=_stub_refuting_judge,
+                    judge_factory=self._live_clip_judge_factory,
                 )
             except Exception as exc:  # noqa: BLE001 - misconfig must not kill the worker
                 self._live_clip_error = f"live clip counter failed to activate: {exc}"
@@ -524,7 +525,12 @@ class VisionWorker:
                     if live_clip_counter_enabled() and self._live_clip_counter is None:
                         # Fail closed: a Track B station must never silently
                         # fall back to the YOLO counting that provably fails
-                        # on it (ADR-0004). Count nothing; surface the error.
+                        # on it (ADR-0004). Count nothing; surface the error
+                        # through the runtime error channel AND the artifact.
+                        error_message = self._live_clip_error or "clip_student mode active but counter unavailable"
+                        if self.last_error_code != "CLIP_COUNTER_UNAVAILABLE":
+                            logger.error("%s", error_message)
+                            self._record_runtime_error("CLIP_COUNTER_UNAVAILABLE", error_message)
                         with self._lock:
                             self._latest_debug_artifact = {
                                 "mode": "runtime",
@@ -533,13 +539,20 @@ class VisionWorker:
                                 "detections": [],
                                 "tracks": [],
                                 "person_boxes": [],
-                                "live_clip_activation_error": self._live_clip_error,
+                                "live_clip_activation_error": error_message,
                             }
                     elif self._live_clip_counter is not None:
-                        increment, debug_artifact = self._run_live_clip_counting(
+                        # Local reference: reset_counts may swap the counter
+                        # concurrently; a result computed against the old one
+                        # is dropped rather than recorded onto new totals.
+                        clip_counter = self._live_clip_counter
+                        increment, debug_artifact = self._run_live_clip_counting_on(
+                            clip_counter,
                             frame,
                             source_timestamp_sec=frame_snapshot.source_timestamp_sec,
                         )
+                        if self._live_clip_counter is not clip_counter:
+                            increment, debug_artifact = 0, {"mode": "live_clip", "discarded_after_reset": True}
                         if increment > 0:
                             logger.info(
                                 "LIVE_CLIP_COUNT: +%d (total hour: %d)",
@@ -671,15 +684,15 @@ class VisionWorker:
 
             self._sleep_remaining(started, next_delay)
 
-    def _run_live_clip_counting(
+    def _run_live_clip_counting_on(
         self,
+        counter: LiveClipCounter,
         frame,
         *,
         source_timestamp_sec: float | None,
     ) -> tuple[int, dict[str, Any]]:
-        assert self._live_clip_counter is not None
         timestamp = float(source_timestamp_sec) if source_timestamp_sec is not None else time.time()
-        result = self._live_clip_counter.process_frame(frame, source_timestamp_sec=timestamp)
+        result = counter.process_frame(frame, source_timestamp_sec=timestamp)
         debug_payload = dict(result["debug_payload"])
         # The locked worker loop is the only count writer: emit events with
         # authority and let its shared `increment > 0` path record them.
@@ -698,6 +711,19 @@ class VisionWorker:
         debug_payload.setdefault("tracks", [])
         debug_payload.setdefault("person_boxes", [])
         return result["count"], debug_payload
+
+    def _run_live_clip_counting(
+        self,
+        frame,
+        *,
+        source_timestamp_sec: float | None,
+    ) -> tuple[int, dict[str, Any]]:
+        assert self._live_clip_counter is not None
+        return self._run_live_clip_counting_on(
+            self._live_clip_counter,
+            frame,
+            source_timestamp_sec=source_timestamp_sec,
+        )
 
     def _run_event_based_counting(
         self,
@@ -1269,10 +1295,11 @@ class VisionWorker:
         self._demo_eof_flush_applied = False
         if self._live_clip_counter is not None:
             # Rebuild the Track B state machine so a post-reset calm frame
-            # cannot finalize a pre-reset clip into the new totals.
+            # cannot finalize a pre-reset clip into the new totals. Reuse the
+            # same judge factory the worker was constructed with.
             self._live_clip_counter = LiveClipCounter(
                 settings=self._live_clip_counter.settings_snapshot(),
-                judge_factory=_stub_refuting_judge,
+                judge_factory=self._live_clip_judge_factory,
             )
         self.rolling_rate_per_min = 0.0
         if self._runtime_event_counter is not None:

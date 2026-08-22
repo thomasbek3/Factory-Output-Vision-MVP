@@ -86,15 +86,19 @@ class LiveClipCounterUnitTests(unittest.TestCase):
         first = counter.process_frame(fake_frame(200), source_timestamp_sec=12.0)
         self.assertTrue(first["debug_payload"]["triggered"])
         self.assertIsNotNone(first["debug_payload"]["pending_window"])
-        # Busy frames inside the cooldown do not judge yet.
-        busy = counter.process_frame(fake_frame(200), source_timestamp_sec=20.0)
+        # Sustained busy frames inside the cooldown keep extending the window
+        # (each step >24 gray levels so every pair is real motion).
+        busy = counter.process_frame(fake_frame(255), source_timestamp_sec=13.0)
         self.assertTrue(busy["debug_payload"]["triggered"])
-        self.assertEqual(len(counter._judged), 0)
+        busy2 = counter.process_frame(fake_frame(0), source_timestamp_sec=14.0)
+        self.assertTrue(busy2["debug_payload"]["triggered"])
+        self.assertEqual(len(counter.__dict__["_judged"]), 0)
+        self.assertIsNotNone(counter.__dict__["_pending"])
         # Calm vs baseline starts the cooldown; once 16s pass with no new
-        # trigger the clip is judged exactly once.
-        calm = counter.process_frame(fake_frame(0), source_timestamp_sec=28.0)
+        # sustained motion the clip is judged exactly once.
+        calm = counter.process_frame(fake_frame(0), source_timestamp_sec=15.0)
         self.assertFalse(calm["debug_payload"]["triggered"])
-        after = counter.process_frame(fake_frame(0), source_timestamp_sec=37.0)
+        after = counter.process_frame(fake_frame(0), source_timestamp_sec=31.0)
         self.assertEqual(len(counter.__dict__["_judged"]), 1)
         self.assertEqual(after["debug_payload"]["verdict"]["judged_by"], "student")
         window = counter.__dict__["_judged"][0]

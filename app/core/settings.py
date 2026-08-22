@@ -222,8 +222,12 @@ def get_count_debounce_sec() -> float:
 # --- Counting mode ---
 
 def get_counting_mode() -> str:
-    """'track_based' (default, existing) or 'event_based' (transit detection)."""
-    return os.getenv("FC_COUNTING_MODE", "track_based")
+    """'track_based' (default, existing), 'event_based' (transit detection),
+    or 'clip_student' (live Track B action recognition, ADR-0004)."""
+    mode = os.getenv("FC_COUNTING_MODE", "track_based")
+    if mode not in {"track_based", "event_based", "clip_student"}:
+        return "track_based"
+    return mode
 
 
 def get_event_count_rule() -> str:
