@@ -4,6 +4,8 @@ import { supabaseFetch } from "@/lib/workerPortalServer";
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+// Config is re-declared locally (instead of imported from workerPortalServer)
+// to avoid a circular import; both modules read the same env vars.
 export const reviewAccessCookie = "fv_review_access";
 export const reviewRefreshCookie = "fv_review_refresh";
 

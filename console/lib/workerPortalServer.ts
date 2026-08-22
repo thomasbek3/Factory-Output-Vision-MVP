@@ -26,6 +26,8 @@ type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: string;
   accessToken?: string;
+  /** Use SUPABASE_SECRET_KEY as BOTH apikey and Bearer (service-role REST calls). */
+  serviceRole?: boolean;
 };
 
 /** Core fetch with the canonical Supabase headers and no-store caching. */
@@ -36,8 +38,16 @@ export async function supabaseFetch(
   const config = reviewServerConfig();
   const headers: Record<string, string> = {
     apikey: config.publishableKey,
+    Authorization: `Bearer ${config.publishableKey}`,
   };
-  if (options.accessToken) headers.Authorization = `Bearer ${options.accessToken}`;
+  if (options.serviceRole) {
+    const secretKey = process.env.SUPABASE_SECRET_KEY;
+    if (!secretKey) throw workerPortalError("SUPABASE_SECRET_KEY_MISSING", 500);
+    headers.apikey = secretKey;
+    headers.Authorization = `Bearer ${secretKey}`;
+  } else if (options.accessToken) {
+    headers.Authorization = `Bearer ${options.accessToken}`;
+  }
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   return fetch(`${config.projectUrl}${path}`, {
     method: options.method ?? "GET",

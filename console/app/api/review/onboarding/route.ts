@@ -3,7 +3,7 @@ import {
   authorizeReviewerAccessToken,
   reviewerAccessToken,
 } from "@/lib/reviewServer";
-import { callWorkerRpc, workerPortalError } from "@/lib/workerPortalServer";
+import { callWorkerRpc } from "@/lib/workerPortalServer";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +16,9 @@ async function rpc(request: NextRequest, functionName: string, body: object) {
   try {
     return await callWorkerRpc(functionName, body, { accessToken: token });
   } catch (error) {
-    const status = (error as { status?: number }).status;
-    throw workerPortalError(
-      error instanceof Error ? error.message : `ONBOARDING_${status ?? "FAILED"}`,
-      status,
-    );
+    // Preserve the pre-transport error contract: ONBOARDING_<status>.
+    const status = (error as { status?: number }).status ?? "FAILED";
+    throw new Error(`ONBOARDING_${status}`);
   }
 }
 

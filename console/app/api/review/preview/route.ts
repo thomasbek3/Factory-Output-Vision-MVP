@@ -57,7 +57,7 @@ async function servicePracticeChunk() {
   const response = await supabaseFetch("/rest/v1/rpc/service_latest_practice_preview", {
     method: "POST",
     body: "{}",
-    accessToken: secretKey,
+    serviceRole: true,
   });
   const text = await response.text();
   if (!response.ok) {

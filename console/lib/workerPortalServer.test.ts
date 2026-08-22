@@ -28,9 +28,32 @@ describe("workerPortalServer transport", () => {
     expect(url).toBe("https://sb.example.com/rest/v1/rpc/some_fn");
     const headers = init.headers as Record<string, string>;
     expect(headers.apikey).toBe("anon-key");
-    expect(headers.Authorization).toBeUndefined();
+    expect(headers.Authorization).toBe("Bearer anon-key");
     expect(headers["Content-Type"]).toBe("application/json");
     expect(init.cache).toBe("no-store");
+  });
+
+  it("supabaseFetch serviceRole sends the secret as BOTH apikey and Bearer", async () => {
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    await supabaseFetch("/rest/v1/rpc/service_latest_practice_preview", {
+      method: "POST",
+      body: "{}",
+      serviceRole: true,
+    });
+    const headers = (fetchMock.mock.calls[0][1] as { headers: Record<string, string> }).headers;
+    expect(headers.apikey).toBe("service-key");
+    expect(headers.Authorization).toBe("Bearer service-key");
+  });
+
+  it("supabaseFetch serviceRole throws when secret key is missing", async () => {
+    delete process.env.SUPABASE_SECRET_KEY;
+    try {
+      await supabaseFetch("/rest/v1/rpc/fn", { method: "POST", body: "{}", serviceRole: true });
+      expect.unreachable("should have thrown");
+    } catch (error) {
+      expect((error as Error).message).toBe("SUPABASE_SECRET_KEY_MISSING");
+    }
+    process.env.SUPABASE_SECRET_KEY = "service-key";
   });
 
   it("supabaseFetch attaches Bearer when accessToken given", async () => {

@@ -28,12 +28,14 @@ type AuthPayload = {
 };
 
 async function consumeInvitation(accessToken: string, invitationToken: string) {
-  await callWorkerRpc("worker_accept_reviewer_invitation", { p_invitation_token: invitationToken }, {
-    accessToken,
-  }).then((result) => {
-    const accepted = (result as { accepted?: boolean; reason?: string }) ?? {};
-    if (!accepted.accepted) throw new Error(accepted.reason ?? "invalid");
-  });
+  const result = (await callWorkerRpc(
+    "worker_accept_reviewer_invitation",
+    { p_invitation_token: invitationToken },
+    { accessToken },
+  )) as { accepted?: boolean; reason?: string } | null;
+  if (!result?.accepted) {
+    throw new Error(result?.reason ?? "invalid");
+  }
 }
 
 function requestIp(request: NextRequest) {
