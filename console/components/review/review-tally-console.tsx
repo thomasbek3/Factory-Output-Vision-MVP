@@ -41,8 +41,6 @@ import {
   reviewerPreviewAccess,
   signOutReviewer,
   workerRpc,
-  RpcError,
-  type DurableReviewAction,
   type ReviewSession,
   type ReviewerLifecycle,
   type WorkerAssignment,
@@ -56,6 +54,16 @@ import {
   videoTimeToSourceMs,
   type ReviewTimeline,
 } from "@/lib/reviewTimeline";
+import {
+  activeClicks,
+  mergeCoverage,
+  readOutbox,
+  submissionId,
+  writeOutbox,
+  type ActiveClick,
+  type CoverageRange,
+  type PendingAction,
+} from "@/lib/reviewSessionEngine";
 
 const appVersion = "worker-portal-v2";
 const reviewSpeeds = [1, 2, 5, 10, 15, 20] as const;
@@ -69,37 +77,7 @@ type WorkSummary = {
   observedAt: string;
 };
 
-type ActiveClick = {
-  id: string;
-  serverId?: string;
-  videoSec: number;
-};
-
-type PendingAction = {
-  clientActionId: string;
-  type: "tally" | "undo";
-  sourceTimeMs: number | null;
-  undoesClientActionId: string | null;
-  playbackRate: number;
-};
-
-type CoverageRange = { start_ms: number; end_ms: number };
-
-function mergeCoverage(ranges: CoverageRange[], next: CoverageRange) {
-  const sorted = [...ranges, next]
-    .filter((range) => range.end_ms > range.start_ms)
-    .sort((a, b) => a.start_ms - b.start_ms);
-  const merged: CoverageRange[] = [];
-  for (const range of sorted) {
-    const prior = merged.at(-1);
-    if (prior && range.start_ms <= prior.end_ms + 250) {
-      prior.end_ms = Math.max(prior.end_ms, range.end_ms);
-    } else {
-      merged.push({ ...range });
-    }
-  }
-  return merged.slice(-128);
-}
+// ActiveClick/PendingAction types are owned by lib/reviewSessionEngine.
 
 function formatRange(assignment: WorkerAssignment, language: ReviewLanguage) {
   const locale = language === "es" ? "es-419" : "en-US";
@@ -150,60 +128,8 @@ function isCoverageIncomplete(error: unknown) {
   return importedIsCoverageIncomplete(error);
 }
 
-function outboxKey(assignmentId: string) {
-  return `factoryvision-review-outbox:${assignmentId}`;
-}
-
-function readOutbox(assignmentId: string): PendingAction[] {
-  try {
-    return JSON.parse(window.localStorage.getItem(outboxKey(assignmentId)) ?? "[]") as PendingAction[];
-  } catch {
-    return [];
-  }
-}
-
-function writeOutbox(assignmentId: string, actions: PendingAction[]) {
-  window.localStorage.setItem(outboxKey(assignmentId), JSON.stringify(actions));
-}
-
-function activeClicks(
-  actions: DurableReviewAction[],
-  pending: PendingAction[],
-  sourceStartMs: number,
-) {
-  const undoneServerIds = new Set(
-    actions.filter((action) => action.type === "undo").map((action) => action.undoesActionId),
-  );
-  const clicks: ActiveClick[] = actions
-    .filter((action) => action.type === "tally" && !undoneServerIds.has(action.id))
-    .map((action) => ({
-      id: action.clientActionId,
-      serverId: action.id,
-      videoSec: Math.max(0, ((action.sourceTimeMs ?? sourceStartMs) - sourceStartMs) / 1000),
-    }));
-
-  for (const action of pending) {
-    if (action.type === "tally") {
-      clicks.push({
-        id: action.clientActionId,
-        videoSec: Math.max(0, ((action.sourceTimeMs ?? sourceStartMs) - sourceStartMs) / 1000),
-      });
-    } else {
-      const index = clicks.findIndex((click) => click.id === action.undoesClientActionId);
-      if (index >= 0) clicks.splice(index, 1);
-    }
-  }
-  return clicks;
-}
-
-function submissionId(assignmentId: string) {
-  const key = `factoryvision-review-submission:${assignmentId}`;
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const created = window.crypto.randomUUID();
-  window.localStorage.setItem(key, created);
-  return created;
-}
+// outboxKey/readOutbox/writeOutbox/activeClicks/submissionId now live in
+// lib/reviewSessionEngine (unit-tested there); imported above.
 
 export function ReviewTallyConsole() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -919,7 +845,7 @@ export function ReviewTallyConsole() {
           p_app_version: appVersion,
         },
       );
-      window.localStorage.removeItem(outboxKey(assignment.id));
+      window.localStorage.removeItem(`factoryvision-review-outbox:${assignment.id}`);
       setAssignment(null);
       clicksRef.current = [];
       setClicks([]);
