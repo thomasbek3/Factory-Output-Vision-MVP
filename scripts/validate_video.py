@@ -3,12 +3,13 @@
 
 The orchestration moved to app/services/validation_runner.py (CP6 inversion:
 app modules must not import from scripts.*). This file keeps the command-line
-interface stable: same flags, same behavior.
+interface stable: same flags, same behavior, same output.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -33,13 +34,15 @@ from app.services.validation_runner import (  # noqa: F401
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--case-id", dest="case_id")
+    parser = argparse.ArgumentParser(description="Run or plan a manifest-backed Factory Vision video validation")
+    parser.add_argument("--case-id")
     parser.add_argument("--manifest", type=Path)
-    parser.add_argument("--execute", action="store_true")
-    parser.add_argument("--use-existing-artifacts", action="store_true")
+    parser.add_argument("--registry", type=Path, default=Path("validation/registry.json"))
     parser.add_argument("--backend-port", type=int)
     parser.add_argument("--frontend-port", type=int)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--use-existing-artifacts", action="store_true")
     parser.add_argument("--auto-start", action="store_true")
     parser.add_argument("--skip-preview", action="store_true")
     parser.add_argument("--skip-launch", action="store_true")
@@ -52,15 +55,17 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    registry_path = REPO_ROOT / "data" / "validation_cases.json"
+    registry_path = args.registry if args.registry.is_absolute() else REPO_ROOT / args.registry
     manifest_path = resolve_manifest_path(
-        case_id=args.case_id, manifest_path=args.manifest, registry_path=registry_path
+        case_id=args.case_id,
+        manifest_path=args.manifest,
+        registry_path=registry_path,
     )
     result = run_validation(
         manifest_path=manifest_path,
         backend_port=args.backend_port,
         frontend_port=args.frontend_port,
-        dry_run=True,
+        dry_run=args.dry_run,
         execute=args.execute,
         use_existing_artifacts=args.use_existing_artifacts,
         auto_start=args.auto_start,
@@ -71,7 +76,7 @@ def main() -> None:
         output_path=args.output,
         force=args.force,
     )
-    print(result.get("mode"))
+    print(json.dumps(result, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
