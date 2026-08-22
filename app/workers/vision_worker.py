@@ -67,6 +67,26 @@ from app.services.runtime_event_counter import RuntimeEventCounter, load_runtime
 logger = logging.getLogger(__name__)
 
 
+def _stub_refuting_judge(config: dict[str, Any]) -> Any:
+    """Production default judge for live clips: refute with an explicit reason.
+
+    Promoted student bundles consume rendered clip tensors; live pixel
+    rendering is not implemented yet, so the honest behavior is to refute
+    every clip with a visible reason rather than silently count nothing.
+    Wire a real factory over LiveClipCounter frames_small_bgr to enable.
+    """
+
+    def judge(descriptor: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "decision": "refute",
+            "score": 0.0,
+            "reason": "live pixel rendering is not implemented; wire a real judge factory",
+            "model_path": str(config.get("model_path", "")),
+        }
+
+    return judge
+
+
 class VisionWorker:
     def __init__(self, video_runtime) -> None:
         self.video_runtime = video_runtime
@@ -97,17 +117,11 @@ class VisionWorker:
         if live_clip_counter_enabled():
             try:
                 settings = load_settings_from_env()
-
-                def _student_judge_factory(config: dict[str, Any]) -> Any:
-                    from pathlib import Path
-
-                    from app.services.clip_models import load_student_judge
-
-                    return load_student_judge(model_path=Path(str(config["model_path"])))
-
                 self._live_clip_counter = LiveClipCounter(
                     settings=settings,
-                    judge_factory=_student_judge_factory,
+                    # Promoted bundles need rendered pixels; ship the honest
+                    # stub until a renderer exists (swap factory, not module).
+                    judge_factory=_stub_refuting_judge,
                 )
             except Exception as exc:  # noqa: BLE001 - misconfig must not kill the worker
                 self._live_clip_error = f"live clip counter failed to activate: {exc}"
@@ -504,8 +518,24 @@ class VisionWorker:
                     roi = config.get("roi_polygon")
                     should_process = self.monitoring_enabled or self.calibrating
 
+                increment = 0
+                debug_artifact: dict[str, Any] = {}
                 if should_process:
-                    if self._live_clip_counter is not None:
+                    if live_clip_counter_enabled() and self._live_clip_counter is None:
+                        # Fail closed: a Track B station must never silently
+                        # fall back to the YOLO counting that provably fails
+                        # on it (ADR-0004). Count nothing; surface the error.
+                        with self._lock:
+                            self._latest_debug_artifact = {
+                                "mode": "runtime",
+                                "updated_at_ts": time.time(),
+                                "source_frame": frame.copy(),
+                                "detections": [],
+                                "tracks": [],
+                                "person_boxes": [],
+                                "live_clip_activation_error": self._live_clip_error,
+                            }
+                    elif self._live_clip_counter is not None:
                         increment, debug_artifact = self._run_live_clip_counting(
                             frame,
                             source_timestamp_sec=frame_snapshot.source_timestamp_sec,
@@ -650,20 +680,23 @@ class VisionWorker:
         assert self._live_clip_counter is not None
         timestamp = float(source_timestamp_sec) if source_timestamp_sec is not None else time.time()
         result = self._live_clip_counter.process_frame(frame, source_timestamp_sec=timestamp)
-        count_events = list(result["count_events"])
-        for event in count_events:
-            self._record_count_event(count_authority="clip_student_promoted")
         debug_payload = dict(result["debug_payload"])
+        # The locked worker loop is the only count writer: emit events with
+        # authority and let its shared `increment > 0` path record them.
         debug_payload["count_events"] = [
             {
                 **event,
                 "reason": "live_clip_placement",
                 "count_authority": "clip_student_promoted",
             }
-            for event in count_events
+            for event in result["count_events"]
         ]
         if self._live_clip_error:
             debug_payload["activation_error"] = self._live_clip_error
+        # Debug-artifact contract: overlay/snapshot getters index these keys.
+        debug_payload.setdefault("detections", [])
+        debug_payload.setdefault("tracks", [])
+        debug_payload.setdefault("person_boxes", [])
         return result["count"], debug_payload
 
     def _run_event_based_counting(
@@ -1168,6 +1201,27 @@ class VisionWorker:
             self._demo_eof_flush_applied = True
             return 0
         self._demo_eof_flush_applied = True
+        if self._live_clip_counter is not None:
+            # Track B EOF: close any open clip window and finalize pending
+            # placements so a trailing placement is never dropped.
+            eof_events = self._live_clip_counter.flush()
+            if not eof_events:
+                return 0
+            self._record_count_events(
+                [
+                    {
+                        **event,
+                        "reason": "live_clip_placement_eof",
+                        "count_authority": "clip_student_promoted",
+                    }
+                    for event in eof_events
+                ],
+                reader_sequence_index=reader_sequence_index,
+                reader_frame_time=reader_frame_time,
+                source_timestamp_sec=reader_source_timestamp_sec,
+                source_kind="demo",
+            )
+            return len(eof_events)
         if self._runtime_event_counter is not None:
             frame_result = self._runtime_event_counter.flush_end_of_stream(iterations=2)
             count_events = self._runtime_count_event_payloads(frame_result)
@@ -1213,6 +1267,13 @@ class VisionWorker:
         self._recent_count_events.clear()
         self._last_event_based_count_source_ts = None
         self._demo_eof_flush_applied = False
+        if self._live_clip_counter is not None:
+            # Rebuild the Track B state machine so a post-reset calm frame
+            # cannot finalize a pre-reset clip into the new totals.
+            self._live_clip_counter = LiveClipCounter(
+                settings=self._live_clip_counter.settings_snapshot(),
+                judge_factory=_stub_refuting_judge,
+            )
         self.rolling_rate_per_min = 0.0
         if self._runtime_event_counter is not None:
             self._runtime_event_counter.reset()
