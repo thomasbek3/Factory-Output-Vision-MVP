@@ -55,6 +55,11 @@ from app.services.calibration import Box, box_center
 from app.services.counting import CentroidTracker, CounterState, EventBasedCounter, YoloObjectDetector, apply_roi_mask, count_dead_tracks, count_new_tracks, mark_all_tracks_counted, track_travel_px
 from app.services.dashboard_state import get_onboarding_dashboard_state
 from app.services.deterministic_demo_runner import DeterministicDemoRunner
+from app.services.live_clip_counter import (
+    LiveClipCounter,
+    live_clip_counter_enabled,
+    load_settings_from_env,
+)
 from app.services.perception_gate import GateDecision
 from app.services.person_detector import PersonDetector, point_in_polygon
 from app.services.runtime_event_counter import RuntimeEventCounter, load_runtime_calibration
@@ -87,6 +92,26 @@ class VisionWorker:
         self._event_count_rule_config_error: str | None = None
         self._event_counter: EventBasedCounter | None = None  # kept for reference, no longer used
         self._event_tracker: CentroidTracker | None = None
+        self._live_clip_counter: LiveClipCounter | None = None
+        self._live_clip_error: str | None = None
+        if live_clip_counter_enabled():
+            try:
+                settings = load_settings_from_env()
+
+                def _student_judge_factory(config: dict[str, Any]) -> Any:
+                    from pathlib import Path
+
+                    from app.services.clip_models import load_student_judge
+
+                    return load_student_judge(model_path=Path(str(config["model_path"])))
+
+                self._live_clip_counter = LiveClipCounter(
+                    settings=settings,
+                    judge_factory=_student_judge_factory,
+                )
+            except Exception as exc:  # noqa: BLE001 - misconfig must not kill the worker
+                self._live_clip_error = f"live clip counter failed to activate: {exc}"
+                logger.error("%s", self._live_clip_error)
         self._runtime_calibration_path = get_runtime_calibration_path() if self._counting_mode == "event_based" else None
         self._deterministic_demo_runner: DeterministicDemoRunner | None = None
         self._runtime_event_counter: RuntimeEventCounter | None = None
@@ -480,7 +505,25 @@ class VisionWorker:
                     should_process = self.monitoring_enabled or self.calibrating
 
                 if should_process:
-                    if deterministic_demo:
+                    if self._live_clip_counter is not None:
+                        increment, debug_artifact = self._run_live_clip_counting(
+                            frame,
+                            source_timestamp_sec=frame_snapshot.source_timestamp_sec,
+                        )
+                        if increment > 0:
+                            logger.info(
+                                "LIVE_CLIP_COUNT: +%d (total hour: %d)",
+                                increment,
+                                self.counter_state.counts_this_hour + increment,
+                            )
+                        with self._lock:
+                            self._latest_debug_artifact = {
+                                "mode": "calibration" if self.calibrating else "runtime",
+                                "updated_at_ts": time.time(),
+                                "source_frame": frame.copy(),
+                                **debug_artifact,
+                            }
+                    elif deterministic_demo:
                         increment, debug_artifact = self._run_deterministic_demo_counting(frame)
                         if increment > 0:
                             logger.info(
@@ -597,6 +640,31 @@ class VisionWorker:
                     self._record_runtime_error("VISION_LOOP_ERROR", str(exc))
 
             self._sleep_remaining(started, next_delay)
+
+    def _run_live_clip_counting(
+        self,
+        frame,
+        *,
+        source_timestamp_sec: float | None,
+    ) -> tuple[int, dict[str, Any]]:
+        assert self._live_clip_counter is not None
+        timestamp = float(source_timestamp_sec) if source_timestamp_sec is not None else time.time()
+        result = self._live_clip_counter.process_frame(frame, source_timestamp_sec=timestamp)
+        count_events = list(result["count_events"])
+        for event in count_events:
+            self._record_count_event(count_authority="clip_student_promoted")
+        debug_payload = dict(result["debug_payload"])
+        debug_payload["count_events"] = [
+            {
+                **event,
+                "reason": "live_clip_placement",
+                "count_authority": "clip_student_promoted",
+            }
+            for event in count_events
+        ]
+        if self._live_clip_error:
+            debug_payload["activation_error"] = self._live_clip_error
+        return result["count"], debug_payload
 
     def _run_event_based_counting(
         self,
