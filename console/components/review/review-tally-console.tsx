@@ -538,8 +538,6 @@ export function ReviewTallyConsole() {
 
   // Lease-liveness timers (heartbeat, work session, coverage autosave, media
   // refresh) are owned by AssignmentKeepAlive in lib/reviewSessionEngine.
-  // Lease-liveness timers (heartbeat, work session, coverage autosave, media
-  // refresh) are owned by AssignmentKeepAlive in lib/reviewSessionEngine.
   // refreshMedia is read through a ref so a language toggle (which changes
   // its identity) does NOT tear down the work session or restart the other
   // clocks - matching pre-refactor behavior where only the media timer
@@ -548,6 +546,10 @@ export function ReviewTallyConsole() {
   useEffect(() => {
     refreshMediaRef.current = refreshMedia;
   }, [refreshMedia]);
+  const saveCoverageRef = useRef(saveCoverage);
+  useEffect(() => {
+    saveCoverageRef.current = saveCoverage;
+  }, [saveCoverage]);
   const keepAlive = useMemo(() => {
     if (!assignment || !session) return null;
     return new AssignmentKeepAlive({
@@ -560,23 +562,9 @@ export function ReviewTallyConsole() {
         if (readOutbox(assignment.id).length === 0) setSaveState("saved");
       },
       onHeartbeatDegraded: () => setSaveState("offline"),
-      saveCoverage: async () => {
-        if (!pageEpoch.current) return;
-        const activeMs =
-          coverageActiveMs.current +
-          (coverageActiveStartedAt.current ? performance.now() - coverageActiveStartedAt.current : 0);
-        await workerRpc(session, "save_worker_coverage", {
-          p_assignment_id: assignment.id,
-          p_lease_token: assignment.leaseToken,
-          p_page_epoch: pageEpoch.current,
-          p_ranges: coverageRanges.current,
-          p_client_active_ms: Math.round(activeMs),
-        });
-      },
+      saveCoverage: () => saveCoverageRef.current(),
       refreshMedia: () => refreshMediaRef.current(),
     });
-    // Rebuilt only when the lease identity changes - not on language toggles.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignment?.id, previewMode, session]);
 
   useEffect(() => {

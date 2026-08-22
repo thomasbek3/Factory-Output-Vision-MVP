@@ -287,6 +287,11 @@ export class AssignmentKeepAlive {
   constructor(private readonly deps: KeepAliveDeps) {}
 
   start(): void {
+    // Restartable: a previous stop() must not poison this cycle (React Strict
+    // Mode mounts, unmounts, and remounts the same instance in dev).
+    for (const interval of this.intervals) window.clearInterval(interval);
+    this.intervals = [];
+    this.disposed = false;
     const timers = { ...DEFAULT_KEEP_ALIVE, ...(this.deps.timers ?? {}) };
     const { session, assignment } = this.deps;
     if (!assignment || !session) return;
