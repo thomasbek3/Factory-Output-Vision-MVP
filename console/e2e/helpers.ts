@@ -20,6 +20,11 @@ const IGNORED_ERROR_SUBSTRINGS = [
   // fall back to the demo loop — Chromium logs it as a generic failed-resource
   // console error with no URL, so we tolerate the 404 resource message here.
   "Failed to load resource: the server responded with a status of 404",
+  // Expected: initializeReviewer probes /api/review/preview to decide whether a
+  // no-login practice pass exists. Unenrolled visitors get 403 from
+  // ops_assert_access and the app handles it (allowed: false). Same class of
+  // benign failed-resource noise as the 404 above — handled in app code.
+  "Failed to load resource: the server responded with a status of 403",
 ];
 
 export function collectConsoleErrors(page: Page): string[] {

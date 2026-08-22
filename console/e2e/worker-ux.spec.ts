@@ -41,7 +41,9 @@ test("ops account can preview the employee portal without reviewer enrollment", 
 
   await page.goto("/review");
   await expect(page.locator("[data-review-route='today']")).toBeVisible();
-  await expect(page.getByText("Employee portal preview. You will not receive assignments."))
+  // Since 53fa279 the preview banner reads "Practice with real footage..." and
+  // the header chip shows "Preview mode".
+  await expect(page.getByText("Practice with real footage. Your clicks are not saved as training data."))
     .toBeVisible();
   await expect(page.getByText("Preview mode")).toBeVisible();
   await expect(page.getByText("No assignments waiting")).toBeVisible();
