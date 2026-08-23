@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { assertNoConsoleErrors, collectConsoleErrors } from "./helpers";
@@ -57,11 +58,16 @@ test("qualification UI is obvious and usable before production activation", asyn
       });
     },
   );
+  // Use the committed tiny fixture when the full demo clip is absent (CI);
+  // prefer the real footage locally so the video actually plays.
+  const fixtureClip = fs.existsSync(path.resolve("demo-media/review/gate-line-20260709-1208.mp4"))
+    ? path.resolve("demo-media/review/gate-line-20260709-1208.mp4")
+    : path.resolve("demo-media/review/fixture-clip.mp4");
   await page.route("https://qualification.fixture/clip.mp4", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "video/mp4",
-      path: path.resolve("demo-media/review/gate-line-20260709-1208.mp4"),
+      path: fixtureClip,
     });
   });
 
