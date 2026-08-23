@@ -47,10 +47,13 @@ test("qualification UI is obvious and usable before production activation", asyn
           qualification: {
             chunkId: "qualification-chunk",
             stationName: "Output line",
+            // Timeline must match the actual fixture video duration
+            // (fixture-clip.mp4 is a 5s synthetic clip; the real demo footage
+            // only exists locally, so CI always gets the 5s timeline).
             sourceStartMs: 0,
-            sourceEndMs: 900_150,
+            sourceEndMs: 5_000,
             renditionSourceStartMs: 0,
-            renditionSourceEndMs: 900_150,
+            renditionSourceEndMs: 5_000,
             mediaUrl: "https://qualification.fixture/clip.mp4",
           },
           attempts: 0,
