@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional
 
-
-SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+from app.services.assignment_window import (
+    SHA256_PATTERN,
+    UTC_TIMESTAMPS_EXAM,
+    AssignmentWindow,
+    assignment_overlaps_windows,
+    require_assignment_lineage,
+    require_presented_contains_canonical,
+    require_sha256_hex,
+    require_utc_timestamps,
+)
 
 
 @dataclass(frozen=True)
@@ -100,39 +107,29 @@ def assignment_overlaps_exam(
     presented_start_at: Optional[datetime] = None,
     presented_end_at: Optional[datetime] = None,
 ) -> bool:
-    if not SHA256_PATTERN.fullmatch(source_sha256):
-        raise ValueError("assignment source_sha256 must be 64 lowercase hex characters")
+    require_sha256_hex(
+        source_sha256,
+        message="assignment source_sha256 must be 64 lowercase hex characters",
+    )
     timestamps = [start_at, end_at]
     if presented_start_at is not None:
         timestamps.append(presented_start_at)
     if presented_end_at is not None:
         timestamps.append(presented_end_at)
-    if any(
-        value.tzinfo is None or value.utcoffset() != timezone.utc.utcoffset(value)
-        for value in timestamps
-    ):
-        raise ValueError("assignment and presented timestamps must be timezone-aware UTC")
-    if start_at >= end_at:
-        raise ValueError("assignment start_at must precede end_at")
-    visible_start_at = presented_start_at or start_at
-    visible_end_at = presented_end_at or end_at
-    if visible_start_at > start_at or visible_end_at < end_at:
-        raise ValueError("presented interval must contain the canonical assignment interval")
-    if visible_start_at >= visible_end_at:
-        raise ValueError("presented interval start must precede end")
-
-    lineage_hashes = set(lineage_source_sha256)
-    if not lineage_hashes:
-        raise ValueError("assignment lineage_source_sha256 must be non-empty")
-    if lineage_is_transitive_complete is not True:
-        raise ValueError("assignment lineage must declare transitive completeness")
-    source_hashes = {source_sha256, *lineage_hashes}
-    if any(not SHA256_PATTERN.fullmatch(value) for value in source_hashes):
-        raise ValueError("assignment lineage hashes must be 64 lowercase hex characters")
-
-    return any(
-        not protected.lineage_source_sha256.isdisjoint(source_hashes)
-        and visible_start_at < protected.end_at
-        and protected.start_at < visible_end_at
-        for protected in intervals
+    require_utc_timestamps(timestamps, message=UTC_TIMESTAMPS_EXAM)
+    visible_start_at, visible_end_at = require_presented_contains_canonical(
+        start_at=start_at,
+        end_at=end_at,
+        presented_start_at=presented_start_at,
+        presented_end_at=presented_end_at,
+    )
+    source_hashes = require_assignment_lineage(
+        source_sha256=source_sha256,
+        lineage_source_sha256=lineage_source_sha256,
+        lineage_is_transitive_complete=lineage_is_transitive_complete,
+        include_source_in_hashes=True,
+    )
+    return assignment_overlaps_windows(
+        intervals,
+        AssignmentWindow(source_hashes, visible_start_at, visible_end_at),
     )

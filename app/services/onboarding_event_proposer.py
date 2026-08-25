@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from app.services.segment_paths import resolve_segment_path as _resolve_segment_path
 from app.services.stream_recorder import validate_segment_manifest
 
 
@@ -373,13 +374,6 @@ def _validate_config(
         raise ValueError("at least one window side must be positive")
     if stable_negative_count < 0:
         raise ValueError("stable_negative_count must be non-negative")
-
-
-def _resolve_segment_path(*, segment_manifest_path: Path, segment: dict[str, Any]) -> Path:
-    raw_path = Path(str(segment["path"])).expanduser()
-    if raw_path.is_absolute():
-        return raw_path
-    return (segment_manifest_path.parent / raw_path).resolve()
 
 
 def _positive_float(value: Any, *, name: str) -> float:

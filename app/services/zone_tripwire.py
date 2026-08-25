@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+from app.services.segment_paths import resolve_segment_path as _resolve_segment_path
 from app.services.stream_recorder import validate_segment_manifest
 
 ScoreMethod = Literal["tiled_absdiff", "tiled_ssim", "tiled_edge"]
@@ -995,11 +996,6 @@ def write_tripwire_payload(path: Path, payload: dict[str, Any], *, force: bool =
         raise FileExistsError(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
-def _resolve_segment_path(segment_manifest_path: Path, segment: dict[str, Any]) -> Path:
-    raw = Path(str(segment["path"])).expanduser()
-    return raw if raw.is_absolute() else (segment_manifest_path.parent / raw).resolve()
 
 
 def _as_list(value: Any) -> list[Any]:

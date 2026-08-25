@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.validation_truth_guard import validate_truth_file
+from app.services.validation_truth_guard import validate_truth_file
 
 
 def _read_json(path: Path) -> dict[str, Any]:
